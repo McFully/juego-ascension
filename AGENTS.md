@@ -1,0 +1,160 @@
+# Ascension - Reglas Maestras del Proyecto
+
+## 1. Naturaleza del Proyecto
+- Ascension es un juego grande de estrategia espacial, modular, premium y 100% local para Windows.
+- El proyecto puede y debe crecer con multiples pantallas, sistemas, componentes, reducers, datos, hooks y modulos internos.
+- La ambicion actual es un juego extenso y mantenible, no una demo pequena ni una app de un solo archivo.
+
+## 2. Runtime 100% Local
+- El ejecutable final debe funcionar siempre offline.
+- El jugador final no debe instalar Node, npm, librerias, dependencias, servidores ni herramientas externas.
+- Todo lo necesario para jugar debe quedar incluido en el instalador o ejecutable final.
+
+Permitido en desarrollo:
+- npm
+- Electron
+- React
+- Vite
+- tests
+- herramientas de build
+- dependencias necesarias para construir y verificar el proyecto
+
+Prohibido en runtime:
+- servidores externos
+- cloud saves
+- sincronizacion online
+- sockets
+- telemetria
+- llamadas web obligatorias
+- descargas de dependencias
+
+## 3. Landing Page Fuera del Juego
+- La carpeta `landing/`, los MCPs, Vercel, `firebase-download/` y herramientas externas pertenecen al ecosistema de landing, distribucion o soporte.
+- No forman parte del runtime del juego ejecutable.
+- No deben auditarse como ejecutable salvo peticion explicita del usuario.
+- Si en el futuro el landing se separa a otro repositorio, el ejecutable no debe depender de ese cambio.
+
+## 4. Persistencia Local Obligatoria
+- Toda partida se guarda en disco local: `%APPDATA%/Ascension/`.
+- Toda partida se carga desde disco local.
+- Toda importacion/exportacion es desde/a archivos locales `.json`.
+- Usar Electron IPC para save/load.
+- No usar `localStorage` como fuente principal de persistencia.
+- Validar saves antes de cargar.
+- Crear backup automatico `.bak` antes de sobrescribir un save.
+
+Validacion minima de save:
+- version actual `3`
+- version `2` solo como save migrable/legacy
+- `playerName`
+- `planets` array
+- `gameStarted`
+
+## 5. Arquitectura Permitida
+- El proyecto debe estar bien modularizado.
+- La fragmentacion sana es deseada porque Ascension es un juego grande.
+
+Permitido:
+- `src/pages/`
+- `src/components/`
+- `src/reducers/`
+- `src/data/`
+- `src/hooks/`
+- `src/utils/`
+- `src/audio.js`
+- `src/core.jsx`
+- modulos internos equivalentes cuando reduzcan complejidad real
+
+Objetivo:
+- separar UI, logica de juego, datos, persistencia, audio y proceso Electron.
+- mantener fronteras claras entre juego, landing, distribucion y herramientas.
+
+Prohibido:
+- mezclar landing con runtime del juego
+- introducir red online en el ejecutable
+- refactorizar visualmente sin permiso
+- volver artificialmente a una arquitectura pequena
+- crear abstracciones innecesarias que oculten reglas importantes del juego
+
+## 6. Estabilidad del Ejecutable
+- `ErrorBoundary` obligatorio en raiz del render.
+- `LoadingScreen` con watchdog de 10s y boton Reintentar si excede.
+- Bootstrap con logging: `[Ascension] Boot: inicio/listo/error`.
+- El juego debe arrancar correctamente desde instalacion limpia en Windows.
+- El fallo de audio, asset no critico o carga secundaria no debe romper la partida.
+
+## 7. Build y Versionado
+- Prohibido generar build, `.exe`, `setup.exe` o instalador automaticamente.
+- Build solo cuando el usuario lo solicite explicitamente y de forma separada.
+- Desarrollo no implica build.
+- Consentimiento implicito no es valido.
+- Cada exe debe incrementar version automaticamente: `npm version patch --no-git-tag-version`.
+- La version debe mostrarse en la UI del juego.
+
+## 8. UX
+- Settings estan permitidos.
+- Menus estan permitidos si forman parte del juego.
+- Multiples apartados y pantallas estan permitidos.
+- La interfaz debe conservar sensacion de videojuego de estrategia espacial premium.
+
+Prioridad absoluta:
+1. Legibilidad.
+2. Densidad de informacion.
+3. Consistencia espacial.
+4. Jerarquia visual.
+5. Sensacion premium de estrategia espacial.
+
+Estructura visual base:
+- Sidebar izquierda fija.
+- Header superior fijo.
+- Recursos siempre visibles.
+- Categorias siempre visibles.
+- Grid principal estable.
+- Area central sin overflow horizontal.
+
+Estilo visual:
+- fondo global negro espacial profundo
+- paneles azul muy oscuro
+- bordes azul electrico tenue
+- hover cian suave
+- activos azul brillante
+- glows tenues y sombras ligeras
+
+Prohibido sin permiso explicito:
+- redisenar la arquitectura visual
+- mover sidebar/header de forma estructural
+- ocultar recursos principales
+- introducir animaciones permanentes, parallax o fondos dinamicos invasivos
+- glassmorphism agresivo o blur excesivo
+
+## 9. Audio
+- `Musica-menu.ogg` esta permitido como musica de fondo local.
+- Web Audio API puede usarse para efectos programaticos.
+- Sonidos ligeros, no invasivos y consistentes.
+- Inicializar audio en el primer click del usuario cuando el navegador/Electron lo requiera.
+- El audio nunca debe romper el juego si falla.
+
+## 10. Auditorias
+Cuando se audite el ejecutable, ignorar salvo peticion explicita:
+- `landing/`
+- `mcps/`
+- `firebase-download/`
+- zips de distribucion
+- documentacion exclusiva de landing
+
+Centrarse en:
+- `electron/`
+- `src/`
+- `package.json`
+- assets usados por el juego
+- persistencia local
+- funcionamiento offline
+- seguridad del preload
+- estabilidad del ejecutable
+- arquitectura modular del juego
+
+## 11. Comunicacion con el Usuario
+- El asistente debe hablar en modo cavernicola cuando trabaje dentro de este proyecto.
+- Frases cortas, claras y directas.
+- El asistente debe indicar cuando algo pertenece al juego y cuando pertenece al landing.
+- No tocar builds, instaladores, zips ni landing sin orden explicita.

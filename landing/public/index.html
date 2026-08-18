@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascensión | Estrategia Espacial 100% Local</title>
+  <meta name="description" content="Domina la galaxia en Ascensión, el simulador de estrategia espacial 100% local y sin conexión. Gestiona recursos, coloniza planetas y lidera flotas espaciales.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-container">
+      <div class="logo-wrapper">
+        <img src="logo-ascension.png" alt="Ascensión Logo" class="header-logo" id="header-logo-img">
+        <span class="logo-text">ASCENSIÓN</span>
+      </div>
+      <nav class="nav">
+        <a href="#universo" class="nav-link">Universo</a>
+        <a href="#caracteristicas" class="nav-link">Características</a>
+        <a href="#ventajas" class="nav-link">Ventajas</a>
+        <a href="#contacto" class="btn btn-secondary">Contacto</a>
+      </nav>
+      <button id="menuToggle" class="menu-toggle" aria-label="Abrir menú">
+        <span id="menuIcon" class="material-symbols-outlined">menu</span>
+      </button>
+    </div>
+  </header>
+
+  <div id="mobileMenu" class="mobile-menu">
+    <a href="#universo" class="mobile-link">Universo</a>
+    <a href="#caracteristicas" class="mobile-link">Características</a>
+    <a href="#ventajas" class="mobile-link">Ventajas</a>
+    <a href="#contacto" class="btn btn-secondary mobile-link">Contacto</a>
+  </div>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-glow"></div>
+      <div class="container hero-container">
+        <div class="hero-content">
+          <div class="badge">Estrategia para un Jugador</div>
+          <h1 class="hero-title">El Destino de la Galaxia está en tus Manos</h1>
+          <p class="hero-subtitle">
+            Ascensión es un videojuego de estrategia espacial profundo, de un solo jugador y 100% local. Sin servidores, sin microtransacciones, y sin necesidad de conexión. Diseña tu imperio espacial desde cero.
+          </p>
+          <div class="hero-actions">
+            <a href="https://probando-ca7d9.web.app/Ascension-v1.1.30.zip" class="btn btn-primary btn-lg download-btn" id="hero-download-btn" download>
+              <span class="material-symbols-outlined">download</span>
+              <span>Descargar para Windows</span>
+            </a>
+            <div class="download-meta">
+              <span class="meta-item">Versión: v1.1.30</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-image-wrapper">
+            <img src="space_colony_concept.png" alt="Concepto de Colonia Espacial de Ascensión" class="hero-image" id="hero-concept-image">
+            <div class="hero-image-overlay"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Universe Description Section -->
+    <section id="universo" class="universe-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Construye tu Propia Civilización Estelar</h2>
+          <p class="section-desc">Adéntrate en un universo de infinitas posibilidades donde tus decisiones de gestión, diplomacia y poder militar decidirán el futuro de la especie.</p>
+        </div>
+        <div class="universe-grid">
+          <div class="universe-card card-glow-purple">
+            <span class="material-symbols-outlined card-icon">public</span>
+            <h3>Colonización Planetaria</h3>
+            <p>Descubre y coloniza nuevos planetas, cada uno con depósitos de recursos y factores ambientales únicos que requieren una gestión estratégica especializada.</p>
+          </div>
+          <div class="universe-card card-glow-cyan">
+            <span class="material-symbols-outlined card-icon">biotech</span>
+            <h3>Tecnología de Vanguardia</h3>
+            <p>Desbloquea decenas de investigaciones en el árbol tecnológico. Desarrolla propulsores hiperespaciales, armas avanzadas e inteligencias artificiales tácticas.</p>
+          </div>
+          <div class="universe-card card-glow-blue">
+            <span class="material-symbols-outlined card-icon">rocket_launch</span>
+            <h3>Diseño de Flotas</h3>
+            <p>Crea tus propios modelos de naves de combate, cargueros e interceptores. Configura sus escudos, armamento y motores para contrarrestar a tus rivales.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="caracteristicas" class="features-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Mecánicas de Juego Profundas</h2>
+          <p class="section-desc">Todo el control en tus manos a través de una interfaz optimizada, fluida y de respuesta inmediata.</p>
+        </div>
+        <div class="feature-row">
+          <div class="feature-content">
+            <div class="feature-icon-wrapper">
+              <span class="material-symbols-outlined">insights</span>
+            </div>
+            <h3>Simulación Macroeconómica Local</h3>
+            <p>Gestiona tres recursos principales: Metal, Cristal y Deuterio. Balancea la energía planetaria de tus reactores y optimiza la automatización de tus minas para maximizar la producción global de tu imperio.</p>
+            <ul class="feature-list">
+              <li><span class="material-symbols-outlined list-check">check_circle</span> Plantas solares y reactores de fusión cuánticos.</li>
+              <li><span class="material-symbols-outlined list-check">check_circle</span> Silos de almacenamiento y bóvedas protegidas contra espionaje.</li>
+              <li><span class="material-symbols-outlined list-check">check_circle</span> Sistemas de colonización avanzada y terraformadores.</li>
+            </ul>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-preview-container">
+              <div class="preview-card bg-glass">
+                <div class="preview-header">
+                  <span class="preview-dot"></span>
+                  <span class="preview-dot"></span>
+                  <span class="preview-dot"></span>
+                  <span class="preview-title">Consola de Control de Producción</span>
+                </div>
+                <div class="preview-body">
+                  <div class="stat-row">
+                    <span>Mina de Metal Nvl 24</span>
+                    <span class="text-cyan">8.420 / hora</span>
+                  </div>
+                  <div class="stat-bar"><div class="stat-fill fill-cyan" style="width: 75%"></div></div>
+                  <div class="stat-row">
+                    <span>Mina de Cristal Nvl 20</span>
+                    <span class="text-purple">5.190 / hora</span>
+                  </div>
+                  <div class="stat-bar"><div class="stat-fill fill-purple" style="width: 58%"></div></div>
+                  <div class="stat-row">
+                    <span>Sintetizador Deuterio Nvl 18</span>
+                    <span class="text-blue">2.840 / hora</span>
+                  </div>
+                  <div class="stat-bar"><div class="stat-fill fill-blue" style="width: 42%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-row reverse">
+          <div class="feature-content">
+            <div class="feature-icon-wrapper">
+              <span class="material-symbols-outlined">swords</span>
+            </div>
+            <h3>Combate Táctico y Defensa de Fronteras</h3>
+            <p>El espacio es peligroso. Defiende tus mundos con cañones Gauss, domos de escudos planetarios y lanzamisiles interplanetarios. Envía patrullas y misiones a sectores lejanos y revisa cada batalla con el sistema de retransmisión.</p>
+            <ul class="feature-list">
+              <li><span class="material-symbols-outlined list-check">check_circle</span> Simulador de batallas detallado con reporte de bajas y pérdidas.</li>
+              <li><span class="material-symbols-outlined list-check">check_circle</span> Sensores Phalanx para monitorear movimientos de flotas enemigas.</li>
+              <li><span class="material-symbols-outlined list-check">check_circle</span> Modificación y configuración de naves personalizadas.</li>
+            </ul>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-preview-container">
+              <div class="preview-card bg-glass border-purple">
+                <div class="preview-header">
+                  <span class="preview-dot"></span>
+                  <span class="preview-dot"></span>
+                  <span class="preview-dot"></span>
+                  <span class="preview-title">Reporte de Combate: Sector Centauri</span>
+                </div>
+                <div class="preview-body text-center">
+                  <div class="combat-status victory">VICTORIA IMPERIAL</div>
+                  <div class="combat-grid">
+                    <div class="combat-stat">
+                      <div class="stat-val text-cyan">24</div>
+                      <div class="stat-lbl">Naves Propias</div>
+                    </div>
+                    <div class="combat-stat">
+                      <div class="stat-val text-red">0</div>
+                      <div class="stat-lbl">Bajas Propias</div>
+                    </div>
+                    <div class="combat-stat">
+                      <div class="stat-val text-purple">12</div>
+                      <div class="stat-lbl">Naves Destruidas</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Advantages Section -->
+    <section id="ventajas" class="advantages-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">¿Por qué elegir Ascensión?</h2>
+          <p class="section-desc">Un enfoque diferente en los videojuegos modernos de estrategia espacial.</p>
+        </div>
+        <div class="advantages-grid">
+          <div class="advantage-card">
+            <span class="material-symbols-outlined adv-icon">sync_disabled</span>
+            <h4>100% Sin Conexión</h4>
+            <p>Ideal para portátiles o lugares con conexión inestable. Juega donde quieras sin depender de internet ni estar atado a servidores en la nube.</p>
+          </div>
+          <div class="advantage-card">
+            <span class="material-symbols-outlined adv-icon">save</span>
+            <h4>Persistencia Local de Partidas</h4>
+            <p>Tus datos son tuyos. Las partidas se guardan localmente en tu sistema con backups automáticos y compatibilidad con importación/exportación JSON.</p>
+          </div>
+          <div class="advantage-card">
+            <span class="material-symbols-outlined adv-icon">speed</span>
+            <h4>Velocidad Optimizada 20X</h4>
+            <p>Sin esperas de días para construir edificios. El simulador funciona a velocidad acelerada fija para ofrecer una experiencia interactiva sin tiempos muertos.</p>
+          </div>
+          <div class="advantage-card">
+            <span class="material-symbols-outlined adv-icon">security</span>
+            <h4>Sin Cuentas ni Microtransacciones</h4>
+            <p>Juego limpio y transparente. Sin compras dentro de la app, anuncios molestos, ni recopilación de información personal.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contacto" class="contact-section">
+      <div class="container contact-panel-container">
+        <div class="contact-panel">
+          <div class="contact-panel-glow"></div>
+          <h2 class="contact-panel-title">¿Tienes alguna duda o propuesta? Escríbenos</h2>
+          <p class="contact-panel-desc">Envíanos tus comentarios, sugerencias o reportes. Nos pondremos en contacto contigo lo antes posible.</p>
+          
+          <form id="contactForm" class="contact-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="formName">Nombre</label>
+                <input type="text" id="formName" name="name" required placeholder="Tu nombre">
+              </div>
+              <div class="form-group">
+                <label for="formEmail">Email</label>
+                <input type="email" id="formEmail" name="email" required placeholder="Tu correo electrónico">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="formPhone">Teléfono</label>
+                <input type="tel" id="formPhone" name="phone" placeholder="Tu número de teléfono">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="formMessage">Mensaje</label>
+              <textarea id="formMessage" name="message" rows="5" required placeholder="Escribe aquí tu mensaje..."></textarea>
+            </div>
+            <button type="submit" id="submitButton" class="btn btn-primary btn-block">
+              <span id="submitIcon" class="material-symbols-outlined">send</span>
+              <span id="submitText">Enviar Mensaje</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-container">
+      <p class="copyright">&copy; 2026 Aritz Bahamonde Larxé. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitButton');
+      const submitText = document.getElementById('submitText');
+      const submitIcon = document.getElementById('submitIcon');
+      
+      const name = document.getElementById('formName').value;
+      const email = document.getElementById('formEmail').value;
+      const phone = document.getElementById('formPhone').value;
+      const message = document.getElementById('formMessage').value;
+      
+      // Cambiar botón a estado "enviando"
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-80', 'cursor-wait');
+      submitText.innerText = 'Sincronizando...';
+      submitIcon.innerText = 'sync';
+      submitIcon.classList.add('animate-spin');
+      
+      const payload = {
+        name: name,
+        email: email,
+        phone: phone,
+        message: message,
+        notes: 'Enviado desde el formulario de contacto estático de Ascensión.',
+        source: 'Ascensión'
+      };
+      
+      try {
+        const res = await fetch('https://aritz-bahamonde.vercel.app/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+          // Éxito
+          submitIcon.classList.remove('animate-spin');
+          submitIcon.innerText = 'check_circle';
+          submitText.innerText = '¡Enviado con Éxito!';
+          submitBtn.classList.remove('btn-primary');
+          submitBtn.classList.add('btn-success');
+          
+          // Limpiar formulario
+          document.getElementById('contactForm').reset();
+          
+          setTimeout(() => {
+            submitIcon.innerText = 'send';
+            submitText.innerText = 'Enviar Mensaje';
+            submitBtn.classList.remove('btn-success', 'cursor-wait', 'opacity-80');
+            submitBtn.classList.add('btn-primary');
+            submitBtn.disabled = false;
+          }, 5000);
+        } else {
+          throw new Error('Server returned error status');
+        }
+      } catch (err) {
+        console.error('[Contact Form Error]', err);
+        submitIcon.classList.remove('animate-spin');
+        submitIcon.innerText = 'error';
+        submitText.innerText = 'Error al enviar';
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.add('btn-error');
+        
+        setTimeout(() => {
+          submitIcon.innerText = 'send';
+          submitText.innerText = 'Enviar Mensaje';
+          submitBtn.classList.remove('btn-error', 'cursor-wait', 'opacity-80');
+          submitBtn.classList.add('btn-primary');
+          submitBtn.disabled = false;
+        }, 5000);
+      }
+    });
+
+    // Lógica del Menú Móvil
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const menuIcon = document.getElementById('menuIcon');
+    const mobileLinks = document.querySelectorAll('.mobile-link');
+
+    menuToggle.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.contains('open');
+      if (isOpen) {
+        mobileMenu.classList.remove('open');
+        menuIcon.innerText = 'menu';
+      } else {
+        mobileMenu.classList.add('open');
+        menuIcon.innerText = 'close';
+      }
+    });
+
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.remove('open');
+        menuIcon.innerText = 'menu';
+      });
+    });
+  </script>
+</body>
+</html>

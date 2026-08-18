@@ -1,0 +1,82 @@
+{
+  "name": "ascension",
+  "private": true,
+  "version": "1.1.47",
+  "description": "Ascensión - Estrategia espacial single player 100% local",
+  "author": "Aritz Bahamonde Larxé",
+  "copyright": "© 2026 Aritz Bahamonde Larxé. All rights reserved.",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "dev:electron": "vite build && electron .",
+    "build": "vite build",
+    "bump": "npm version patch --no-git-tag-version --no-commit-hooks",
+    "dist": "npm run bump && vite build && electron-builder --win",
+    "dist:dir": "npm run bump && vite build && electron-builder --win --dir",
+    "dist:all": "npm run bump && vite build && electron-builder --win --linux --mac",
+    "test": "vitest run"
+  },
+  "build": {
+    "publish": null,
+    "appId": "com.ascension",
+    "productName": "Ascension",
+    "electronLanguages": [
+      "es",
+      "es-419"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Ascension-v${version}-Setup.${ext}",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "Ascension-v${version}-Portable.${ext}"
+    }
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "framer-motion": "^11.15.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^42.2.0",
+    "electron-builder": "^26.8.1",
+    "postcss": "^8.4.49",
+    "sharp": "^0.35.1",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.0.5",
+    "vitest": "^4.1.8"
+  }
+}

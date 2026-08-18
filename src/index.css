@@ -1,0 +1,396 @@
+@import url('../public/fonts/outfit.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.engraved-icon {
+  color: #3b494b;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.15), 0 -1px 0 rgba(0,0,0,0.8);
+}
+
+/* ============================================
+   UNREAL ENGINE 5 / HIGH-FIDELITY 64-BIT UI
+   Premium sci-fi look with glassmorphism,
+   emissive lighting, depth, and polish.
+   ============================================ */
+
+:root {
+  --ue-bg: #05070f;
+  --ue-surface: #0a0d1a;
+  --ue-glass: rgba(10, 13, 26, 0.72);
+  --ue-border: rgba(6, 182, 212, 0.18);
+  --ue-border-strong: rgba(6, 182, 212, 0.35);
+  --ue-accent: #06b6d4;
+  --ue-accent-2: #3b82f6;
+  --ue-gold: #f4a261;
+  --ue-text: #ffffff;
+  --ue-text-dim: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: 'Outfit', 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  background-color: var(--ue-bg);
+  color: var(--ue-text);
+  /* Subtle film grain for "rendered in engine" texture */
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 3px 3px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Stronger dark base + vignette for cinematic depth */
+#root {
+  min-height: 100vh;
+  background: 
+    radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 95%);
+}
+
+/* Global glassmorphism & premium panel styles */
+.glass {
+  background: var(--ue-glass);
+  border: 1px solid var(--ue-border);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.3);
+}
+
+.holographic {
+  position: relative;
+  overflow: hidden;
+}
+
+.holographic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 20%,
+    rgba(6, 182, 212, 0.08) 40%,
+    transparent 60%
+  );
+  pointer-events: none;
+  transition: all 0.4s ease;
+}
+
+.holographic:hover::after {
+  background: linear-gradient(
+    135deg,
+    transparent 10%,
+    rgba(6, 182, 212, 0.15) 35%,
+    rgba(59, 130, 246, 0.08) 55%,
+    transparent 80%
+  );
+}
+
+/* Emissive / glowing elements (Unreal PBR lighting simulation) */
+.emissive-cyan {
+  box-shadow: 
+    0 0 8px rgba(6, 182, 212, 0.55),
+    0 0 22px rgba(6, 182, 212, 0.3),
+    0 0 40px rgba(6, 182, 212, 0.12);
+}
+
+.emissive-gold {
+  box-shadow: 
+    0 0 8px rgba(244, 162, 97, 0.55),
+    0 0 22px rgba(244, 162, 97, 0.3),
+    0 0 40px rgba(244, 162, 97, 0.12);
+}
+
+/* Fresnel / specular edge lighting (UE5 material) */
+.fresnel {
+  position: relative;
+}
+.fresnel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    145deg,
+    rgba(255,255,255,0.18) 0%,
+    transparent 35%,
+    transparent 65%,
+    rgba(255,255,255,0.08) 100%
+  );
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Specular highlight on hover (PBR simulation) */
+.specular {
+  transition: box-shadow 0.2s ease;
+}
+.specular:hover {
+  box-shadow: 
+    0 0 12px rgba(255,255,255,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
+/* Holographic text / labels */
+.holo-text {
+  text-shadow:
+    0 0 4px rgba(6, 182, 212, 0.4),
+    0 0 12px rgba(6, 182, 212, 0.2);
+  letter-spacing: 0.04em;
+}
+
+/* Ultimate UE5 glass-deep with PBR layers + engine noise */
+.glass-deep {
+  background: rgba(8, 11, 22, 0.85);
+  border: 1px solid rgba(6, 182, 212, 0.24);
+  box-shadow:
+    0 14px 56px rgba(0,0,0,0.6),
+    inset 0 2px 0 rgba(255,255,255,0.14),
+    inset 0 -2px 0 rgba(0,0,0,0.45),
+    0 0 0 1px rgba(6, 182, 212, 0.08);
+  background-image:
+    linear-gradient(rgba(255,255,255,0.009) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.009) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* UE5 cinematic post-processing extras - max fidelity */
+
+/* More HUD grid for engine authenticity */
+.ue-hud-grid {
+  background-image: 
+    linear-gradient(rgba(6,182,212,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6,182,212,0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+/* Subtle lens flare on holographic for UE5 */
+.holographic.ue-lens::after {
+  content: '';
+  position: absolute;
+  top: 20%; left: 30%;
+  width: 40%; height: 60%;
+  background: radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%);
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+
+/* Better input range for high-end feel */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #1e293b;
+  border-radius: 9999px;
+  outline: none;
+  border: 1px solid #334155;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: linear-gradient(145deg, #e2e8f0, #64748b);
+  border: 1px solid #0f172a;
+  box-shadow: 
+    0 2px 4px rgba(0,0,0,0.4),
+    0 0 0 3px rgba(6, 182, 212, 0.2);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: linear-gradient(145deg, #e2e8f0, #64748b);
+  border: 1px solid #0f172a;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+}
+
+/* Subtle scanline effect on certain panels (optional premium touch) */
+.scanlines {
+  position: relative;
+}
+
+.scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.06) 3px,
+    rgba(0,0,0,0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+/* Extra Unreal-like post-processing */
+.unreal-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.unreal-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.07) 0%,
+    transparent 12%,
+    transparent 82%,
+    rgba(0,0,0,0.18) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Subtle engine noise on deep glass (UE material texture) */
+.glass-deep {
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.008) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.008) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+/* Ultimate UE5 chromatic + holographic edge (stronger cinematic aberration) */
+.holographic {
+  position: relative;
+}
+
+.holographic::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    45deg,
+    rgba(103, 232, 249, 0.18) 0%,
+    rgba(192, 38, 255, 0.14) 50%,
+    rgba(103, 232, 249, 0.18) 100%
+  );
+  opacity: 0.5;
+  filter: blur(0.6px);
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.holographic::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    135deg,
+    rgba(103, 232, 249, 0.06) 0%,
+    transparent 30%,
+    rgba(192, 38, 255, 0.05) 70%,
+    transparent 100%
+  );
+  opacity: 0.7;
+  z-index: -2;
+  border-radius: inherit;
+}
+
+/* Premium data readouts */
+.data-text {
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: 0.025em;
+}
+
+/* ============================================
+   CINEMATIC POST-PROCESSING (Unreal 5 style)
+   Stronger vignette, film grain, scanlines
+   ============================================ */
+
+.vignette {
+  box-shadow: inset 0 0 120px rgba(0,0,0,0.6);
+}
+
+.filmgrain {
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+  background-size: 3px 3px;
+  pointer-events: none;
+}
+
+/* Enhanced global scanlines for .scanlines panels */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.035) 2px,
+    rgba(0,0,0,0.035) 3px
+  );
+  pointer-events: none;
+  z-index: 2;
+  border-radius: inherit;
+}
+
+/* Reduced motion respect (performance + accessibility) */
+@media (prefers-reduced-motion: reduce) {
+  .holographic::before,
+  .holographic::after,
+  .unreal-panel::after {
+    transition: none !important;
+  }
+  .filmgrain,
+  .vignette {
+    opacity: 0.6;
+  }
+}
+
+/* Subtle chromatic aberration helper for key HUD reads */
+.chromatic {
+  position: relative;
+}
+.chromatic::before,
+.chromatic::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0; top: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.06;
+}
+.chromatic::before { color: #67e8f9; transform: translate(-0.6px, 0); }
+.chromatic::after  { color: #c026ff; transform: translate(0.6px, 0); }
+
+/* Deeper bevel + emissive on premium buttons when active */
+button.emissive-cyan,
+.emissive-cyan {
+  box-shadow: 0 0 8px rgba(6,182,212,0.55), 0 0 22px rgba(6,182,212,0.28), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+button.emissive-gold,
+.emissive-gold {
+  box-shadow: 0 0 8px rgba(244,162,97,0.55), 0 0 22px rgba(244,162,97,0.28), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+
+/* Custom scrollbar hider */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+
