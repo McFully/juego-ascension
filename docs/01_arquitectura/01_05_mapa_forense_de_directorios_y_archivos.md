@@ -1,0 +1,156 @@
+# MAPA FORENSE DE DIRECTORIOS Y ARCHIVOS
+
+## 1. INVENTARIO COMPLETO DE ARCHIVOS
+Total de archivos auditados: **614**
+
+- `.gitignore`
+- `AGENTS.md`
+- `architectural_audit.md`
+- `auditoria_por_hacer_02072026.md`
+- `audit_report.md`
+- `build-dist.js`
+- `ejemplo.png`
+- `favicon.ico`
+- `futuro.md`
+- `generador_documentacion_atomicidad_absoluta_universal.md`
+- `icono.jpg`
+- `icono.png`
+- `image_prompts.md`
+- `index.html`
+- `Informe_Completo_Edificios_Investigaciones_Ascension.pdf`
+- `Informe_Edificios_Investigaciones_Ascension.pdf`
+- `iniciar.bat`
+- `LICENSE.txt`
+- `logo.png`
+- `Musica-menu.ogg`
+- `opencode.json`
+- `package-lock.json`
+- `package.json`
+- `postcss.config.js`
+- `refactorizacion.md`
+- `rename-release.js`
+- `tailwind.config.js`
+- `vite.config.js`
+- `walkthrough.md`
+- `.idx/dev.nix`
+- `.opencode/.gitignore`
+- `.opencode/package-lock.json`
+- `.opencode/package.json`
+- `.opencode/rules/01-persistencia-local.md`
+- `.opencode/rules/02-arquitectura.md`
+- `.opencode/rules/03-estabilidad.md`
+- `.opencode/rules/04-control-builds.md`
+- `.opencode/rules/05-ux.md`
+- `.opencode/rules/06-audio.md`
+- `.opencode/rules/07-estructura.md`
+- `.opencode/skills/terminal-solver/SKILL.md`
+- `Assets/ablativePlating.jpg`
+- `Assets/abmInterceptorSilo.jpg`
+- `Assets/abmInterceptorSilo.webp`
+- `Assets/Academia Militar.webp`
+- `Assets/acceleratedSleepBio.jpg`
+- `Assets/adaptiveModularArch.jpg`
+- `Assets/aiCore.jpg`
+- `Assets/alcubierreDrive.jpg`
+- `Assets/algorithmicBureaucracy.jpg`
+- `Assets/Almacen Cristal.webp`
+- `Assets/Almacen Deuterio.webp`
+- `Assets/Almacen Metal.webp`
+- `Assets/Almacen Orbital.webp`
+- `Assets/antimatterCatalyzed.jpg`
+- `Assets/antimatterCatalyzed.webp`
+- `Assets/antimatterWarhead.jpg`
+- `Assets/arbitratedNegotiation.jpg`
+- `Assets/arcologyAlpha.jpg`
+- `Assets/arcologyAlpha.webp`
+- `Assets/arcologySociology.jpg`
+- `Assets/Armamento Balístico.webp`
+- `Assets/Armas.webp`
+- `Assets/armoredUndergroundVault.jpg`
+- `Assets/artilleria orbital.webp`
+- `Assets/Astillero.webp`
+- `Assets/Astrofísica.webp`
+- `Assets/automatedMine.jpg`
+- `Assets/automatedMine.webp`
+- `Assets/Automatizacion Minera.webp`
+- `Assets/Automatizacion Total.webp`
+- `Assets/Ayuntamiento.png`
+- `Assets/ballisticsTestCenter.jpg`
+- `Assets/ballisticsTestCenter.webp`
+- `Assets/ballisticWeapons.jpg`
+- `Assets/Base Lunar.webp`
+- `Assets/biomeDomeSimulation.jpg`
+- `Assets/biomeDomeSimulation.webp`
+- `Assets/bioRegenClinic.jpg`
+- `Assets/bioRegenClinic.webp`
+- `Assets/Blindaje.webp`
+- `Assets/Bombardero.webp`
+- `Assets/Boveda Protegida.webp`
+- `Assets/Campos Defensivos.webp`
+- `Assets/carbonNanotubes.jpg`
+- `Assets/Carguera Pequeña.webp`
+- `Assets/Cartografia Galactica.webp`
+- `Assets/catalyticDeut.jpg`
+- `Assets/catalyticDeut.webp`
+- `Assets/Cazador Ligero.webp`
+- `Assets/Cazador Pesado.webp`
+- `Assets/Cañón de Iones.webp`
+- `Assets/Cañón Gauss.webp`
+- `Assets/Central Geotermica.webp`
+- `Assets/centralAiResearch.jpg`
+- `Assets/centralAiResearch.webp`
+- `Assets/centralLogisticHub.jpg`
+- `Assets/Centro de Construcciones.webp`
+- `Assets/Centro de Ensamblaje.webp`
+- `Assets/Centro de Espionaje.webp`
+- `Assets/Centro de Mando.webp`
+- `Assets/Centro de Nanotecnología.webp`
+- `Assets/Centro de Ocio.png`
+- `Assets/Centro de Salud.png`
+- `Assets/Centro Diplomático.webp`
+- `Assets/Centro Ing Genética.webp`
+- `Assets/Centro Inv Avanzada.webp`
+- `Assets/Centro Logistico.webp`
+- `Assets/civilGuardCommand.jpg`
+- `Assets/civilPowerGrid.jpg`
+- `Assets/civilPowerGrid.webp`
+- `Assets/climateComfortField.jpg`
+- `Assets/cognitiveNetwork.jpg`
+- `Assets/coherentResonance.jpg`
+- `Assets/Colonizacion Avanzada.webp`
+- `Assets/Colonizador.webp`
+- `Assets/colonySupremeCourt.jpg`
+- `Assets/Combustión.webp`
+- `Assets/Comercio Galáctico.webp`
+- `Assets/communityCenter.jpg`
+- `Assets/communityCenter.webp`
+- `Assets/Complejo Industrial.webp`
+- `Assets/Computación.webp`
+- `Assets/consulateHeadquarters.jpg`
+- `Assets/councilChamber.jpg`
+- `Assets/Criptografia Galactica.webp`
+- `Assets/Crucero.webp`
+- `Assets/cryogenicToughness.jpg`
+- `Assets/crystalMegaStorage.jpg`
+- `Assets/cyberDefenseActive.jpg`
+- `Assets/Cúpula Grande.webp`
+- `Assets/Cúpula Pequeña.webp`
+- `Assets/deepColonizationPsych.jpg`
+- `Assets/deepScanner.jpg`
+- `Assets/Deposito Lunar.webp`
+- `Assets/Destructor de Planetas.png`
+- `Assets/Destructor.webp`
+- `Assets/deuteriumLiquidCell.jpg`
+- `Assets/deuteriumLiquidCell.webp`
+- `Assets/deutMegaStorage.jpg`
+- `Assets/Diseno Experimental.webp`
+- `Assets/earlyWarningSat.jpg`
+- `Assets/earlyWarningSat.webp`
+- `Assets/electromagneticChaff.jpg`
+- `Assets/electronBeamWeld.jpg`
+- `Assets/electronDegeneracy.jpg`
+- `Assets/electronDegeneracy.webp`
+- `Assets/Energía.webp`
+- `Assets/Escaner Profundo.webp`
+- `Assets/Escudos.webp`
+- ... y 464 archivos adicionales registrados en inventario.
