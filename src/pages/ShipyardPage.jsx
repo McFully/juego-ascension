@@ -1,15 +1,35 @@
 import React, { useState } from 'react';
+import { GameCarousel } from '../components/ui/GameCarousel.jsx';
+import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
+import { useNavigation } from '../components/navigation/NavigationContext.jsx';
+import { SafeImg } from '../assets.jsx';
+import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
+import { ShipyardQueueSection } from '../components/shipyard/ShipyardQueueSection.jsx';
+import { ShipProductionCard } from '../components/shipyard/ShipProductionCard.jsx';
 
-const ShipyardPage = ({ state, dispatch, currentPlanet, SHIPS, RESEARCH, BUILDINGS, S, CardBanner, ProgressBar, fmt, fmtTime, shipTimeBonus, shipCost, calcShipTime, meetsReq, getShipStats, canAfford, constructionDiscount, GAME_SPEED, onOpenCodex }) => {
+const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEARCH, BUILDINGS, S, CardBanner, ProgressBar, fmt, fmtTime, shipTimeBonus, shipCost, calcShipTime, meetsReq, getShipStats, canAfford, constructionDiscount, GAME_SPEED, onOpenCodex }) => {
+  const { navigateBack } = useNavigation();
   const [shipCat, setShipCat] = useState('civil');
   const bonus = shipTimeBonus(currentPlanet.buildings);
 
   if (!currentPlanet.buildings.shipyard) {
     return (
-      <div className={`${S.card} text-center py-12`}>
-        <div className="text-6xl mb-4">🚀</div>
-        <h3 className="text-xl mb-2">Astillero requerido</h3>
-        <p className="text-slate-400">Construye un Astillero para fabricar naves.</p>
+      <div className={`${S.card} text-center py-12 view-enter max-w-xl mx-auto space-y-6`}>
+        <div className="text-6xl mb-2">🚀</div>
+        <h3 className="text-xl font-bold">Astillero Naval Requerido</h3>
+        <p className="text-slate-400 text-sm">Construye un Astillero en el Complejo de Obras para iniciar la manufactura de naves espaciales.</p>
+        <div className="pt-2">
+          <ActionCardTile
+            type="back"
+            title="Volver al Alto Mando"
+            subtitle="Regresar al Alto Mando"
+            icon="◀"
+            badgeText="VOLVER"
+            onClick={() => {
+              if (navigateBack) navigateBack();
+            }}
+          />
+        </div>
       </div>
     );
   }
@@ -30,168 +50,260 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, SHIPS, RESEARCH, BUILDIN
     { totalCount: 0, totalAtk: 0, totalDef: 0 }
   );
 
+  const categories = [
+    { key: 'civil', title: 'Naves Civiles', icon: '📦', assetId: 'smallCargo', subtitle: 'Cargueros, naves colonizadoras, recicladores y sondas de espionaje' },
+    { key: 'military', title: 'Flota Militar', icon: '⚔️', assetId: 'battleship', subtitle: 'Cazas ligeros, cruceros de asalto, destructores y acorazados estelares' },
+    { key: 'ammo', title: 'Munición y Despliegue', icon: '☄️', assetId: 'missileSilo', subtitle: 'Satélites solares, cápsulas orbitales y cargas tácticas' },
+  ];
+
   return (
-    <div className="space-y-4">
-      <div className="bg-[#0b1021] border border-cyan-500/20 rounded-xl p-4 flex flex-wrap gap-6 items-center justify-around text-sm font-mono shadow-inner relative z-10">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🚀</span>
-          <div>
-            <div className="text-[10px] text-slate-400 uppercase font-bold">Total de Naves</div>
-            <div className="text-lg font-black text-cyan-400">{fmt(fleetSummary.totalCount)}</div>
-          </div>
-        </div>
-        <div className="h-8 w-px bg-white/10" />
-        <div className="flex items-center gap-2">
-          <span className="text-xl">⚔️</span>
-          <div>
-            <div className="text-[10px] text-slate-400 uppercase font-bold">Poder de Ataque Total</div>
-            <div className="text-lg font-black text-red-400">{fmt(fleetSummary.totalAtk)}</div>
-          </div>
-        </div>
-        <div className="h-8 w-px bg-white/10" />
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🛡️</span>
-          <div>
-            <div className="text-[10px] text-slate-400 uppercase font-bold">Poder de Defensa Total</div>
-            <div className="text-lg font-black text-emerald-400">{fmt(fleetSummary.totalDef)}</div>
-          </div>
-        </div>
-      </div>
-      {shipQueues.length > 0 && (
-        <div className={S.cardInner}>
-          <h4 className="font-semibold mb-2 text-sm">🚀 Cola de Astillero ({shipQueues.length}/5)</h4>
-          {shipQueues.map(item => {
-            const s = SHIPS[item.shipId];
-            const totalQty = item.quantity;
-            const delivered = item.unitsDelivered || 0;
-            const remainingQty = Math.max(1, totalQty - delivered);
-            const remainingTime = Math.max(0, (item.endTime - Date.now()) / 1000);
-            const totalTime = (item.endTime - item.startTime) / 1000;
-            return (
-              <div key={item.id} className="bg-slate-950/50 rounded p-2 mb-2 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm shrink-0">
-                  <span>{s?.icon || '🚀'}</span>
-                  <span className="font-medium text-slate-200">{fmt(remainingQty)}x {s?.name || item.shipId} <span className="text-[10px] text-slate-400">({delivered} en hangar)</span></span>
-                  <span className="text-xs font-mono text-cyan-400">{fmtTime(remainingTime)}</span>
-                </div>
-                <div className="flex-1 mx-2">
-                  <ProgressBar value={totalTime - remainingTime} max={totalTime} color="from-cyan-500 to-blue-500" height="h-1.5" />
-                </div>
-                <button
-                  onClick={() => dispatch({ type: 'CANCEL_SHIP_QUEUE', queueId: item.id })}
-                  className="px-2 py-1 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 rounded transition-all shrink-0 flex items-center gap-1"
-                  title="Cancelar naves restantes y reembolsar 50% de recursos"
-                >
-                  ✕ Cancelar (50%)
-                </button>
+    <div className="space-y-4 view-enter">
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Flota Status) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Astillero Naval"
+        breadcrumbIcon="🚀"
+        rightSlot={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">
+              <span className="text-slate-400">Hangar:</span>
+              <span className="font-bold text-cyan-300">{fmt(fleetSummary.totalCount)} naves</span>
+            </div>
+            {shipQueues.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-xs font-mono">
+                <span className="text-slate-400">Ensamblando:</span>
+                <span className="font-bold text-amber-300">{shipQueues.length}/5</span>
               </div>
+            )}
+          </div>
+        }
+      />
+      {/* Banner de Alto Mando del Astillero */}
+      <section className="bg-[#0b1021]/90 border border-cyan-500/25 rounded-2xl p-4 flex flex-wrap gap-4 items-center justify-between shadow-[0_0_30px_rgba(6,182,212,0.1)]">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">🚀</span>
+          <div>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">Astillero Naval Planetario</h2>
+            <p className="text-[10px] text-cyan-400 font-mono">Ensamblaje orbital y hangares de atraque</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 text-xs font-mono bg-[#05070f]/70 border border-white/8 px-4 py-2 rounded-xl">
+          <div className="flex items-center gap-2">
+            <span className="text-cyan-400">Total Hangar:</span>
+            <span className="font-bold text-white text-sm">{fmt(fleetSummary.totalCount)}</span>
+          </div>
+          <div className="h-4 w-px bg-white/10" />
+          <div className="flex items-center gap-2">
+            <span className="text-red-400">Ataque:</span>
+            <span className="font-bold text-red-300">{fmt(fleetSummary.totalAtk)}</span>
+          </div>
+          <div className="h-4 w-px bg-white/10" />
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400">Defensa:</span>
+            <span className="font-bold text-emerald-300">{fmt(fleetSummary.totalDef)}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Presets Rápidos de Doctrina Naval (Punto 6) */}
+      <section className="bg-black/50 border border-cyan-500/20 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+        <div className="flex items-center gap-2 text-slate-300">
+          <span className="text-amber-400">⚡</span>
+          <span className="font-bold uppercase tracking-wider text-[11px] text-cyan-300">Doctrina Rápida:</span>
+          <span className="text-slate-500 hidden sm:inline">Packs estratégicos de ensamblaje masivo con un solo clic</span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {/* Preset 1: Patrulla Ligera */}
+          <button
+            onClick={() => {
+              if (meetsReq(SHIPS.lightFighter?.req, { ...currentPlanet.buildings, ...state.research })) {
+                dispatch({ type: 'START_SHIP', shipId: 'lightFighter', quantity: 5 });
+                if (window.playSfx) window.playSfx('click');
+              }
+            }}
+            className="px-3 py-1.5 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-200 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+            title="Ensamblar 5 Cazas Ligeros de reconocimiento rápido"
+          >
+            <span>🛸 Escuadra Ligera (5x Caza)</span>
+          </button>
+
+          {/* Preset 2: Convoy de Carga y Minería */}
+          <button
+            onClick={() => {
+              if (meetsReq(SHIPS.smallCargo?.req, { ...currentPlanet.buildings, ...state.research })) {
+                dispatch({ type: 'START_SHIP', shipId: 'smallCargo', quantity: 3 });
+                if (window.playSfx) window.playSfx('click');
+              }
+            }}
+            className="px-3 py-1.5 rounded-xl bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/40 text-amber-200 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+            title="Ensamblar 3 Cargueros para transporte de recursos"
+          >
+            <span>📦 Convoy de Carga (3x Carguera)</span>
+          </button>
+
+          {/* Preset 3: Fuerza de Choque */}
+          <button
+            onClick={() => {
+              if (meetsReq(SHIPS.cruiser?.req, { ...currentPlanet.buildings, ...state.research })) {
+                dispatch({ type: 'START_SHIP', shipId: 'cruiser', quantity: 2 });
+                if (window.playSfx) window.playSfx('click');
+              } else if (meetsReq(SHIPS.heavyFighter?.req, { ...currentPlanet.buildings, ...state.research })) {
+                dispatch({ type: 'START_SHIP', shipId: 'heavyFighter', quantity: 4 });
+                if (window.playSfx) window.playSfx('click');
+              }
+            }}
+            className="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-200 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+            title="Ensamblar fuerza naval de asalto de choque"
+          >
+            <span>⚔️ Escuadrón de Choque</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Cola de Producción Activa (Componente Modular) */}
+      <ShipyardQueueSection
+        shipQueues={shipQueues}
+        SHIPS={SHIPS}
+        fmt={fmt}
+        fmtTime={fmtTime}
+        ProgressBar={ProgressBar}
+        dispatch={dispatch}
+      />
+
+      {/* Selector de Divisiones Navales en Grid Responsivo con Tarjeta Consola Central al Final */}
+      <div className="w-full space-y-3 py-2">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-2">
+            <span>🚀</span>
+            <span>Divisiones del Astillero</span>
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full items-stretch pt-2 pb-4">
+          {categories.map(c => {
+            const isSelected = shipCat === c.key;
+            const count = Object.entries(SHIPS).filter(([, s]) => s.cat === c.key).length;
+            return (
+              <button
+                key={c.key}
+                onClick={() => {
+                  setShipCat(c.key);
+                  if (window.playSfx) window.playSfx('click');
+                }}
+                className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none cursor-pointer text-left focus:outline-none w-full h-full min-h-[260px] ${
+                  isSelected
+                    ? 'bg-gradient-to-b from-[#16274a]/95 via-[#0d1b38]/90 to-[#05070f] border-cyan-400 shadow-[0_0_35px_rgba(6,182,212,0.4)] scale-[1.02]'
+                    : 'bg-[#090d1f]/90 border-white/10 hover:border-cyan-400/60 hover:bg-[#0e1633] hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(6,182,212,0.2)]'
+                }`}
+              >
+                {/* Banner de Imagen Superior Grande */}
+                <div className="relative w-full h-36 md:h-40 overflow-hidden bg-[#05070f] border-b border-white/10">
+                  <SafeImg
+                    id={c.assetId}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <span className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider backdrop-blur-md border ${
+                    isSelected
+                      ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                      : 'bg-black/60 border-white/10 text-slate-400'
+                  }`}>
+                    DIVISIÓN NAVAL
+                  </span>
+                </div>
+
+                {/* Cuerpo de la Tarjeta */}
+                <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
+                  <div>
+                    <h4 className="text-base font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors line-clamp-1">
+                      {c.title}
+                    </h4>
+                    <p className="text-xs text-slate-400 font-mono mt-1.5 line-clamp-2 leading-relaxed">
+                      {c.subtitle}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono uppercase tracking-wider font-semibold">
+                    <span className={isSelected ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}>
+                      {isSelected ? '● Hangar Activo' : `${count} Modelos`}
+                    </span>
+                    <span className={`transition-transform duration-200 ${isSelected ? 'text-cyan-300 translate-x-1' : 'text-cyan-400/70 group-hover:translate-x-1'}`}>
+                      ➔
+                    </span>
+                  </div>
+                </div>
+              </button>
             );
           })}
-        </div>
-      )}
 
-      <div className={S.tabBar}>
-        {[
-          { key: 'civil', title: '📦 Civiles' },
-          { key: 'military', title: '⚔️ Militares' },
-          { key: 'ammo', title: '☄️ Munición' },
-        ].map(c => (
-          <button key={c.key} onClick={() => setShipCat(c.key)}
-            className={`${S.tab} ${shipCat === c.key ? S.tabActive : S.tabInactive}`}>
-            {c.title}
-          </button>
-        ))}
+          {/* Tarjeta de Retorno a Pantalla Anterior como la ÚLTIMA TARJETA del grid */}
+          <ActionCardTile
+            type="back"
+            title="Volver Atrás"
+            subtitle="Regresar a la pantalla anterior"
+            icon="◀"
+            assetId="commandCenter"
+            badgeText="VOLVER"
+            onClick={() => {
+              if (navigateBack) navigateBack();
+            }}
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-2 items-stretch">
-        {Object.entries(SHIPS).filter(([, s]) => s.cat === shipCat).map(([id, s]) => {
-          const cost = shipCost(id, 1, currentPlanet.buildings?.constructionCenter || 0);
-          const time = calcShipTime(id, 1, currentPlanet.buildings.shipyard, currentPlanet.buildings.naniteFactory || 0, GAME_SPEED, bonus);
-          const meets = meetsReq(s.req, { ...currentPlanet.buildings, ...state.research });
-          const count = currentPlanet.fleet[id] || 0;
-          return (
-            <div key={id} className={S.card}>
-              <CardBanner id={id} />
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="font-semibold">{s.name}</div>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onOpenCodex(id); }}
-                      className="w-4 h-4 rounded bg-white/5 border border-white/10 flex items-center justify-center text-slate-500 hover:text-[var(--ue-accent)] hover:border-[var(--ue-accent)]/40 hover:bg-[var(--ue-accent)]/10 transition-all group/info"
-                      title="Ver detalles"
-                    >
-                      <span className="material-symbols-outlined text-[10px] group-hover/info:scale-110 transition-transform">menu_book</span>
-                    </button>
-                  </div>
-                  <div className="text-xs text-slate-400">En hangar: {fmt(count)}</div>
-                </div>
-                {count > 0 && <button onClick={() => dispatch({ type: 'SCRAP_SHIPS', shipId: id, quantity: Math.max(1, Math.floor(count/2)) })}
-                  className="text-xs text-red-400/50 hover:text-red-300" title="Desguazar mitad">🗑️</button>}
-              </div>
-              {(() => {
-                const st = getShipStats(id, state.research, state.blueprints, 'human', currentPlanet.buildings) || s;
-                const dAtk = st.atk - s.atk;
-                const dShd = st.shd - s.shd;
-                const dHull = st.hull - s.hull;
-                const dSpeed = st.speed - s.speed;
-                const driveNames = { combustion: 'Combustión', impulse: 'Impulso', hyperspace: 'Hiperespacio' };
-                return (
-                  <div className="grid grid-cols-2 gap-1 text-xs mb-2 text-slate-400">
-                    <div title={`Base: ${s.atk} | +${((state.research.weapons || 0) * 10)}% por Tecnología de Armas Nv${state.research.weapons || 0}`}>
-                      ⚔️ Atk: <span className="text-slate-200">{s.atk}</span>
-                      {dAtk > 0 && <span className="text-emerald-400 font-bold ml-1">+{dAtk.toFixed(0)}</span>}
-                    </div>
-                    <div title={`Base: ${s.shd} | +${((state.research.shields || 0) * 10)}% por Tecnología de Escudos Nv${state.research.shields || 0}`}>
-                      🛡️ Shd: <span className="text-slate-200">{s.shd}</span>
-                      {dShd > 0 && <span className="text-emerald-400 font-bold ml-1">+{dShd.toFixed(0)}</span>}
-                    </div>
-                    <div title={`Base: ${s.hull} | +${((state.research.armour || 0) * 8)}% por Tecnología de Blindaje Nv${state.research.armour || 0}`}>
-                      💪 Hull: <span className="text-slate-200">{s.hull}</span>
-                      {dHull > 0 && <span className="text-emerald-400 font-bold ml-1">+{dHull.toFixed(0)}</span>}
-                    </div>
-                    <div title={s.drive ? `Base: ${s.speed} | +${((state.research[s.drive] || 0) * (s.drive === 'combustion' ? 10 : s.drive === 'impulse' ? 20 : s.drive === 'hyperspace' ? 30 : 0))}% por Motor de ${driveNames[s.drive] || s.drive} Nv${state.research[s.drive] || 0}` : ''}>
-                      🚀 Vel: <span className="text-slate-200">{fmt(s.speed)}</span>
-                      {dSpeed > 0 && <span className="text-emerald-400 font-bold ml-1">+{fmt(dSpeed)}</span>}
-                    </div>
-                    <div>📦 Cargo: <span className="text-slate-200">{fmt(s.cargo)}</span></div>
-                    <div>⛽ Fuel: <span className="text-slate-200">{s.fuel}/h</span></div>
-                    <div className="col-span-2 flex gap-1 flex-wrap">
-                      {s.drive && <span className={`text-[10px] px-1 rounded ${s.drive === 'hyperspace' ? 'bg-purple-500/20 text-purple-300' : s.drive === 'impulse' ? 'bg-blue-500/20 text-blue-300' : 'bg-amber-500/20 text-amber-300'}`}>{driveNames[s.drive] || s.drive}</span>}
-                      {s.rapid && <span className="text-[10px] px-1 rounded bg-red-500/20 text-red-300" title={Object.entries(s.rapid).map(([k, v]) => `x${v} contra ${SHIPS[k]?.name || k}`).join(', ')}>⚡ Fuego Rápido x{Object.values(s.rapid).reduce((a, b) => a + b, 0)}</span>}
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className="space-y-1 mb-3 text-xs">
-                {cost.metal > 0 && <div className="flex justify-between"><span className="text-amber-400">⛏️ Metal</span><span>{fmt(cost.metal)}</span></div>}
-                {cost.crystal > 0 && <div className="flex justify-between"><span className="text-cyan-400">💎 Cristal</span><span>{fmt(cost.crystal)}</span></div>}
-                {cost.deuterium > 0 && <div className="flex justify-between"><span className="text-emerald-400">⚗️ Deuterio</span><span>{fmt(cost.deuterium)}</span></div>}
-                <div className="flex justify-between"><span className="text-slate-400">⏱️ Tiempo</span><span className="text-cyan-400">{fmtTime(time)}</span></div>
-              </div>
-              <div className="flex gap-1 mt-auto">
-                {[1, 5, 10].map(q => (
-                  <button key={q} onClick={() => dispatch({ type: 'START_SHIP', shipId: id, quantity: q })}
-                    disabled={!canAfford(currentPlanet.resources, shipCost(id, q, currentPlanet.buildings?.constructionCenter || 0)) || !meets}
-                    className={`flex-1 ${S.btn} text-xs ${canAfford(currentPlanet.resources, shipCost(id, q, currentPlanet.buildings?.constructionCenter || 0)) && meets ? S.btnPrimary : S.btnGhost}`}>
-                    +{q}
-                  </button>
-                ))}
-                <button onClick={() => {
-                  const maxAfford = Math.max(1, Math.floor(Math.min(
-                    (currentPlanet.resources.metal / (s.cost.m * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1)),
-                    (currentPlanet.resources.crystal / (s.cost.c * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1)),
-                    (currentPlanet.resources.deuterium / ((s.cost.d || 0) * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1))
-                  )));
-                  if (maxAfford > 0) dispatch({ type: 'START_SHIP', shipId: id, quantity: maxAfford });
-                }} disabled={!meets} className={`${S.btn} text-xs ${S.btnGhost}`}>
-                  MAX
-                </button>
-              </div>
-              {s.req && !meets && <div className="text-xs text-red-400 mt-2">Requiere: {Object.entries(s.req).map(([k, v]) => `${RESEARCH[k]?.name || BUILDINGS[k]?.name || k} ${v}`).join(', ')}</div>}
-            </div>
-          );
-        })}
+      {/* Carrusel Horizontal de Naves de Videojuego */}
+      <div className="w-full space-y-3 py-2">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-2">
+            <span>{categories.find(c => c.key === shipCat)?.icon || '🚀'}</span>
+            <span>Línea de Ensamblaje — {categories.find(c => c.key === shipCat)?.title || 'Categoría'}</span>
+          </h3>
+          <span className="text-[11px] font-mono text-slate-400">
+            {Object.entries(SHIPS).filter(([, s]) => s.cat === shipCat).length} Modelos Disponibles
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full items-stretch pt-2 pb-4">
+          {Object.entries(SHIPS).filter(([, s]) => s.cat === shipCat).map(([id, s]) => (
+            <ShipProductionCard
+              key={id}
+              id={id}
+              s={s}
+              currentPlanet={currentPlanet}
+              state={state}
+              meetsReq={meetsReq}
+              canAfford={canAfford}
+              shipCost={shipCost}
+              calcShipTime={calcShipTime}
+              getShipStats={getShipStats}
+              constructionDiscount={constructionDiscount}
+              GAME_SPEED={GAME_SPEED}
+              bonus={bonus}
+              CardBanner={CardBanner}
+              S={S}
+              fmt={fmt}
+              fmtTime={fmtTime}
+              onOpenCodex={onOpenCodex}
+              dispatch={dispatch}
+              RESEARCH={RESEARCH}
+              BUILDINGS={BUILDINGS}
+            />
+          ))}
+          {/* Tarjeta de Retorno a Alto Mando como última casilla del grid */}
+          <ActionCardTile
+            type="back"
+            title="Volver al Alto Mando"
+            subtitle="Regresar al Alto Mando"
+            badgeText="VOLVER"
+            onClick={() => {
+              if (navigateBack) navigateBack();
+            }}
+          />
+        </div>
       </div>
     </div>
   );

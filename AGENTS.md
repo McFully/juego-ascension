@@ -34,17 +34,20 @@ Prohibido en runtime:
 - No deben auditarse como ejecutable salvo peticion explicita del usuario.
 - Si en el futuro el landing se separa a otro repositorio, el ejecutable no debe depender de ese cambio.
 
-## 4. Persistencia Local Obligatoria
-- Toda partida se guarda en disco local: `%APPDATA%/Ascension/`.
-- Toda partida se carga desde disco local.
-- Toda importacion/exportacion es desde/a archivos locales `.json`.
-- Usar Electron IPC para save/load.
+## 4. Persistencia Local Obligatoria (SQLite Unificado v4)
+- Toda partida se guarda en SQLite local: `%APPDATA%/Ascension/saves/universe.db`.
+- Toda partida se carga desde SQLite local.
+- Formato de persistencia principal: SQLite con better-sqlite3 (embebido, sin servidor).
+- Los archivos `.json` se mantienen solo para import/export manual del usuario.
+- Usar Electron IPC para save/load a traves de gameRepository.cjs.
 - No usar `localStorage` como fuente principal de persistencia.
 - Validar saves antes de cargar.
-- Crear backup automatico `.bak` antes de sobrescribir un save.
+- Crear backup automatico `.bak` del archivo `.db` antes de sobrescribir.
+- Migración automática: saves JSON legacy se migran a SQLite en primer arranque.
 
 Validacion minima de save:
-- version actual `3`
+- version actual `4` (SQLite unificado)
+- version `3` como save migrable/legacy (JSON)
 - version `2` solo como save migrable/legacy
 - `playerName`
 - `planets` array
@@ -90,6 +93,7 @@ Prohibido:
 - Consentimiento implicito no es valido.
 - Cada exe debe incrementar version automaticamente: `npm version patch --no-git-tag-version`.
 - La version debe mostrarse en la UI del juego.
+- Siempre que se genere un instalador o ejecutable, debe copiarse/moverse obligatoriamente a: `E:\Proyectos Antigravity\Juegos\Ascensión\Instalador`.
 
 ## 8. UX
 - Settings estan permitidos.

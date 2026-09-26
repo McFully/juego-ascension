@@ -22,21 +22,22 @@ export const researchReducer = (state, action) => {
       const queuedCount = state.researchQueue.filter(q => q.researchId === researchId).length;
       const targetLvl = lvl + queuedCount + 1;
 
-      const planet = getCurrentPlanet();
+      const planet = (action.planetId ? state.planets.find(p => p.id === action.planetId) : null) || getCurrentPlanet();
       if (!planet) return state;
       const cost = researchCost(researchId, targetLvl - 1, state.research?.aiStrategy || 0, planet.buildings?.constructionCenter || 0);
 
       if (!canAfford(planet.resources, cost)) return state;
-      if (!meetsReq(r.req, state.research)) return state;
-      if (!planet.buildings.researchLab) return state;
+      if (!meetsReq(r.req, { ...(planet.buildings || {}), ...(state.research || {}) })) return state;
+      if (!planet.buildings?.researchLab) return state;
       if (state.researchQueue.length >= 8) return state;
 
-      const newRes = deduct(planet.resources, cost);
+      const newRes = clampResources(deduct(planet.resources, cost));
       const bonus = researchTimeBonus(planet.buildings);
       const factionResearchBonus = (FACTIONS[planet.faction] || FACTIONS.human).bonuses.research || 1.0;
       let specBonus = 1.0;
       if (planet.specialization === 'scientific') specBonus = 1.15;
-      const time = calcResearchTime(cost, planet.buildings.researchLab, GAME_SPEED, bonus * factionResearchBonus * specBonus);
+      const rawTime = calcResearchTime(cost, planet.buildings.researchLab, GAME_SPEED, bonus * factionResearchBonus * specBonus);
+      const time = Math.max(1, Math.floor(rawTime || 1));
       
       const startTime = Date.now();
       const endTime = startTime + time * 1000;

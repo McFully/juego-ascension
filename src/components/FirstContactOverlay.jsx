@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { DialogueBox2D } from './dialogue/DialogueBox2D.jsx';
 
 
 const FIRST_CONTACT_DIALOGUES = {
@@ -142,147 +143,76 @@ const FirstContactOverlay = ({ activeFirstContact, dispatch }) => {
     });
   };
 
-  const getFactionColor = () => {
+  const getAvatarKey = () => {
     switch (factionKey) {
-      case 'cyborg': return 'text-cyan-400 border-cyan-500/50 shadow-cyan-500/20';
-      case 'synth': return 'text-emerald-400 border-emerald-500/50 shadow-emerald-500/20';
+      case 'cyborg':
+      case 'synth':
+        return 'cyborg';
+      case 'vortex':
+      case 'umbra':
+        return 'vortex';
       case 'draconian':
-      case 'drakon': return 'text-red-500 border-red-500/50 shadow-red-500/20';
-      case 'vortex': return 'text-purple-400 border-purple-500/50 shadow-purple-500/20';
-      case 'umbra': return 'text-fuchsia-500 border-fuchsia-500/50 shadow-fuchsia-500/20';
-      default: return 'text-amber-400 border-amber-500/50 shadow-amber-500/20';
+      case 'drakon':
+        return 'warlord';
+      default:
+        return 'merchant';
+    }
+  };
+
+  const getSpeakerRole = () => {
+    switch (factionKey) {
+      case 'cyborg': return 'Mente Colectiva Cuántica';
+      case 'synth': return 'Nodo Lógico Sintético';
+      case 'vortex': return 'Entidad del Abismo';
+      case 'umbra': return 'Consciencia Oscura';
+      case 'draconian':
+      case 'drakon': return 'Señor de Guerra Draconiano';
+      default: return 'Delegado Diplomático';
+    }
+  };
+
+  const getVoiceKey = () => {
+    switch (factionKey) {
+      case 'umbra': return 'diplo_umbra_greeting';
+      case 'vortex': return 'diplo_vortex_greeting';
+      case 'cyborg': return 'diplo_cyborg_greeting';
+      case 'synth': return 'diplo_synth_greeting';
+      case 'draconian':
+      case 'drakon': return 'diplo_draconian_greeting';
+      case 'helios': return 'diplo_helios_greeting';
+      case 'solaris': return 'diplo_solaris_greeting';
+      case 'human': return 'diplo_human_greeting';
+      default: return 'diplo_solaris_greeting';
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#020408]/95 backdrop-blur-md p-4 overflow-hidden select-none font-mono">
-      {/* Film grain effect & scanlines specific to transmissions */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[repeating-linear-gradient(transparent,transparent_2px,rgba(255,255,255,0.7)_2px,rgba(255,255,255,0.7)_4px)]" />
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)]" />
-
-      <div className="relative max-w-2xl w-full border border-white/10 bg-[#070b14]/90 rounded-xl p-8 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
-        {/* Decorative corner brackets */}
-        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-slate-500/40" />
-        <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-slate-500/40" />
-        <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-slate-500/40" />
-        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-slate-500/40" />
-
-        {/* Close button always visible */}
-        <button onClick={() => { dispatch({ type: 'DISMISS_FIRST_CONTACT' }); }}
-          className="absolute top-2 right-2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 border border-white/10 text-slate-400 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition-all text-sm cursor-pointer"
-          title="Cerrar (Escape)"
-        >
-          ✕
-        </button>
-
-        {isDecoding ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="relative w-20 h-20 mb-8">
-              <div className="absolute inset-0 border-4 border-cyan-500/20 rounded-full animate-pulse" />
-              <div className="absolute inset-0 border-t-4 border-r-4 border-cyan-400 rounded-full animate-spin" />
-            </div>
-            <h2 className="text-lg text-cyan-400 font-bold uppercase tracking-wider mb-2 animate-pulse">
-              📡 Captando Señal de Radio Estelar
-            </h2>
-            <div className="text-[10px] text-slate-500 mb-6">
-              COODENADAS: G{activeFirstContact.galaxy} - S{activeFirstContact.system} - P{activeFirstContact.position}
-            </div>
-            
-            <div className="w-64 bg-slate-800/50 border border-slate-700 h-2.5 rounded-full overflow-hidden mb-2">
-              <div 
-                className="bg-cyan-500 h-full rounded-full transition-all duration-150" 
-                style={{ width: `${decodingProgress}%` }}
-              />
-            </div>
-            <div className="text-xs text-cyan-300 font-bold">
-              DECODIFICANDO SECUENCIA FRECUENCIAL: {decodingProgress}%
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Header: Sintonización exitosa */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div>
-                <span className="text-[10px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 px-2 py-0.5 rounded font-bold uppercase tracking-widest">
-                  Transmisión Establecida
-                </span>
-                <h2 className="text-xl font-black text-white mt-2">
-                  PRIMER CONTACTO: {activeFirstContact.name || activeFirstContact.empireName}
-                </h2>
-              </div>
-              <div className="text-right text-[11px] text-slate-400">
-                <div>Firma: <span className={`font-bold capitalize ${getFactionColor()}`}>{factionKey}</span></div>
-                <div>Planeta: {activeFirstContact.name}</div>
-              </div>
-            </div>
-
-            {/* Video Feed / Waveform area */}
-            <div className="relative w-full h-32 bg-[#03060d] border border-white/5 rounded-lg flex items-center justify-center overflow-hidden">
-              {/* Grid backdrop */}
-              <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.15)_1px,transparent_1px)]" style={{ backgroundSize: '16px 16px' }} />
-              
-              {/* Radar circular sweeping lines */}
-              <div className="absolute w-28 h-28 border border-cyan-500/10 rounded-full animate-ping" />
-              
-              {/* Oscilloscope wave simulator */}
-              <div className="flex items-center gap-1">
-                {[...Array(24)].map((_, i) => {
-                  const delay = i * 0.08;
-                  return (
-                    <div 
-                      key={i} 
-                      className={`w-1 rounded-full bg-cyan-400/80 shadow-[0_0_8px_rgba(6,182,212,0.6)] animate-bounce`}
-                      style={{ 
-                        height: `${15 + Math.sin(i * 0.4) * 35 + Math.random() * 20}px`,
-                        animationDelay: `${delay}s`,
-                        animationDuration: '1.2s'
-                      }}
-                    />
-                  );
-                })}
-              </div>
-
-              <div className="absolute bottom-2 left-2 text-[9px] text-slate-500 flex items-center gap-1.5 uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                Audio Activo / Traductor Cuántico Conectado
-              </div>
-            </div>
-
-            {/* Dialogue text box */}
-            <div className="bg-[#03060d]/80 border border-white/5 rounded-lg p-5 min-h-[100px] text-slate-200 text-sm leading-relaxed whitespace-pre-line relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-1.5 text-[9px] text-slate-600 font-bold uppercase tracking-wider select-none">
-                Mensaje Entrante
-              </div>
-              <p className="font-sans font-medium">{typedText}</p>
-              {typedText.length < greeting.length && (
-                <span className="inline-block w-2.5 h-4 ml-1 bg-cyan-400 animate-pulse align-middle" />
-              )}
-            </div>
-
-            {/* Response options */}
-            {typedText.length >= greeting.length && (
-              <div className="space-y-2.5 pt-2 animate-slideUp">
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-1">
-                  Selecciona una respuesta para el canal diplomático:
-                </div>
-                {data.options.map((opt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSelectOption(opt.delta)}
-                    className="w-full text-left px-5 py-3 rounded-lg border border-white/10 hover:border-cyan-500/40 bg-white/[0.01] hover:bg-cyan-500/[0.04] text-slate-300 hover:text-white transition-all text-xs font-semibold flex items-center justify-between group cursor-pointer"
-                  >
-                    <span>{opt.text}</span>
-                    <span className="text-[10px] text-slate-500 group-hover:text-cyan-400 font-bold">
-                      {opt.delta > 0 ? `+${opt.delta}` : opt.delta} Relación
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+    <DialogueBox2D
+      isOpen={true}
+      speakerSide="right"
+      speakerName={activeFirstContact.empireName || activeFirstContact.name || 'Civilización Desconocida'}
+      speakerRole={getSpeakerRole()}
+      leftCharacter={{ name: 'Comandante Imperial', avatarKey: 'player' }}
+      rightCharacter={{ 
+        name: activeFirstContact.empireName || activeFirstContact.name || 'Emisario Alienígena', 
+        avatarKey: getAvatarKey() 
+      }}
+      message={greeting}
+      voiceKey={getVoiceKey()}
+      options={data.options.map((opt, i) => ({
+        text: opt.text,
+        actionKey: String(i),
+        variant: opt.delta > 0 ? 'peace' : opt.delta < 0 ? 'danger' : 'neutral'
+      }))}
+      onSelectOption={(idxStr) => {
+        const idx = parseInt(idxStr, 10);
+        const opt = data.options[idx];
+        if (opt) {
+          handleSelectOption(opt.delta);
+        }
+      }}
+      onClose={() => dispatch({ type: 'DISMISS_FIRST_CONTACT' })}
+    />
   );
 };
 

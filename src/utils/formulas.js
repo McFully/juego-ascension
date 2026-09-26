@@ -17,8 +17,71 @@ import {
   PLANET_TRAITS
 } from '../data/gameData.js';
 import { EXPANDED_BUILDINGS, EXPANDED_RESEARCH } from '../data/expandedContent.js';
+import { calcBuildingEnergyDemand } from './formulas/productionFormulas.js';
 
-// ============ DATOS FUSIONADOS (fuente única) ============
+export { calcBuildingEnergyDemand };
+
+// ============ RE-EXPORTS DESDE SUBMÓDULOS MODULARES ============
+export {
+  constructionDiscount,
+  aiResearchDiscount,
+  calcRequiredPopulation,
+  buildingCost,
+  researchCost,
+  shipCost,
+  defenseCost,
+  canAfford,
+  deduct,
+  calcCustomShipCost,
+  calcCustomShipTime,
+  calcCustomShipStats,
+  calcBuildTime,
+  calcResearchTime,
+  calcShipTime,
+  calcDefenseTime
+} from './formulas/costFormulas.js';
+
+export {
+  calcDistance,
+  calcFlightTime,
+  calcFuel,
+  shipSpeed,
+  fleetSpeed
+} from './formulas/flightFormulas.js';
+
+export {
+  SHIP_TECH_KEYS,
+  DEFENSE_TECH_KEYS,
+  extractShipTechSnapshot,
+  extractDefenseTechSnapshot,
+  calculateTechGeneration,
+  getVariantKey,
+  isVariantOutdated,
+  calculateRetrofitUnitCost,
+  calculateRetrofitUnitTime
+} from './formulas/retrofitFormulas.js';
+
+export {
+  getDefenseStats,
+  getEffectiveTech,
+  isOutdated,
+  getShipStats
+} from './formulas/combatFormulas.js';
+
+export {
+  calcPlanetMaxPop,
+  storageCapacity,
+  calcStorage,
+  shipTimeBonus,
+  researchTimeBonus,
+  LAB_RESEARCH_BONUS_MULT,
+  calcProduction
+} from './formulas/productionFormulas.js';
+
+import { storageCapacity, calcProduction } from './formulas/productionFormulas.js';
+import { aiResearchDiscount } from './formulas/costFormulas.js';
+
+// ============ DATOS FUSIONADOS ============
 const BUILDINGS = { ...BASE_BUILDINGS, ...EXPANDED_BUILDINGS };
 const RESEARCH = { ...BASE_RESEARCH, ...EXPANDED_RESEARCH };
 
@@ -94,63 +157,6 @@ export const getPOIAtCoordinates = (galaxy, system, position) => {
   return null;
 };
 
-// ============ FÓRMULAS ============
-export const buildingCost = (id, lvl, constructionCenterLvl = 0) => {
-  const b = BUILDINGS[id];
-  const COST_MULT = 1; // coste base completo (100%)
-  const discount = constructionDiscount(constructionCenterLvl);
-  return {
-    metal: Math.floor(b.cost.m * Math.pow(b.factor, lvl) * COST_MULT * discount),
-    crystal: Math.floor(b.cost.c * Math.pow(b.factor, lvl) * COST_MULT * discount),
-    deuterium: Math.floor((b.cost.d || 0) * Math.pow(b.factor, lvl) * COST_MULT * discount),
-  };
-};
-
-export const constructionDiscount = (constructionCenterLvl = 0) => Math.pow(0.5, constructionCenterLvl || 0); // Divide a la mitad los recursos de TODAS las tarjetas por cada nivel de Centro de Construcciones
-export const aiResearchDiscount = (aiStrategyLvl = 0) => Math.pow(0.75, aiStrategyLvl || 0); // Descuento bestial por nivel de IA Estratégica
-
-export const researchCost = (id, lvl, aiStrategyLvl = 0, constructionCenterLvl = 0) => {
-  const r = RESEARCH[id];
-  const COST_MULT = 1; // coste base completo (100%)
-  const discount = aiResearchDiscount(aiStrategyLvl) * constructionDiscount(constructionCenterLvl);
-  return {
-    metal: Math.floor(r.cost.m * Math.pow(r.factor, lvl) * COST_MULT * discount),
-    crystal: Math.floor(r.cost.c * Math.pow(r.factor, lvl) * COST_MULT * discount),
-    deuterium: Math.floor((r.cost.d || 0) * Math.pow(r.factor, lvl) * COST_MULT * discount),
-  };
-};
-
-export const shipCost = (id, qty = 1, constructionCenterLvl = 0) => {
-  const d = constructionDiscount(constructionCenterLvl);
-  return {
-    metal: SHIPS[id].cost.m * qty * d,
-    crystal: SHIPS[id].cost.c * qty * d,
-    deuterium: (SHIPS[id].cost.d || 0) * qty * d,
-  };
-};
-
-export const defenseCost = (id, qty = 1, constructionCenterLvl = 0) => {
-  const d = constructionDiscount(constructionCenterLvl);
-  return {
-    metal: DEFENSES[id].cost.m * qty * d,
-    crystal: DEFENSES[id].cost.c * qty * d,
-    deuterium: (DEFENSES[id].cost.d || 0) * qty * d,
-  };
-};
-
-export const canAfford = (res, cost) => {
-  if ((cost.metal || 0) < 0 || (cost.crystal || 0) < 0 || (cost.deuterium || 0) < 0) return false;
-  return (res.metal || 0) >= (cost.metal || 0) &&
-         (res.crystal || 0) >= (cost.crystal || 0) &&
-         (res.deuterium || 0) >= (cost.deuterium || 0);
-};
-
-export const deduct = (res, cost) => ({
-  metal: Math.max(0, (res.metal || 0) - (cost.metal || 0)),
-  crystal: Math.max(0, (res.crystal || 0) - (cost.crystal || 0)),
-  deuterium: Math.max(0, (res.deuterium || 0) - (cost.deuterium || 0)),
-});
-
 export const calcResourceValueForAI = (aiPlanet, offer) => {
   let metalWeight = 1.0;
   let crystalWeight = 2.0;
@@ -202,304 +208,6 @@ export const meetsReq = (req, research) => {
   return Object.entries(req).every(([k, v]) => (research[k] || 0) >= v);
 };
 
-export const storageCapacity = (level) => Math.floor(STORAGE_BASE * 2.5 * Math.exp(20 * level / 33));
-
-export const calcProduction = (buildings, research, temp, speed = 1, factionKey = 'human', biomeKey = null, gravityIdx = null, trait = null, specialization = null, coords = null, taxRate = 0, relics = []) => {
-  const ml = buildings.metalMine || 0;
-  const cl = buildings.crystalMine || 0;
-  const dl = buildings.deutSynth || 0;
-  const sl = buildings.solarPlant || 0;
-  const fl = buildings.fusionReactor || 0;
-  const gel = buildings.geoPlant || 0;
-  const oel = buildings.orbitalEnergy || 0;
-  const qrl = buildings.quantumReactor || 0;
-  const dmp = buildings.darkMatterPlant || 0;
-  const pl = research.plasma || 0;
-
-  const fact = FACTIONS[factionKey] || FACTIONS.human;
-  let prodBonus = fact.bonuses.production || 1.0;
-  const energyBonus = fact.bonuses.energy || 1.0;
-  prodBonus *= (1 + (buildings.geneticLab || 0) * 0.02);
-  prodBonus *= (1 + (buildings.townHall || 0) * 0.015);
-  prodBonus *= (1 + (buildings.leisureCenter || 0) * 0.01);
-
-  let biomeBonusMetal = 0, biomeBonusCrystal = 0, biomeBonusDeuterium = 0;
-  if (biomeKey && BIOMES[biomeKey]) {
-    const bio = BIOMES[biomeKey];
-    biomeBonusMetal = bio.bonus?.metal || 0;
-    biomeBonusMetal += bio.penalty?.metal || 0;
-    biomeBonusCrystal = bio.bonus?.crystal || 0;
-    biomeBonusCrystal += bio.penalty?.crystal || 0;
-    biomeBonusDeuterium = bio.bonus?.deuterium || 0;
-    biomeBonusDeuterium += bio.penalty?.deuterium || 0;
-  }
-
-  let gravProdMult = 1;
-  if (gravityIdx !== null && gravityIdx !== undefined) {
-    const idx = Math.floor(Number(gravityIdx));
-    if (idx >= 0 && idx < GRAVITY_LEVELS.length) {
-      const gLevel = GRAVITY_LEVELS[idx];
-      if (gLevel && gLevel.mult) {
-        gravProdMult = gLevel.mult.prod;
-      }
-    }
-  }
-
-  let traitBonusMetal = 0, traitBonusCrystal = 0, traitBonusDeuterium = 0, traitMalus = 0;
-  if (trait) {
-    const eff = trait.effect ? trait.effect({}) : {};
-    traitBonusMetal = eff.metal || 0;
-    traitBonusCrystal = eff.crystal || 0;
-    traitBonusDeuterium = eff.deuterium || 0;
-    traitMalus = eff.malus || 0;
-  }
-
-  const productionFactor = Math.max(0, (1 - (taxRate || 0)));
-
-  const metalBase = 45 * speed * ml * Math.pow(1.1, ml) * productionFactor;
-  const crystalBase = 30 * speed * cl * Math.pow(1.1, cl) * productionFactor;
-  const tempFactor = 0.7 + (temp || 0) * 0.006;
-  const deutBase = 22.5 * speed * dl * Math.pow(1.1, dl) * Math.max(0.5, Math.min(1.3, tempFactor)) * productionFactor;
-
-  const plasmaBonus = 1 + pl * 0.10; // +10% por nivel de tecnología plasma
-  const miningAutoBonus = 1 + (research.miningAuto || 0) * 0.10; // +10% por nivel de automatización minera
-  const aiProdBonus = 1 + (research.aiProd || 0) * 0.10; // +10% por nivel de IA de producción
-  
-  // === INTEGRACIÓN DE MINISTROS Y DIRECTIVAS ===
-  let govMetalMult = 1.0;
-  let govCrystalMult = 1.0;
-  let govDeutMult = 1.0;
-
-  if (relics && typeof relics === 'object') {
-    // Si relics pasa el objeto state o mins
-    const mins = relics.ministries || {};
-    const ecoMinister = mins.economy?.minister;
-    const ecoDirs = mins.economy?.directives || {};
-    const ecoUpgrades = relics.ministryUpgrades?.economy || {};
-
-    if (ecoMinister?.bonus === 'metalProd') govMetalMult += 0.15;
-    if (ecoDirs.dir_pyme) govCrystalMult += 0.10;
-    if (ecoDirs.dir_heavy) { govMetalMult += 0.15; }
-    
-    // Programas de economía (mining_subsidy, deep_mines)
-    if (ecoUpgrades.mining_subsidy) govMetalMult += ecoUpgrades.mining_subsidy * 0.10;
-    const infraUpgrades = relics.ministryUpgrades?.infra || {};
-    if (infraUpgrades.deep_mines) {
-      govMetalMult += infraUpgrades.deep_mines * 0.12;
-      govCrystalMult += infraUpgrades.deep_mines * 0.12;
-      govDeutMult += infraUpgrades.deep_mines * 0.12;
-    }
-  }
-
-  const globalTechMult = plasmaBonus * miningAutoBonus * aiProdBonus;
-
-  let metalProd = metalBase * globalTechMult * prodBonus * govMetalMult * (1 + biomeBonusMetal - traitMalus) * gravProdMult;
-  let crystalProd = crystalBase * globalTechMult * prodBonus * govCrystalMult * (1 + biomeBonusCrystal - traitMalus) * gravProdMult;
-  let deutProd = deutBase * globalTechMult * prodBonus * govDeutMult * (1 + biomeBonusDeuterium - traitMalus) * gravProdMult;
-
-  // === RECOMPENSAS ADICIONALES DE EDIFICIOS EXPANDIDOS (RECURSOS) ===
-  const vacuumForgeLvl = buildings.vacuumForge || 0;
-  const slagRecyclerLvl = buildings.slagRecycler || 0;
-  const automatedMineLvl = buildings.automatedMine || 0;
-  const spaceElevatorLvl = buildings.spaceElevator || 0;
-  metalProd += (800 * vacuumForgeLvl + 200 * slagRecyclerLvl + 1200 * automatedMineLvl + 2000 * spaceElevatorLvl) * speed * productionFactor;
-
-  const siliconPurifierLvl = buildings.siliconPurifier || 0;
-  crystalProd += (700 * siliconPurifierLvl) * speed * productionFactor;
-
-  const heliumExtractorLvl = buildings.heliumExtractor || 0;
-  const catalyticDeutLvl = buildings.catalyticDeut || 0;
-  deutProd += (600 * heliumExtractorLvl + 500 * catalyticDeutLvl) * speed * productionFactor;
-
-  // === RECOMPENSAS ADICIONALES DE EDIFICIOS EXPANDIDOS (CIVILES Y GOBIERNO) ===
-  const arcologyLvl = buildings.arcologyAlpha || 0;
-  const urbanHydroLvl = buildings.urbanHydroponic || 0;
-  const holoLeisureLvl = buildings.holographicLeisure || 0;
-  const ecoParkLvl = buildings.geosphericEcoPark || 0;
-  const govPalaceLvl = buildings.sectorGovPalace || 0;
-  const councilChamberLvl = buildings.councilChamber || 0;
-  const resourceAllocLvl = buildings.resourceAllocationMinistry || 0;
-
-  const civProdBoost = 1 + arcologyLvl * 0.02 + urbanHydroLvl * 0.015 + holoLeisureLvl * 0.01 + ecoParkLvl * 0.01 + govPalaceLvl * 0.02 + councilChamberLvl * 0.015 + resourceAllocLvl * 0.025;
-  metalProd *= civProdBoost;
-  crystalProd *= civProdBoost;
-  deutProd *= civProdBoost;
-
-  // === RECOMPENSAS DE INVESTIGACIONES EXPANDIDAS (PRODUCCIÓN & RECURSOS) ===
-  const quantumNetworksLvl = research.quantumNetworks || 0;
-  const cognitiveNetLvl = research.cognitiveNetwork || 0;
-  const cyberIntegLvl = research.cyberIntegration || 0;
-  const quantumCryptoLvl = research.quantumCrypto || 0;
-  const expResearchProdBoost = 1 + quantumNetworksLvl * 0.10 + cognitiveNetLvl * 0.05 + cyberIntegLvl * 0.08 + quantumCryptoLvl * 0.03;
-  metalProd *= expResearchProdBoost;
-  crystalProd *= expResearchProdBoost;
-  deutProd *= expResearchProdBoost;
-
-  if (coords && coords.galaxy && coords.system && coords.position) {
-    const poi = getPOIAtCoordinates(coords.galaxy, coords.system, coords.position);
-    if (poi && poi.type === 'helium_belt') {
-      deutProd *= 1.5;
-    }
-  }
-
-  const energySaver = Math.max(0.2, 1 - (research.quantumEnergy || 0) * 0.10);
-  const vacuumForgeCons = vacuumForgeLvl * 40;
-  const siliconPurifierCons = siliconPurifierLvl * 40;
-  const heliumExtractorCons = heliumExtractorLvl * 35;
-  const catalyticDeutCons = catalyticDeutLvl * 45;
-  const slagRecyclerCons = slagRecyclerLvl * 15;
-  const automatedMineCons = automatedMineLvl * 80;
-  const expandedEnergyCons = vacuumForgeCons + siliconPurifierCons + heliumExtractorCons + catalyticDeutCons + slagRecyclerCons + automatedMineCons;
-  
-  let energyCons = Math.floor(((10 * ml * Math.pow(1.1, ml) + 10 * cl * Math.pow(1.1, cl) + 20 * dl * Math.pow(1.1, dl)) * energySaver) + expandedEnergyCons);
-
-  if (specialization === 'industrial') {
-    metalProd *= 1.22;
-    crystalProd *= 1.22;
-    energyCons = Math.floor(energyCons * 1.12);
-  } else if (specialization === 'scientific') {
-    deutProd *= 1.15;
-    metalProd *= 0.90;
-  } else if (specialization === 'military') {
-    metalProd *= 0.90;
-    crystalProd *= 0.90;
-    deutProd *= 0.90;
-  } else if (specialization === 'commercial') {
-    metalProd *= 1.05;
-    crystalProd *= 1.05;
-    deutProd *= 1.05;
-  }
-
-  const civEnergyMult = (1 + (buildings.healthCenter || 0) * 0.03 + (buildings.civilPowerGrid || 0) * 0.04);
-  const energyTechMult = (1 + (research.energy || 0) * 0.10 + (research.fusionMagnetic || 0) * 0.05 + (research.highTempSuperconduct || 0) * 0.06); // +10% de energía global por cada nivel de investigación en Energía
-  const advReactorsMult = (1 + (research.advReactors || 0) * 0.15 + (research.plasmaResonance || 0) * 0.08); // +15% por nivel de Reactores Avanzados en Fusión
-
-  const solarEnergyVal = Math.floor(20 * sl * Math.pow(1.1, sl) * energyTechMult);
-  const fusionEnergyVal = Math.floor(1000 * fl * Math.pow(1.1, fl) * energyTechMult * advReactorsMult);
-  const hydroGeoLvl = buildings.hydrothermalGeothermal || 0;
-  const rtgLvl = research.rtgGenerator || 0;
-  const rtgBonus = 1 + rtgLvl * 0.05;
-  const energyProd = Math.floor((solarEnergyVal + fusionEnergyVal + (30 * gel * Math.pow(1.1, gel) + 120 * hydroGeoLvl * Math.pow(1.1, hydroGeoLvl) + 100 * oel * Math.pow(1.1, oel) + 200 * qrl * Math.pow(1.1, qrl) + 500 * dmp * Math.pow(1.15, dmp))) * energyBonus * civEnergyMult * rtgBonus);
-  const leisureEfficiency = Math.max(0.8, 1 - (buildings.leisureCenter || 0) * 0.01 - (buildings.holographicLeisure || 0) * 0.01);
-  const adjustedEnergyCons = Math.floor(energyCons * leisureEfficiency);
-  const ratio = adjustedEnergyCons > 0 ? Math.min(1, energyProd / adjustedEnergyCons) : 1;
-
-  const fusionCons = fl > 0 ? Math.floor(10 * fl * Math.pow(1.1, fl)) : 0;
-
-  // Apply relic bonuses
-  const relicMetalMult = (relics || []).reduce((acc, r) => r.effect?.metalProd ? acc * r.effect.metalProd : acc, 1);
-  const relicCrystalMult = (relics || []).reduce((acc, r) => r.effect?.crystalProd ? acc * r.effect.crystalProd : acc, 1);
-  const relicEnergyMult = (relics || []).reduce((acc, r) => r.effect?.energyProd ? acc * r.effect.energyProd : acc, 1);
-  const relicBuildSpeed = (relics || []).reduce((acc, r) => r.effect?.buildSpeed ? acc * r.effect.buildSpeed : acc, 1);
-
-  const applyRounding = (v) => Math.round(v);
-
-  return {
-    metal: applyRounding(metalProd * ratio * relicMetalMult),
-    crystal: applyRounding(crystalProd * ratio * relicCrystalMult),
-    deuterium: applyRounding(Math.max(0, deutProd * ratio - fusionCons)),
-    energyProd: Math.floor(energyProd * relicEnergyMult), energyCons, energyBalance: Math.floor(energyProd * relicEnergyMult) - energyCons, ratio,
-    relicBuildSpeed,
-  };
-};
-
-export const calcStorage = (buildings, research = {}) => {
-  const b = buildings || {};
-  const r = research || {};
-  const syncedMult = 1 + (r.syncedInventory || 0) * 0.10;
-  return {
-    metal: Math.floor((storageCapacity(b.metalStorage || 0) + (b.metalMegaStorage || 0) * 500000) * syncedMult),
-    crystal: Math.floor((storageCapacity(b.crystalStorage || 0) + (b.crystalMegaStorage || 0) * 500000) * syncedMult),
-    deuterium: Math.floor((storageCapacity(b.deutStorage || 0) + (b.deutMegaStorage || 0) * 300000) * syncedMult),
-  };
-};
-
-export const shipTimeBonus = (b) => 1 + (b.logiCenter || 0) * 0.05 + (b.industrialComplex || 0) * 0.03 + (b.modularFactory || 0) * 0.04 + (b.spacePort || 0) * 0.03 + (b.stealthHangars || 0) * 0.05 + (b.merchantHangar || 0) * 0.04;
-export const researchTimeBonus = (b, r = {}) => {
-  const buildings = b || {};
-  const research = r || {};
-  return 1 + (buildings.advResearchCenter || 0) * 0.08 + (buildings.aiCore || 0) * 0.05 + (buildings.nanoCenter || 0) * 0.06 + (buildings.expLab || 0) * 0.07 + (buildings.galacticMarket || 0) * 0.02 + (buildings.quantumSupercomputer || 0) * 0.10 + (buildings.particleAccelerator || 0) * 0.12 + (buildings.centralAiResearch || 0) * 0.15 + (research.quantumNetworks || 0) * 0.05 + (research.cyberIntegration || 0) * 0.05;
-};
-export const LAB_RESEARCH_BONUS_MULT = 10;
-
-export const calcCustomShipCost = (blueprint, constructionCenterLvl = 0) => {
-  const chassis = SHIP_CHASSIS[blueprint.chassis];
-  const weapon = SHIP_WEAPONS[blueprint.weapon];
-  const engine = SHIP_ENGINES[blueprint.engine];
-  const shield = SHIP_SHIELDS[blueprint.shield];
-  const mods = (blueprint.modules || []).map(m => SHIP_MODULES[m]);
-  if (!chassis) return { metal: 0, crystal: 0, deuterium: 0 };
-  let metal = chassis.cost.m, crystal = chassis.cost.c, deut = chassis.cost.d;
-  if (weapon) { metal += weapon.cost.m; crystal += weapon.cost.c; deut += weapon.cost.d; }
-  if (engine) { metal += engine.cost.m; crystal += engine.cost.c; deut += engine.cost.d; }
-  if (shield) { metal += shield.cost.m; crystal += shield.cost.c; deut += shield.cost.d; }
-  mods.forEach(m => { if (m) { metal += m.cost.m; crystal += m.cost.c; deut += m.cost.d; } });
-
-  if (blueprint.modules?.includes('ionDeflector')) {
-    crystal = Math.round(crystal * 1.20);
-  }
-  if (blueprint.modules?.includes('plasmaInjector')) {
-    deut = Math.round(deut * 1.25);
-  }
-
-  const d = constructionDiscount(constructionCenterLvl);
-  return { metal: metal * d, crystal: crystal * d, deuterium: deut * d };
-};
-
-export const calcCustomShipTime = (blueprint, shipyard, nanite, speed = 1, bonus = 1) => {
-  const cost = calcCustomShipCost(blueprint);
-  const totalCost = cost.metal + cost.crystal;
-  const shipyardReduction = 1 + shipyard * 0.5;
-  const t = (totalCost / (2500 * shipyardReduction * (1 + nanite * 0.5) * speed * bonus)) * 3600;
-  return Math.max(1, Math.floor(t));
-};
-
-export const calcCustomShipStats = (blueprint) => {
-  const chassis = SHIP_CHASSIS[blueprint.chassis];
-  const weapon = SHIP_WEAPONS[blueprint.weapon];
-  const engine = SHIP_ENGINES[blueprint.engine];
-  const shield = SHIP_SHIELDS[blueprint.shield];
-  const mods = (blueprint.modules || []).map(m => SHIP_MODULES[m]);
-  if (!chassis) return { atk: 0, shd: 0, hull: 0, speed: 0, cargo: 0, energy: 0, slotsUsed: 0, slotsMax: 0 };
-  let atk = weapon?.atk || 0, shd = shield?.shd || 0;
-  let hull = chassis.hull, speed = engine?.speed || 1000, cargo = chassis.cargo;
-  let energy = (weapon?.energy || 0) + (engine?.energy || 0) + (shield?.energy || 0);
-  let slotsUsed = (weapon?.slots || 0) + (engine?.slots || 0) + (shield?.slots || 0);
-  let stealth = 0;
-  mods.forEach(m => {
-    if (!m) return;
-    slotsUsed += m.slots;
-    if (m.bonus) {
-      if (m.bonus.hull) hull += m.bonus.hull;
-      if (m.bonus.cargo) cargo += m.bonus.cargo;
-      if (m.bonus.speed) speed += m.bonus.speed;
-      if (m.bonus.atk) atk += m.bonus.atk;
-      if (m.bonus.shd) shd += m.bonus.shd;
-      if (m.bonus.energy) energy += m.bonus.energy;
-      if (m.bonus.stealth) stealth += m.bonus.stealth;
-    }
-  });
-
-  if (blueprint.modules?.includes('ionDeflector')) {
-    shd = Math.round(shd * 1.40);
-  }
-  if (blueprint.modules?.includes('plasmaInjector')) {
-    speed = Math.round(speed * 1.35);
-  }
-  if (blueprint.modules?.includes('gaussBattery')) {
-    atk = Math.round(atk * 1.50);
-    speed = Math.round(speed * 0.85);
-  }
-  if (blueprint.modules?.includes('stealthModule')) {
-    speed = Math.round(speed * 0.92);
-  }
-  if (blueprint.modules?.includes('tradeModule')) {
-    cargo = Math.round(cargo * 1.5);
-  }
-
-  return { atk, shd, hull, speed, cargo, energy, slotsUsed, slotsMax: chassis.slots, stealth };
-};
-
 export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME_SPEED, planet = {}) => {
   const b = BUILDINGS[id];
   if (!b) return null;
@@ -509,7 +217,6 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
   const aiProd = research.aiProd || 0;
   const globalTechMult = (1 + pl * 0.10) * (1 + miningAuto * 0.10) * (1 + aiProd * 0.10);
 
-  // Bonus/malus planetarios e imperiales idénticos a calcProduction
   let prodBonus = (FACTIONS[planet.faction] || FACTIONS.human).bonuses.production || 1.0;
   if (planet.buildings) {
     prodBonus *= (1 + (planet.buildings.geneticLab || 0) * 0.02);
@@ -548,30 +255,55 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
     specDeut = 1.05;
   }
 
-  // Calcular la producción energética total y ratio de energía actual del planeta
-  const sl = planet.buildings?.solarPlant || 0;
-  const fl = planet.buildings?.fusionReactor || 0;
-  const gel = planet.buildings?.geoPlant || 0;
-  const oel = planet.buildings?.orbitalEnergy || 0;
-  const qrl = planet.buildings?.quantumReactor || 0;
-  const dmp = planet.buildings?.darkMatterPlant || 0;
-  const ml = planet.buildings?.metalMine || 0;
-  const cl = planet.buildings?.crystalMine || 0;
-  const dl = planet.buildings?.deutSynth || 0;
+  const prodCalculated = calcProduction(
+    planet.buildings || {},
+    research,
+    temp,
+    speed,
+    planet.faction || 'human',
+    planet.biome,
+    planet.gravity,
+    planet.trait ? { effect: () => PLANET_TRAITS[planet.trait]?.effect || {} } : null,
+    planet.specialization,
+    planet.galaxy ? { galaxy: planet.galaxy, system: planet.system, position: planet.position } : null,
+    planet.taxRate || 0
+  );
+  const ratio = prodCalculated.ratio ?? 1;
 
-  const energyTechMult = (1 + (research.energy || 0) * 0.10);
-  const advReactorsMult = (1 + (research.advReactors || 0) * 0.15);
-  const solarEnergyVal = Math.floor(20 * sl * Math.pow(1.1, sl) * energyTechMult);
-  const fusionEnergyVal = Math.floor(1000 * fl * Math.pow(1.1, fl) * energyTechMult * advReactorsMult);
-  const energyBonus = (FACTIONS[planet.faction] || FACTIONS.human).bonuses.energy || 1.0;
-  const civEnergyMult = (1 + (planet.buildings?.healthCenter || 0) * 0.03);
-  const energyProd = Math.floor((solarEnergyVal + fusionEnergyVal + (30 * gel * Math.pow(1.1, gel) + 100 * oel * Math.pow(1.1, oel) + 200 * qrl * Math.pow(1.1, qrl) + 500 * dmp * Math.pow(1.15, dmp))) * energyBonus * civEnergyMult);
-
-  const energySaver = Math.max(0.2, 1 - (research.quantumEnergy || 0) * 0.10);
-  const energyCons = Math.floor((10 * ml * Math.pow(1.1, ml) + 10 * cl * Math.pow(1.1, cl) + 20 * dl * Math.pow(1.1, dl)) * energySaver);
-  const leisureEfficiency = Math.max(0.8, 1 - (planet.buildings?.leisureCenter || 0) * 0.01);
-  const adjustedEnergyCons = Math.floor(energyCons * leisureEfficiency);
-  const ratio = adjustedEnergyCons > 0 ? Math.min(1, energyProd / adjustedEnergyCons) : 1;
+  // Builds de industria del Ministerio (Instalaciones): el contador real usa la
+  // fórmula lineal de calcProduction (NO la exponencial de mina). Tarjeta honesta
+  // = delta real que el contador aplicará al pasar de lvl-1 a lvl (y de lvl a lvl+1),
+  // recalculando calcProduction con el ratio de energía del planeta.
+  const INDUSTRY_BUILD_IDS = ['refinery', 'chemPlant', 'synthPlant', 'enrichPlant'];
+  const isIndustry = INDUSTRY_BUILD_IDS.includes(id);
+  if (isIndustry) {
+    const industrySim = (buildingLvl) => {
+      const targetBuildings = { ...(planet.buildings || {}), [id]: buildingLvl };
+      return calcProduction(
+        targetBuildings,
+        research,
+        temp,
+        speed,
+        planet.faction || 'human',
+        planet.biome,
+        planet.gravity,
+        planet.trait ? { effect: () => PLANET_TRAITS[planet.trait]?.effect || {} } : null,
+        planet.specialization,
+        planet.galaxy ? { galaxy: planet.galaxy, system: planet.system, position: planet.position } : null,
+        planet.taxRate || 0
+      );
+    };
+    const resource = b.prod === 'metal' ? 'metal' : b.prod === 'crystal' ? 'crystal' : 'deuterium';
+    const resourceIcon = b.prod === 'metal' ? '⛏️' : b.prod === 'crystal' ? '💎' : '⚗️';
+    const resourceLabel = b.prod === 'metal' ? 'Metal' : b.prod === 'crystal' ? 'Cristal' : 'Deuterio';
+    const atLvl = lvl > 0 ? industrySim(lvl)[resource] - industrySim(0)[resource] : 0;
+    const atNext = industrySim(lvl + 1)[resource] - industrySim(0)[resource];
+    const consCurrent = lvl > 0 ? calcBuildingEnergyDemand(id, lvl) : 0;
+    const consNext = calcBuildingEnergyDemand(id, lvl + 1);
+    const current = { type: 'industry', resource: resourceLabel, resourceIcon, prod: Math.round(atLvl), cons: consCurrent, consType: 'energy', consIcon: '⚡' };
+    const next = { type: 'industry', resource: resourceLabel, resourceIcon, prod: Math.round(atNext), cons: consNext, consType: 'energy', consIcon: '⚡' };
+    return { current, next, kind: 'industry', deltaProd: next.prod - current.prod, deltaCons: next.cons - current.cons };
+  }
 
   const compute = (l) => {
     if (b.prod === 'metal') {
@@ -633,28 +365,44 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
       };
     }
     if (b.cat === 'storage') {
+      const cons = l > 0 && b.energy ? calcBuildingEnergyDemand(id, l) : 0;
       return {
         type: 'storage',
         resource: 'capacity',
         resourceIcon: '📦',
         capacity: l > 0 ? storageCapacity(l) : 0,
+        cons,
+        consType: b.energy ? 'energy' : null,
+        consIcon: b.energy ? '⚡' : null,
       };
     }
     if (b.cat === 'civil' || b.cat === 'government') {
+      const cons = l > 0 && b.energy ? calcBuildingEnergyDemand(id, l) : 0;
       return {
-        type: 'civil',
+        type: b.cat,
         resource: 'colonia',
         resourceIcon: '🏛️',
         desc: b.desc || 'Mejora calidad de vida y administración.',
+        cons,
+        consType: b.energy ? 'energy' : null,
+        consIcon: b.energy ? '⚡' : null,
       };
     }
-    return { type: 'facility' };
+    const facilityCons = l > 0 && b.energy ? calcBuildingEnergyDemand(id, l) : 0;
+    return {
+      type: 'facility',
+      cons: facilityCons,
+      consType: b.energy ? 'energy' : null,
+      consIcon: b.energy ? '⚡' : null,
+    };
   };
   const current = compute(lvl);
   const next = compute(lvl + 1);
   const result = { current, next, kind: current.type };
   if (current.prod !== undefined) {
     result.deltaProd = next.prod - current.prod;
+  }
+  if (current.cons !== undefined && next.cons !== undefined) {
     result.deltaCons = next.cons - current.cons;
   }
   if (current.capacity !== undefined) {
@@ -677,237 +425,6 @@ export const buildingProdDisplay = (id, lvl, research, temp = 20, speed = GAME_S
   return '';
 };
 
-export const calcBuildTime = (cost, robot, nanite, speed = 1, construction = 0, mins = {}, research = {}, buildings = {}, relics = []) => {
-  const conscription = mins?.defense?.conscriptionLevel || 'volunteer';
-  let conscriptionBonus = 1.0;
-  if (conscription === 'mandated') conscriptionBonus = 1.15;
-
-  const infraMinister = mins?.infra?.minister;
-  const infraDirs = mins?.infra?.directives || {};
-  let govBuildSpeedMult = 1.0;
-  if (infraMinister?.bonus === 'buildTime') govBuildSpeedMult += 0.12;
-  if (infraDirs?.dir_rapid) govBuildSpeedMult += 0.15;
-
-  const relicBuildMult = (relics || []).reduce((acc, r) => r.effect?.buildSpeed ? acc * r.effect.buildSpeed : acc, 1);
-
-  const r = (research && Object.keys(research).length > 0) ? research : (mins?.research || {});
-  const b = buildings || {};
-  const fullAutoLvl = r.fullAuto || 0;
-  const molecularVaporDepLvl = r.molecularVaporDep || 0;
-  const adaptiveModularArchLvl = r.adaptiveModularArch || 0;
-  const courtLvl = b.colonySupremeCourt || 0;
-  const buildSpeedMult = 1 + fullAutoLvl * 0.05 + molecularVaporDepLvl * 0.03 + adaptiveModularArchLvl * 0.05 + courtLvl * 0.05;
-
-  const t = ((cost.metal + cost.crystal) / (2500 * (1 + robot * 1.5625) * (1 + nanite * 0.5) * (1 + construction * 1.5625) * speed * conscriptionBonus * govBuildSpeedMult * relicBuildMult * buildSpeedMult)) * 3600;
-  return Math.max(1, Math.floor(t));
-};
-
-export const calcResearchTime = (cost, lab, speed = 1, bonus = 1, mins = {}, research = {}) => {
-  const grants = mins?.science?.researchGrants || 0.05;
-  const grantBonus = 1 + (grants * 2);
-
-  const sciMinister = mins?.science?.minister;
-  let sciMinisterBonus = 1.0;
-  if (sciMinister?.bonus === 'researchSpeed') sciMinisterBonus += 0.15;
-
-  const r = (research && Object.keys(research).length > 0) ? research : (mins?.research || {});
-  const opticalLvl = r.synchronousOptical || 0;
-  const opticalBonus = 1 + opticalLvl * 0.03;
-
-  const labReduction = 1 + lab * 1.5625 * LAB_RESEARCH_BONUS_MULT;
-  const t = ((cost.metal + cost.crystal) / (1000 * labReduction * speed * bonus * grantBonus * sciMinisterBonus * opticalBonus)) * 3600;
-  return Math.max(1, Math.floor(t));
-};
-
-export const calcShipTime = (id, qty, shipyard, nanite, speed = 1, bonus = 1, mins = {}) => {
-  const s = SHIPS[id];
-  const cost = s.cost.m + s.cost.c;
-  
-  const conscription = mins.defense?.conscriptionLevel || 'volunteer';
-  let conscriptionBonus = 1.0;
-  if (conscription === 'mandated') conscriptionBonus = 1.15;
-
-  const shipyardReduction = 1 + shipyard * 0.5;
-  const t = (cost / (2500 * shipyardReduction * (1 + nanite * 0.5) * speed * bonus * conscriptionBonus)) * 3600 * qty;
-  return Math.max(1, Math.floor(t));
-};
-
-export const calcDefenseTime = (id, qty, shipyard, nanite, speed = 1, bonus = 1) => {
-  const d = DEFENSES[id];
-  const cost = d.cost.m + d.cost.c;
-  const shipyardReduction = 1 + shipyard * 0.5;
-  const t = (cost / (2500 * shipyardReduction * (1 + nanite * 0.5) * speed * bonus)) * 3600 * qty;
-  return Math.max(1, Math.floor(t));
-};
-
-export const calcDistance = (a, b) => {
-  if (a.galaxy !== b.galaxy) return 20000 * Math.abs(a.galaxy - b.galaxy);
-  if (a.system !== b.system) return 2700 + 95 * Math.abs(a.system - b.system);
-  return 5 + 5 * Math.abs(a.position - b.position);
-};
-
-export const calcFlightTime = (dist, speed, missionSpeed = 10, research = {}) => {
-  const cartography = research?.galacticCartography || 0;
-  const exploration = research?.dimensionalExploration || 0;
-  const gravityCurrents = research?.gravityCurrents || 0;
-  const compression = research?.hyperspaceCompression || 0;
-
-  let speedMult = 1 + (cartography + exploration) * 0.05;
-
-  if (dist <= 2700) {
-    speedMult += gravityCurrents * 0.06;
-  }
-  if (dist > 20000) {
-    speedMult += compression * 0.05;
-  }
-
-  const baseTime = (4743416 * Math.sqrt(dist)) / Math.max(1, speed * speedMult);
-  const scaledTime = baseTime / (missionSpeed / 10);
-  return Math.max(10, Math.round(scaledTime));
-};
-
-export const calcFuel = (dist, shipId, qty, driveLevel, research = {}) => {
-  const s = SHIPS[shipId];
-  const speedBonus = 1 + driveLevel * 0.1;
-  let fuelMult = 1.0;
-  fuelMult -= (research.deuteriumLiquidCell || 0) * 0.04;
-  fuelMult -= (research.magnetohydrodynamics || 0) * 0.05;
-  fuelMult -= (research.solarPropulsionFreight || 0) * 0.06;
-  fuelMult = Math.max(0.2, fuelMult);
-  return Math.max(1, Math.floor(dist / 35000 * (s.fuel * qty) * Math.pow(speedBonus, -2) * fuelMult));
-};
-
-export const shipSpeed = (id, research, factionKey = 'human') => {
-  const fact = FACTIONS[factionKey] || FACTIONS.human;
-  const speedBonus = fact.bonuses.speed || 1.0;
-  if (id.startsWith('custom_')) {
-    return Math.floor(5000 * speedBonus);
-  }
-  const s = SHIPS[id];
-  let bonus = 0;
-  if (s.drive === 'combustion') bonus = (research.combustion || 0) * 0.1;
-  else if (s.drive === 'impulse') bonus = (research.impulse || 0) * 0.2;
-  else if (s.drive === 'hyperspace') bonus = (research.hyperspace || 0) * 0.3;
-
-  let alcubierreBonus = 0;
-  if (['cruiser', 'battleship', 'bomber', 'destroyer', 'deathstar'].includes(id)) {
-    alcubierreBonus = (research.alcubierreDrive || 0) * 0.20;
-  }
-
-  return Math.floor(s.speed * (1 + bonus + alcubierreBonus) * speedBonus);
-};
-
-export const fleetSpeed = (fleet, research, factionKey = 'human', relics = []) => {
-  let minSpeed = Infinity;
-  for (const [id, qty] of Object.entries(fleet)) {
-    if (qty > 0) minSpeed = Math.min(minSpeed, shipSpeed(id, research, factionKey));
-  }
-  const relicSpeedMult = (relics || []).reduce((acc, r) => r.effect?.fleetSpeed ? acc * r.effect.fleetSpeed : acc, 1);
-  return minSpeed === Infinity ? 0 : Math.floor(minSpeed * relicSpeedMult);
-};
-
-export const getDefenseStats = (id, tech, factionKey = 'human', buildings = {}, relics = []) => {
-  const d = DEFENSES[id];
-  if (!d) return null;
-  const fact = FACTIONS[factionKey] || FACTIONS.human;
-  let atkMult = fact.bonuses.attack || 1.0;
-  let defMult = fact.bonuses.defense || 1.0;
-  const relicShdMult = (relics || []).reduce((acc, r) => r.effect?.defShd ? acc * r.effect.defShd : acc, 1);
-  defMult *= relicShdMult;
-  const resMult = fact.bonuses.resistance || 1.0;
-  const milAcademy = (buildings.militaryAcademy || 0) * 0.03;
-  atkMult *= (1 + milAcademy);
-
-  const hullBonus = 1 + (tech?.armour || 0) * 0.08 + (tech?.nanoRepair || 0) * 0.03;
-  const shdBonus = 1 + (tech?.shields || 0) * 0.1 + (tech?.galacticCrypto || 0) * 0.02 + (tech?.aiStrategy || 0) * 0.03;
-  const atkBonus = 1 + (tech?.weapons || 0) * 0.1 + (tech?.aiTactics || 0) * 0.02 + (tech?.aiMilitary || 0) * 0.03 + (tech?.gaussRailgunAccel || 0) * 0.10;
-
-  return {
-    hull: d.hull * hullBonus * resMult,
-    shd: d.shd * shdBonus * defMult,
-    atk: d.atk * atkBonus * atkMult,
-  };
-};
-
-export const getEffectiveTech = (planet, globalResearch) => {
-  if (planet && planet.retrofitTech && Object.keys(planet.retrofitTech).length > 0) {
-    return planet.retrofitTech;
-  }
-  return {};
-};
-
-export const isOutdated = (planet, globalResearch) => {
-  if (!planet || !globalResearch) return false;
-  const t = planet.retrofitTech || {};
-  return (globalResearch.weapons || 0) > (t.weapons || 0) ||
-    (globalResearch.shields || 0) > (t.shields || 0) ||
-    (globalResearch.armour || 0) > (t.armour || 0) ||
-    (globalResearch.combustion || 0) > (t.combustion || 0) ||
-    (globalResearch.impulse || 0) > (t.impulse || 0) ||
-    (globalResearch.hyperspace || 0) > (t.hyperspace || 0);
-};
-
-export const getShipStats = (id, tech, blueprints, factionKey = 'human', buildings = {}, relics = []) => {
-  const fact = FACTIONS[factionKey] || FACTIONS.human;
-  let atkMult = fact.bonuses.attack || 1.0;
-  const milAcademy = (buildings.militaryAcademy || 0) * 0.03;
-  atkMult *= (1 + milAcademy);
-  const relicAtkMult = (relics || []).reduce((acc, r) => r.effect?.fleetAtk ? acc * r.effect.fleetAtk : acc, 1);
-  atkMult *= relicAtkMult;
-  const defMult = fact.bonuses.defense || 1.0;
-  const resMult = fact.bonuses.resistance || 1.0;
-  const speedBonus = fact.bonuses.speed || 1.0;
-
-  let hullBonus = 1 + (tech?.armour || 0) * 0.08 + (tech?.nanoRepair || 0) * 0.03 + (tech?.latticeMaterials || 0) * 0.05 + (tech?.nanobotRepairSwarms || 0) * 0.02;
-  const shdBonus = 1 + (tech?.shields || 0) * 0.1 + (tech?.galacticCrypto || 0) * 0.02 + (tech?.aiStrategy || 0) * 0.03;
-  let atkBonus = 1 + (tech?.weapons || 0) * 0.1 + (tech?.aiTactics || 0) * 0.02 + (tech?.aiMilitary || 0) * 0.03;
-
-  if (['smallCargo', 'lightFighter', 'espionageProbe'].includes(id)) {
-    hullBonus += (tech?.grapheneTitanium || 0) * 0.08;
-  }
-  if (id === 'lightFighter') {
-    atkBonus += (tech?.geneticWarAlgorithm || 0) * 0.04;
-  }
-
-  let cargoMult = 1.0;
-  if (['smallCargo', 'largeCargo'].includes(id)) {
-    cargoMult += (tech?.orbitalLogisticExpert || 0) * 0.10 + (tech?.molecularCargoCompress || 0) * 0.15;
-  }
-
-  if (id.startsWith('custom_')) {
-    const bp = blueprints?.find(b => id === 'custom_' + b.id);
-    if (bp) {
-      const s = calcCustomShipStats(bp);
-      const shd = s.shd * shdBonus * defMult;
-      const atk = s.atk * atkBonus * atkMult;
-      const hull = s.hull * hullBonus * resMult;
-
-      let driveBonus = 0;
-      if (bp.engine === 'basicCombustion' || bp.engine === 'advCombustion') {
-        driveBonus = (tech?.combustion || 0) * 0.10;
-      } else if (bp.engine === 'basicImpulse' || bp.engine === 'advImpulse') {
-        driveBonus = (tech?.impulse || 0) * 0.20;
-      } else if (bp.engine === 'hyperDrive') {
-        driveBonus = (tech?.hyperspace || 0) * 0.30;
-      } else if (bp.engine === 'quantumEngine') {
-        driveBonus = (tech?.quantumDrive || 0) * 0.15;
-      }
-
-      const dimExplorationMult = 1 + (tech?.dimensionalExploration || 0) * 0.05;
-      const speed = Math.floor(s.speed * (1 + driveBonus) * speedBonus * dimExplorationMult);
-
-      return { hull, shd, atk, speed, cargo: Math.floor(s.cargo * cargoMult), fuel: 10, rapid: {} };
-    }
-  }
-  const ship = SHIPS[id];
-  if (!ship) return null;
-  return {
-    hull: ship.hull * hullBonus * resMult,
-    shd: ship.shd * shdBonus * defMult,
-    atk: ship.atk * atkBonus * atkMult,
-    speed: shipSpeed(id, tech || {}, factionKey), cargo: Math.floor(ship.cargo * cargoMult), fuel: ship.fuel, rapid: ship.rapid || {},
-  };
-};
 
 export const researchEffectInfo = (id, lvl) => {
   const r = RESEARCH[id];
@@ -922,12 +439,22 @@ export const researchEffectInfo = (id, lvl) => {
     result.unit = '%';
     return result;
   }
+  if (id === 'astrophysics') {
+    const curMax = 1 + Math.ceil(lvl / 2);
+    const nxtMax = 1 + Math.ceil((lvl + 1) / 2);
+    result.current.effect = `Capacidad del Imperio: ${curMax} mundos (Base 1 + ${curMax - 1} colonias)`;
+    result.next.effect = `Capacidad del Imperio: ${nxtMax} mundos (Base 1 + ${nxtMax - 1} colonias)`;
+    result.current.bonus = curMax;
+    result.next.bonus = nxtMax;
+    result.delta = nxtMax - curMax;
+    result.unit = ' mundos';
+    return result;
+  }
   if (r.perLevel) {
     const values = Object.values(r.perLevel);
     const keys = Object.keys(r.perLevel);
     const stepPct = values[0] || 10;
     
-    // Multiplicador absoluto (1.00x base, +0.10x por nivel)
     const curMult = (1 + (lvl * stepPct) / 100).toFixed(2);
     const nxtMult = (1 + ((lvl + 1) * stepPct) / 100).toFixed(2);
     
@@ -941,3 +468,71 @@ export const researchEffectInfo = (id, lvl) => {
   }
   return result;
 };
+
+// ============ CAPACIDAD COLONIAL Y ASTROFÍSICA ============
+export const getMaxPlanets = (astroLevel = 0) => {
+  const lvl = Math.max(0, parseInt(astroLevel, 10) || 0);
+  return 1 + Math.ceil(lvl / 2);
+};
+
+export const getRequiredAstroLevelForPlanets = (totalPlanetsNeeded = 1) => {
+  if (totalPlanetsNeeded <= 1) return 0;
+  const extraNeeded = totalPlanetsNeeded - 1;
+  return (extraNeeded * 2) - 1;
+};
+
+export const getUsedColonySlots = (state) => {
+  if (!state) return 1;
+  const colonizedCount = (state.planets || []).length;
+  const inFlightColonizations = (state.fleetMissions || []).filter(
+    m => m.type === 'colonize' && !m.isReturning
+  ).length;
+  return colonizedCount + inFlightColonizations;
+};
+
+export const canColonizeNewPlanet = (state) => {
+  if (!state) return false;
+  const astroLvl = state.research?.astrophysics || 0;
+  const maxPlanets = getMaxPlanets(astroLvl);
+  const usedSlots = getUsedColonySlots(state);
+  return usedSlots < maxPlanets;
+};
+
+export const migrateLegacyColonization = (state) => {
+  if (!state) return state;
+  const currentPlanetsCount = (state.planets || []).length;
+  const inFlightColonizations = (state.fleetMissions || []).filter(
+    m => m.type === 'colonize' && !m.isReturning
+  ).length;
+  const totalOccupiedOrEnRoute = currentPlanetsCount + inFlightColonizations;
+
+  const currentAstro = state.research?.astrophysics || 0;
+  const requiredAstro = getRequiredAstroLevelForPlanets(totalOccupiedOrEnRoute);
+
+  if (currentAstro < requiredAstro) {
+    return {
+      ...state,
+      research: {
+        ...(state.research || {}),
+        astrophysics: requiredAstro
+      },
+      stats: {
+        ...(state.stats || {}),
+        totalResearch: Math.max(state.stats?.totalResearch || 0, (state.stats?.totalResearch || 0) + (requiredAstro - currentAstro)),
+        maxTechLevel: Math.max(state.stats?.maxTechLevel || 0, requiredAstro)
+      },
+      notifications: [
+        ...(state.notifications || []),
+        {
+          id: uid(),
+          type: 'success',
+          message: `📜 Amnistía Imperial: Se ha homologado tu Astrofísica a Nivel ${requiredAstro} para certificar tus ${totalOccupiedOrEnRoute} mundos y expediciones en curso sin pérdidas.`,
+          timestamp: Date.now()
+        }
+      ]
+    };
+  }
+
+  return state;
+};
+

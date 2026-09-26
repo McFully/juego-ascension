@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SafeImg } from '../../assets.jsx';
 
 export const FleetSelectionList = ({ 
   state, 
@@ -30,138 +31,214 @@ export const FleetSelectionList = ({
   const totalHull = sortedShips.reduce((acc, [id, qty]) => { const st = shipStats(id); return acc + (st?.hull || 0) * qty; }, 0);
   const totalShd = sortedShips.reduce((acc, [id, qty]) => { const st = shipStats(id); return acc + (st?.shd || 0) * qty; }, 0);
 
-  return (
-    <div className={S.cardDeep}>
-      <h3 className="text-lg font-semibold mb-3">🚀 Selecciona Naves</h3>
+  const totalCargoCap = Object.entries(selectedShips).reduce((acc, [id, qty]) => {
+    const s = shipStats(id);
+    return acc + ((s?.cargo || 0) * qty);
+  }, 0);
 
-      {/* Fleet Power Summary */}
-      <div className="flex flex-wrap gap-3 mb-3 text-xs font-mono bg-black/20 rounded-lg p-2 border border-white/5">
-        <span>⚔️ <span className="text-red-400">{fmt(totalAtk)}</span></span>
-        <span>🛡️ <span className="text-cyan-400">{fmt(totalShd)}</span></span>
-        <span>💪 <span className="text-emerald-400">{fmt(totalHull)}</span></span>
-        <span>🚀 <span className="text-slate-300">{sortedShips.reduce((a, [,q]) => a + q, 0)}</span> naves</span>
+  const totalSelectedCount = Object.values(selectedShips).reduce((a, b) => a + b, 0);
+
+  const handleSetShipExact = (id, exactVal, maxQty) => {
+    const targetVal = Math.max(0, Math.min(maxQty, Math.floor(exactVal)));
+    setSelectedShips(prev => {
+      if (targetVal <= 0) {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      return { ...prev, [id]: targetVal };
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedShips({});
+    if (window.playSfx) window.playSfx('click');
+  };
+
+  const handleSelectAll = () => {
+    const all = {};
+    sortedShips.forEach(([id, maxQty]) => {
+      if (maxQty > 0) all[id] = maxQty;
+    });
+    setSelectedShips(all);
+    if (window.playSfx) window.playSfx('click');
+  };
+
+  return (
+    <div className="bg-[#0a0d1a]/85 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/8 pb-3">
+        <div className="flex items-center gap-2.5">
+          <span className="text-2xl">🚀</span>
+          <div>
+            <h3 className="text-base font-black text-white uppercase tracking-tight">Despacho y Asignación de Escuadrones</h3>
+            <p className="text-[10px] font-mono text-cyan-400">Selecciona las unidades asignadas a esta misión táctica</p>
+          </div>
+        </div>
+
+        {/* Telemetría rápida */}
+        <div className="flex items-center gap-3 text-xs font-mono bg-[#05070f]/80 border border-white/8 px-3.5 py-2 rounded-xl shadow-inner">
+          <span className="text-red-400 font-bold">⚔️ {fmt(totalAtk)}</span>
+          <span className="text-cyan-400 font-bold">🛡️ {fmt(totalShd)}</span>
+          <span className="text-emerald-400 font-bold">💪 {fmt(totalHull)}</span>
+          <span className="text-slate-300 font-bold">🛸 {sortedShips.reduce((a, [,q]) => a + q, 0)} en hangar</span>
+        </div>
       </div>
 
-      {/* Search input */}
-      <input
-        placeholder="🔍 Buscar nave..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        className={S.input + ' text-xs mb-2 w-full'}
-      />
-
-      {/* Fleet Presets - Premium glass */}
-      {(state.fleetPresets || []).length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
-          {(state.fleetPresets || []).map(p => (
-            <div key={p.name} className="flex items-center glass rounded-lg border border-white/10 text-xs">
-              <button onClick={() => {
-                const preset = {};
-                for (const [id, qty] of Object.entries(p.fleet)) {
-                  const maxQty = currentPlanet.fleet[id] || 0;
-                  if (maxQty > 0) preset[id] = Math.min(qty, maxQty);
-                }
-                setSelectedShips(preset);
-              }} className="px-2 py-1 hover:text-[var(--ue-accent)]">
-                📋 {p.name}
-              </button>
-              <button onClick={() => dispatch({ type: 'DELETE_FLEET_PRESET', name: p.name })} className="px-1.5 text-red-400/70 hover:text-red-400 border-l border-white/10">✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Save current selection as preset */}
-      {Object.keys(selectedShips).length > 0 && (
-        <div className="flex gap-1 mb-3 items-center">
+      {/* Buscador + Acciones Globales + Presets */}
+      <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <input
-            id="preset-name"
-            className={S.input + ' text-xs py-1 w-28'}
-            placeholder="Nombre preset"
-            onKeyDown={e => {
-              if (e.key === 'Enter' && e.target.value.trim()) {
-                const fleet = Object.fromEntries(Object.entries(selectedShips).filter(([, v]) => v > 0));
-                dispatch({ type: 'SAVE_FLEET_PRESET', name: e.target.value.trim(), fleet });
-                e.target.value = '';
-              }
-            }}
+            placeholder="🔍 Filtrar por modelo..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full sm:w-64 px-3 py-2 bg-[#05070f] border border-white/15 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition font-mono"
           />
-          <button onClick={() => {
-            const input = document.getElementById('preset-name');
-            if (input?.value?.trim()) {
-              const fleet = Object.fromEntries(Object.entries(selectedShips).filter(([, v]) => v > 0));
-              dispatch({ type: 'SAVE_FLEET_PRESET', name: input.value.trim(), fleet });
-              input.value = '';
-            }
-          }} className={`${S.btnSmall} ${S.btnSuccess}`}>
-            💾 Guardar
+          <button
+            onClick={handleSelectAll}
+            className="px-3 py-2 rounded-xl text-xs font-mono font-bold bg-cyan-950/60 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/40 hover:text-white transition cursor-pointer shrink-0"
+            title="Asignar todas las naves filtradas a la misión"
+          >
+            ⚡ Desplegar Todo
           </button>
+          {totalSelectedCount > 0 && (
+            <button
+              onClick={handleClearAll}
+              className="px-3 py-2 rounded-xl text-xs font-mono font-bold bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/40 hover:text-white transition cursor-pointer shrink-0"
+              title="Vaciar selección de naves"
+            >
+              🛑 Despejar
+            </button>
+          )}
         </div>
-      )}
 
-      {/* Group Filters */}
-      <div className={S.tabBar + " mb-3"}>
+        {/* Fleet Presets */}
+        {(state.fleetPresets || []).length > 0 && (
+          <div className="flex flex-wrap gap-1.5 items-center">
+            <span className="text-[10px] text-slate-500 uppercase font-mono mr-1">Presets:</span>
+            {(state.fleetPresets || []).map(p => (
+              <div key={p.name} className="flex items-center bg-[#05070f] rounded-lg border border-white/10 text-xs overflow-hidden">
+                <button
+                  onClick={() => {
+                    const preset = {};
+                    for (const [id, qty] of Object.entries(p.fleet)) {
+                      const maxQty = currentPlanet.fleet[id] || 0;
+                      if (maxQty > 0) preset[id] = Math.min(qty, maxQty);
+                    }
+                    setSelectedShips(preset);
+                  }}
+                  className="px-2.5 py-1 text-slate-300 hover:text-cyan-400 hover:bg-white/5 transition font-mono"
+                >
+                  📋 {p.name}
+                </button>
+                <button
+                  onClick={() => dispatch({ type: 'DELETE_FLEET_PRESET', name: p.name })}
+                  className="px-1.5 py-1 text-red-400/60 hover:text-red-300 hover:bg-red-500/10 border-l border-white/10"
+                  title="Eliminar preset"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Filtros de escuadrón */}
+      <div className="flex gap-2">
         {[
-          { id: 'all', label: '🚀 Todas' },
-          { id: 'combat', label: '⚔️ Militar' },
-          { id: 'civilian', label: '📦 Civil / Utilitario' },
+          { id: 'all', label: '🚀 Todas las Naves' },
+          { id: 'combat', label: '⚔️ Armada Militar' },
+          { id: 'civilian', label: '📦 Apoyo y Cargueros' },
         ].map(btn => (
           <button
             key={btn.id}
             onClick={() => setFilter(btn.id)}
-            className={`${S.tab} ${filter === btn.id ? S.tabActive : S.tabInactive} text-xs py-1 flex-none`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all focus-ring-game ${filter === btn.id ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.2)]' : 'bg-[#05070f] text-slate-400 border border-white/8 hover:text-white'}`}
           >
             {btn.label}
           </button>
         ))}
       </div>
 
+      {/* Grid de naves para despliegue */}
       {sortedShips.length === 0 ? (
-        <p className="text-slate-400 text-sm">No tienes naves disponibles.</p>
+        <div className="p-8 text-center rounded-2xl bg-[#05070f]/50 border border-white/5 text-slate-500 text-xs font-mono">
+          No hay naves operativas de esta categoría en los hangares de {currentPlanet.name}.
+        </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 tile-stagger">
           {sortedShips.map(([id, maxQty]) => {
             const sel = selectedShips[id] || 0;
             const icon = shipDisplayIcon(id);
             const name = shipDisplayName(id);
+            const st = shipStats(id);
+            const isSelected = sel > 0;
+
             return (
-              <div key={id} className={`p-2 rounded-xl border transition-all glass ${sel > 0 ? 'border-[var(--ue-accent)]/50' : 'border-white/10'}`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{icon}</span>
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold">{name}</div>
-                    <div className="text-xs text-slate-400">{sel} / {maxQty}</div>
-                  </div>
-                </div>
-                {(() => { 
-                  const st = shipStats(id); 
-                  if (!st) return null; 
-                  return (
-                    <div className="grid grid-cols-3 gap-1 text-[10px] text-slate-500 mb-2">
-                      <span>⚔️{st.atk?.toFixed?.(1) || st.atk}</span>
-                      <span>🛡️{st.shd?.toFixed?.(1) || st.shd}</span>
-                      <span>💪{fmt(st.hull)}</span>
+              <div
+                key={id}
+                className={`p-3 rounded-2xl border transition-all flex flex-col justify-between overflow-hidden relative ${
+                  isSelected
+                    ? 'bg-gradient-to-b from-[#0e1d3b]/90 to-[#070d1e] border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)]'
+                    : 'bg-[#05070f]/80 border-white/10 hover:border-white/25 hover:bg-[#070c1e]'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-2.5">
+                    <div className="w-12 h-12 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
+                      <SafeImg id={id} fallbackText={icon} className="w-full h-full object-cover" />
                     </div>
-                  ); 
-                })()}
-                <div className="flex gap-1">
-                  <button onClick={() => toggleShip(id, -1)} className={`${S.btnSmall} ${S.btnDanger}`}>-1</button>
-                  <button onClick={() => toggleShip(id, 1)} className={`${S.btnSmall} ${S.btnSuccess}`}>+1</button>
-                  <button onClick={() => toggleShip(id, 10)} className={`${S.btnSmall} ${S.btnSuccess}`}>+10</button>
-                  <button onClick={() => toggleShip(id, 100)} className={`${S.btnSmall} ${S.btnSuccess}`}>+100</button>
-                  <button onClick={() => toggleShip(id, maxQty)} className={`${S.btnSmall} ${S.btnEmissive}`}>MAX</button>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-white truncate" title={name}>{name}</div>
+                      <div className="text-xs font-mono mt-0.5">
+                        <span className={isSelected ? 'text-cyan-300 font-black' : 'text-slate-400'}>{sel}</span>
+                        <span className="text-slate-500"> / {maxQty}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {st && (
+                    <div className="grid grid-cols-3 gap-1 text-[9px] font-mono text-slate-300 p-1.5 rounded-lg bg-black/40 border border-white/5 mb-3 text-center">
+                      <span title="Ataque">⚔️ {st.atk?.toFixed?.(0) || st.atk}</span>
+                      <span title="Escudos">🛡️ {st.shd?.toFixed?.(0) || st.shd}</span>
+                      <span title="Bodega">📦 {fmt(st.cargo || 0)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Botones de acción rápida por nave */}
+                <div className="space-y-1.5 pt-2 border-t border-white/10">
+                  <div className="flex gap-1">
+                    <button onClick={() => toggleShip(id, -1)} className="px-2 py-1 bg-white/5 hover:bg-white/15 text-slate-300 rounded-lg text-[10px] font-mono font-bold flex-1">-1</button>
+                    <button onClick={() => toggleShip(id, 1)} className="px-2 py-1 bg-white/5 hover:bg-white/15 text-slate-300 rounded-lg text-[10px] font-mono font-bold flex-1">+1</button>
+                    <button onClick={() => toggleShip(id, 10)} className="px-2 py-1 bg-white/5 hover:bg-white/15 text-slate-300 rounded-lg text-[10px] font-mono font-bold flex-1">+10</button>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => handleSetShipExact(id, maxQty / 2, maxQty)} className="px-2 py-1 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 rounded-lg text-[10px] font-mono font-bold flex-1">50%</button>
+                    <button onClick={() => handleSetShipExact(id, maxQty, maxQty)} className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[10px] font-mono font-black flex-1 shadow-sm">MAX</button>
+                    {sel > 0 && (
+                      <button onClick={() => handleSetShipExact(id, 0, maxQty)} className="px-2 py-1 bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 rounded-lg text-[10px] font-mono font-bold">0</button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       )}
-      {Object.keys(selectedShips).length > 0 && (
-        <div className="text-xs text-slate-400 mt-2">
-          Capacidad de carga: {fmt(Object.entries(selectedShips).reduce((acc, [id, qty]) => {
-            const s = shipStats(id);
-            return acc + ((s?.cargo || 0) * qty);
-          }, 0))} unidades
+
+      {/* Capacidad de Carga Total Seleccionada */}
+      {totalSelectedCount > 0 && (
+        <div className="p-3.5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-cyan-300 shadow-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📦</span>
+            <span>Capacidad de transporte asignada:</span>
+            <span className="font-black text-white text-sm">{fmt(totalCargoCap)} uds</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">Total Naves en Operación:</span>
+            <span className="font-black text-cyan-300 text-sm">{fmt(totalSelectedCount)}</span>
+          </div>
         </div>
       )}
     </div>

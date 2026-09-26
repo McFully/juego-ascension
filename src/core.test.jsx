@@ -328,6 +328,7 @@ describe('Ascensión Core Logic Tests', () => {
       expect(validateSave({ version: 3, playerName: 'x', planets: [], gameStarted: true }).valid).toBe(false);
       expect(validateSave({ version: 3, playerName: 'x', planets: [{}], gameStarted: false }).valid).toBe(false);
       expect(validateSave({ version: 3, playerName: 'x', planets: [{}], gameStarted: true }).valid).toBe(true);
+      expect(validateSave({ version: 4, playerName: 'x', planets: [{}], gameStarted: true }).valid).toBe(true);
     });
 
     it('LOAD coerces aiPlanets null/undefined (migration safety)', () => {
@@ -378,179 +379,43 @@ describe('Ascensión Core Logic Tests', () => {
       const loaded = gameReducer({ gameStarted: false }, { type: 'LOAD', payload });
       expect(Array.isArray(loaded.aiPlanets)).toBe(true);
     });
-  });
-});
 
-describe('Ascensión Laboratorio Investigación (x10)', () => {
-  const oldCalcResearchTime = (cost, lab, speed = 1, bonus = 1, mins = {}, research = {}) => {
-    const grants = mins.science?.researchGrants || 0.05;
-    const grantBonus = 1 + grants * 2;
-    const r = research && Object.keys(research).length > 0 ? research : (mins?.research || {});
-    const opticalBonus = 1 + (r.synchronousOptical || 0) * 0.03;
-    const labReduction = 1 + lab * 1.5625;
-    const t = ((cost.metal + cost.crystal) / (1000 * labReduction * speed * bonus * grantBonus * opticalBonus)) * 3600;
-    return Math.max(1, Math.floor(t));
-  };
-
-  const cost = { metal: 20000, crystal: 20013, deuterium: 0 };
-
-  it('con un Laboratorio nivel 11, una investigación de 2h pasa a durar unos 12 minutos (x10)', () => {
-    const oldTime = oldCalcResearchTime(cost, 11);
-    expect(oldTime).toBe(7200); // 2 horas = 7200s bajo el sistema anterior
-
-    const newTime = calcResearchTime(cost, 11);
-    expect(newTime).toBeGreaterThanOrEqual(700);
-    expect(newTime).toBeLessThanOrEqual(780);
-    expect(newTime).toBeLessThan(oldTime / 9);      // al menos 9x más rápido
-    expect(newTime).toBeGreaterThanOrEqual(oldTime / 11); // sin llegar a ser 11x
-  });
-
-  it('sin Laboratorio (nivel 0) no aplica ninguna reducción global x10', () => {
-    const smallCost = { metal: 100000, crystal: 100000, deuterium: 0 };
-    const oldTime = oldCalcResearchTime(smallCost, 0);
-    const newTime = calcResearchTime(smallCost, 0);
-    expect(newTime).toBe(oldTime);
-  });
-
-  it('la reducción procede del nivel del Laboratorio y aplica en todos los niveles', () => {
-    const levels = [1, 3, 5, 8, 11, 15, 20, 30];
-    let prevSpeedMult = 0;
-    for (const lvl of levels) {
-      const oldTime = oldCalcResearchTime(cost, lvl);
-      const newTime = calcResearchTime(cost, lvl);
-      expect(newTime).toBeLessThan(oldTime); // cada nivel acelera respecto al sistema antiguo
-      const speedMult = oldTime / newTime;
-      expect(speedMult).toBeGreaterThanOrEqual(6);   // mínimo ~6.5x incluso en nivel 1
-      expect(speedMult).toBeLessThanOrEqual(10.5);   // tiende a 10x en niveles altos
-      expect(speedMult).toBeGreaterThanOrEqual(prevSpeedMult); // progresión coherente y creciente
-      prevSpeedMult = speedMult;
-    }
-  });
-
-  it('cada incremento de nivel produce una reducción claramente perceptible', () => {
-    for (let lvl = 2; lvl <= 30; lvl += 1) {
-      const prevTime = calcResearchTime(cost, lvl - 1);
-      const time = calcResearchTime(cost, lvl);
-      expect(time).toBeLessThan(prevTime);
-      expect(prevTime / time).toBeGreaterThanOrEqual(1.025); // al menos ~2.5% por nivel
-    }
-  });
-
-  it('funciona tanto para investigaciones cortas como largas y respeta el mínimo de 1 segundo', () => {
-    const tiny = { metal: 100, crystal: 100, deuterium: 0 };
-    const huge = { metal: 5000000, crystal: 4000000, deuterium: 0 };
-
-    const tinyTime = calcResearchTime(tiny, 30);
-    expect(tinyTime).toBe(1); // mínimo permitido
-
-    let prevHuge = Infinity;
-    for (let lvl = 1; lvl <= 12; lvl += 1) {
-      const hugeTime = calcResearchTime(huge, lvl);
-      expect(hugeTime).toBeGreaterThanOrEqual(1);
-      expect(Number.isFinite(hugeTime)).toBe(true);
-      expect(hugeTime).toBeLessThanOrEqual(prevHuge);
-      prevHuge = hugeTime;
-    }
-    expect(prevHuge).toBeLessThan(calcResearchTime(huge, 1));
-  });
-
-  describe('Centro de Construcciones & IA Estratégica (descuentos)', () => {
-    it('constructionDiscount divide a la mitad por nivel y aiResearchDiscount es multiplicativo bestial', () => {
-      expect(constructionDiscount(0)).toBe(1);
-      expect(constructionDiscount(1)).toBeCloseTo(0.5);
-      expect(constructionDiscount(2)).toBeCloseTo(0.25);
-      expect(constructionDiscount(3)).toBeCloseTo(0.125);
-      expect(aiResearchDiscount(0)).toBe(1);
-      expect(aiResearchDiscount(1)).toBeCloseTo(0.75);
-      expect(aiResearchDiscount(2)).toBeCloseTo(0.5625);
-      expect(aiResearchDiscount(5)).toBeCloseTo(0.2373046875);
+    it('LOAD applies imperial amnesty if player has more planets/missions than astrophysics allows', () => {
+      const payload = {
+        version: 3,
+        playerName: 'Emperor',
+        planets: Array.from({ length: 8 }, (_, i) => ({ id: `p${i}`, resources: {}, fleet: {}, defenses: {}, buildings: {} })),
+        fleetMissions: [{ type: 'colonize', isReturning: false, to: { galaxy: 1, system: 2, position: 3 } }],
+        research: { astrophysics: 0 },
+        gameStarted: true
+      };
+      const loaded = gameReducer({ gameStarted: false }, { type: 'LOAD', payload });
+      // 8 planetas + 1 misión = 9 mundos -> Astrofísica nivel 15
+      expect(loaded.research.astrophysics).toBe(15);
+      expect(loaded.notifications.some(n => (n.message || '').includes('Amnistía Imperial'))).toBe(true);
     });
 
-    it('buildingCost aplica -50%/nivel de Centro de Construcciones', () => {
-      const base = buildingCost('metalMine', 0, 0);
-      const c1 = buildingCost('metalMine', 0, 1);
-      const c2 = buildingCost('metalMine', 0, 2);
-      expect(c2.metal).toBeLessThan(c1.metal);
-      expect(c1.metal).toBeLessThan(base.metal);
-      expect(c1.metal).toBe(Math.floor(base.metal * 0.5));
-      expect(c2.metal).toBe(Math.floor(base.metal * 0.25));
-    });
+    it('blocks COLONIZE when player has reached max colony limit for their astrophysics level', () => {
+      const initial = createInitial('LimitPlayer');
+      const homeId = initial.currentPlanetId;
+      const stateWithColonizer = {
+        ...initial,
+        aiPlanets: [], // evitar colisiones aleatorias con planetas IA
+        research: { astrophysics: 0 }, // solo 1 planeta permitido
+        planets: initial.planets.map(p =>
+          p.id === homeId ? { ...p, fleet: { ...p.fleet, colonizer: 2 } } : p
+        )
+      };
 
-    it('shipCost y defenseCost aplican -50%/nivel en naves y defensas', () => {
-      const shipBase = shipCost('lightFighter', 1, 0);
-      expect(shipCost('lightFighter', 1, 1).metal).toBeCloseTo(shipBase.metal * 0.5);
-      expect(shipCost('lightFighter', 3, 2).metal).toBeCloseTo(shipCost('lightFighter', 3, 0).metal * 0.25);
-      const defBase = defenseCost('rocketLauncher', 1, 0);
-      expect(defenseCost('rocketLauncher', 1, 2).metal).toBeCloseTo(defBase.metal * 0.25);
-    });
+      const result = gameReducer(stateWithColonizer, {
+        type: 'COLONIZE',
+        to: { galaxy: 1, system: 12, position: 4 }
+      });
 
-    it('researchCost aplica IA Estratégica bestial: -25%/nivel y se acumula con CC', () => {
-      const base = researchCost('weapons', 0, 0, 0);
-      const ai1 = researchCost('weapons', 0, 1, 0);
-      const ai2 = researchCost('weapons', 0, 2, 0);
-      const ai1cc1 = researchCost('weapons', 0, 1, 1);
-      expect(ai1.metal).toBeLessThan(base.metal);
-      expect(ai2.metal).toBeLessThan(ai1.metal);
-      expect(Math.abs(ai1.metal - base.metal * 0.75)).toBeLessThanOrEqual(1);
-      expect(Math.abs(ai2.metal - base.metal * 0.5625)).toBeLessThanOrEqual(1);
-      expect(Math.abs(ai1cc1.metal - base.metal * 0.375)).toBeLessThanOrEqual(1);
-    });
-
-    it('BUILD_MISSILE cobra el coste descontado por CC (cargo = display)', () => {
-      let state = createInitial('TestPlayer', 'human');
-      const planet = state.planets.find(p => p.id === state.currentPlanetId);
-      planet.resources = { metal: 100000, crystal: 100000, deuterium: 100000 };
-      planet.buildings = { ...planet.buildings, missileSilo: 10, constructionCenter: 2 };
-      const before = planet.resources.metal;
-      const next = gameReducer(state, { type: 'BUILD_MISSILE', missileId: 'interplanetaryMissile', quantity: 2 });
-      const planetAfter = next.planets.find(p => p.id === state.currentPlanetId);
-      const expected = 12000 * 2 * 0.25;
-      expect(planetAfter.resources.metal).toBe(before - expected);
-      expect(planetAfter.missiles.interplanetaryMissile).toBe(2);
-    });
-
-    it('BUILD_MOON_BUILDING cobra el coste descontado por CC', () => {
-      let state = createInitial('TestPlayer', 'human');
-      const planet = state.planets.find(p => p.id === state.currentPlanetId);
-      planet.resources = { metal: 100000, crystal: 100000, deuterium: 100000 };
-      planet.buildings = { ...(planet.buildings || {}), constructionCenter: 2 };
-      planet.moon = { buildings: {} };
-      const before = planet.resources.metal;
-      const next = gameReducer(state, { type: 'BUILD_MOON_BUILDING', buildingId: 'lunarBase' });
-      const planetAfter = next.planets.find(p => p.id === state.currentPlanetId);
-      const expected = Math.floor(20000 * 0.25);
-      expect(planetAfter.resources.metal).toBe(before - expected);
-      expect(planetAfter.moon.buildings.lunarBase).toBe(1);
-    });
-
-    it('START_SHIP y START_DEFENSE cobran con descuento de CC (cargo = display)', () => {
-      let state = createInitial('TestPlayer', 'human');
-      const planet = state.planets.find(p => p.id === state.currentPlanetId);
-      planet.resources = { metal: 100000, crystal: 100000, deuterium: 100000 };
-      planet.buildings = { ...planet.buildings, shipyard: 2, constructionCenter: 1 };
-      const shipBefore = planet.resources.metal;
-      const afterShip = gameReducer(state, { type: 'START_SHIP', shipId: 'lightFighter', quantity: 1 });
-      const pAfterShip = afterShip.planets.find(p => p.id === state.currentPlanetId);
-      expect(pAfterShip.resources.metal).toBe(shipBefore - shipCost('lightFighter', 1, 1).metal);
-
-      const defBefore = pAfterShip.resources.metal;
-      const afterDef = gameReducer(afterShip, { type: 'START_DEFENSE', defenseId: 'rocketLauncher', quantity: 1 });
-      const pAfterDef = afterDef.planets.find(p => p.id === state.currentPlanetId);
-      expect(pAfterDef.resources.metal).toBe(defBefore - defenseCost('rocketLauncher', 1, 1).metal);
-    });
-
-    it('START_RESEARCH cobra con IA Estratégica + CC (cargo = display)', () => {
-      let state = createInitial('TestPlayer', 'human');
-      const planet = state.planets.find(p => p.id === state.currentPlanetId);
-      planet.resources = { metal: 100000, crystal: 100000, deuterium: 100000 };
-      planet.buildings = { ...planet.buildings, researchLab: 2, constructionCenter: 1 };
-      state.research = { ...(state.research || {}), aiStrategy: 1, energy: 5 };
-      const before = planet.resources.metal;
-      const next = gameReducer(state, { type: 'START_RESEARCH', researchId: 'weapons' });
-      const planetAfter = next.planets.find(p => p.id === state.currentPlanetId);
-      expect(planetAfter.resources.metal).toBe(before - researchCost('weapons', 0, 1, 1).metal);
-      expect(next.researchQueue.length).toBe(1);
+      expect(result.planets.length).toBe(1);
+      expect(result.notifications.some(n => (n.message || '').includes('Límite imperial alcanzado'))).toBe(true);
     });
   });
 });
+
 

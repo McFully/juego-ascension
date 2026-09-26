@@ -4,14 +4,29 @@ import {
 } from '../../core.jsx';
 
 export const processPlayerPlanets = (newState, prodCache, storageCache) => {
+  const councilMinisters = newState.imperialCouncil?.ministers || {};
+  const hasEcoMinister = Boolean(councilMinisters.economy);
+  const hasResMinister = Boolean(councilMinisters.resources);
+
+  const ecoProdBonus = hasEcoMinister ? 1.15 : 1.0;
+  const resMetalBonus = hasResMinister ? 1.20 : 1.0;
+  const resDeutBonus = hasResMinister ? 1.20 : 1.0;
+  const storageMultiplier = hasResMinister ? 1.15 : 1.0;
+
   newState.planets = newState.planets.map(planet => {
     let p = planet;
     const prod = prodCache.get(p.id) || { metal: 0, crystal: 0, deuterium: 0, energyBalance: 0, ratio: 1 };
-    const storage = storageCache.get(p.id) || { metal: 0, crystal: 0, deuterium: 0 };
+    const rawStorage = storageCache.get(p.id) || { metal: 0, crystal: 0, deuterium: 0 };
+    const storage = {
+      metal: rawStorage.metal * storageMultiplier,
+      crystal: rawStorage.crystal * storageMultiplier,
+      deuterium: rawStorage.deuterium * storageMultiplier
+    };
+
     let newRes = {
-      metal: Math.min((p.resources.metal || 0) + prod.metal / 3600, storage.metal),
-      crystal: Math.min((p.resources.crystal || 0) + prod.crystal / 3600, storage.crystal),
-      deuterium: Math.min(Math.max(0, (p.resources.deuterium || 0) + prod.deuterium / 3600), storage.deuterium),
+      metal: Math.min((p.resources.metal || 0) + (prod.metal * ecoProdBonus * resMetalBonus) / 3600, storage.metal),
+      crystal: Math.min((p.resources.crystal || 0) + (prod.crystal * ecoProdBonus) / 3600, storage.crystal),
+      deuterium: Math.min(Math.max(0, (p.resources.deuterium || 0) + (prod.deuterium * ecoProdBonus * resDeutBonus) / 3600), storage.deuterium),
     };
     newRes = clampResources(newRes);
 
@@ -41,9 +56,9 @@ export const processPlayerPlanets = (newState, prodCache, storageCache) => {
       const bioClinicLvl = p.buildings?.bioRegenClinic || 0;
       const maxPop = 10000 + healthCenterLvl * 50000 + arcologyLvl * 10000 + bioClinicLvl * 8000;
       if (pop < maxPop) {
-        const bioLvl = state.research?.orbitalSanitaryBio || 0;
-        const hydroLvl = state.research?.multiproposeHydroponic || 0;
-        const sleepLvl = state.research?.acceleratedSleepBio || 0;
+        const bioLvl = newState.research?.orbitalSanitaryBio || 0;
+        const hydroLvl = newState.research?.multiproposeHydroponic || 0;
+        const sleepLvl = newState.research?.acceleratedSleepBio || 0;
         const growthMult = 1 + bioLvl * 0.06 + hydroLvl * 0.05 + sleepLvl * 0.03;
         const growth = Math.floor((10 + townHallLvl * 50) * growthMult);
         nextPop = Math.min(maxPop, pop + growth);
@@ -82,7 +97,47 @@ export const processPlayerPlanets = (newState, prodCache, storageCache) => {
         }
       }
     }
-    return { ...p, resources: newRes, population: nextPop, retrofitTech };
+    // Avance de Terraformación si la nave terraformatriz está activa
+    let terraProgress = p.terraformingProgress || 0;
+    let isTerraActive = p.isTerraformingActive || false;
+    let isTerraformed = p.terraformed || false;
+    let planetSize = p.planetSize || 100;
+    let biome = p.biome;
+    let requiresConditioning = p.requiresConditioning || false;
+
+    if (isTerraActive && !isTerraformed) {
+      terraProgress += 1;
+      if (terraProgress >= 100) {
+        terraProgress = 100;
+        isTerraActive = false;
+        isTerraformed = true;
+        requiresConditioning = false;
+        planetSize = Math.max(planetSize + 300, 450);
+        biome = 'temperate';
+        newState.notifications = [
+          ...(newState.notifications || []),
+          {
+            id: uid(),
+            type: 'success',
+            message: `🌱 ¡Terraformación completada en ${p.name}! Bioma estabilizado a Templado y parcelas aumentadas a ${planetSize} campos.`,
+            timestamp: Date.now()
+          }
+        ];
+      }
+    }
+
+    return {
+      ...p,
+      resources: newRes,
+      population: nextPop,
+      retrofitTech,
+      terraformingProgress: terraProgress,
+      isTerraformingActive: isTerraActive,
+      terraformed: isTerraformed,
+      requiresConditioning,
+      planetSize,
+      biome
+    };
   });
   return newState;
 };

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { S } from '../../styles.js';
+import { DiplomacyFactionList } from './DiplomacyFactionList.jsx';
+import { DiplomacyActionConsole } from './DiplomacyActionConsole.jsx';
 
 export const DiplomacyChat = ({
   aiList,
@@ -13,7 +15,11 @@ export const DiplomacyChat = ({
   isGlitching,
   chatHistory = {},
   handleDiplomaticAction,
-  executeWarToggle
+  executeWarToggle,
+  influence = 0,
+  resources = {},
+  onOpenTradeModal,
+  onOpenBuyShipsModal
 }) => {
   const [detailView, setDetailView] = useState(false);
 
@@ -36,46 +42,23 @@ export const DiplomacyChat = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      {/* Faction selection list - hidden in detail view */}
+      {/* Faction selection list (Componente Modular) */}
       {!detailView && (
-      <div className={`${S.cardDeep} lg:col-span-5 flex flex-col`}>
-        <h3 className="text-sm font-semibold mb-3 text-slate-300 uppercase tracking-wider">📡 Receptores de Frecuencia Activos</h3>
-        <div className="space-y-1.5 max-h-[350px] overflow-y-auto pr-1">
-          {aiList.length === 0 ? (
-            <p className="text-slate-500 text-sm">No se encontraron imperios en la vecindad galáctica.</p>
-          ) : (
-            aiList.map(ai => {
-              const isSelected = activeContact?.id === ai.id;
-              const intelLvl = getIntelLevel(ai);
-              return (
-                <div key={ai.id} className={`glass-deep rounded-xl border transition-all ${isSelected ? 'border-[var(--ue-accent)]/80 shadow-[0_0_12px_rgba(34,211,238,0.2)] bg-white/5' : 'border-white/5 bg-black/20 hover:bg-white/5'}`}>
-                  <button onClick={() => onSelectContact(ai)} className="w-full flex items-center justify-between p-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{FACTIONS[ai.faction]?.icon || '👽'}</span>
-                      <div className="text-left">
-                        <div className="font-semibold text-sm">{ai.name}</div>
-                        <div className="text-[10px] text-slate-400">
-                          Firma: <span className="font-mono text-cyan-400">{FACTIONS[ai.faction]?.name || 'Civilización Desconocida'}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right flex flex-col items-end">
-                      <span className={`text-xs font-mono font-bold ${getRelationColor(ai.relation)}`}>
-                        {getRelationText(ai.relation)}
-                      </span>
-                      <div className="text-[9px] text-slate-500 uppercase tracking-tighter">Intel Nv.{intelLvl}</div>
-                    </div>
-                  </button>
-                </div>
-              );
-            })
-          )}
+        <div className="lg:col-span-4 flex flex-col">
+          <DiplomacyFactionList
+            aiList={aiList}
+            activeContact={activeContact}
+            getIntelLevel={getIntelLevel}
+            getRelationColor={getRelationColor}
+            getRelationText={getRelationText}
+            FACTIONS={FACTIONS}
+            onSelectContact={onSelectContact}
+          />
         </div>
-      </div>
       )}
 
       {/* Narratives & Transmission Console */}
-      <div className={`${detailView ? 'lg:col-span-12' : 'lg:col-span-7'} flex flex-col`}>
+      <div className={`${detailView ? 'lg:col-span-12' : 'lg:col-span-8'} flex flex-col`}>
         {activeContact && detailView && (
           <button onClick={onBackToList}
             className="self-start mb-2 px-3 py-1.5 border border-white/10 hover:border-cyan-500/50 rounded-xl text-[10px] text-slate-400 hover:text-cyan-400 font-mono transition-all flex items-center gap-1.5">
@@ -189,6 +172,62 @@ export const DiplomacyChat = ({
                           <span className="text-emerald-400 font-bold">{affinity}%</span>
                         </div>
                       </div>
+
+                      {/* Estado Bilateral de Tratados y Pactos */}
+                      <div className="bg-slate-950/60 p-2 rounded-lg border border-white/5 font-mono text-[10px] flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-slate-400 uppercase text-[9px] font-bold">Tratados Bilaterales Vigentes:</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {(activeContact.pna || activeContact.activePacts?.includes('pna') || activeContact.activePacts?.includes('non_aggression')) ? (
+                            <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-bold flex items-center gap-1">
+                              <span>📜</span>
+                              <span>Pacto de No Agresión</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-white/5 text-slate-500 border border-white/5 text-[9px]">
+                              Sin PNA
+                            </span>
+                          )}
+
+                          {(activeContact.trade || activeContact.activePacts?.includes('trade') || activeContact.activePacts?.includes('trade_treaty') || activeContact.activePacts?.includes('trade_agreement')) && (
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold flex items-center gap-1">
+                              <span>🤝</span>
+                              <span>Acuerdo Comercial</span>
+                            </span>
+                          )}
+
+                          {(activeContact.alliance || activeContact.activePacts?.includes('alliance')) && (
+                            <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[9px] font-bold flex items-center gap-1">
+                              <span>⚔️</span>
+                              <span>Alianza Militar</span>
+                            </span>
+                          )}
+
+                          {(activeContact.defensivePact || activeContact.activePacts?.includes('defense_agreement') || activeContact.activePacts?.includes('defensive_pact')) && (
+                            <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold flex items-center gap-1">
+                              <span>🛡️</span>
+                              <span>Defensa Mutua</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Canales Bilaterales Directos (Comercio Físico y Compra de Flota) */}
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <button
+                          onClick={() => onOpenTradeModal && onOpenTradeModal(activeContact)}
+                          className="px-3 py-2 rounded-xl bg-[#0b1329] hover:bg-[#111e42] border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 hover:text-white font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                        >
+                          <span>🤝</span>
+                          <span>Mesa de Comercio Directo</span>
+                        </button>
+                        <button
+                          onClick={() => onOpenBuyShipsModal && onOpenBuyShipsModal(activeContact)}
+                          className="px-3 py-2 rounded-xl bg-[#120f26] hover:bg-[#1c173c] border border-purple-500/30 hover:border-purple-400 text-purple-300 hover:text-white font-mono text-[11px] font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                        >
+                          <span>🚀</span>
+                          <span>Astillero Mercante Extranjero</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -261,88 +300,14 @@ export const DiplomacyChat = ({
                     </div>
                   </div>
 
-                  {/* Actions Grid */}
-                  <div className="space-y-3 pt-2">
-                    <span className="text-[10px] uppercase font-mono text-slate-400 tracking-wider block">Consola de Acciones Diplomáticas</span>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* COOPERATIVAS */}
-                      <div className="space-y-1.5 p-2 bg-slate-950/30 border border-white/5 rounded-xl">
-                        <span className="text-[9px] text-slate-500 font-mono uppercase block border-b border-white/5 pb-1 mb-1">Cooperación</span>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button onClick={() => handleDiplomaticAction('greet')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono">
-                            👋 Saludo
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('official_intro')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 5 Inf">
-                            🏛️ Pres. Oficial
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('cultural_exchange')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 10 Inf">
-                            🎭 Int. Cultural
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('scientific_exchange')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 15 Inf & 500 Deut">
-                            🔬 Int. Científico
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* TRATADOS */}
-                      <div className="space-y-1.5 p-2 bg-slate-950/30 border border-white/5 rounded-xl">
-                        <span className="text-[9px] text-slate-500 font-mono uppercase block border-b border-white/5 pb-1 mb-1">Tratados y Acuerdos</span>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button onClick={() => handleDiplomaticAction('trade_agreement')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 15 Inf">
-                            🤝 Ac. Comercial
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('research_agreement')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 20 Inf">
-                            🧪 Ac. Investig.
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('transit_agreement')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 10 Inf">
-                            🚀 Ac. Tránsito
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('defense_agreement')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 25 Inf">
-                            🛡️ Ac. Defensa
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* PRESIÓN Y CONFLICTO */}
-                      <div className="space-y-1.5 p-2 bg-slate-950/30 border border-white/5 rounded-xl">
-                        <span className="text-[9px] text-slate-500 font-mono uppercase block border-b border-white/5 pb-1 mb-1">Presión / Conflicto</span>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button onClick={() => handleDiplomaticAction('threat')} className="py-1 bg-red-950/45 hover:bg-red-900/40 border border-red-500/20 rounded text-[10px] text-red-400 font-mono">
-                            ⚠️ Amenazar
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('ultimatum')} className="py-1 bg-red-950/45 hover:bg-red-900/40 border border-red-500/20 rounded text-[10px] text-red-400 font-mono">
-                            🚨 Ultimátum
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('embargo')} className="py-1 bg-amber-950/45 hover:bg-amber-900/40 border border-amber-500/20 rounded text-[10px] text-amber-400 font-mono">
-                            🚫 Embargo
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('sanctions')} className="py-1 bg-amber-950/45 hover:bg-amber-900/40 border border-amber-500/20 rounded text-[10px] text-amber-400 font-mono">
-                            🚫 Sanciones
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* SOBERANÍA Y OTROS */}
-                      <div className="space-y-1.5 p-2 bg-slate-950/30 border border-white/5 rounded-xl">
-                        <span className="text-[9px] text-slate-500 font-mono uppercase block border-b border-white/5 pb-1 mb-1">Soberanía / Ruptura</span>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button onClick={() => handleDiplomaticAction('protectorate')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 30 Inf">
-                            👑 Protectorado
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('vassalage')} className="py-1 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded text-[10px] text-white font-mono" title="Cuesta 50 Inf">
-                            🔗 Vasallaje
-                          </button>
-                          <button onClick={() => handleDiplomaticAction('break_relations')} className="py-1 bg-red-950/40 hover:bg-red-900/30 border border-red-500/30 rounded text-[10px] text-red-300 font-mono">
-                            💔 Romper Rel.
-                          </button>
-                          <button onClick={executeWarToggle} className="py-1 bg-red-900/60 hover:bg-red-800/60 border border-red-500 rounded text-[10px] text-white font-bold font-mono">
-                            ⚔️ Declarar Guerra
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Actions Grid (Componente Modular) */}
+                  <DiplomacyActionConsole
+                    activeContact={activeContact}
+                    handleDiplomaticAction={handleDiplomaticAction}
+                    executeWarToggle={executeWarToggle}
+                    influence={influence}
+                    resources={resources}
+                  />
                 </div>
               );
             })()}

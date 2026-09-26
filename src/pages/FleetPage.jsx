@@ -1,33 +1,49 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { getDefenseStats } from '../core.jsx';
-import { CombatSimulatorModal } from '../components/fleet/CombatSimulatorModal';
-import { FleetSelectionList } from '../components/fleet/FleetSelectionList';
+import React, { useState } from "react";
+import { getDefenseStats } from "../core.jsx";
+import { CombatSimulatorModal } from "../components/fleet/CombatSimulatorModal";
+import { FleetSelectionList } from "../components/fleet/FleetSelectionList";
+import { IncomingInvasionsAlert } from "../components/fleet/IncomingInvasionsAlert.jsx";
+import { MissionConfigPanel } from "../components/fleet/MissionConfigPanel.jsx";
+import { TradeRoutesSection } from "../components/fleet/TradeRoutesSection.jsx";
+import { SpyReportsSection } from "../components/fleet/SpyReportsSection.jsx";
+import { DestinationSelectorSection } from "../components/fleet/DestinationSelectorSection.jsx";
+import { FleetInventorySection } from "../components/fleet/FleetInventorySection.jsx";
+import { PatrolControlSection } from "../components/fleet/PatrolControlSection.jsx";
+import { ActionCardTile } from "../components/ui/ActionCardTile.jsx";
+import { useNavigation } from "../components/navigation/NavigationContext.jsx";
+import { SubsystemTopBanner } from "../components/navigation/SubsystemTopBanner.jsx";
+import { SafeImg } from "../assets.jsx";
+import { useCombatPredictions } from "../hooks/useCombatPredictions.js";
+import { ImperialRegistryModal } from "../components/fleet/ImperialRegistryModal.jsx";
 
-const FleetPage = ({ state, dispatch, currentPlanet, selectedTarget, setSelectedTarget, SHIPS, DEFENSES, BUILDINGS, SHIP_CHASSIS, S, ProgressBar, fmt, fmtTime, getEffectiveTech, simulateCombat, getShipStats, calcCustomShipStats }) => {
+const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget, setSelectedTarget, SHIPS, DEFENSES, BUILDINGS, SHIP_CHASSIS, S, ProgressBar, fmt, fmtTime, getEffectiveTech, simulateCombat, getShipStats, calcCustomShipStats }) => {
+  const { navigateTo, navigateBack } = useNavigation();
+  // Estado de vista del Hangar:
+  // 'menu' (pantalla principal con tarjetas de botón) | 'inventory' | 'in_flight' | 'trade_routes' | 'dispatch' | 'spy_reports'
+  const [activeCardView, setActiveCardView] = useState(() => selectedTarget ? 'dispatch' : 'menu');
+
   const [selectedShips, setSelectedShips] = useState({});
   const [missionType, setMissionType] = useState(() => {
-    if (selectedTarget && !selectedTarget.occupied) return 'colonize';
-    if (selectedTarget && selectedTarget.occupied && !selectedTarget.isAI) return 'transport';
-    return 'attack';
+    if (selectedTarget && !selectedTarget.occupied) return "colonize";
+    if (selectedTarget && selectedTarget.occupied && !selectedTarget.isAI) return "transport";
+    return "attack";
   });
   const [missionSpeed, setMissionSpeed] = useState(10);
   const [transportRes, setTransportRes] = useState({ metal: 0, crystal: 0, deuterium: 0 });
   const [autoRetreat, setAutoRetreat] = useState(false);
-  const [formation, setFormation] = useState('standard');
-  const [filter, setFilter] = useState('all');
+  const [formation, setFormation] = useState("standard");
+  const [filter, setFilter] = useState("all");
   const [simResult, setSimResult] = useState(null);
-  const [newRouteFrom, setNewRouteFrom] = useState(currentPlanet.id);
-  const [newRouteResource, setNewRouteResource] = useState('metal');
-  const [newRouteRatio, setNewRouteRatio] = useState(0.5);
+  const [showRegistryModal, setShowRegistryModal] = useState(false);
 
   const target = selectedTarget;
 
   React.useEffect(() => {
     if (selectedTarget) {
-      if (!selectedTarget.occupied) setMissionType('colonize');
-      else if (!selectedTarget.isAI) setMissionType('transport');
-      else setMissionType('attack');
+      setActiveCardView('dispatch');
+      if (!selectedTarget.occupied) setMissionType("colonize");
+      else if (!selectedTarget.isAI) setMissionType("transport");
+      else setMissionType("attack");
     }
   }, [selectedTarget]);
 
@@ -47,19 +63,20 @@ const FleetPage = ({ state, dispatch, currentPlanet, selectedTarget, setSelected
     if (Object.keys(fleet).length === 0) return;
 
     dispatch({
-      type: 'SEND_FLEET',
+      type: "SEND_FLEET",
       fromId: currentPlanet.id,
       to: target,
       fleet,
       missionType,
       missionSpeed,
-      resources: missionType === 'transport' ? transportRes : null,
+      resources: missionType === "transport" ? transportRes : null,
       autoRetreat,
       formation,
     });
     setSelectedShips({});
     setTransportRes({ metal: 0, crystal: 0, deuterium: 0 });
     setSelectedTarget(null);
+    setActiveCardView('in_flight');
   };
 
   const handleSimulate = () => {
@@ -78,43 +95,46 @@ const FleetPage = ({ state, dispatch, currentPlanet, selectedTarget, setSelected
 
     let result;
     try {
-      result = simulateCombat(selectedShips, defFleet, defDefenses, state.research, defTech, 6, state.blueprints, 'human', targetAI ? (targetAI.faction || 'human') : 'human', autoRetreat);
+      result = simulateCombat(selectedShips, defFleet, defDefenses, state.research, defTech, 6, state.blueprints, "human", targetAI ? (targetAI.faction || "human") : "human", autoRetreat);
     } catch (e) {
-      console.error('[Ascensión] simulateCombat error:', e);
+      console.error("[Ascensión] simulateCombat error:", e);
       if (window.electronAPI && window.electronAPI.logError) {
-        window.electronAPI.logError(`simulateCombat failed: ${e?.message || e}`, e?.stack || '', `player=${state.playerName} ships=${Object.keys(selectedShips).length}`);
+        window.electronAPI.logError(`simulateCombat failed: ${e?.message || e}`, e?.stack || "", `player=${state.playerName} ships=${Object.keys(selectedShips).length}`);
       }
-      result = { error: true, message: 'Error en simulación de combate' };
+      result = { error: true, message: "Error en simulación de combate" };
     }
     setSimResult(result);
   };
 
-  const availableShips = Object.entries(currentPlanet.fleet).filter(([id, q]) => {
+  const availableShips = Object.entries(currentPlanet.fleet || {}).filter(([id, q]) => {
     if (q <= 0) return false;
-    if (filter === 'all') return true;
-    const isCombat = ['lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'bomber', 'destroyer', 'deathstar'].includes(id) || id.startsWith('custom_');
-    if (filter === 'combat') return isCombat;
-    if (filter === 'civilian') return !isCombat;
+    if (filter === "all") return true;
+    const isCombat = ["lightFighter", "heavyFighter", "cruiser", "battleship", "bomber", "destroyer", "deathstar"].includes(id) || id.startsWith("custom_");
+    if (filter === "combat") return isCombat;
+    if (filter === "civilian") return !isCombat;
     return true;
   });
+
   const shipDisplayName = (id) => {
-    if (id.startsWith('custom_')) {
-      const bp = state.blueprints.find(b => id === 'custom_' + b.id);
-      return bp ? bp.name : 'Nave Personalizada';
+    if (id.startsWith("custom_")) {
+      const bp = state.blueprints.find(b => id === "custom_" + b.id);
+      return bp ? bp.name : "Nave Personalizada";
     }
     return SHIPS[id]?.name || id;
   };
+
   const shipDisplayIcon = (id) => {
-    if (id.startsWith('custom_')) {
-      const bp = state.blueprints.find(b => id === 'custom_' + b.id);
-      return bp ? (SHIP_CHASSIS[bp.chassis]?.icon || '🔧') : '🔧';
+    if (id.startsWith("custom_")) {
+      const bp = state.blueprints.find(b => id === "custom_" + b.id);
+      return bp ? (SHIP_CHASSIS[bp.chassis]?.icon || "🔧") : "🔧";
     }
-    return SHIPS[id]?.icon || '🚀';
+    return SHIPS[id]?.icon || "🚀";
   };
+
   const shipStats = (id) => {
-    const tech = getEffectiveTech(currentPlanet, state.research);
-    if (id.startsWith('custom_')) {
-      const bp = state.blueprints.find(b => id === 'custom_' + b.id);
+    const tech = state.research || {};
+    if (id.startsWith("custom_")) {
+      const bp = state.blueprints.find(b => id === "custom_" + b.id);
       if (!bp) return null;
       const cs = calcCustomShipStats(bp);
       const hull = cs.hull * (1 + (tech.armour || 0) * 0.08);
@@ -122,7 +142,7 @@ const FleetPage = ({ state, dispatch, currentPlanet, selectedTarget, setSelected
       const atk = cs.atk * (1 + (tech.weapons || 0) * 0.1);
       return { ...cs, hull, shd, atk, speed: cs.speed };
     }
-    return getShipStats(id, tech, state.blueprints, 'human', currentPlanet.buildings) || SHIPS[id];
+    return getShipStats(id, tech, state.blueprints, "human", currentPlanet.buildings) || SHIPS[id];
   };
 
   const simDefTech = (() => {
@@ -135,511 +155,576 @@ const FleetPage = ({ state, dispatch, currentPlanet, selectedTarget, setSelected
     return getEffectiveTech(tp, state.research);
   })();
 
-  const incomingAttacks = state.fleetMissions?.filter(m => m.isAI && m.type === 'attack') || [];
+  const incomingAttacks = state.fleetMissions?.filter(m => m.isAI && m.type === "attack") || [];
+  const playerActiveMissions = (state.fleetMissions || []).filter(m => !m.isAI);
+  const totalShipsInHangar = Object.values(currentPlanet.fleet || {}).reduce((a, b) => a + b, 0);
 
-  // Group incoming attacks by destination planet and sort chronologically to simulate decay
-  const sortedIncomingAttacks = [...incomingAttacks].sort((a, b) => a.arrivalTime - b.arrivalTime);
-  const attacksByPlanet = {};
-  sortedIncomingAttacks.forEach(m => {
-    const destKey = m.toPlanetId || `${m.to?.galaxy}:${m.to?.system}:${m.to?.position}`;
-    if (!attacksByPlanet[destKey]) attacksByPlanet[destKey] = [];
-    attacksByPlanet[destKey].push(m);
-  });
+  // Predicciones de combate modularizadas vía hook useCombatPredictions
+  const attackPredictions = useCombatPredictions(state, incomingAttacks, simulateCombat, getEffectiveTech);
 
-  const attackPredictions = {};
-  Object.entries(attacksByPlanet).forEach(([destKey, list]) => {
-    const firstM = list[0];
-    const destPlanet = state.planets.find(p => 
-      p.id === firstM.toPlanetId || 
-      p.name === firstM.to?.name || 
-      (p.galaxy === firstM.to?.galaxy && p.system === firstM.to?.system && p.position === firstM.to?.position)
-    );
-
-    if (!destPlanet) {
-      list.forEach(m => {
-        attackPredictions[m.id] = { color: 'text-red-400 border-red-500/30 bg-red-950/20', text: 'Peligro Máximo' };
-      });
-      return;
-    }
-
-    let currentFleet = { ...(destPlanet.fleet || {}) };
-    let currentDefenses = { ...(destPlanet.defenses || {}) };
-    const defTech = getEffectiveTech(destPlanet, state.research);
-
-    list.forEach(m => {
-      const attackerFleet = m.fleet || {};
-      const atkTech = state.research || { weapons: 0, shields: 0, armour: 0 };
-      
-      const sim = simulateCombat(
-        attackerFleet,
-        currentFleet,
-        currentDefenses,
-        atkTech,
-        defTech,
-        6,
-        state.blueprints,
-        m.faction || 'human',
-        destPlanet.faction || 'human'
-      );
-
-      currentFleet = sim.defShipSurvivors || {};
-      currentDefenses = sim.defDefenseSurvivors || {};
-
-      let colorClass = '';
-      let statusText = '';
-      if (sim.winner === 'defender') {
-        const initialPlanetShips = Object.values(destPlanet.fleet || {}).reduce((a, b) => a + b, 0);
-        const initialPlanetDefs = Object.values(destPlanet.defenses || {}).reduce((a, b) => a + b, 0);
-        const initialDefTotal = initialPlanetShips + initialPlanetDefs;
-
-        const survivingDefShips = Object.values(currentFleet).reduce((a, b) => a + b, 0);
-        const survivingDefDefs = Object.values(currentDefenses).reduce((a, b) => a + b, 0);
-        const survivingTotal = survivingDefShips + survivingDefDefs;
-
-        const ratio = survivingTotal / Math.max(initialDefTotal, 1);
-        if (ratio > 0.8) {
-          colorClass = 'text-emerald-400 border-emerald-500/40 bg-emerald-950/20';
-          statusText = 'Victoria Asegurada';
-        } else if (ratio > 0.4) {
-          colorClass = 'text-cyan-400 border-cyan-500/40 bg-cyan-950/20';
-          statusText = 'Victoria Cómoda';
-        } else {
-          colorClass = 'text-amber-400 border-amber-500/40 bg-amber-950/20';
-          statusText = 'Victoria Crítica (Bajas graves)';
-        }
-      } else if (sim.winner === 'draw') {
-        colorClass = 'text-amber-400 border-amber-500/40 bg-amber-950/20';
-        statusText = 'Empate Táctico';
-      } else {
-        colorClass = 'text-red-500 border-red-500/40 bg-red-950/20';
-        statusText = 'Derrota Inevitable';
-      }
-
-      attackPredictions[m.id] = {
-        color: colorClass,
-        text: statusText
-      };
-    });
-  });
 
   return (
-    <div className="space-y-4">
-      {/* Alertas de Incursiones Enemigas (Solo si no hay un objetivo seleccionado activo desde Galaxia) */}
-      {!target && incomingAttacks.length > 0 && (
-        <div className="bg-red-950/20 border-2 border-red-500/30 rounded-2xl p-4 space-y-3 backdrop-blur-md shadow-[0_0_20px_rgba(239,68,68,0.05)]">
-          <h3 className="text-sm font-bold text-red-400 flex items-center gap-2 uppercase tracking-tight">
-            <span className="material-symbols-outlined text-red-500 animate-pulse text-xl">emergency_home</span>
-            🚨 Invasión Hostil Detectada en el Sistema
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {incomingAttacks.map(m => {
-              const remaining = Math.max(0, (m.arrivalTime - Date.now()) / 1000);
-              const total = (m.arrivalTime - m.departure) / 1000;
-              const ships = Object.values(m.fleet || {}).reduce((a, b) => a + b, 0);
-              const pred = attackPredictions[m.id] || { color: 'text-red-500 border-red-500/40 bg-red-950/20', text: 'Amenaza' };
-              const borderClass = pred.color.split(' ').find(c => c.startsWith('border-')) || 'border-red-500/40';
-              const bgClass = pred.color.split(' ').find(c => c.startsWith('bg-')) || 'bg-red-950/20';
-              
-              return (
-                <div key={m.id} className={`bg-black/40 border ${borderClass} ${bgClass} rounded-xl p-3 space-y-2`}>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="text-xs font-bold text-red-400 flex flex-wrap items-center gap-1.5">
-                        <span>FLOTA ENEMIGA EN RUTA</span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-semibold ${pred.color}`}>
-                          {pred.text}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-300 mt-1 font-mono">
-                        Destino: <span className="text-cyan-400 font-bold">{m.to?.name || `[${m.to?.galaxy}:${m.to?.system}:${m.to?.position}]`}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-red-500 font-mono">{ships} naves</span>
-                      <div className="text-[9px] text-slate-455 font-mono">{fmtTime(remaining)}</div>
-                    </div>
-                  </div>
-                  <ProgressBar value={total - remaining} max={total} color="from-red-600 to-rose-500" />
-                  <div className="text-[9px] text-slate-500 font-mono leading-relaxed truncate">
-                    Naves: {Object.entries(m.fleet || {}).map(([id, q]) => `${q} ${SHIPS[id]?.name || id}`).join(', ')}
-                  </div>
+    <div className="space-y-5 view-enter">
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Misiones) con título Hangar de la Flota */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle={
+          activeCardView === 'inventory' ? 'Inventario de la Flota' :
+          activeCardView === 'in_flight' ? 'Flotas en Vuelo' :
+          activeCardView === 'trade_routes' ? 'Rutas Comerciales' :
+          activeCardView === 'destination' ? 'Despacho de Misión' :
+          activeCardView === 'spy_reports' ? 'Informes de Espionaje' :
+          'Hangar de la Flota'
+        }
+        breadcrumbIcon="🛸"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom={activeCardView === 'menu' ? 'Alto Mando' : 'Hangar de la Flota'}
+        backButtonIcon={activeCardView === 'menu' ? '👑' : '🛸'}
+        onBackToAltoMando={() => {
+          if (activeCardView !== 'menu') {
+            setActiveCardView('menu');
+          } else {
+            if (navigateBack) navigateBack();
+            else if (navigateTo) navigateTo('government');
+            else if (setActiveTab) setActiveTab('government');
+          }
+        }}
+        rightSlot={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">
+              <span className="text-slate-400">En vuelo:</span>
+              <span className="font-bold text-cyan-300">{playerActiveMissions.length} misiones</span>
+            </div>
+            {incomingAttacks.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs font-mono">
+                <span className="text-rose-300 animate-pulse">⚠️ {incomingAttacks.length} Alertas</span>
+              </div>
+            )}
+          </div>
+        }
+      />
+
+      {/* Alertas de Incursiones Enemigas */}
+      {incomingAttacks.length > 0 && (
+        <IncomingInvasionsAlert
+          incomingAttacks={incomingAttacks}
+          attackPredictions={attackPredictions}
+          state={state}
+          dispatch={dispatch}
+          currentPlanet={currentPlanet}
+          fmtTime={fmtTime}
+          ProgressBar={ProgressBar}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* VISTA PRINCIPAL: GRID DE TARJETAS DE BOTÓN DEL HANGAR */}
+      {/* ========================================================================= */}
+      {activeCardView === 'menu' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-base md:text-lg font-black text-white font-mono tracking-wider uppercase flex items-center gap-2">
+              <span>🛸</span>
+              <span>Comando del Hangar de la Flota</span>
+            </h2>
+            <span className="text-xs font-mono text-cyan-400">
+              {currentPlanet?.name || "Tierra"} — Dársenas Operativas
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-stretch">
+            {/* TARJETA 1: Inventario de la Flota en Tierra */}
+            <button
+              onClick={() => {
+                setActiveCardView('inventory');
+                if (window.playSfx) window.playSfx('click');
+              }}
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-cyan-500/30 hover:border-cyan-400 bg-gradient-to-b from-[#0e1b38]/95 to-[#060a14] hover:shadow-[0_0_35px_rgba(6,182,212,0.35)] transition-all duration-300 select-none cursor-pointer text-left focus:outline-none min-h-[260px]"
+            >
+              <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
+                <SafeImg id="battleship" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-cyan-950/80 text-cyan-300 border border-cyan-500/50">
+                  DÁRSENAS
+                </span>
+              </div>
+              <div className="p-4 flex flex-col justify-between flex-1">
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
+                    Inventario de Flota
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-mono mt-1 line-clamp-2">
+                    Naves en {currentPlanet?.name || 'Tierra'}, unidades en el espacio exterior y destruidas.
+                  </p>
                 </div>
-              );
-            })}
+                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-cyan-300">
+                  <span>{fmt(totalShipsInHangar)} naves</span>
+                  <span>➔</span>
+                </div>
+              </div>
+            </button>
+
+            {/* TARJETA 2: Flotas en Vuelo */}
+            <button
+              onClick={() => {
+                setActiveCardView('in_flight');
+                if (window.playSfx) window.playSfx('click');
+              }}
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-blue-500/30 hover:border-blue-400 bg-gradient-to-b from-[#0d1836]/95 to-[#060914] hover:shadow-[0_0_35px_rgba(59,130,246,0.35)] transition-all duration-300 select-none cursor-pointer text-left focus:outline-none min-h-[260px]"
+            >
+              <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
+                <SafeImg id="cruiser" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-blue-950/80 text-blue-300 border border-blue-500/50">
+                  TRÁNSITO
+                </span>
+              </div>
+              <div className="p-4 flex flex-col justify-between flex-1">
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-blue-300 transition-colors">
+                    Flotas en Vuelo
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-mono mt-1 line-clamp-2">
+                    Monitoreo en tiempo real de misiones en tránsito y vectores de retorno.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-blue-300">
+                  <span>{playerActiveMissions.length} misiones</span>
+                  <span>➔</span>
+                </div>
+              </div>
+            </button>
+
+            {/* TARJETA 3: Rutas Comerciales Automáticas */}
+            <button
+              onClick={() => {
+                setActiveCardView('trade_routes');
+                if (window.playSfx) window.playSfx('click');
+              }}
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-amber-500/30 hover:border-amber-400 bg-gradient-to-b from-[#24170c]/95 to-[#0a0705] hover:shadow-[0_0_35px_rgba(245,158,11,0.35)] transition-all duration-300 select-none cursor-pointer text-left focus:outline-none min-h-[260px]"
+            >
+              <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
+                <SafeImg id="largeCargo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-amber-950/80 text-amber-300 border border-amber-500/50">
+                  LOGÍSTICA
+                </span>
+              </div>
+              <div className="p-4 flex flex-col justify-between flex-1">
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-amber-300 transition-colors">
+                    Rutas Comerciales
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-mono mt-1 line-clamp-2">
+                    Fletes automáticos de punto a punto, intercambios recíprocos y bucles.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-amber-300">
+                  <span>{(state.tradeRoutes || []).length} rutas</span>
+                  <span>➔</span>
+                </div>
+              </div>
+            </button>
+
+            {/* TARJETA 4: Despacho Táctico / Destino */}
+            <button
+              onClick={() => {
+                setActiveCardView('dispatch');
+                if (window.playSfx) window.playSfx('click');
+              }}
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-emerald-500/30 hover:border-emerald-400 bg-gradient-to-b from-[#0c221a]/95 to-[#050e0a] hover:shadow-[0_0_35px_rgba(16,185,129,0.35)] transition-all duration-300 select-none cursor-pointer text-left focus:outline-none min-h-[260px]"
+            >
+              <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
+                <SafeImg id="destroyer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-emerald-950/80 text-emerald-300 border border-emerald-500/50">
+                  MISIÓN
+                </span>
+              </div>
+              <div className="p-4 flex flex-col justify-between flex-1">
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-emerald-300 transition-colors">
+                    Despacho Táctico
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-mono mt-1 line-clamp-2">
+                    Asignación de flotas para ataque, transporte o colonización hacia coordenadas.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-emerald-300">
+                  <span>{target ? "Destino Fijado" : "Configurar"}</span>
+                  <span>➔</span>
+                </div>
+              </div>
+            </button>
+
+            {/* TARJETA 5: Informes de Espionaje */}
+            <button
+              onClick={() => {
+                setActiveCardView('spy_reports');
+                if (window.playSfx) window.playSfx('click');
+              }}
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-purple-500/30 hover:border-purple-400 bg-gradient-to-b from-[#1c1033]/95 to-[#080512] hover:shadow-[0_0_35px_rgba(168,85,247,0.35)] transition-all duration-300 select-none cursor-pointer text-left focus:outline-none min-h-[260px]"
+            >
+              <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
+                <SafeImg id="spyProbe" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-purple-950/80 text-purple-300 border border-purple-500/50">
+                  INTELIGENCIA
+                </span>
+              </div>
+              <div className="p-4 flex flex-col justify-between flex-1">
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-purple-300 transition-colors">
+                    Informes de Espionaje
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-mono mt-1 line-clamp-2">
+                    Telemetría de defensas y flotas enemigas recopiladas por sondas espía.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-purple-300">
+                  <span>{(state.spyReports || []).length} informes</span>
+                  <span>➔</span>
+                </div>
+              </div>
+            </button>
+
+            {/* TARJETA 6: Patrullas y Seguridad Orbital */}
+            <button
+              onClick={() => {
+                setActiveCardView('patrols');
+                if (window.playSfx) window.playSfx('click');
+              }}
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-cyan-500/40 hover:border-cyan-300 bg-gradient-to-b from-[#0a233c]/95 to-[#040c17] hover:shadow-[0_0_35px_rgba(6,182,212,0.4)] transition-all duration-300 select-none cursor-pointer text-left focus:outline-none min-h-[260px]"
+            >
+              <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
+                <SafeImg id="patrol_orbital" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-cyan-950/90 text-cyan-300 border border-cyan-400/60 shadow-lg">
+                  DEFENSA
+                </span>
+              </div>
+              <div className="p-4 flex flex-col justify-between flex-1">
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
+                    Patrullas y Seguridad
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-mono mt-1 line-clamp-2">
+                    Escudo orbital activo y policía de sistema. Interceptación automática de hostiles.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-cyan-300">
+                  <span>{(state.patrols || []).length} escuadrones</span>
+                  <span>➔</span>
+                </div>
+              </div>
+            </button>
+
+            {/* TARJETA 7: Registro Naval Imperial (Matrículas y Cascos SQLite) */}
+            <button
+              onClick={() => {
+                setShowRegistryModal(true);
+                if (window.playSfx) window.playSfx('click');
+              }}
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-amber-500/40 hover:border-amber-300 bg-gradient-to-b from-[#2b1e07]/95 to-[#0e0a02] hover:shadow-[0_0_35px_rgba(245,158,11,0.4)] transition-all duration-300 select-none cursor-pointer text-left focus:outline-none min-h-[260px]"
+            >
+              <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10 flex items-center justify-center">
+                <span className="text-6xl group-hover:scale-110 transition-transform duration-500">🎖️</span>
+                <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-amber-950/90 text-amber-300 border border-amber-400/60 shadow-lg">
+                  REGISTRO
+                </span>
+              </div>
+              <div className="p-4 flex flex-col justify-between flex-1">
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-amber-300 transition-colors">
+                    Registro de Cascos
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-mono mt-1 line-clamp-2">
+                    Matrículas permanentes, astillero natal, bitácoras y condecoraciones de cada nave.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-amber-300">
+                  <span>Auditoría de Cascos</span>
+                  <span>➔</span>
+                </div>
+              </div>
+            </button>
+
+            {/* TARJETA 8: Volver Atrás */}
+            <ActionCardTile
+              type="back"
+              title="Volver Atrás"
+              subtitle="Regresar a la pantalla anterior"
+              badgeText="VOLVER"
+              onClick={() => {
+                if (navigateBack) navigateBack();
+              }}
+            />
           </div>
         </div>
       )}
 
-      <div className={S.cardDeep}>
-        <h3 className="text-lg font-semibold mb-3">🎯 Destino</h3>
-        {target ? (
-          <div className="flex items-center justify-between bg-slate-950/50 rounded-lg p-3">
-            <div>
-              <div className="font-mono text-cyan-400">[{target.galaxy}:{target.system}:{target.position}]</div>
-              <div className="text-sm text-slate-400">
-                {target.occupied ? (target.isAI ? 'Planeta IA' : 'Tu planeta') : 'Espacio vacío'}
-              </div>
-            </div>
-            <button onClick={() => setSelectedTarget(null)} className={S.btnGhost + ' ' + S.btn}>✕</button>
-          </div>
-        ) : (
-          <div>
-            <p className="text-slate-400 text-sm mb-4">Selecciona un destino en la vista de Galaxia para enviar flotas en misiones tácticas.</p>
-            
-            {/* Local Fleet Inventory when no target is selected */}
-            <div className="space-y-3 pt-2">
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wide">🛸 Inventario de Flota en {currentPlanet.name}</h4>
-              {Object.entries(currentPlanet.fleet || {}).filter(([_, q]) => q > 0).length === 0 ? (
-                <p className="text-slate-500 text-xs italic font-mono bg-black/20 p-4 rounded-xl border border-white/5">No hay naves estacionadas en este hangar local.</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {Object.entries(currentPlanet.fleet || {}).filter(([_, q]) => q > 0).map(([id, maxQty]) => {
-                    const icon = shipDisplayIcon(id);
-                    const name = shipDisplayName(id);
-                    const st = shipStats(id);
-                    return (
-                      <div key={id} className="p-3 rounded-xl border border-white/5 glass bg-black/20 relative overflow-hidden group hover:border-[var(--ue-accent)]/30 transition-all">
-                        <div className="flex items-center gap-3">
-                          <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{icon}</span>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-bold text-white truncate">{name}</div>
-                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">Disponibles: <span className="text-cyan-400 font-bold">{maxQty}</span></div>
-                          </div>
-                        </div>
-                        {st && (
-                          <div className="grid grid-cols-3 gap-1 text-[9px] text-slate-500 font-mono mt-2 pt-2 border-t border-white/5">
-                            <span title="Ataque">⚔️ {st.atk?.toFixed?.(1) || st.atk}</span>
-                            <span title="Escudos">🛡️ {st.shd?.toFixed?.(1) || st.shd}</span>
-                            <span title="Casco">💪 {fmt(st.hull)}</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Modal de Inspección del Registro Naval Imperial */}
+      <ImperialRegistryModal
+        isOpen={showRegistryModal}
+        onClose={() => setShowRegistryModal(false)}
+        currentPlanet={currentPlanet}
+      />
 
-      {target && (
-        <>
-          <FleetSelectionList
+      {/* ========================================================================= */}
+      {/* SUB-VISTA 1: INVENTARIO DE FLOTA */}
+      {/* ========================================================================= */}
+      {activeCardView === 'inventory' && (
+        <div className="space-y-4">
+          <FleetInventorySection
+            currentPlanet={currentPlanet}
             state={state}
             dispatch={dispatch}
-            currentPlanet={currentPlanet}
-            selectedShips={selectedShips}
-            setSelectedShips={setSelectedShips}
-            filter={filter}
-            setFilter={setFilter}
-            availableShips={availableShips}
+            SHIPS={SHIPS}
             shipDisplayIcon={shipDisplayIcon}
             shipDisplayName={shipDisplayName}
             shipStats={shipStats}
-            toggleShip={toggleShip}
+            fmt={fmt}
+            fmtTime={fmtTime}
+            ProgressBar={ProgressBar}
+            S={S}
+          />
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUB-VISTA 2: FLOTAS EN VUELO */}
+      {/* ========================================================================= */}
+      {activeCardView === 'in_flight' && (
+        <div className="space-y-4">
+          <div className="bg-[#090d1f]/90 border border-blue-500/25 rounded-3xl p-5 md:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+              <div className="w-12 h-12 rounded-2xl bg-blue-950/60 border border-blue-500/40 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                🚀
+              </div>
+              <div>
+                <h3 className="text-lg md:text-xl font-black text-white uppercase tracking-tight">
+                  Flotas en Vuelo y Vectores de Misión
+                </h3>
+                <p className="text-xs text-blue-400 font-mono">
+                  Seguimiento de misiones activas de ataque, transporte, reciclaje y exploración
+                </p>
+              </div>
+            </div>
+
+            {playerActiveMissions.length === 0 ? (
+              <div className="p-12 text-center rounded-2xl bg-black/30 border border-white/5 text-slate-500 text-xs font-mono">
+                No hay misiones tácticas en vuelo actualmente. Las flotas aguardan órdenes en los hangares planetarios.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {playerActiveMissions.map(m => {
+                  const isReturning = m.returning;
+                  const remaining = Math.max(0, (isReturning ? (m.returnTime - Date.now()) : (m.arrivalTime - Date.now())) / 1000);
+                  const total = Math.max(1, (isReturning ? (m.returnTime - (m.returnDeparture || m.departure)) : (m.arrivalTime - m.departure)) / 1000);
+                  const pct = Math.min(100, Math.max(0, Math.round(((total - remaining) / total) * 100)));
+
+                  const typeMap = {
+                    colonize: 'Colonización',
+                    transport: 'Transporte',
+                    attack: 'Ataque',
+                    espionage: 'Espionaje',
+                    recycle: 'Reciclaje',
+                    recycling: 'Reciclaje',
+                    planet_destruction: 'Destrucción',
+                    expedition: 'Expedición'
+                  };
+                  const typeLabel = typeMap[m.type] || (m.type ? m.type.charAt(0).toUpperCase() + m.type.slice(1) : 'Tránsito');
+
+                  const planets = state?.planets || [];
+                  const originPlanet = m.from?.id ? planets.find(p => p.id === m.from.id) : (m.from?.name ? planets.find(p => p.name === m.from.name) : planets.find(p => p.galaxy === m.from?.galaxy && p.system === m.from?.system && p.position === m.from?.position));
+                  const originName = originPlanet?.name || m.from?.name || 'Base';
+                  const originCoords = `[${m.from?.galaxy || 1}:${m.from?.system || 1}:${m.from?.position || 1}]`;
+                  const destCoords = `[${m.to?.galaxy || 1}:${m.to?.system || 1}:${m.to?.position || 1}]`;
+                  const targetPlanet = planets.find(p => p.galaxy === m.to?.galaxy && p.system === m.to?.system && p.position === m.to?.position);
+                  const destName = m.to?.name || targetPlanet?.name || null;
+
+                  return (
+                    <div
+                      key={m.id}
+                      className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-black/50 border border-white/10 hover:border-blue-400/50 transition-all select-none"
+                    >
+                      {/* 1. Misión, Planeta Origen y Objetivo (3 líneas claras) */}
+                      <div className="flex flex-col min-w-[150px] leading-tight space-y-0.5">
+                        <span className="text-xs font-black text-white uppercase tracking-wide">
+                          {isReturning ? `Misión de ${typeLabel} (Regreso)` : `Misión de ${typeLabel}`}
+                        </span>
+                        <div className="text-[11px] font-mono text-slate-300 flex items-center gap-1">
+                          <span className="text-slate-400">Desde:</span>
+                          <span className="text-emerald-300 font-bold">🪐 {originName}</span>
+                          <span className="text-slate-400 text-[10px]">{originCoords}</span>
+                        </div>
+                        <div className="text-[11px] font-mono text-slate-300 flex items-center gap-1">
+                          <span className="text-slate-400">{isReturning ? 'Hacia:' : 'Objetivo:'}</span>
+                          <span className="text-cyan-300 font-bold">
+                            {isReturning ? `${originName} ${originCoords}` : (destName ? `${destName} ${destCoords}` : destCoords)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 2. Recuadros con imagen de cada nave y cantidad */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {Object.entries(m.fleet || {}).filter(([, qty]) => qty > 0).map(([sId, qty]) => {
+                          const name = shipDisplayName(sId);
+                          return (
+                            <div
+                              key={sId}
+                              title={`${name}: ${qty}`}
+                              className="flex items-center gap-1.5 p-1 pr-2 rounded-xl bg-black/60 border border-white/10 shadow-sm"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-blue-950/40 border border-blue-500/20 overflow-hidden flex items-center justify-center shrink-0">
+                                <SafeImg id={sId} fallback={<span className="text-sm">{shipDisplayIcon(sId)}</span>} className="w-full h-full object-cover" />
+                              </div>
+                              <span className="font-mono text-xs font-black text-cyan-300">
+                                {qty}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* 3. Botón de retorno + Reloj y progreso */}
+                      <div className="flex items-center gap-3 shrink-0 ml-auto">
+                        {!isReturning && dispatch && (
+                          <button
+                            onClick={() => {
+                              dispatch({ type: 'CANCEL_MISSION', missionId: m.id });
+                              if (window.playSfx) window.playSfx('click');
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 hover:text-white font-mono text-[11px] font-bold uppercase transition-all cursor-pointer active:scale-95 shadow-sm"
+                            title="Ordenar retorno inmediato a la base"
+                          >
+                            ✕ Retorno
+                          </button>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-lg bg-blue-950/60 border border-blue-500/30 text-cyan-300 font-mono text-xs font-bold whitespace-nowrap">
+                            ⏱ {fmtTime ? fmtTime(remaining) : `${Math.round(remaining)}s`} ({pct}%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUB-VISTA 3: RUTAS COMERCIALES AUTOMÁTICAS */}
+      {/* ========================================================================= */}
+      {activeCardView === 'trade_routes' && (
+        <div className="space-y-4">
+          <TradeRoutesSection
+            state={state}
+            currentPlanet={currentPlanet}
+            dispatch={dispatch}
+            SHIPS={SHIPS}
+            S={S}
+            fmt={fmt}
+          />
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUB-VISTA 4: DESPACHO TÁCTICO / DESTINO Y ASIGNACIÓN DE NAVES */}
+      {/* ========================================================================= */}
+      {activeCardView === 'dispatch' && (
+        <div className="space-y-4">
+          <DestinationSelectorSection
+            target={target}
+            setSelectedTarget={setSelectedTarget}
+            currentPlanet={currentPlanet}
+            shipDisplayIcon={shipDisplayIcon}
+            shipDisplayName={shipDisplayName}
+            shipStats={shipStats}
             fmt={fmt}
             S={S}
           />
 
-          <div className={S.cardDeep}>
-            <h3 className="text-lg font-semibold mb-3">📋 Tipo de Misión</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-              {[
-                { id: 'attack', label: '⚔️ Atacar', available: target.occupied && target.isAI },
-                { id: 'planet_destruction', label: '🪐 Pulverizar Planeta', available: target.occupied && target.isAI && (currentPlanet.fleet.planetDestroyer || 0) > 0 },
-                { id: 'espionage', label: '👁️ Espiar', available: target.occupied && target.isAI && (currentPlanet.fleet.espionageProbe || 0) > 0 },
-                { id: 'transport', label: '📦 Transportar', available: target.occupied && !target.isAI },
-                { id: 'colonize', label: '🏴 Colonizar', available: !target.occupied && (currentPlanet.fleet.colonizer || 0) > 0 },
-                { id: 'recycle', label: '♻️ Reciclar', available: (state.debrisField?.metal || 0) > 0 || (state.debrisField?.crystal || 0) > 0 },
-                { id: 'expedition', label: '🌌 Expedición', available: true },
-              ].map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setMissionType(m.id)}
-                  disabled={!m.available}
-                  className={`${S.btn} ${missionType === m.id ? S.btnPrimary : S.btnGhost} ${!m.available ? 'opacity-40' : ''}`}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            {missionType === 'transport' && (
-              <div className="space-y-2 mb-4">
-                <label className="text-sm text-slate-400">Recursos a transportar:</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <input type="number" min="0" placeholder="Metal" value={transportRes.metal || ''} onChange={e => setTransportRes({ ...transportRes, metal: Math.max(0, parseInt(e.target.value) || 0) })} className={S.input} />
-                  <input type="number" min="0" placeholder="Cristal" value={transportRes.crystal || ''} onChange={e => setTransportRes({ ...transportRes, crystal: Math.max(0, parseInt(e.target.value) || 0) })} className={S.input} />
-                  <input type="number" min="0" placeholder="Deuterio" value={transportRes.deuterium || ''} onChange={e => setTransportRes({ ...transportRes, deuterium: Math.max(0, parseInt(e.target.value) || 0) })} className={S.input} />
-                </div>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <label className="text-sm text-slate-400 block mb-2">Velocidad de misión: {missionSpeed}/10</label>
-              <input
-                type="range" min="1" max="10" value={missionSpeed}
-                onChange={e => setMissionSpeed(parseInt(e.target.value))}
-                className="w-full"
+          {target && (
+            <>
+              <FleetSelectionList
+                state={state}
+                dispatch={dispatch}
+                currentPlanet={currentPlanet}
+                selectedShips={selectedShips}
+                setSelectedShips={setSelectedShips}
+                filter={filter}
+                setFilter={setFilter}
+                availableShips={availableShips}
+                shipDisplayIcon={shipDisplayIcon}
+                shipDisplayName={shipDisplayName}
+                shipStats={shipStats}
+                toggleShip={toggleShip}
+                fmt={fmt}
+                S={S}
               />
-            </div>
 
-            {missionType === 'attack' && (
-              <div className="mb-4 flex items-center gap-2 glass p-2 rounded-xl border border-white/10">
-                <input
-                  type="checkbox"
-                  id="auto-retreat-chk"
-                  checked={autoRetreat}
-                  onChange={e => setAutoRetreat(e.target.checked)}
-                  className="rounded border-white/20 text-[var(--ue-accent)] focus:ring-[var(--ue-accent)] bg-[#05070f] w-4 h-4 cursor-pointer"
-                />
-                <label htmlFor="auto-retreat-chk" className="text-xs text-slate-300 cursor-pointer select-none">
-                  🛡️ Activar retirada automática (si quedan menos del 30% de naves)
-                </label>
-              </div>
-            )}
-
-            {missionType === 'attack' && (
-              <div className="mb-4">
-                <label className="text-sm text-[var(--ue-text-dim)] block mb-2">🛡️ Formación de Combate:</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'standard', name: 'Estándar', desc: 'Sin modificadores.' },
-                    { id: 'vanguard', name: 'Vanguardia', desc: '+20% Vel, +10% Atk, -15% Escudo' },
-                    { id: 'artillery', name: 'Artillería', desc: '-15% Vel, +25% Atk, +10% Escudo' },
-                    { id: 'escort', name: 'Escolta', desc: '+5% Vel, +15% Escudo, -5% Atk (segura)' },
-                    { id: 'raider', name: 'Asaltante', desc: '+10% Vel, +15% Atk, -10% Escudo (+15% escombros, alto riesgo)' },
-                  ].map(f => (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => setFormation(f.id)}
-                      className={`p-2 rounded-xl border transition-all text-left glass ${formation === f.id ? 'border-[var(--ue-accent)]/50 text-[var(--ue-accent)]' : 'border-white/10 text-slate-400 hover:text-slate-200'}`}
-                    >
-                      <div className="text-xs font-semibold">{f.name}</div>
-                      <div className="text-[9px] text-slate-500 mt-1 leading-tight">{f.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={handleSimulate}
-                disabled={Object.values(selectedShips).every(v => !v || v === 0)}
-                className={`flex-1 ${S.btn} ${S.btnGhost}`}
-              >
-                🔮 Simular
-              </button>
-              <button
-                onClick={sendFleet}
-                disabled={Object.values(selectedShips).every(v => !v || v === 0)}
-                className={`flex-1 ${S.btn} ${Object.values(selectedShips).some(v => v > 0) ? S.btnPrimary : S.btnGhost}`}
-              >
-                🚀 Enviar Flota
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Active Missions */}
-      {state.fleetMissions.filter(m => !m.isAI).length > 0 && (
-        <div className={S.cardDeep}>
-          <h3 className="text-lg font-semibold mb-3">🛸 Flotas en Vuelo</h3>
-          <div className="space-y-2">
-            {state.fleetMissions.filter(m => !m.isAI).map(m => {
-              const isReturning = m.returning;
-              const remaining = Math.max(0, (isReturning ? (m.returnTime - Date.now()) : (m.arrivalTime - Date.now())) / 1000);
-              const total = (isReturning ? (m.returnTime - (m.returnDeparture || m.departure)) : (m.arrivalTime - m.departure)) / 1000;
-              const ships = Object.values(m.fleet).reduce((a, b) => a + b, 0);
-              return (
-                <div key={m.id} className="bg-slate-950/50 rounded-lg p-3">
-                  <div className="flex justify-between mb-2">
-                    <div>
-                      <span className="font-semibold capitalize">{isReturning ? `🚀 ${m.type} (regreso)` : m.type}</span>
-                      <span className="text-xs text-slate-400 ml-2">
-                        {isReturning ? `← [${m.from.galaxy}:${m.from.system}:${m.from.position}]` : `→ [${m.to.galaxy}:${m.to.system}:${m.to.position}]`}
-                      </span>
-                    </div>
-                    <span className="text-xs text-cyan-400 font-mono">{ships} naves • {fmtTime(remaining)}</span>
-                  </div>
-                  <ProgressBar value={total - remaining} max={total} color="from-cyan-500 to-blue-500" />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Trade Routes */}
-      <div className={S.cardDeep}>
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">🚚 Rutas Comerciales Automáticas</h3>
-        {(state.tradeRoutes || []).length === 0 ? (
-          <div className="text-xs text-slate-500">
-            Sin rutas activas. Crea una ruta para transferir excedentes de recursos entre colonias automáticamente.
-          </div>
-        ) : (
-          <div className="space-y-2 mb-3">
-            {(state.tradeRoutes || []).map(route => {
-              const from = state.planets.find(p => p.id === route.fromId);
-              const resNames = { metal: '⛏️ Metal', crystal: '💎 Cristal', deuterium: '⚗️ Deuterio' };
-              return (
-                <div key={route.id} className={`glass rounded-xl p-3 border ${route.active ? 'border-emerald-500/30' : 'border-white/10'}`}>
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs">
-                      <span className="font-semibold text-slate-200">{from?.name || 'Origen'}</span>
-                      <span className="text-slate-400"> → </span>
-                      <span className="text-slate-200">Capital</span>
-                      <span className="mx-2 text-slate-500">·</span>
-                      <span>{resNames[route.resource] || route.resource}</span>
-                      <span className="text-slate-500 ml-2">(ratio: {(route.ratio * 100).toFixed(0)}%)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => dispatch({ type: 'TOGGLE_TRADE_ROUTE', routeId: route.id })}
-                        className={`text-[10px] px-2 py-1 rounded ${route.active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>
-                        {route.active ? 'Activa' : 'Pausada'}
-                      </button>
-                      <button onClick={() => dispatch({ type: 'REMOVE_TRADE_ROUTE', routeId: route.id })}
-                        className="text-[10px] text-red-400 hover:text-red-300">✕</button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        <div className="flex flex-wrap gap-2 items-center">
-          <select value={newRouteFrom} onChange={e => setNewRouteFrom(e.target.value)}
-            className="text-xs bg-slate-800 border border-white/10 rounded p-1.5 text-slate-200">
-            {state.planets.filter(p => !p.isHome && !(state.tradeRoutes || []).some(r => r.fromId === p.id && r.active)).map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-          <select value={newRouteResource} onChange={e => setNewRouteResource(e.target.value)}
-            className="text-xs bg-slate-800 border border-white/10 rounded p-1.5 text-slate-200">
-            <option value="metal">⛏️ Metal</option>
-            <option value="crystal">💎 Cristal</option>
-            <option value="deuterium">⚗️ Deuterio</option>
-          </select>
-          <select value={newRouteRatio} onChange={e => setNewRouteRatio(parseFloat(e.target.value))}
-            className="text-xs bg-slate-800 border border-white/10 rounded p-1.5 text-slate-200">
-            <option value="0.25">25% (mínimo excedente)</option>
-            <option value="0.5">50%</option>
-            <option value="0.75">75% (máximo excedente)</option>
-          </select>
-          {(state.tradeRoutes || []).length < 5 && (
-            <button onClick={() => {
-              dispatch({ type: 'ADD_TRADE_ROUTE', fromId: newRouteFrom, toGalaxy: 1, toSystem: 1, toPosition: 1, resource: newRouteResource, ratio: newRouteRatio });
-            }} className={`${S.btn} ${S.btnPrimary} text-xs`}>+ Añadir Ruta</button>
-          )}
-          {(state.tradeRoutes || []).length > 0 && (
-            <button onClick={() => dispatch({ type: 'PROCESS_TRADE_ROUTES' })}
-              className={`${S.btn} ${S.btnGhost} text-xs`}>⚡ Procesar Ahora</button>
+              <MissionConfigPanel
+                target={target}
+                currentPlanet={currentPlanet}
+                selectedShips={selectedShips}
+                setSelectedShips={setSelectedShips}
+                missionType={missionType}
+                setMissionType={setMissionType}
+                missionSpeed={missionSpeed}
+                setMissionSpeed={setMissionSpeed}
+                transportRes={transportRes}
+                setTransportRes={setTransportRes}
+                autoRetreat={autoRetreat}
+                setAutoRetreat={setAutoRetreat}
+                formation={formation}
+                setFormation={setFormation}
+                handleSimulate={handleSimulate}
+                sendFleet={sendFleet}
+                shipStats={shipStats}
+                state={state}
+                fmt={fmt}
+                S={S}
+              />
+            </>
           )}
         </div>
-      </div>
+      )}
 
-      {/* Spy Reports */}
-      {state.spyReports?.length > 0 && (
-        <div className={S.cardDeep}>
-          <h3 className="text-lg font-semibold mb-3">👁️ Informes de Espionaje</h3>
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-            {state.spyReports.slice().reverse().slice(0, 10).map(r => {
-              const hasResources = r.resources && (typeof r.resources.metal === 'number' || r.resources.metal === 'parcial' || r.resources.metal === '???');
-              const hasBuildings = r.buildings && Object.keys(r.buildings).length > 0;
-              const hasFleet = r.fleet && Object.keys(r.fleet).length > 0;
-              const hasDefenses = r.defenses && Object.keys(r.defenses).length > 0;
-              const hasExtended = r.extendedInfo;
-
-              return (
-                <div key={r.id} className="glass rounded-xl p-3.5 border border-white/10 space-y-3 transition-colors hover:border-[var(--ue-accent)]/30">
-                  <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                    <div>
-                      <span className="font-semibold text-sm text-cyan-300">{r.target?.name || r.targetName}</span>
-                      <span className="text-xs text-slate-500 font-mono ml-2">
-                        [{r.coords?.galaxy || r.target?.galaxy}:{r.coords?.system || r.target?.system}:{r.coords?.position || r.target?.position}]
-                      </span>
-                    </div>
-                    <span className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded tracking-wider ${
-                      r.intelLevel === 'full' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
-                      r.intelLevel === 'high' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                      r.intelLevel === 'medium' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-                      r.intelLevel === 'low' ? 'bg-slate-800 text-slate-400' :
-                      'bg-red-500/20 text-red-300 border border-red-500/30'
-                    }`}>
-                      Intel: {r.intelLevel}
-                    </span>
-                  </div>
-
-                  {/* Resources */}
-                  {hasResources && (
-                    <div className="grid grid-cols-3 gap-2 text-xs bg-slate-950/80 p-2 rounded border border-slate-900">
-                      <div>
-                        <span className="text-amber-400 mr-1.5">⛏️</span> 
-                        <span className="font-mono text-slate-300">
-                          {typeof r.resources.metal === 'number' ? fmt(r.resources.metal) : r.resources.metal}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-cyan-400 mr-1.5">💎</span> 
-                        <span className="font-mono text-slate-300">
-                          {typeof r.resources.crystal === 'number' ? fmt(r.resources.crystal) : r.resources.crystal}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-emerald-400 mr-1.5">⚗️</span> 
-                        <span className="font-mono text-slate-300">
-                          {typeof r.resources.deuterium === 'number' ? fmt(r.resources.deuterium) : r.resources.deuterium}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tabbed details */}
-                  <div className="space-y-1.5 text-xs">
-                    {hasBuildings && (
-                      <div className="text-slate-400 leading-relaxed">
-                        <span className="font-semibold text-slate-300">🏢 Edificios:</span>{' '}
-                        {Object.entries(r.buildings).filter(([, v]) => v > 0).map(([k, v]) => `${BUILDINGS[k]?.name || k} (${v})`).join(', ') || 'Ninguno'}
-                      </div>
-                    )}
-                    {hasFleet && (
-                      <div className="text-slate-400 leading-relaxed">
-                        <span className="font-semibold text-slate-300">🚀 Flota:</span>{' '}
-                        {r.fleet.estimated ? (
-                          <span className="text-amber-400/90 italic font-medium">Presencia de flota detectada (Sensores insuficientes para recuento)</span>
-                        ) : r.fleet.none ? (
-                          <span className="text-slate-500 italic">No se detectaron naves en órbita</span>
-                        ) : (
-                          Object.entries(r.fleet).filter(([, v]) => v > 0).map(([k, v]) => `${SHIPS[k]?.name || k} (${v})`).join(', ') || 'Ninguna'
-                        )}
-                      </div>
-                    )}
-                    {hasDefenses && (
-                      <div className="text-slate-400 leading-relaxed">
-                        <span className="font-semibold text-slate-300">🛡️ Defensas:</span>{' '}
-                        {Object.entries(r.defenses).filter(([, v]) => v > 0).map(([k, v]) => `${DEFENSES[k]?.name || k} (${v})`).join(', ') || 'Ninguna'}
-                      </div>
-                    )}
-                    {hasExtended && (
-                      <div className="border-t border-slate-900/60 pt-2 mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-slate-400 bg-cyan-950/10 p-2 rounded">
-                        <div><span className="font-semibold text-cyan-400/80 mr-1">Estrategia:</span> {r.extendedInfo.strategy}</div>
-                        <div><span className="font-semibold text-cyan-400/80 mr-1">Agresión:</span> {(r.extendedInfo.aggression * 100).toFixed(0)}%</div>
-                        <div><span className="font-semibold text-cyan-400/80 mr-1">Récord Combate:</span> {r.extendedInfo.totalWins}V / {r.extendedInfo.totalLosses}D</div>
-                        <div><span className="font-semibold text-cyan-400/80 mr-1">Predicción:</span> {r.extendedInfo.behaviorPrediction}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* ========================================================================= */}
+      {/* SUB-VISTA 5: INFORMES DE ESPIONAJE */}
+      {/* ========================================================================= */}
+      {activeCardView === 'spy_reports' && (
+        <div className="space-y-4">
+          <SpyReportsSection
+            spyReports={state.spyReports}
+            BUILDINGS={BUILDINGS}
+            SHIPS={SHIPS}
+            DEFENSES={DEFENSES}
+            fmt={fmt}
+            S={S}
+          />
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* SUB-VISTA 6: PATRULLAS Y SEGURIDAD ORBITAL */}
+      {/* ========================================================================= */}
+      {activeCardView === 'patrols' && (
+        <PatrolControlSection
+          state={state}
+          dispatch={dispatch}
+          currentPlanet={currentPlanet}
+          SHIPS={SHIPS}
+          fmt={fmt}
+          fmtTime={fmtTime}
+          S={S}
+          onBack={() => setActiveCardView('menu')}
+        />
+      )}
+
+      {/* Modal del Simulador de Combate */}
       <CombatSimulatorModal
         simResult={simResult}
         setSimResult={setSimResult}

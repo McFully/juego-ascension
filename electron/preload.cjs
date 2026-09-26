@@ -56,5 +56,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   renameSave: (oldSlug, newName) => ipcRenderer.invoke('rename-save', { oldSlug, newName }),
   exportSaveToFile: (data, defaultName) => ipcRenderer.invoke('export-save-to-file', { data: toSaveIPC(data), defaultName }),
   importSaveFromFile: () => ipcRenderer.invoke('import-save-from-file'),
+  exportLogs: (additionalTelemetry) => ipcRenderer.invoke('export-logs', sanitizeForIPC(additionalTelemetry, new WeakSet())),
   quitApp: () => ipcRenderer.invoke('quit-app'),
+  toggleFullscreen: () => ipcRenderer.invoke('toggle-fullscreen'),
+
+  // Registro Naval Imperial (SQLite)
+  dbInsertShips: (ships) => ipcRenderer.invoke('db-insert-ships', ships),
+  dbGetShipsByPlanet: (payload) => ipcRenderer.invoke('db-get-ships-by-planet', payload),
+  dbGetPlanetFleetSummary: (planetId) => ipcRenderer.invoke('db-get-planet-fleet-summary', planetId),
+  dbLogShipEvent: (payload) => ipcRenderer.invoke('db-log-ship-event', payload),
+  dbGetShipLogs: (shipId) => ipcRenderer.invoke('db-get-ship-logs', shipId),
+  dbRenameShip: (payload) => ipcRenderer.invoke('db-rename-ship', payload),
+  dbAssignShipsMission: (payload) => ipcRenderer.invoke('db-assign-ships-mission', payload),
+  dbReturnShipsPlanet: (payload) => ipcRenderer.invoke('db-return-ships-planet', payload),
+  dbResolveCombatShips: (payload) => ipcRenderer.invoke('db-resolve-combat-ships', payload),
+  dbScrapShips: (payload) => ipcRenderer.invoke('db-scrap-ships', payload),
+  dbMigrateJson: (saveSlug) => ipcRenderer.invoke('db-migrate-json', saveSlug),
 });

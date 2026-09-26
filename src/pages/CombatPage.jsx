@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { SafeImg } from '../assets.jsx';
+import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
+import { useNavigation } from '../components/navigation/NavigationContext.jsx';
+import { CombatReportModal } from '../components/combat/CombatReportModal.jsx';
+import { CombatLogList } from '../components/combat/CombatLogList.jsx';
+import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 
-const CombatPage = ({ state, SHIPS, DEFENSES, S, ProgressBar, fmt }) => {
+const CombatPage = ({ state, currentPlanet, production, SHIPS, DEFENSES, S, ProgressBar, fmt }) => {
+  const { navigateBack } = useNavigation();
   const [selectedReport, setSelectedReport] = useState(null);
   const [combatFilter, setCombatFilter] = useState('all'); // 'all' | 'attack' | 'defense'
   const [visibleLogsCount, setVisibleLogsCount] = useState(10);
@@ -17,273 +23,145 @@ const CombatPage = ({ state, SHIPS, DEFENSES, S, ProgressBar, fmt }) => {
     return true;
   });
 
+  const theaters = [
+    { id: 'all', title: 'Registro Global', icon: '⚔️', assetId: 'battleship', count: `${state.combatLog.length} Batallas`, subtitle: 'Historial completo de enfrentamientos y escaramuzas galácticas' },
+    { id: 'attack', title: 'Incursiones Ofensivas', icon: '🚀', assetId: 'weapons', count: `${playerExpeditions.length} En Vuelo`, subtitle: 'Ataques proyectados y expediciones bélicas hacia otros mundos' },
+    { id: 'defense', title: 'Defensa Territorial', icon: '🛡️', assetId: 'plasmaTurret', count: `${incomingAttacks.length} Invasiones`, subtitle: 'Vectores hostiles entrantes interceptados por los sensores orbitales' },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* Overview Cards for Operations */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className={S.cardDeep + " border-red-500/25 bg-red-950/5"}>
-          <div className="text-xs text-red-400 uppercase tracking-widest font-mono mb-1">Ataques Hostiles Detectados</div>
-          <div className="text-3xl font-bold text-red-200">{incomingAttacks.length}</div>
-          <p className="text-[10px] text-slate-500 mt-1">Sistemas de escaneo profundo rastreando vectores hostiles.</p>
-        </div>
-
-        <div className={S.cardDeep + " border-cyan-500/25 bg-cyan-950/5"}>
-          <div className="text-xs text-cyan-400 uppercase tracking-widest font-mono mb-1">Operaciones Proactivas</div>
-          <div className="text-3xl font-bold text-cyan-200">{playerExpeditions.length}</div>
-          <p className="text-[10px] text-slate-500 mt-1">Flotas aliadas en tránsito a través de cuadrantes galácticos.</p>
-        </div>
-
-        <div className={S.cardDeep}>
-          <div className="text-xs text-slate-400 uppercase tracking-widest font-mono mb-1">Total Combates Históricos</div>
-          <div className="text-3xl font-bold text-slate-200">{state.combatLog.length}</div>
-          <p className="text-[10px] text-slate-500 mt-1">Registros tácticos almacenados en la base de datos local.</p>
-        </div>
-      </div>
-
-      {/* Grid: Live Missions (Left) & Log (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        
-        {/* Radar Militar en Vivo */}
-        <div className={`${S.cardDeep} lg:col-span-5 flex flex-col`}>
-          <h3 className="text-sm font-semibold mb-3 text-slate-200 uppercase tracking-wider flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" /> Radar de Operaciones Militares en Curso
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Combate Status) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Simulador y Centro de Guerra"
+        breadcrumbIcon="⚔️"
+        rightSlot={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-950/40 border border-red-500/30 text-xs font-mono">
+              <span className="text-slate-400">Batallas:</span>
+              <span className="font-bold text-red-300">{state.combatLog.length}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">
+              <span className="text-slate-400">Incursiones:</span>
+              <span className="font-bold text-cyan-300">{playerExpeditions.length}</span>
+            </div>
+          </div>
+        }
+      />
+      {/* Selector de Teatros Operacionales */}
+      <div className="w-full space-y-3 py-2">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm md:text-base font-black text-red-400 font-mono tracking-wider uppercase flex items-center gap-2">
+            <span>⚔️</span>
+            <span>Teatros de Operaciones y Mando de Batalla</span>
           </h3>
-          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 flex-1 scrollbar-thin scrollbar-thumb-cyan-500/20 scrollbar-track-transparent">
-            {incomingAttacks.map(m => {
-              const remaining = Math.max(0, (m.arrivalTime - Date.now()) / 1000);
-              return (
-                <div key={m.id} className="p-2 bg-red-950/20 border border-red-500/30 rounded-xl space-y-1">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-red-400">⚠️ INVASIÓN DETECTADA</span>
-                    <span className="font-mono font-bold text-red-200">{Math.ceil(remaining)}s</span>
-                  </div>
-                  <div className="text-[10px] text-slate-300">
-                    Flota hostil de <span className="font-bold text-white">{m.from.name || "AI"}</span> se dirige a <span className="text-cyan-300">{m.to.name || "Tus coordenadas"}</span>.
-                  </div>
-                  <ProgressBar value={m.arrivalTime - Date.now()} max={m.arrivalTime - m.departureTime} color="from-red-600 to-amber-500" height="h-1" />
-                </div>
-              );
-            })}
-
-            {playerExpeditions.map(m => {
-              const remaining = Math.max(0, (m.arrivalTime - Date.now()) / 1000);
-              return (
-                <div key={m.id} className="p-2 bg-cyan-950/20 border border-cyan-500/25 rounded-xl space-y-1">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-cyan-400 capitalize">🛸 Misión: {m.type}</span>
-                    <span className="font-mono font-bold text-cyan-200">{Math.ceil(remaining)}s</span>
-                  </div>
-                  <div className="text-[10px] text-slate-400">
-                    Flota despachada hacia <span className="text-slate-200">{m.to.name || `${m.to.galaxy}:${m.to.system}:${m.to.position}`}</span>.
-                  </div>
-                  <ProgressBar value={m.arrivalTime - Date.now()} max={m.arrivalTime - m.departureTime} color="from-cyan-500 to-indigo-500" height="h-1" />
-                </div>
-              );
-            })}
-
-            {activeMissions.length === 0 && (
-              <div className="text-xs text-slate-500 italic text-center py-12">
-                Ninguna flota militar en vuelo detectada por los sensores orbitales.
-              </div>
-            )}
-          </div>
+          <span className="text-[11px] font-mono text-slate-400">
+            {theaters.length} Teatros Estratégicos
+          </span>
         </div>
 
-        {/* Historial de Combates */}
-        <div className={`${S.cardDeep} lg:col-span-7`}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-2 border-b border-white/5">
-            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">🗄️ Historial de Operaciones Finalizadas</h3>
-            <div className="flex gap-1">
-              {['all', 'attack', 'defense'].map(f => (
-                <button
-                  key={f}
-                  onClick={() => setCombatFilter(f)}
-                  className={`px-2 py-0.5 text-[9px] uppercase font-mono rounded-lg border transition-all ${
-                    combatFilter === f 
-                      ? 'bg-cyan-500/20 border-cyan-500/50 text-white' 
-                      : 'border-white/5 text-slate-400 hover:bg-white/5'
-                  }`}
-                >
-                  {f === 'all' ? 'Todos' : f === 'attack' ? 'Ataques' : 'Defensas'}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full items-stretch pt-2 pb-4">
+          {theaters.map(theater => {
+            const isSelected = combatFilter === theater.id;
+            return (
+              <button
+                key={theater.id}
+                onClick={() => setCombatFilter(theater.id)}
+                className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none cursor-pointer text-left focus:outline-none w-full h-full min-h-[260px] ${
+                  isSelected
+                    ? 'bg-gradient-to-b from-[#1c1236]/95 via-[#130b26]/90 to-[#05070f] border-red-500/80 shadow-[0_0_35px_rgba(239,68,68,0.35)] scale-[1.02]'
+                    : 'bg-[#090d1f]/90 border-white/10 hover:border-red-500/40 hover:bg-[#0e1633] hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(239,68,68,0.2)]'
+                }`}
+              >
+                <div className="relative w-full h-36 md:h-40 overflow-hidden bg-[#05070f] border-b border-white/10">
+                  <SafeImg
+                    id={theater.assetId}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                  />
+                  <span className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider backdrop-blur-md border ${
+                    isSelected
+                      ? 'bg-red-500/30 border-red-400 text-red-200 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                      : 'bg-black/60 border-white/10 text-slate-400'
+                  }`}>
+                    {theater.count}
+                  </span>
+                </div>
 
-          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-cyan-500/20 scrollbar-track-transparent">
-            {filteredLogs.slice().reverse().slice(0, visibleLogsCount).map(c => {
-              const isPlayerAtk = c.attacker.name === state.playerName;
-              const isPlayerDef = c.defender.name === state.playerName;
-              const playerWon = (isPlayerAtk && c.result.winner === 'attacker') || (isPlayerDef && c.result.winner === 'defender');
-              const playerLost = (isPlayerAtk && c.result.winner === 'defender') || (isPlayerDef && c.result.winner === 'attacker');
-              const winText = playerWon ? '🏆 Victoria' : playerLost ? '💀 Derrota' : '🤝 Empate';
-              
-              return (
-                <div
-                  key={c.id}
-                  onClick={() => setSelectedReport(c)}
-                  className={`p-2 rounded-xl border cursor-pointer bg-slate-950/20 hover:bg-slate-900/40 transition-all ${
-                    playerWon ? 'border-emerald-500/20 hover:border-emerald-500/40' : playerLost ? 'border-red-500/20 hover:border-red-500/40' : 'border-amber-500/20 hover:border-amber-500/40'
-                  }`}
-                >
-                  <div className="flex justify-between items-center mb-0.5 text-[11px]">
-                    <span className={`font-bold uppercase tracking-wider ${playerWon ? 'text-emerald-400' : playerLost ? 'text-red-400' : 'text-amber-400'}`}>
-                      {winText}
+                <div className="p-3.5 flex flex-col justify-between flex-1">
+                  <div>
+                    <h4 className="text-sm md:text-base font-bold text-white uppercase tracking-wide group-hover:text-red-300 transition-colors">
+                      {theater.title}
+                    </h4>
+                    <p className="text-xs text-slate-400 font-mono mt-1 line-clamp-2 leading-relaxed">
+                      {theater.subtitle}
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-xs font-mono">
+                    <span className={isSelected ? 'text-red-400 font-bold' : 'text-slate-500'}>
+                      {isSelected ? '● Teatro Activo' : 'Inspeccionar'}
                     </span>
-                    <span className="font-mono text-slate-600 text-[9px]">{new Date(c.timestamp).toLocaleString()}</span>
-                  </div>
-                  <div className="text-[10px] text-slate-400">
-                    <span className="text-slate-100 font-semibold">{c.attacker.name}</span> → <span className="text-slate-100 font-semibold">{c.defender.name}</span> · {c.result.rounds.length} rondas
-                  </div>
-                  <div className="flex gap-2 text-[9px] text-slate-500 mt-0.5 flex-wrap">
-                    {c.summary?.formation && <span className="capitalize">⚔️ {c.summary.formation}</span>}
-                    <span>💀 {c.summary?.atkLostTotal || 0}/{c.summary?.defLostTotal || 0}</span>
-                    <span>⛏️ {fmt(c.result.debris.metal)}M {fmt(c.result.debris.crystal)}C</span>
+                    <span className="text-red-400 font-bold">➔</span>
                   </div>
                 </div>
-              );
-            })}
-
-            {filteredLogs.length > visibleLogsCount && (
-              <button 
-                onClick={() => setVisibleLogsCount(prev => prev + 10)}
-                className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded-xl text-[10px] font-semibold text-slate-300 hover:text-white transition-all uppercase cursor-pointer"
-              >
-                Cargar más registros (+10)
               </button>
-            )}
+            );
+          })}
 
-            {filteredLogs.length === 0 && (
-              <div className="text-xs text-slate-500 italic text-center py-12">
-                No hay operaciones registradas en esta categoría.
-              </div>
-            )}
-          </div>
+          <ActionCardTile
+            type="back"
+            title="Volver"
+            subtitle="Regresar a la pantalla anterior"
+            badgeText="VOLVER"
+            onClick={() => {
+              if (navigateBack) navigateBack();
+            }}
+          />
         </div>
       </div>
 
-      {selectedReport && (
-        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4" onClick={() => setSelectedReport(null)}>
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="glass-deep border border-cyan-500/30 rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto font-mono text-xs"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
-              <h3 className="text-base font-bold text-white uppercase tracking-wider">📜 Registro Operativo de Batalla</h3>
-              <span className="text-[10px] font-mono text-slate-500">{new Date(selectedReport.timestamp).toLocaleString()}</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-3">
-                <span className="text-emerald-400 font-bold uppercase tracking-wider block text-[10px] mb-1">🛸 Atacante</span>
-                <span className="font-bold text-sm text-slate-100">{selectedReport.attacker.name}</span>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                  Weap: +{(selectedReport.attacker.tech?.weapons||0)*10}% · Shld: +{(selectedReport.attacker.tech?.shields||0)*10}%
-                </div>
-              </div>
-              <div className="bg-red-950/20 border border-red-500/20 rounded-xl p-3">
-                <span className="text-red-400 font-bold uppercase tracking-wider block text-[10px] mb-1">🛡️ Defensor</span>
-                <span className="font-bold text-sm text-slate-100">{selectedReport.defender.name}</span>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                  Weap: +{(selectedReport.defender.tech?.weapons||0)*10}% · Shld: +{(selectedReport.defender.tech?.shields||0)*10}%
-                </div>
-              </div>
-            </div>
-
-            {selectedReport.summary && (
-              <div className="mb-4 bg-slate-950/40 rounded-xl p-3 border border-white/5 space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Total Bajas Atacante:</span>
-                  <span className="text-red-400 font-bold">{selectedReport.summary.atkLostTotal} naves</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Total Bajas Defensor:</span>
-                  <span className="text-red-400 font-bold">{selectedReport.summary.defLostTotal} unidades</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Eficiencia Táctica:</span>
-                  <span className="text-cyan-400 font-bold">{selectedReport.summary.efficiency}%</span>
-                </div>
-                {selectedReport.summary.formation && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Formación Usada:</span>
-                    <span className="text-amber-400 font-bold capitalize">{selectedReport.summary.formation}</span>
-                  </div>
-                )}
-                {selectedReport.summary.autoRetreatUsed && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Retirada Automática:</span>
-                    <span className="text-emerald-400 font-bold">Activada</span>
-                  </div>
-                )}
-                {selectedReport.summary.intelBonus > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Bonus Inteligencia:</span>
-                    <span className="text-purple-400 font-bold">+{Math.round(selectedReport.summary.intelBonus * 100)}% ataque</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <h4 className="font-bold text-slate-200 uppercase tracking-wider mb-2">⚔️ Cronología del Combate por Rondas</h4>
-            <div className="space-y-2 mb-4 max-h-[200px] overflow-y-auto pr-1">
-              {selectedReport.result.rounds.map((r, i) => (
-                <div key={i} className="bg-slate-950/60 rounded-xl p-2.5 border border-white/5 font-mono text-[11px]">
-                  <div className="font-bold text-cyan-400 mb-1 flex justify-between">
-                    <span>⚔️ RONDA {r.round}</span>
-                    <span className="text-slate-500">Dmg total: {fmt(r.atkDmg + r.defDmg)}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-slate-400">
-                    <div>Atacantes Operativas: <span className="text-slate-200 font-bold">{r.atkAlive}</span></div>
-                    <div>Defensores Operativas: <span className="text-slate-200 font-bold">{r.defAlive}</span></div>
-                    <div>Daño Causado Atk: <span className="text-emerald-500">{fmt(r.atkDmg)}</span></div>
-                    <div>Daño Causado Def: <span className="text-rose-400">{fmt(r.defDmg)}</span></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10">
-              <div>
-                <span className="font-bold text-emerald-400 block mb-1 text-[11px]">🏆 Naves supervivientes</span>
-                {Object.entries(selectedReport.result.atkSurvivors || {}).map(([id, q]) => (
-                  <div key={id} className="text-slate-400 text-[10px]">{SHIPS[id]?.icon || '🚀'} {SHIPS[id]?.name || id}: <span className="text-emerald-300">{q}</span></div>
-                ))}
-                {Object.keys(selectedReport.result.atkSurvivors || {}).length === 0 && <div className="text-slate-600 italic text-[10px]">Ninguna sobreviviente</div>}
-              </div>
-              <div>
-                <span className="font-bold text-rose-400 block mb-1 text-[11px]">💀 Bajas atacante por tipo</span>
-                {Object.entries(selectedReport.result.atkLosses || {}).map(([id, q]) => (
-                  <div key={id} className="text-slate-400 text-[10px]">{SHIPS[id]?.icon || '🚀'} {SHIPS[id]?.name || id}: <span className="text-red-300">{q}</span></div>
-                ))}
-                {Object.keys(selectedReport.result.atkLosses || {}).length === 0 && <div className="text-slate-600 italic text-[10px]">Sin pérdidas</div>}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10 mt-2">
-              <div>
-                <span className="font-bold text-cyan-400 block mb-1 text-[11px]">🛡️ Defensas supervivientes</span>
-                {Object.entries({...selectedReport.result.defShipSurvivors, ...selectedReport.result.defDefenseSurvivors}).map(([id, q]) => (
-                  <div key={id} className="text-slate-400 text-[10px]">{(SHIPS[id] || DEFENSES[id])?.icon || '🛡️'} {(SHIPS[id] || DEFENSES[id])?.name || id}: <span className="text-cyan-300">{q}</span></div>
-                ))}
-                {Object.keys({...selectedReport.result.defShipSurvivors, ...selectedReport.result.defDefenseSurvivors}).length === 0 && <div className="text-slate-600 italic text-[10px]">Ninguna sobreviviente</div>}
-              </div>
-              <div>
-                <span className="font-bold text-orange-400 block mb-1 text-[11px]">💥 Bajas defensor por tipo</span>
-                {Object.entries({...selectedReport.result.defShipLosses, ...selectedReport.result.defDefenseLosses}).map(([id, q]) => (
-                  <div key={id} className="text-slate-400 text-[10px]">{(SHIPS[id] || DEFENSES[id])?.icon || '💥'} {(SHIPS[id] || DEFENSES[id])?.name || id}: <span className="text-orange-300">{q}</span></div>
-                ))}
-                {Object.keys({...selectedReport.result.defShipLosses, ...selectedReport.result.defDefenseLosses}).length === 0 && <div className="text-slate-600 italic text-[10px]">Sin pérdidas</div>}
-              </div>
-            </div>
-
-            <button onClick={() => setSelectedReport(null)} className={`w-full mt-5 py-2.5 rounded-lg border border-slate-700 bg-slate-950 text-slate-300 font-bold uppercase tracking-wider hover:text-white transition-all`}>
-              Cerrar Registro Táctico
-            </button>
-          </motion.div>
+      {/* Panel de Registros de Batalla */}
+      <div className="p-4 rounded-2xl bg-[#090d1f]/90 border border-white/10 backdrop-blur-xl shadow-lg space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+          <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 font-mono">
+            <span>📜</span>
+            <span>Historial Táctico de Encuentros</span>
+          </h4>
+          <div className="flex gap-2">
+            {['all', 'attack', 'defense'].map(f => (
+              <button
+                key={f}
+                onClick={() => setCombatFilter(f)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono uppercase transition-all cursor-pointer border ${
+                  combatFilter === f ? 'bg-cyan-500/20 border-cyan-500/50 text-white font-bold' : 'border-white/5 text-slate-400 hover:bg-white/5'
+                }`}
+              >
+                {f === 'all' ? 'Todos' : f === 'attack' ? 'Ataques' : 'Defensas'}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
+
+        <CombatLogList
+          filteredLogs={filteredLogs}
+          visibleLogsCount={visibleLogsCount}
+          setVisibleLogsCount={setVisibleLogsCount}
+          onSelectReport={setSelectedReport}
+          state={state}
+          fmt={fmt}
+        />
+      </div>
+
+      <CombatReportModal
+        selectedReport={selectedReport}
+        onClose={() => setSelectedReport(null)}
+        fmt={fmt}
+        SHIPS={SHIPS}
+        DEFENSES={DEFENSES}
+      />
     </div>
   );
 };

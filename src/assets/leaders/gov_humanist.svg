@@ -1,0 +1,15 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgHum" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#061a14"/>
+      <stop offset="100%" stop-color="#0e382b"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="20" fill="url(#bgHum)"/>
+  <path d="M 65,140 Q 58,85 80,62 Q 100,48 120,62 Q 142,85 135,140 Z" fill="#173129"/>
+  <!-- Manto civil diplomático -->
+  <path d="M 45,200 L 70,142 L 130,142 L 155,200 Z" fill="#0c201a" stroke="#10b981" stroke-width="1.5"/>
+  <circle cx="100" cy="80" r="40" fill="none" stroke="#34d399" stroke-dasharray="3,3" opacity="0.4"/>
+  <circle cx="86" cy="90" r="3" fill="#6ee7b7"/>
+  <circle cx="114" cy="90" r="3" fill="#6ee7b7"/>
+</svg>

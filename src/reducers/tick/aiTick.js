@@ -177,58 +177,71 @@ export const processAISimulation = (newState) => {
     return newAi;
   });
 
-  // AI attacks or allied gifts
-  if (Math.random() < 0.007 && state.aiPlanets.length > 0) {
+  // AI Utility-Based Decisions (game-development pattern: Utility AI / Scoring)
+  if (Math.random() < 0.012 && state.aiPlanets.length > 0) {
     const aiSource = state.aiPlanets[Math.floor(Math.random() * state.aiPlanets.length)];
     const target = newState.planets[Math.floor(Math.random() * newState.planets.length)];
     if (aiSource && target) {
       const rel = aiSource.relation || 0;
-      if (rel >= 50 && Math.random() < 0.4) {
+      const dist = calcDistance(aiSource, target);
+      const aiFleetPower = Object.values(aiSource.fleet || {}).reduce((sum, qty) => sum + qty, 0);
+      const targetFleetPower = Object.values(target.fleet || {}).reduce((sum, qty) => sum + qty, 0);
+      const targetDefPower = Object.values(target.defenses || {}).reduce((sum, qty) => sum + qty, 0);
+      const targetWealth = ((target.resources?.metal || 0) + (target.resources?.crystal || 0) * 1.5 + (target.resources?.deuterium || 0) * 2);
+
+      // 1. Scoring de Alianza y Comercio (Utility Aid)
+      const aidUtility = (rel >= 40 ? 0.4 : 0) + (rel >= 75 ? 0.3 : 0) + (dist < 3000 ? 0.2 : 0);
+
+      // 2. Scoring de Ataque (Utility Raid)
+      const militaryAdvantage = aiFleetPower / Math.max(1, targetFleetPower + targetDefPower * 0.7);
+      const distancePenalty = Math.min(0.5, dist / 8000);
+      const greedFactor = Math.min(0.4, targetWealth / 500000);
+      const hostilityBonus = rel < 0 ? Math.min(0.5, Math.abs(rel) / 100) : -0.3;
+
+      const raidUtility = (militaryAdvantage > 1.2 ? 0.4 : 0) + greedFactor + hostilityBonus - distancePenalty;
+
+      if (aidUtility > 0.5 && Math.random() < 0.4) {
         const gift = {
           metal: Math.floor((aiSource.aiLevel || 1) * 8000),
           crystal: Math.floor((aiSource.aiLevel || 1) * 4000),
           deuterium: Math.floor((aiSource.aiLevel || 1) * 2000),
         };
-        const dist = calcDistance(aiSource, target);
         const arrivalTime = Date.now() + calcFlightTime(dist, 8000, 10) * 1000;
         newState.fleetMissions = [...(newState.fleetMissions || []), {
           id: uid(), type: 'ally_trade', from: aiSource, to: target, fleet: { largeCargo: 2 }, resources: gift,
           departure: Date.now(), arrivalTime, isAI: true,
         }];
         newState.notifications = [...(newState.notifications || []), {
-          id: uid(), type: 'success', message: `🤝 El Imperio aliado ${aiSource.empireName || aiSource.name} ha despachado una flota comercial con cargamentos de regalo hacia ${target.name}`, timestamp: Date.now(),
+          id: uid(), type: 'success', message: `🤝 El Imperio aliado ${aiSource.empireName || aiSource.name} ha despachado una flota comercial con suministros estratégicos hacia ${target.name}`, timestamp: Date.now(),
         }];
-      } else if (rel <= -30 || (rel < 50 && Math.random() < 0.15)) {
-        if (aiSource.fleet && Object.values(aiSource.fleet).some(v => v > 10)) {
-          const fleetToSend = {};
-          for (const [id, qty] of Object.entries(aiSource.fleet)) {
-            fleetToSend[id] = Math.floor(qty * 0.5);
-          }
-          if (Object.values(fleetToSend).some(v => v > 0)) {
-            const dist = calcDistance(aiSource, target);
-            const spd = fleetSpeed(fleetToSend, aiSource.research || {}, aiSource.faction || 'human');
-            if (spd > 0) {
-              const arrivalTime = Date.now() + calcFlightTime(dist, spd, 5) * 1000;
-              newState.fleetMissions = [...(newState.fleetMissions || []), {
-                id: uid(), type: 'attack', from: aiSource, to: target, fleet: fleetToSend,
-                departure: Date.now(), arrivalTime, isAI: true,
-              }];
-              newState.aiPlanets = newState.aiPlanets.map(p => p.id === aiSource.id ? { ...p, relation: Math.max(-100, (p.relation || 0) - 15) } : p);
-              newState.notifications = [...(newState.notifications || []), {
-                id: uid(), type: 'warning', message: `⚔️ Flota hostil detectada despegando desde ${aiSource.empireName || aiSource.name} [${aiSource.galaxy}:${aiSource.system}:${aiSource.position}]`, timestamp: Date.now(),
-              }];
-              newState.aiPlanets = newState.aiPlanets.map(p => {
-                if (p.id === aiSource.id) {
-                  const newFleet = { ...p.fleet };
-                  for (const [id, qty] of Object.entries(fleetToSend)) {
-                    newFleet[id] = Math.max(0, (newFleet[id] || 0) - qty);
-                    if (newFleet[id] <= 0) delete newFleet[id];
-                  }
-                  return { ...p, fleet: newFleet };
+      } else if (raidUtility > 0.35 && aiFleetPower > 10) {
+        const fleetToSend = {};
+        for (const [id, qty] of Object.entries(aiSource.fleet || {})) {
+          if (qty > 0) fleetToSend[id] = Math.max(1, Math.floor(qty * 0.45));
+        }
+        if (Object.values(fleetToSend).some(v => v > 0)) {
+          const spd = fleetSpeed(fleetToSend, aiSource.research || {}, aiSource.faction || 'human');
+          if (spd > 0) {
+            const arrivalTime = Date.now() + calcFlightTime(dist, spd, 5) * 1000;
+            newState.fleetMissions = [...(newState.fleetMissions || []), {
+              id: uid(), type: 'attack', from: aiSource, to: target, fleet: fleetToSend,
+              departure: Date.now(), arrivalTime, isAI: true,
+            }];
+            newState.aiPlanets = newState.aiPlanets.map(p => p.id === aiSource.id ? { ...p, relation: Math.max(-100, (p.relation || 0) - 15) } : p);
+            newState.notifications = [...(newState.notifications || []), {
+              id: uid(), type: 'warning', message: `⚔️ Flota hostil detectada despegando desde ${aiSource.empireName || aiSource.name} [${aiSource.galaxy}:${aiSource.system}:${aiSource.position}] hacia ${target.name}`, timestamp: Date.now(),
+            }];
+            newState.aiPlanets = newState.aiPlanets.map(p => {
+              if (p.id === aiSource.id) {
+                const newFleet = { ...p.fleet };
+                for (const [id, qty] of Object.entries(fleetToSend)) {
+                  newFleet[id] = Math.max(0, (newFleet[id] || 0) - qty);
+                  if (newFleet[id] <= 0) delete newFleet[id];
                 }
-                return p;
-              });
-            }
+                return { ...p, fleet: newFleet };
+              }
+              return p;
+            });
           }
         }
       }

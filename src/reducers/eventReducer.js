@@ -72,6 +72,20 @@ export const eventReducer = (state, action) => {
     case 'DISMISS_TRANSMISSION':
       return { ...state, activeTransmission: null, activeEvent: null, activeFirstContact: null };
 
+    case 'DISMISS_TACTICAL_EVENT': {
+      const eventId = action.payload || action.id;
+      return {
+        ...state,
+        tacticalEvents: (state.tacticalEvents || []).filter(e => e.id !== eventId)
+      };
+    }
+
+    case 'DISMISS_ALL_TACTICAL_EVENTS':
+      return {
+        ...state,
+        tacticalEvents: []
+      };
+
     case 'RESOLVE_DECISION_EVENT': {
       const { option } = action;
       const planet = getCurrentPlanet();
@@ -149,8 +163,10 @@ export const eventReducer = (state, action) => {
         workingState = updatePlanet(workingState, planet.id, p => ({ ...p, resources: deduct(p.resources, option.cost) }));
       }
 
-      // Execute narrative effect
-      if (option.effect) {
+      // Execute narrative effect or impact
+      if (option.impact) {
+        workingState = option.impact(workingState) || workingState;
+      } else if (option.effect) {
         workingState = structuredClone(workingState);
         option.effect(workingState);
       }
@@ -160,7 +176,7 @@ export const eventReducer = (state, action) => {
         activeEvent: null,
         activeFirstContact: null,
         activeTransmission: null,
-        adventureLogs: [...(workingState.adventureLogs || []), { tick: state.gameTick, eventId, text: `Crisis resuelta: ${event.title} -> ${option.label}` }]
+        adventureLogs: [...(workingState.adventureLogs || []), { tick: state.gameTick, eventId, text: `Crisis resuelta: ${event.title} -> ${option.label || option.text}` }]
       };
     }
 

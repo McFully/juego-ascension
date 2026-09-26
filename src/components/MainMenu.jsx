@@ -25,7 +25,7 @@ export const MainMenu = ({
         <div className="flex flex-col items-center mb-12 group">
           <div className="relative mb-6">
             <div className="absolute -inset-4 bg-cyan-500/20 blur-2xl rounded-full group-hover:bg-cyan-500/40 transition-all duration-700 animate-pulse" />
-            <img src={asset('logo-ascension.png')} alt="Ascensión" className="h-48 w-auto object-contain relative drop-shadow-[0_0_20px_rgba(34,211,238,0.4)]" draggable={false} />
+            <img src={asset('logo-ascension.webp')} alt="Ascensión" className="h-48 w-auto object-contain relative drop-shadow-[0_0_20px_rgba(34,211,238,0.4)]" draggable={false} />
           </div>
           <div className="flex flex-col items-center gap-2">
             <h1 className="text-4xl font-black italic tracking-tighter uppercase text-white drop-shadow-md">ASCENSIÓN</h1>
@@ -103,7 +103,7 @@ export const MainMenu = ({
         </div>
 
         <div className="mt-auto pt-10 text-[9px] text-slate-700 font-mono uppercase tracking-widest">
-          © 2026 Aritz Bahamonde Larxé · Ascension Core Engine · v{appVersion}
+          © 2026 Aritz Bahamonde Larxé · Ascension · v{appVersion}
         </div>
       </div>
     </div>

@@ -78,27 +78,55 @@ export const CombatSimulatorModal = ({ simResult, setSimResult, state, target, s
           </motion.span>
         </div>
 
-        <h4 className="font-semibold mb-2 text-sm">⚔️ Rondas</h4>
-        <div className="space-y-1 mb-4">
+        <h4 className="font-semibold mb-2 text-sm text-cyan-300 flex items-center justify-between font-mono">
+          <span>⚔️ Telemetría de Rondas de Combate</span>
+          <span className="text-[10px] text-slate-500 font-normal">Impactos Gauss y Disipación de Escudos</span>
+        </h4>
+        <div className="space-y-2 mb-4 font-mono">
           {simResult.rounds.map((r, i) => (
-            <motion.div key={i} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ delay: 0.1 * i }}>
-              <div className="bg-slate-950/50 rounded p-2 text-xs">
-                <div className="flex justify-between mb-1">
-                  <span className="font-semibold">Ronda {r.round}</span>
-                  <span className="text-cyan-400">💥 {fmt(r.atkDmg)} / 💥 {fmt(r.defDmg)}</span>
+            <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 * i }}>
+              <div className="bg-slate-950/80 border border-cyan-500/20 rounded-xl p-2.5 text-xs shadow-md">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="font-bold text-cyan-300 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                    Ronda {r.round}
+                  </span>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="text-emerald-400">⚡ Láser: {fmt(r.atkDmg)}</span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-rose-400">💥 Gauss: {fmt(r.defDmg)}</span>
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <span className="text-emerald-400">🛸 {r.atkAlive}</span>
-                  <span className="text-red-400">🛡️ {r.defAlive}</span>
-                  <span className="text-slate-500">🔫 {r.atkShots || '-'}/{r.defShots || '-'}</span>
+
+                {/* Visualizador de Fuerza Táctica Relativa */}
+                <div className="grid grid-cols-2 gap-2 text-[10px] mb-1.5 bg-black/40 p-1.5 rounded-lg border border-white/5">
+                  <div className="flex justify-between text-emerald-300">
+                    <span>🛸 Atacante: {r.atkAlive}</span>
+                    <span className="text-slate-500">{r.atkShots || 0} disparos</span>
+                  </div>
+                  <div className="flex justify-between text-rose-300">
+                    <span>🛡️ Defensor: {r.defAlive}</span>
+                    <span className="text-slate-500">{r.defShots || 0} salvas</span>
+                  </div>
                 </div>
-                <ProgressBar value={r.atkAlive} max={Math.max(r.atkAlive + r.defAlive, 1)} color={r.atkAlive > r.defAlive ? 'from-emerald-500 to-cyan-500' : 'from-red-500 to-amber-500'} height="h-1" />
+
+                <ProgressBar 
+                  value={r.atkAlive} 
+                  max={Math.max(r.atkAlive + r.defAlive, 1)} 
+                  color={r.atkAlive >= r.defAlive ? 'from-cyan-500 via-emerald-500 to-teal-400' : 'from-rose-500 via-red-500 to-amber-500'} 
+                  height="h-1.5" 
+                />
               </div>
             </motion.div>
           ))}
         </div>
 
-        <button onClick={() => setSimResult(null)} className={`w-full ${S?.btn} ${S?.btnPrimary}`}>Cerrar</button>
+        <button 
+          onClick={() => setSimResult(null)} 
+          className="w-full py-2.5 rounded-xl font-bold font-mono text-xs uppercase tracking-wider bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-200 hover:text-white transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)] cursor-pointer"
+        >
+          Cerrar Simulación
+        </button>
       </motion.div>
     </div>
   );

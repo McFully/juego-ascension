@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
+import { useNavigation } from '../components/navigation/NavigationContext.jsx';
 
 const ReplayPage = ({ state, dispatch, S }) => {
+  const { navigateTo, navigateBack } = useNavigation();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentEventIndex, setCurrentEventIndex] = useState(-1);
   const [replaySpeed, setReplaySpeed] = useState(1);
@@ -244,6 +247,19 @@ const ReplayPage = ({ state, dispatch, S }) => {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Tarjeta de Retorno a Pantalla Anterior */}
+      <div className="pt-2">
+        <ActionCardTile
+          type="back"
+          title="Volver Atrás"
+          subtitle="Regresar a la pantalla anterior"
+          badgeText="VOLVER"
+          onClick={() => {
+            if (navigateBack) navigateBack();
+          }}
+        />
       </div>
     </div>
   );

@@ -1,19 +1,63 @@
 import React, { useState, useEffect } from 'react';
+import { GameCarousel } from '../components/ui/GameCarousel.jsx';
+import { SafeImg } from '../assets.jsx';
+import { useNavigation } from '../components/navigation/NavigationContext.jsx';
+import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
+import { MissionsChaptersGrid } from '../components/missions/MissionsChaptersGrid.jsx';
+import { MissionsChapterDetail } from '../components/missions/MissionsChapterDetail.jsx';
 
-const CHAPTERS_INFO = [
-  { id: 1, name: "Capítulo 1: Fundaciones Imperiales", icon: "🏗️", intro: "Las primeras colonias se asientan sobre el polvo de mundos remotos. Reúne recursos, genera energía y establece tus primeros laboratorios científicos." },
-  { id: 2, name: "Capítulo 2: Defensa y Espionaje", icon: "🛰️", intro: "El cosmos no está vacío. Construye una red de satélites espía, blinda tu atmósfera con láseres pesados y prepara defensas antimisiles defensivas." },
-  { id: 3, name: "Capítulo 3: Expansión de la Galaxia", icon: "🌌", intro: "Es hora de cruzar el umbral del vacío interestelar. Construye cargueros de transporte, entabla contacto con las primeras civilizaciones vecinas y funda colonias." },
-  { id: 4, name: "Capítulo 4: Relaciones Galácticas", icon: "🤝", intro: "La diplomacia y el comercio son armas más potentes que los destructores. Firma pactos bilaterales, acumula influencia y asegura tu reputación galáctica." },
-  { id: 5, name: "Capítulo 5: Operaciones Ministeriales", icon: "🏛️", intro: "Los ministerios del imperio demandan especializaciones drásticas. Industrializa tus mundos y automatiza las rutas logísticas del tesoro." },
-  { id: 6, name: "Capítulo 6: Guerra y Cañones de Plasma", icon: "⚔️", intro: "Las tensiones acumuladas estallan en batallas colosales de naves de plasma. Moviliza tu armada y derrota a las civilizaciones opositoras." },
-  { id: 7, name: "Capítulo 7: Soberanía Absoluta y Singularidad", icon: "👑", intro: "Consolida la hegemonía interestelar definitiva. Construye la Estrella de la Muerte e instaura una alianza imperial eterna." }
-];
+import { CHAPTERS_INFO, ERAS_INFO } from '../data/chaptersData.js';
+import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 
-const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, S }) => {
+const MISSION_ASSET_MAP = {
+  m1_metal: 'metalMine',
+  m2_solar: 'solarPlant',
+  m3_lab: 'researchLab',
+  m4_deuterium: 'deutSynth',
+  m5_energy_tech: 'energy',
+  m6_shipyard: 'shipyard',
+  m2_1_silo: 'missileSilo',
+  m2_2_spy: 'spyCenter',
+  m2_3_spytech: 'espionage',
+  m2_4_defense: 'rocketLauncher',
+  m2_5_laser: 'lightLaser',
+  m2_6_heavy_laser: 'heavyLaser',
+  m3_1_cargo: 'smallCargo',
+  m3_2_col: 'colonizer',
+  m3_3_newcol: 'advColonization',
+  m3_4_spacenav: 'interstellarNav',
+  m3_5_probe: 'espionageProbe',
+  m3_6_diplo: 'diploCenter',
+  m4_1_rep: 'historicImperialArchive',
+  m4_2_pacts: 'treatyCoordinationOffice',
+  m4_3_trade: 'galacticMarket',
+  m4_4_influence: 'councilChamber',
+  m4_5_alliance: 'permanentEmbassy',
+  m5_1_econ: 'industrialComplex',
+  m5_2_mil: 'militaryAcademy',
+  m5_3_sci: 'expLab',
+  m5_4_comm: 'systemTradeNetwork',
+  m5_5_autotrade: 'centralLogisticHub',
+  m6_1_weapons: 'weapons',
+  m6_2_shields: 'shields',
+  m6_3_cruiser: 'cruiser',
+  m6_4_plasma: 'plasma',
+  m6_5_combat: 'battleship',
+  m7_1_capital: 'sectorGovPalace',
+  m7_2_nano: 'naniteFactory',
+  m7_3_federation: 'consulateHeadquarters',
+  m7_4_custom: 'customShipyard',
+  m7_5_deathstar: 'deathstar',
+  m7_6_hegemony: 'singularity'
+};
+
+const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, S, production, fmt }) => {
+  const { navigateTo, navigateBack } = useNavigation();
   const completedList = state.completedMissions || [];
   const activeList = state.activeMissions || [];
   const [selectedChap, setSelectedChap] = useState(1);
+  const [selectedEra, setSelectedEra] = useState(1);
+  const [viewMode, setViewMode] = useState('chapters'); // 'chapters' | 'chapter_detail'
 
   const isChapterCompleted = (chapId) => {
     const chapMissions = MISSIONS.filter(m => m.chap === chapId);
@@ -25,8 +69,11 @@ const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, 
     const firstIncomplete = CHAPTERS_INFO.find(ch => !isChapterCompleted(ch.id));
     if (firstIncomplete) {
       setSelectedChap(firstIncomplete.id);
+      const era = ERAS_INFO.find(e => (e.chapters || []).includes(firstIncomplete.id));
+      if (era) setSelectedEra(era.id);
     } else {
       setSelectedChap(CHAPTERS_INFO[CHAPTERS_INFO.length - 1].id);
+      setSelectedEra(ERAS_INFO[ERAS_INFO.length - 1].id);
     }
   }, [completedList]);
 
@@ -50,196 +97,125 @@ const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, 
 
   const isChapterUnlocked = (chapId) => {
     if (chapId === 1) return true;
-    // Check if the previous chapter is 100% completed
     return getChapterProgress(chapId - 1) === 100;
   };
-
-  const activeChapters = CHAPTERS_INFO.filter(ch => !isChapterCompleted(ch.id));
-  const visibleChapters = activeChapters.length > 0 ? activeChapters : [CHAPTERS_INFO[CHAPTERS_INFO.length - 1]];
 
   const currentChapInfo = CHAPTERS_INFO.find(c => c.id === selectedChap) || CHAPTERS_INFO[0];
   const currentChapMissions = MISSIONS.filter(m => m.chap === selectedChap);
 
   const activeMission = MISSIONS.find(m => activeList.includes(m.id));
 
-  // Determine next future rewards info
   const totalCompleted = completedList.length;
   const totalMissions = MISSIONS.length;
   const campaignProgress = Math.round((totalCompleted / totalMissions) * 100);
 
+  const handleTopBack = () => {
+    if (window.playSfx) window.playSfx('click');
+    if (viewMode === 'chapter_detail') {
+      setViewMode('chapters');
+    } else if (navigateBack) {
+      navigateBack();
+    } else if (setActiveTab) {
+      setActiveTab('overview');
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Campaign Progress header */}
-      <div className={S.cardDeep + " flex flex-col md:flex-row md:items-center justify-between gap-4"}>
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">🚀 Campaña del Imperio: Ascensión</h2>
-          <p className="text-xs text-slate-400">Completa cada capítulo para desbloquear los siguientes sectores e historia.</p>
-        </div>
-        <div className="shrink-0 flex items-center gap-4 min-w-[280px]">
-          <div className="flex-1">
-            <div className="flex justify-between text-xs font-mono text-cyan-400 mb-1">
-              <span>Progreso General</span>
-              <span>{campaignProgress}%</span>
+    <div className="space-y-4 view-enter w-full">
+      {/* Barra superior estándar con Recursos, Breadcrumb y Botón Volver Atrás */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle={viewMode === 'chapter_detail' ? `Capítulo ${selectedChap}` : "Misiones Imperiales"}
+        breadcrumbIcon="🎯"
+        showBackToAltoMando={true}
+        onBackToAltoMando={handleTopBack}
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom={viewMode === 'chapter_detail' ? "Capítulos" : "Alto Mando"}
+        backButtonIcon={viewMode === 'chapter_detail' ? "◀" : "👑"}
+        rightSlot={
+          <div className="flex items-center gap-3 bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
+            <div className="w-28 sm:w-36">
+              <div className="flex justify-between text-[10px] font-mono text-cyan-400 mb-0.5">
+                <span>Campaña</span>
+                <span className="font-bold">{campaignProgress}%</span>
+              </div>
+              <div className="w-full bg-slate-950/80 rounded-full h-1.5 border border-white/5 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full transition-all duration-300"
+                  style={{ width: `${campaignProgress}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-slate-950/60 rounded-full h-2 border border-white/5 overflow-hidden">
-              <div className="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full transition-all duration-300" style={{ width: `${campaignProgress}%` }} />
-            </div>
+            <span className="text-xs font-mono font-bold bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-lg whitespace-nowrap">
+              {totalCompleted}/{totalMissions}
+            </span>
           </div>
-          <span className="text-sm font-mono font-bold bg-cyan-950/30 text-cyan-400 border border-cyan-500/20 px-3 py-1.5 rounded-xl">
-            {totalCompleted} / {totalMissions}
-          </span>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Chapters selection bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-        {visibleChapters.map(ch => {
-          const unlocked = isChapterUnlocked(ch.id);
-          const progress = getChapterProgress(ch.id);
-          const active = selectedChap === ch.id;
+      {/* NIVEL 1: Selector de Eras y Capítulos Compacto (Sin scroll vertical masivo) */}
+      {viewMode === 'chapters' && (
+        <MissionsChaptersGrid
+          erasInfo={ERAS_INFO}
+          chaptersInfo={CHAPTERS_INFO}
+          selectedEra={selectedEra}
+          onSelectEra={(eraId) => setSelectedEra(eraId)}
+          selectedChap={selectedChap}
+          isChapterUnlocked={isChapterUnlocked}
+          getChapterProgress={getChapterProgress}
+          onSelectChapter={(chapId) => {
+            setSelectedChap(chapId);
+            setViewMode('chapter_detail');
+          }}
+          onNavigateBack={handleTopBack}
+        />
+      )}
 
-          let btnClass = "border bg-black/30 text-slate-500 border-white/5 opacity-50 cursor-not-allowed";
-          if (unlocked) {
-            if (active) {
-              btnClass = "border border-cyan-500/80 bg-cyan-950/20 text-white shadow-[0_0_12px_rgba(6,182,212,0.15)]";
-            } else {
-              btnClass = "border border-white/10 bg-slate-900/40 text-slate-300 hover:bg-white/5 hover:border-white/20";
-            }
-          }
+      {/* NIVEL 2: Pantalla Dedicada con las Misiones del Capítulo Seleccionado */}
+      {viewMode === 'chapter_detail' && (
+        <MissionsChapterDetail
+          currentChapInfo={currentChapInfo}
+          currentChapMissions={currentChapMissions}
+          completedList={completedList}
+          activeList={activeList}
+          missionAssetMap={MISSION_ASSET_MAP}
+          onBackToChapters={() => {
+            if (window.playSfx) window.playSfx('click');
+            setViewMode('chapters');
+          }}
+        />
+      )}
 
-          return (
-            <button
-              key={ch.id}
-              onClick={() => unlocked && setSelectedChap(ch.id)}
-              disabled={!unlocked}
-              className={`rounded-xl p-2.5 transition-all text-left flex flex-col justify-between h-20 ${btnClass}`}
-            >
-              <div className="flex items-center gap-1.5 w-full">
-                <span className="text-lg shrink-0">{ch.icon}</span>
-                <span className="font-bold text-[11px] truncate leading-tight">Cap. {ch.id}</span>
-              </div>
-              <div className="w-full mt-2">
-                <div className="flex justify-between text-[9px] text-slate-400 mb-0.5 font-mono">
-                  <span>{unlocked ? "Progreso" : "Bloqueado"}</span>
-                  {unlocked && <span>{progress}%</span>}
-                </div>
-                {unlocked ? (
-                  <div className="w-full bg-slate-950/80 rounded-full h-1 overflow-hidden">
-                    <div className="bg-cyan-400 h-full transition-all" style={{ width: `${progress}%` }} />
-                  </div>
-                ) : (
-                  <div className="text-[10px] text-red-400/80 font-mono flex items-center gap-0.5">🔒 Requiere Cap. {ch.id - 1}</div>
-                )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selected Chapter Details */}
-      <div className={S.card}>
-        <div className="border-b border-white/10 pb-3 mb-4">
-          <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-            <span>{currentChapInfo.icon}</span> {currentChapInfo.name}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1 italic leading-relaxed">
-            "{currentChapInfo.intro}"
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-          {currentChapMissions.map((m) => {
-            const isCompleted = completedList.includes(m.id);
-            const isLocked = m.req && !completedList.includes(m.req);
-            const isActive = activeList.includes(m.id);
-
-            let statusBg = "glass-deep border-white/10 text-slate-400";
-            if (isCompleted) statusBg = "bg-emerald-950/20 border-emerald-500/20 text-slate-300";
-            else if (isActive) statusBg = "bg-cyan-950/20 border-cyan-500/30 text-slate-200 shadow-lg shadow-cyan-500/5";
-
-            return (
-              <div key={m.id} className={`flex flex-col border rounded-xl p-4 transition-all relative ${statusBg} ${isLocked ? "opacity-45" : ""}`}>
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl shrink-0">{m.icon}</span>
-                    <span className="font-bold text-sm text-slate-100">{m.name}</span>
-                  </div>
-                  {isCompleted ? (
-                    <span className="text-xs glass border border-emerald-500/30 text-emerald-300 emissive-gold px-2 py-0.5 rounded-full font-bold">
-                      Completada
-                    </span>
-                  ) : isActive ? (
-                    <span className="text-xs glass border border-[var(--ue-accent)]/30 text-[var(--ue-accent)] px-2 py-0.5 rounded-full font-bold emissive-cyan fresnel specular">
-                      Activa
-                    </span>
-                  ) : isLocked ? (
-                    <span className="text-xs glass border-white/10 text-slate-400 px-2 py-0.5 rounded-full font-bold">
-                      🔒 Bloqueada
-                    </span>
-                  ) : (
-                    <span className="text-xs glass-deep border-white/10 text-slate-500 px-2 py-0.5 rounded-full font-bold">
-                      Pendiente
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-xs text-slate-300 mb-4 flex-1">
-                  {m.desc}
-                </p>
-
-                <div className="glass-deep border-white/10 rounded-xl p-2.5 space-y-1 mt-auto">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">Recompensa del Capítulo:</div>
-                  <div className="text-xs font-bold text-[var(--ue-accent)] holo-text">
-                    🎁 {m.rewardDesc}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Active Mission Dashboard (Rendered at the bottom for layout consistency) */}
-      {activeMission ? (
-        <div className="relative overflow-hidden bg-gradient-to-r from-cyan-950/40 via-purple-950/20 to-slate-900/60 border border-cyan-500/30 rounded-2xl p-6 shadow-xl shadow-cyan-500/5">
-          <div className="absolute top-0 right-0 p-4 opacity-10 text-9xl pointer-events-none">
-            {activeMission.icon}
-          </div>
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
+      {/* Cuadro de Misión Activa en Pantalla */}
+      {activeMission && (
+        <section className="relative overflow-hidden bg-gradient-to-r from-cyan-950/40 via-purple-950/20 to-slate-900/60 border border-cyan-500/30 rounded-2xl p-5 shadow-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 text-[10px] font-bold glass border border-[var(--ue-accent)]/40 text-[var(--ue-accent)] emissive-cyan rounded-full">
-                  MISIÓN ACTIVA ACTUAL
+                <span className="px-2.5 py-0.5 text-[9px] font-bold tracking-wider uppercase border border-cyan-500/40 text-cyan-300 bg-cyan-500/10 rounded-full animate-pulse">
+                  MISIÓN PRIORITARIA EN CURSO
                 </span>
-                <span className="text-xs text-slate-400">Capítulo {activeMission.chap}</span>
+                <span className="text-[10px] text-slate-400 font-mono">Capítulo {activeMission.chap}</span>
               </div>
-              <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-                <span className="text-3xl">{activeMission.icon}</span> {activeMission.name}
-              </h2>
-              <p className="text-slate-300 text-sm max-w-xl">
+              <h3 className="text-xl font-black text-white flex items-center gap-2">
+                <span>{activeMission.icon}</span>
+                <span>{activeMission.name}</span>
+              </h3>
+              <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
                 {activeMission.desc}
               </p>
             </div>
-            
-            <div className="shrink-0 glass-deep border border-white/10 fresnel specular rounded-xl p-4 space-y-2 min-w-[240px]">
-              <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Recompensa de la Misión:</div>
-              <div className="text-sm font-bold text-cyan-300 flex items-center gap-1.5">
+            <div className="shrink-0 bg-[#05070f]/80 border border-white/10 rounded-xl p-3 min-w-[220px]">
+              <div className="text-[9px] text-slate-400 uppercase font-mono mb-1">Recompensa:</div>
+              <div className="text-xs font-bold text-cyan-300 flex items-center gap-1 font-mono">
                 🎁 {activeMission.rewardDesc}
-              </div>
-              <div className="pt-2 text-[10px] text-slate-500">
-                Se otorga automáticamente al cumplir el objetivo.
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="bg-gradient-to-r from-emerald-950/30 via-slate-900/50 to-slate-950 border border-emerald-500/30 rounded-2xl p-8 text-center space-y-4">
-          <div className="text-6xl">👑</div>
-          <h2 className="text-2xl font-bold text-slate-100">¡Campaña Completada!</h2>
-          <p className="text-slate-300 max-w-md mx-auto text-sm">
-            Has completado con éxito todos los objetivos de la campaña. Tu soberanía e imperio espacial han alcanzado la hegemonía interestelar definitiva.
-          </p>
-        </div>
+        </section>
       )}
     </div>
   );

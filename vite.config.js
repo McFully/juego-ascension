@@ -13,8 +13,23 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    fs: {
+      strict: false,
+    },
   },
   test: {
     include: ['src/**/*.{test,spec}.{js,jsx}'],
+    pool: 'threads',
   },
+  build: {
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-three': ['three']
+        }
+      }
+    }
+  }
 });

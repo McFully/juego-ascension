@@ -3,13 +3,13 @@ export const S = {
   header: 'fixed top-0 left-0 w-full z-50 flex items-stretch justify-between px-margin-edge h-16 bg-[#0a0d1a]/88 backdrop-blur-3xl border-b border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.75)] fresnel',
   card: 'glass holographic rounded-2xl p-4 border border-white/10 hover:border-[var(--ue-accent)]/40 transition-all duration-200 shadow-[0_10px_40px_rgba(0,0,0,0.5)] unreal-panel fresnel specular flex flex-col h-full text-white',
   cardInner: 'glass rounded-xl p-3 border border-white/5 bg-[#05070f]/60',
-  btn: 'px-4 py-2 rounded-xl font-medium transition-all active:scale-[0.985] disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden',
+  btn: 'px-4 py-2 rounded-xl font-medium transition-all btn-spring active:scale-[0.965] disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden',
   btnPrimary: 'bg-[#0a0d1a] border border-[var(--ue-accent)]/60 text-white shadow-[0_0_15px_rgba(6,182,212,0.25)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:border-[var(--ue-accent)]',
   btnSuccess: 'bg-emerald-950/60 border border-emerald-500/50 text-emerald-200 hover:bg-emerald-900/60',
   btnDanger: 'bg-red-950/60 border border-red-500/50 text-red-200 hover:bg-red-900/60',
   btnGhost: 'bg-white/5 border border-white/10 hover:bg-white/10 text-white',
   btnEmissive: 'bg-[#0a0d1a] border border-[var(--ue-accent)]/70 text-[var(--ue-accent)] hover:bg-[#0a0d1a] hover:border-[var(--ue-accent)] shadow-[0_0_18px_rgba(6,182,212,0.35)]',
-  btnSmall: 'px-2.5 py-1 text-xs rounded-lg font-medium transition-all active:scale-[0.98] disabled:opacity-40',
+  btnSmall: 'px-2.5 py-1 text-xs rounded-lg font-medium transition-all btn-spring active:scale-[0.96] disabled:opacity-40',
   badge: 'px-2.5 py-0.5 rounded-full text-[10px] font-medium tracking-wider border border-white/10',
   tab: 'px-4 py-1.5 text-xs tracking-wider rounded-xl transition-all whitespace-nowrap flex items-center justify-center border font-semibold uppercase pointer-events-auto',
   tabActive: 'bg-[var(--ue-accent)]/20 border-[var(--ue-accent)]/80 text-white tab-active-text-force shadow-[0_0_14px_rgba(6,182,212,0.35)] emissive-cyan',
@@ -38,6 +38,8 @@ export const S = {
   listItem: 'glass rounded-xl p-3 border border-white/8 hover:border-[var(--ue-accent)]/30 transition-all fresnel specular',
   uePanel: 'glass-deep holographic fresnel specular pointer-events-auto',
   ueHolo: 'holographic ue-lens fresnel',
+  militaryCode: 'military-code font-mono text-cyan-300 font-bold',
+  militaryLabel: 'military-label tracking-widest text-[var(--ue-accent)]',
 };
 
 export const MAT_ICONS = { metal: 'hardware', crystal: 'diamond', deuterium: 'science', energy: 'bolt' };

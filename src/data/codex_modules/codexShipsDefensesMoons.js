@@ -1,0 +1,162 @@
+export const CODEX_SHIPS_DEFENSES_MOONS = {
+  smallCargo: {
+    name: "Carguera Pequeña",
+    lore: "Nave de transporte ligera diseñada para rutas comerciales rápidas.",
+    stats: "Carga: 5,000 | Velocidad: 5,000 | Consumo: 20/h",
+    usage: "Ideal para saquear recursos y misiones de transporte menores.",
+  },
+  largeCargo: {
+    name: "Carguera Grande",
+    lore: "El pilar del comercio imperial. Inmensas bodegas protegidas por blindaje medio.",
+    stats: "Carga: 25,000 | Velocidad: 7,500 | Consumo: 50/h",
+    usage: "Transporte masivo de recursos entre colonias.",
+  },
+  lightFighter: {
+    name: "Cazador Ligero",
+    lore: "Una nave monoplaza ágil diseñada para interceptar sondas y escoltar cargueros. Barata de producir y rápida.",
+    stats: "Ataque: 50 | Escudo: 10 | Integridad: 400 | Velocidad: 12,500",
+    usage: "Carne de cañón ideal para absorber fuego enemigo y escolta básica.",
+  },
+  heavyFighter: {
+    name: "Cazador Pesado",
+    lore: "Blindaje reforzado y cañones de iones. Diseñado para enfrentarse a naves de su misma clase y sobrevivir.",
+    stats: "Ataque: 150 | Escudo: 25 | Integridad: 1,000 | Velocidad: 10,000",
+    usage: "Excelente contra cazadores ligeros y defensas básicas.",
+  },
+  cruiser: {
+    name: "Crucero",
+    lore: "El depredador de cazadores. Equipado con sistemas de apuntado rápido para diezmar flotas pequeñas.",
+    stats: "Ataque: 400 | Escudo: 50 | Integridad: 2,700 | Velocidad: 15,000",
+    usage: "Eficacia extrema contra cazadores ligeros (Rapid Fire).",
+  },
+  battleship: {
+    name: "Nave de Batalla",
+    lore: "La columna vertebral de la flota de combate. Gran potencia de fuego y blindaje pesado.",
+    stats: "Ataque: 1,000 | Escudo: 200 | Integridad: 6,000 | Velocidad: 10,000",
+    usage: "Dominancia en batallas campales contra otras flotas pesadas.",
+  },
+  bomber: {
+    name: "Bombardero",
+    lore: "Especializado en la destrucción de defensas planetarias mediante bombardeo de precisión.",
+    stats: "Ataque: 1,000 | Escudo: 500 | Integridad: 7,500 | Velocidad: 4,000",
+    usage: "Eficacia extrema contra láseres y cañones gauss.",
+  },
+  destroyer: {
+    name: "Destructor",
+    lore: "Nave de asalto pesado diseñada para aniquilar naves de batalla y cruceros enemigos.",
+    stats: "Ataque: 2,000 | Escudo: 500 | Integridad: 11,000 | Velocidad: 5,000",
+    usage: "La fuerza bruta de la flota.",
+  },
+  deathstar: {
+    name: "Estrella de la Muerte",
+    lore: "Una estación de combate del tamaño de una luna pequeña. Capaz de destruir planetas enteros.",
+    stats: "Ataque: 200,000 | Escudo: 50,000 | Integridad: 9,000,000 | Velocidad: 100",
+    usage: "El arma definitiva. Lenta pero virtualmente indestructible para flotas pequeñas.",
+  },
+  espionageProbe: {
+    name: "Sonda de Espionaje",
+    lore: "Sondas diminutas no tripuladas dotadas de propulsores hiperrápidos y sensores de amplio espectro.",
+    stats: "Ataque: 0 | Escudo: 0 | Integridad: 1 | Velocidad: Extremadamente alta",
+    usage: "Enviadas para recolectar informes detallados de tecnologías y recursos en otros planetas.",
+  },
+  colonizer: {
+    name: "Colonizador",
+    lore: "Inmensas naves de transporte adaptadas para albergar cúpulas habitacionales y maquinaria de fundición inicial.",
+    stats: "Nave consumible de colonización planetaria. Hull: 30,000 | Carga: 7,500",
+    usage: "Enviada a posiciones vacías de la galaxia para fundar una nueva colonia imperial.",
+  },
+  recycler: {
+    name: "Reciclador",
+    lore: "Cargueros pesados modificados con brazos magnéticos y trituradoras moleculares para recolectar escombros.",
+    stats: "Carga: 20,000 | Velocidad: Lenta | Diseñado para recolectar metal y cristal flotante en el espacio.",
+    usage: "Enviar a órbitas planetarias destruidas tras batallas espaciales para saquear materias primas.",
+  },
+  interplanetaryMissile: {
+    name: "Misil Interplanetario",
+    lore: "Misiles nucleares pesados de largo alcance diseñados para arrasar defensas enemigas de forma remota.",
+    stats: "Ataque directo no interceptable por naves convencionales. Ataque: 12,000",
+    usage: "Lanzar desde el Silo de Misiles contra planetas hostiles para despejar defensas terrestres antes del ataque.",
+  },
+  antiBallisticMissile: {
+    name: "Misil Antibalístico",
+    lore: "Sistemas de intercepción automáticos que destruyen ojivas termonucleares en órbita alta.",
+    stats: "Defensa pasiva del Silo de Misiles contra misiles interplanetarios.",
+    usage: "Se consume automáticamente para repeler ataques de misiles enemigos.",
+  },
+
+  // ==================== DEFENSAS ====================
+  rocketLauncher: {
+    name: "Lanzamisiles",
+    lore: "Baterías de misiles de corto alcance. Baratas y fáciles de desplegar en masa.",
+    stats: "Ataque: 80 | Escudo: 20 | Integridad: 200",
+    usage: "Defensa básica ideal como escudo para artillería pesada.",
+  },
+  lightLaser: {
+    name: "Láser Ligero",
+    lore: "Haces de luz coherente para interceptar naves ligeras con gran precisión.",
+    stats: "Ataque: 100 | Escudo: 25 | Integridad: 200",
+    usage: "Efectivo contra cazadores ligeros.",
+  },
+  heavyLaser: {
+    name: "Láser Pesado",
+    lore: "Versión amplificada del láser ligero capaz de perforar blindajes de cruceros.",
+    stats: "Ataque: 250 | Escudo: 100 | Integridad: 800",
+    usage: "Buen equilibrio entre coste y potencia de fuego.",
+  },
+  gaussCannon: {
+    name: "Cañón Gauss",
+    lore: "Aceleradores electromagnéticos que disparan proyectiles de tungsteno a velocidades hipersónicas.",
+    stats: "Ataque: 1,100 | Escudo: 200 | Integridad: 3,500",
+    usage: "Artillería pesada contra naves de batalla.",
+  },
+  ionCannon: {
+    name: "Cañón de Iones",
+    lore: "Dispara flujos de partículas que sobrecargan los escudos enemigos sin dañar el casco directamente.",
+    stats: "Ataque: 150 | Escudo: 500 | Integridad: 800",
+    usage: "Excelente para neutralizar escudos de naves pesadas.",
+  },
+  plasmaTurret: {
+    name: "Cañón de Plasma",
+    lore: "El arma defensiva más potente. Dispara esferas de materia ionizada que funden cualquier aleación.",
+    stats: "Ataque: 3,000 | Escudo: 300 | Integridad: 10,000",
+    usage: "Máximo poder defensivo galáctico.",
+  },
+  smallShieldDome: {
+    name: "Cúpula Pequeña de Escudo",
+    lore: "Generador de campos deflectores esféricos proyectados sobre todas las defensas terrestres.",
+    stats: "Escudo masivo planetario. Ataque: 1 | Escudo: 2,000 | Integridad: 2,000 | Límite: 1 por planeta",
+    usage: "Crucial para repeler ataques menores sin sufrir daños colaterales.",
+  },
+  largeShieldDome: {
+    name: "Cúpula Grande de Escudo",
+    lore: "Supergenerador de distorsión electromagnética capaz de desviar bombardeos orbitales destructores.",
+    stats: "Escudo supremo planetario. Ataque: 1 | Escudo: 10,000 | Integridad: 10,000 | Límite: 1 por planeta",
+    usage: "Tu máxima protección pasiva contra acorazados invasores.",
+  },
+
+  // ==================== LUNARES ====================
+  lunarBase: {
+    name: "Base Lunar",
+    lore: "La primera infraestructura necesaria en cualquier satélite. Proporciona soporte vital y energía básica para futuras expansiones.",
+    stats: "Permite la construcción de otros edificios en la luna.",
+    usage: "El corazón de tu puesto avanzado lunar.",
+  },
+  sensorPhalanx: {
+    name: "Sensor Phalanx",
+    lore: "Una red masiva de sensores capaces de detectar flotas moviéndose a través del hiperespacio en sistemas lejanos.",
+    stats: "Permite escanear flotas en vuelo de otros jugadores y facciones IA.",
+    usage: "Herramienta de inteligencia estratégica suprema.",
+  },
+  jumpGate: {
+    name: "Puerta de Salto",
+    lore: "Un portal de curvatura espacio-temporal que permite el tránsito instantáneo de flotas entre colonias lejanas.",
+    stats: "Transfiere flotas sin tiempo de viaje ni consumo de deuterio entre lunas con puertas activas.",
+    usage: "Logística instantánea y despliegue rápido de defensa.",
+  },
+  moonStorage: {
+    name: "Depósito Lunar",
+    lore: "Instalaciones de almacenamiento de recursos diseñadas para el entorno de baja gravedad de la luna.",
+    stats: "Aumenta la capacidad de recursos en la luna.",
+    usage: "Necesario para acumular recursos para construcciones lunares caras.",
+  },
+};

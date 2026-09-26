@@ -29,93 +29,149 @@ export const NARRATIVE_EVENTS = [
     id: 'first_expansion',
     title: 'Nueva Frontera',
     type: 'info',
+    image: 'event_first_expansion.jpg',
     description: 'Nuestros sensores detectan una anomalía en un sector cercano que podría ser ideal para la colonización. El Alto Mando sugiere preparar naves colonizadoras.',
     triggerCondition: (s) => s.totalBuildings > 5 && (s.planets?.length || 0) === 1,
     options: [
-      { text: 'Entendido, prepararemos la expedición.', impact: (s) => ({ ...s, influence: (s.influence || 0) + 5 }) }
+      {
+        text: 'Entendido, prepararemos la expedición.',
+        bonus: '+5 Puntos de Influencia imperial.',
+        penalty: null,
+        impact: (s) => ({ ...s, influence: (s.influence || 0) + 5 })
+      }
     ]
   },
   {
     id: 'economic_boom',
     title: 'Auge Económico',
     type: 'success',
+    image: 'event_economic_boom.jpg',
     description: 'Un descubrimiento en las técnicas de minería ha disparado la eficiencia en todas nuestras colonias. ¡Es un buen momento para reinvertir!',
     triggerCondition: (s) => (s.gameTick || 0) > 600 && Math.random() < 0.3,
     options: [
-      { text: 'Excelente noticia.', impact: (s) => {
-        const newState = { ...s };
-        newState.planets = newState.planets.map(p => ({
-          ...p,
-          resources: {
-            ...p.resources,
-            metal: (p.resources.metal || 0) + 5000,
-            crystal: (p.resources.crystal || 0) + 2500
-          }
-        }));
-        return newState;
-      }}
+      {
+        text: 'Excelente noticia.',
+        bonus: '+5.000 Metal y +2.500 Cristal en cada planeta.',
+        penalty: null,
+        impact: (s) => {
+          const newState = { ...s };
+          newState.planets = newState.planets.map(p => ({
+            ...p,
+            resources: {
+              ...p.resources,
+              metal: (p.resources.metal || 0) + 5000,
+              crystal: (p.resources.crystal || 0) + 2500
+            }
+          }));
+          return newState;
+        }
+      }
     ]
   },
   {
     id: 'space_pirates',
     title: 'Piratas Espaciales',
     type: 'crisis',
+    image: 'event_space_pirates.jpg',
     description: 'Una banda de piratas ha sido detectada merodeando nuestras rutas comerciales. Debemos reforzar nuestras defensas.',
     triggerCondition: (s) => s.totalShips > 20 && Math.random() < 0.2,
     options: [
-      { text: 'Enviad patrullas.', impact: (s) => ({ ...s, reputation: (s.reputation || 0) + 2 }) },
-      { text: 'Ignoradlos por ahora.', impact: (s) => ({ ...s, reputation: (s.reputation || 0) - 5 }) }
+      {
+        text: 'Enviad patrullas.',
+        bonus: '+2 Reputación galáctica por defender el comercio.',
+        penalty: 'Riesgo de desgaste en patrullas navales.',
+        impact: (s) => ({ ...s, reputation: (s.reputation || 0) + 2 })
+      },
+      {
+        text: 'Ignoradlos por ahora.',
+        bonus: 'Ahorro de recursos y combustible.',
+        penalty: '-5 Reputación galáctica por negligencia defensiva.',
+        impact: (s) => ({ ...s, reputation: (s.reputation || 0) - 5 })
+      }
     ]
   },
   {
     id: 'ancient_ruins',
     title: 'Ruinas Antiguas',
     type: 'info',
+    image: 'event_ancient_ruins.jpg',
     description: 'Sondeos profundos en uno de nuestros asteroides cercanos han revelado una estructura enterrada de origen desconocido. Podría contener tecnología valiosa.',
     triggerCondition: (s) => (s.gameTick || 0) > 300 && Math.random() < 0.15,
     options: [
-      { text: 'Excavar el sitio arqueológico.', impact: (s) => {
-        const newState = { ...s };
-        const techKeys = Object.keys(s.research || {}).filter(k => (s.research[k] || 0) > 0);
-        if (techKeys.length > 0) {
-          const pick = techKeys[Math.floor(Math.random() * techKeys.length)];
-          newState.research = { ...newState.research, [pick]: (newState.research[pick] || 0) + 1 };
+      {
+        text: 'Excavar el sitio arqueológico.',
+        bonus: '+1 Nivel gratuito en una investigación científica activa.',
+        penalty: 'Riesgo de despertar defensas o radiación ancestral.',
+        impact: (s) => {
+          const newState = { ...s };
+          const techKeys = Object.keys(s.research || {}).filter(k => (s.research[k] || 0) > 0);
+          if (techKeys.length > 0) {
+            const pick = techKeys[Math.floor(Math.random() * techKeys.length)];
+            newState.research = { ...newState.research, [pick]: (newState.research[pick] || 0) + 1 };
+          }
+          return newState;
         }
-        return newState;
-      }},
-      { text: 'Sellar el área por seguridad.', impact: (s) => ({ ...s, reputation: (s.reputation || 0) + 3 }) }
+      },
+      {
+        text: 'Sellar el área por seguridad.',
+        bonus: '+3 Reputación galáctica por prudencia diplomática y científica.',
+        penalty: 'Pérdida irrecuperable de secretos tecnológicos olvidados.',
+        impact: (s) => ({ ...s, reputation: (s.reputation || 0) + 3 })
+      }
     ]
   },
   {
     id: 'colonial_tensions',
     title: 'Tensiones Coloniales',
     type: 'crisis',
+    image: 'event_space_pirates.jpg',
     description: 'Aumentan las protestas en nuestras colonias ante la falta de representación en el senado galáctico. Grupos separatistas están ganando apoyo.',
     triggerCondition: (s) => s.planets.length >= 3 && Math.random() < 0.12,
     options: [
-      { text: 'Prometer reformas y mayor autonomía.', impact: (s) => ({ ...s, influence: (s.influence || 0) + 10 }) },
-      { text: 'Desplegar fuerzas de seguridad.', impact: (s) => ({ ...s, reputation: (s.reputation || 0) - 5 }) }
+      {
+        text: 'Prometer reformas y mayor autonomía.',
+        bonus: '+10 Puntos de Influencia en las colonias.',
+        penalty: 'Menor control centralizado en los mundos exteriores.',
+        impact: (s) => ({ ...s, influence: (s.influence || 0) + 10 })
+      },
+      {
+        text: 'Desplegar fuerzas de seguridad.',
+        bonus: 'Restablecimiento inmediato del orden colonial.',
+        penalty: '-5 Reputación galáctica por represión civil.',
+        impact: (s) => ({ ...s, reputation: (s.reputation || 0) - 5 })
+      }
     ]
   },
   {
     id: 'solar_flare',
     title: 'Tormenta Solar Masiva',
     type: 'crisis',
+    image: 'event_solar_flare.jpg',
     description: 'Una tormenta solar de proporciones épicas se dirige hacia nuestros planetas. Los sistemas de comunicación y energía podrían verse gravemente afectados.',
     triggerCondition: (s) => (s.gameTick || 0) > 800 && Math.random() < 0.1,
     options: [
-      { text: 'Activar escudos planetarios de emergencia.', impact: (s) => {
-        const newState = { ...s };
-        newState.planets = newState.planets.map(p => ({
-          ...p,
-          resources: {
-            ...p.resources,
-            energy: (p.resources.energy || 0) - 200
-          }
-        }));
-        return newState;
-      }},
-      { text: 'Confinar a la población en refugios subterráneos.', impact: (s) => ({ ...s }) }
+      {
+        text: 'Activar escudos planetarios de emergencia.',
+        bonus: 'Protección absoluta de infraestructuras y colonos.',
+        penalty: 'Consumo de -200 Energía en cada planeta.',
+        impact: (s) => {
+          const newState = { ...s };
+          newState.planets = newState.planets.map(p => ({
+            ...p,
+            resources: {
+              ...p.resources,
+              energy: (p.resources.energy || 0) - 200
+            }
+          }));
+          return newState;
+        }
+      },
+      {
+        text: 'Confinar a la población en refugios subterráneos.',
+        bonus: 'Cero coste energético en la red de escudos.',
+        penalty: 'Caída temporal del rendimiento productivo civil.',
+        impact: (s) => ({ ...s })
+      }
     ]
   }
 ];

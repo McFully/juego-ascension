@@ -16,21 +16,109 @@ export default function useGameLoop({
   const offlineResourcesBeforeRef = useRef(null);
   const offlineEventsBeforeRef = useRef(null);
 
-  // TICK interval (wrapped for disk logging on reducer errors)
+  // TICK loop determinista con Fixed Timestep y acumulador delta
+  const lastFrameTimeRef = useRef(Date.now());
+  const accumulatorRef = useRef(0);
+  const workerRef = useRef(null);
+  const isTickInProgressRef = useRef(false);
+  const tickCounterRef = useRef(0);
+
+  // Inicializar Web Worker para cálculos pesados en hilo secundario (con fallback robusto)
+  useEffect(() => {
+    let worker = null;
+    try {
+      worker = new Worker(new URL('../workers/game.worker.js', import.meta.url), { type: 'module' });
+      worker.onmessage = (event) => {
+        const { action, payload } = event.data || {};
+        if (action === 'TICK_SUCCESS') {
+          isTickInProgressRef.current = false;
+          if (payload?.newState) {
+            dispatch({ type: 'APPLY_TICK_STATE', payload: payload.newState });
+          }
+        } else if (action === 'TICK_ERROR') {
+          isTickInProgressRef.current = false;
+          console.error('[Ascensión] Worker TICK error:', payload?.error);
+          if (window.electronAPI && window.electronAPI.logError) {
+            window.electronAPI.logError(`Worker TICK error: ${payload?.error}`, payload?.stack || '', 'WebWorker');
+          }
+        }
+      };
+      worker.onerror = (err) => {
+        console.warn('[Ascensión] Web Worker no disponible o error de inicialización. Conmutando a modo directo:', err);
+        workerRef.current = null;
+        isTickInProgressRef.current = false;
+      };
+      workerRef.current = worker;
+    } catch (e) {
+      console.warn('[Ascensión] Error al instanciar Web Worker. Conmutando a modo directo:', e);
+      workerRef.current = null;
+    }
+
+    return () => {
+      if (worker) {
+        worker.terminate();
+      }
+      workerRef.current = null;
+      isTickInProgressRef.current = false;
+    };
+  }, [dispatch]);
+
   useEffect(() => {
     if (!state.gameStarted) return;
+    lastFrameTimeRef.current = Date.now();
+    accumulatorRef.current = 0;
+
     const interval = setInterval(() => {
-      try {
-        dispatch({ type: 'TICK' });
-      } catch (e) {
-        console.error('[Ascensión] TICK dispatch error:', e);
-        if (window.electronAPI && window.electronAPI.logError) {
-          const snap = stateRef.current || state;
-          const ctx = `player=${snap.playerName}|missions=${(snap.fleetMissions||[]).length}|tick=${snap.gameTick||0}`;
-          window.electronAPI.logError(`TICK error: ${e?.message || e}`, e?.stack || '', ctx);
+      const now = Date.now();
+      const delta = now - lastFrameTimeRef.current;
+      lastFrameTimeRef.current = now;
+
+      // Limitar delta a máximo 5 segundos para evitar espirales de la muerte tras suspensión
+      const clampedDelta = Math.min(delta, 5000);
+      accumulatorRef.current += clampedDelta;
+
+      // Consumir el acumulador en pasos de fixed timestep (TICK_MS)
+      const maxTicksPerFrame = 5;
+      let ticksProcessed = 0;
+
+      while (accumulatorRef.current >= TICK_MS && ticksProcessed < maxTicksPerFrame) {
+        accumulatorRef.current -= TICK_MS;
+        ticksProcessed++;
+
+        // Si el Web Worker está activo y listo, delegar la simulación al hilo secundario
+        if (workerRef.current && !isTickInProgressRef.current) {
+          isTickInProgressRef.current = true;
+          tickCounterRef.current++;
+          const currentState = stateRef.current || state;
+          workerRef.current.postMessage({
+            action: 'TICK',
+            payload: {
+              state: currentState,
+              tickId: tickCounterRef.current
+            }
+          });
+        } else if (!workerRef.current) {
+          // Fallback clásico síncrono si el entorno no soporta Worker
+          try {
+            dispatch({ type: 'TICK' });
+          } catch (e) {
+            console.error('[Ascensión] TICK dispatch error:', e);
+            if (window.electronAPI && window.electronAPI.logError) {
+              const snap = stateRef.current || state;
+              const ctx = `player=${snap.playerName}|missions=${(snap.fleetMissions||[]).length}|tick=${snap.gameTick||0}`;
+              window.electronAPI.logError(`TICK error: ${e?.message || e}`, e?.stack || '', ctx);
+            }
+            break;
+          }
         }
       }
+
+      // Si aún queda exceso acumulado tras el tope por frame, descartar para mantener fluidez
+      if (accumulatorRef.current > TICK_MS * 2) {
+        accumulatorRef.current = 0;
+      }
     }, TICK_MS);
+
     return () => clearInterval(interval);
   }, [state.gameStarted, dispatch, state, stateRef]);
 

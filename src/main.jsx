@@ -3,26 +3,23 @@ import ReactDOM from 'react-dom/client';
 import AppWithBoundary from './App.jsx';
 import './index.css';
 
-// Global error handlers for improved logging to disk
-// These catch errors outside React ErrorBoundary and send them via Electron IPC
+import { logTelemetry, LOG_LEVELS } from './utils/telemetry.js';
+
+// Global error handlers for improved logging to disk y telemetría 360
 const setupGlobalErrorLogging = () => {
   if (typeof window === 'undefined') return;
 
   const logToElectron = (message, stack = '', context = '') => {
     try {
-      if (window.electronAPI && window.electronAPI.logError) {
-        const fullMessage = `[Global] ${message}${context ? ' | Context: ' + context : ''}`;
-        window.electronAPI.logError(fullMessage, stack);
-      }
+      logTelemetry(LOG_LEVELS.ERROR, `[Global Error] ${message}`, { stack, context });
     } catch (_) {
-      // Last resort - never break the app
       console.error('[Ascensión] Failed to log global error:', message);
     }
   };
 
   window.onerror = (message, source, lineno, colno, error) => {
     const stack = error?.stack || `${source}:${lineno}:${colno}`;
-    logToElectron(String(message), stack, 'window.onerror');
+    logToElectron(String(message), stack, `window.onerror (${source}:${lineno})`);
     return false; // Let default handling continue
   };
 

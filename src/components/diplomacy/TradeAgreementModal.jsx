@@ -17,11 +17,25 @@ export const TradeAgreementModal = ({
   if (!tradeAIPlanet) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 font-mono" onClick={() => setTradeAIPlanet(null)}>
-      <div className="glass-deep rounded-2xl p-6 max-w-lg w-full border border-cyan-500/30 bg-[#070b14]/95 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-white mb-4 uppercase tracking-wider border-b border-white/10 pb-2">
-          🤝 Mesa de Negociación Bilateral: {tradeAIPlanet.name}
-        </h3>
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-mono animate-in fade-in duration-200" onClick={() => setTradeAIPlanet(null)}>
+      <div className="glass-deep rounded-2xl p-6 max-w-xl w-full border border-cyan-500/40 bg-[#070b16]/95 shadow-[0_0_50px_rgba(6,182,212,0.15)] relative overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">🤝</span>
+            <div>
+              <h3 className="text-sm md:text-base font-bold text-white uppercase tracking-wider">
+                Mesa de Negociación Bilateral: {tradeAIPlanet.name}
+              </h3>
+              <span className="text-[10px] text-cyan-400">Intercambio de recursos y ratificación de tratados soberanos</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setTradeAIPlanet(null)}
+            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+          >
+            ✕
+          </button>
+        </div>
 
         <div className="space-y-4 mb-5 text-xs">
           <div className="bg-white/[0.01] p-3 rounded-lg border border-white/5">

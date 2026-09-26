@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { readFileSync, copyFileSync, writeFileSync, existsSync, renameSync } from 'fs';
+import { readFileSync, copyFileSync, writeFileSync, existsSync, renameSync, mkdirSync } from 'fs';
 import path from 'path';
 
 console.log('[Build Script] Starting build and packaging pipeline...');
@@ -61,7 +61,18 @@ try {
   htmlContent = htmlContent.replace(oldLocalLinkRegex, newLink);
 
   writeFileSync(htmlPath, htmlContent, 'utf8');
-  console.log('[Build Script] Auto-update of index.html complete.');
+  // 8. Copiar obligatoriamente el instalador a E:\Proyectos Antigravity\Juegos\Ascensión\Instalador (Regla 7 AGENTS.md)
+  const masterInstallerDir = 'E:\\Proyectos Antigravity\\Juegos\\Ascensión\\Instalador';
+  try {
+    if (!existsSync(masterInstallerDir)) {
+      mkdirSync(masterInstallerDir, { recursive: true });
+    }
+    const targetSetupPath = path.join(masterInstallerDir, setupFilename);
+    console.log(`[Build Script] Copiando instalador a carpeta maestra: ${targetSetupPath}`);
+    copyFileSync(setupPath, targetSetupPath);
+  } catch (errCopy) {
+    console.warn(`[Build Script] Aviso al copiar a carpeta maestra de instalador: ${errCopy.message}`);
+  }
 
   console.log('[Build Script] Pipeline completed successfully!');
 } catch (error) {

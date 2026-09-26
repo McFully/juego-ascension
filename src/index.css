@@ -33,21 +33,33 @@ body {
   font-family: 'Outfit', 'Space Grotesk', system-ui, -apple-system, sans-serif;
   background-color: var(--ue-bg);
   color: var(--ue-text);
-  /* Subtle film grain for "rendered in engine" texture */
-  background-image: 
-    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-  background-size: 3px 3px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* Stronger dark base + vignette for cinematic depth */
 #root {
   min-height: 100vh;
-  background: 
-    radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 95%);
+}
+
+/* ============================================
+   PUNTO 17: JERARQUÍA TIPOGRÁFICA MILITAR
+   Tipografía militar ultra condensada y nítida
+   ============================================ */
+.military-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+.military-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 900;
+  color: var(--ue-accent);
 }
 
 /* Global glassmorphism & premium panel styles */
@@ -104,7 +116,7 @@ body {
     0 0 40px rgba(244, 162, 97, 0.12);
 }
 
-/* Fresnel / specular edge lighting (UE5 material) */
+/* Fresnel / specular edge lighting (UE5 material + Punto 13: Guiado por Cursor) */
 .fresnel {
   position: relative;
 }
@@ -113,15 +125,22 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    145deg,
-    rgba(255,255,255,0.18) 0%,
-    transparent 35%,
-    transparent 65%,
-    rgba(255,255,255,0.08) 100%
-  );
+  background: 
+    radial-gradient(
+      280px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(6, 182, 212, 0.18),
+      transparent 80%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,0.18) 0%,
+      transparent 35%,
+      transparent 65%,
+      rgba(255,255,255,0.08) 100%
+    );
   pointer-events: none;
   mix-blend-mode: screen;
+  transition: opacity 0.3s ease;
 }
 
 /* Specular highlight on hover (PBR simulation) */
@@ -151,10 +170,6 @@ body {
     inset 0 2px 0 rgba(255,255,255,0.14),
     inset 0 -2px 0 rgba(0,0,0,0.45),
     0 0 0 1px rgba(6, 182, 212, 0.08);
-  background-image:
-    linear-gradient(rgba(255,255,255,0.009) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.009) 1px, transparent 1px);
-  background-size: 4px 4px;
 }
 
 /* UE5 cinematic post-processing extras - max fidelity */
@@ -219,53 +234,37 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* Subtle scanline effect on certain panels (optional premium touch) */
 .scanlines {
   position: relative;
 }
 
-.scanlines::before {
-  content: '';
+/* ============================================
+   PUNTO 11: FILTRO CRT Y SCANLINES TÁCTICO
+   Emulación diegética de monitor táctico de nave
+   ============================================ */
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: 
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  background-size: 100% 3px, 6px 100%;
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.7);
+}
+
+.crt-overlay::after {
+  content: " ";
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    transparent,
-    transparent 3px,
-    rgba(0,0,0,0.06) 3px,
-    rgba(0,0,0,0.06) 4px
-  );
+  background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.6) 100%);
   pointer-events: none;
-  z-index: 1;
-  border-radius: inherit;
 }
 
 /* Extra Unreal-like post-processing */
 .unreal-panel {
   position: relative;
-  overflow: hidden;
-}
-
-.unreal-panel::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.07) 0%,
-    transparent 12%,
-    transparent 82%,
-    rgba(0,0,0,0.18) 100%
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Subtle engine noise on deep glass (UE material texture) */
-.glass-deep {
-  background-image: 
-    linear-gradient(rgba(255,255,255,0.008) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.008) 1px, transparent 1px);
-  background-size: 3px 3px;
 }
 
 /* Ultimate UE5 chromatic + holographic edge (stronger cinematic aberration) */
@@ -317,7 +316,7 @@ input[type="range"]::-moz-range-thumb {
    ============================================ */
 
 .vignette {
-  box-shadow: inset 0 0 120px rgba(0,0,0,0.6);
+  box-shadow: none;
 }
 
 .filmgrain {
@@ -330,18 +329,7 @@ input[type="range"]::-moz-range-thumb {
 
 /* Enhanced global scanlines for .scanlines panels */
 .scanlines::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.035) 2px,
-    rgba(0,0,0,0.035) 3px
-  );
-  pointer-events: none;
-  z-index: 2;
-  border-radius: inherit;
+  display: none;
 }
 
 /* Reduced motion respect (performance + accessibility) */
@@ -384,7 +372,17 @@ button.emissive-gold,
 }
 
 
-/* Custom scrollbar hider */
+/* Custom scrollbar hider - Universal Zero-Scrollbar Console Experience */
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -393,4 +391,201 @@ button.emissive-gold,
   display: none;
 }
 
+/* ============================================================
+   ANIME.JS & DESIGN SPELLS: ANIMACIONES Y MICROINTERACCIONES
+   ============================================================ */
 
+/* Rebote elástico cartoon / JRPG */
+@keyframes cartoonPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(40px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-6px);
+  }
+  85% {
+    transform: scale(0.97) translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Balanceo sutil de personaje al hablar */
+@keyframes talkingIdle {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-4px) rotate(-1deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(1deg);
+  }
+}
+
+/* Destello cósmico reactivo (Design Spells) */
+@keyframes cosmicPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.25), inset 0 0 10px rgba(6, 182, 212, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.5), inset 0 0 15px rgba(6, 182, 212, 0.25);
+  }
+}
+
+.animate-cartoon-pop {
+  animation: cartoonPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-talking-bounce {
+  animation: talkingIdle 2.5s ease-in-out infinite;
+}
+
+.cosmic-interactive {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cosmic-interactive:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.cosmic-interactive:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+
+/* ============================================================
+   GAME NAVIGATION UI: ANIMATIONS, STATES & TRANSITIONS
+   ============================================================ */
+
+@keyframes viewSlideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.view-enter { animation: viewSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.view-fade-in { animation: viewFadeIn 0.2s ease-out forwards; }
+
+@keyframes tileAppear {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.tile-stagger > * {
+  opacity: 0;
+  animation: tileAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.tile-stagger > *:nth-child(1)  { animation-delay: 0.03s; }
+.tile-stagger > *:nth-child(2)  { animation-delay: 0.06s; }
+.tile-stagger > *:nth-child(3)  { animation-delay: 0.09s; }
+.tile-stagger > *:nth-child(4)  { animation-delay: 0.12s; }
+.tile-stagger > *:nth-child(5)  { animation-delay: 0.15s; }
+.tile-stagger > *:nth-child(6)  { animation-delay: 0.18s; }
+.tile-stagger > *:nth-child(7)  { animation-delay: 0.21s; }
+.tile-stagger > *:nth-child(8)  { animation-delay: 0.24s; }
+.tile-stagger > *:nth-child(9)  { animation-delay: 0.27s; }
+.tile-stagger > *:nth-child(10) { animation-delay: 0.30s; }
+.tile-stagger > *:nth-child(11) { animation-delay: 0.33s; }
+.tile-stagger > *:nth-child(12) { animation-delay: 0.36s; }
+
+@keyframes progressFill { from { width: 0%; } }
+.progress-animate { animation: progressFill 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@keyframes unlockShine {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.unlock-shine {
+  background: linear-gradient(90deg, transparent 0%, rgba(6,182,212,0.3) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: unlockShine 1.5s ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(6,182,212,0.3); }
+  50%      { box-shadow: 0 0 16px rgba(6,182,212,0.6); }
+}
+.pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+
+/* Punto 50: Sincronización lumínica de núcleos de reactor y plasma */
+@keyframes reactorPulse {
+  0%   { box-shadow: 0 0 8px rgba(34,211,238,0.3), inset 0 0 4px rgba(34,211,238,0.2); filter: drop-shadow(0 0 2px rgba(6,182,212,0.4)); }
+  35%  { box-shadow: 0 0 24px rgba(34,211,238,0.7), inset 0 0 12px rgba(34,211,238,0.4); filter: drop-shadow(0 0 8px rgba(6,182,212,0.8)); }
+  70%  { box-shadow: 0 0 14px rgba(34,211,238,0.4), inset 0 0 6px rgba(34,211,238,0.25); filter: drop-shadow(0 0 4px rgba(6,182,212,0.5)); }
+  100% { box-shadow: 0 0 8px rgba(34,211,238,0.3), inset 0 0 4px rgba(34,211,238,0.2); filter: drop-shadow(0 0 2px rgba(6,182,212,0.4)); }
+}
+.reactor-glow-sync {
+  animation: reactorPulse 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+/* Visual State Classes */
+.state-available { border-color: rgba(6,182,212,0.3); }
+.state-available:hover { border-color: rgba(6,182,212,0.6); box-shadow: 0 0 20px rgba(6,182,212,0.15); }
+.state-locked { opacity: 0.5; filter: grayscale(0.4); cursor: not-allowed !important; pointer-events: none; position: relative; }
+.state-locked::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4); border-radius: inherit; pointer-events: none; }
+.state-building { border-color: rgba(234,179,8,0.4) !important; box-shadow: 0 0 12px rgba(234,179,8,0.15); }
+.state-upgrade { border-color: rgba(6,182,212,0.5) !important; animation: pulseGlow 2s ease-in-out infinite; }
+.state-new { border-color: rgba(16,185,129,0.5) !important; box-shadow: 0 0 15px rgba(16,185,129,0.2); }
+.state-no-resources { border-color: rgba(239,68,68,0.3) !important; }
+.state-completed { border-color: rgba(234,179,8,0.4) !important; box-shadow: 0 0 10px rgba(234,179,8,0.15); }
+
+/* Game Focus Ring - Android TV & Console Specular Focus */
+.focus-ring-game:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+.console-focused {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #05070f, 0 0 0 4px #22d3ee, 0 0 35px rgba(34, 211, 238, 0.65), inset 0 0 15px rgba(34, 211, 238, 0.25) !important;
+  transform: translateY(-4px) scale(1.03) !important;
+  border-color: #22d3ee !important;
+  z-index: 25 !important;
+}
+
+/* Carousel Scroll */
+.carousel-scroll { scrollbar-width: thin; scrollbar-color: rgba(6,182,212,0.3) transparent; }
+.carousel-scroll::-webkit-scrollbar { height: 4px; }
+.carousel-scroll::-webkit-scrollbar-track { background: transparent; }
+.carousel-scroll::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.25); border-radius: 4px; }
+.carousel-scroll::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.5); }
+
+/* Breadcrumbs */
+.breadcrumbs-bar {
+  background: linear-gradient(180deg, rgba(5,7,15,0.95) 0%, rgba(10,13,26,0.9) 100%);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+
+/* Nav Tile Depth */
+.nav-tile { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); backdrop-filter: blur(8px); }
+.nav-tile::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; background: linear-gradient(135deg, rgba(6,182,212,0.08) 0%, transparent 50%); opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+.nav-tile:hover::before { opacity: 1; }
+
+/* Sidebar Command Panel */
+.sidebar-section-header { position: relative; overflow: hidden; }
+.sidebar-section-header::after { content: ''; position: absolute; bottom: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(90deg, transparent, rgba(6,182,212,0.2), transparent); }
+
+.sidebar-item { transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.sidebar-item:hover { background: rgba(255,255,255,0.04); }
+.sidebar-item.active { background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.5); box-shadow: 0 0 12px rgba(6,182,212,0.15), inset 0 0 8px rgba(6,182,212,0.05); }
+
+/* Micro-física háptica de resorte para botones de cabina espacial */
+.btn-spring {
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease-out, border-color 0.15s ease-out;
+  will-change: transform;
+}
+.btn-spring:active:not(:disabled) {
+  transform: scale(0.965) translateY(1px);
+  transition-duration: 0.06s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-enter, .view-fade-in, .tile-stagger > *, .progress-animate, .unlock-shine, .pulse-glow, .nav-tile, .btn-spring {
+    animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important;
+  }
+}

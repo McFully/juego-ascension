@@ -1,0 +1,42 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 350" width="100%" height="100%">
+  <defs>
+    <radialGradient id="leaderSkin" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#ffcccc"/>
+      <stop offset="70%" stop-color="#f8a5c2"/>
+      <stop offset="100%" stop-color="#e77f98"/>
+    </radialGradient>
+    <linearGradient id="commanderSuit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0984e3"/>
+      <stop offset="50%" stop-color="#1e3799"/>
+      <stop offset="100%" stop-color="#0c2461"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Traje táctico humano con hombreras geométricas -->
+  <path d="M 60,225 Q 150,205 240,225 L 260,350 L 40,350 Z" fill="url(#commanderSuit)" stroke="#0c1836" stroke-width="5"/>
+  <polygon points="150,215 135,280 165,280" fill="#00d2d3" stroke="#0c1836" stroke-width="3"/>
+
+  <!-- Cabeza y cuello humano estilizado cartoon -->
+  <rect x="125" y="155" width="50" height="60" fill="#f8a5c2" stroke="#0c1836" stroke-width="4"/>
+  <path d="M 90,110 Q 80,180 150,185 Q 220,180 210,110 Q 200,45 150,45 Q 100,45 90,110 Z" fill="url(#leaderSkin)" stroke="#0c1836" stroke-width="6"/>
+
+  <!-- Cabello heroico animado estilo Advance Wars -->
+  <path d="M 80,105 Q 85,35 150,30 Q 215,35 220,105 Q 235,55 195,30 Q 150,15 105,30 Q 65,55 80,105 Z" fill="#2c3e50" stroke="#0c1836" stroke-width="5"/>
+  <path d="M 100,60 L 130,85 L 140,55 L 165,85 L 185,55" stroke="#0c1836" stroke-width="4" fill="none"/>
+
+  <!-- Ojos expresivos y decididos -->
+  <ellipse cx="125" cy="115" rx="14" ry="16" fill="#ffffff" stroke="#0c1836" stroke-width="3.5"/>
+  <circle cx="127" cy="116" r="7" fill="#0984e3"/>
+  <circle cx="128" cy="112" r="3" fill="#ffffff"/>
+
+  <ellipse cx="175" cy="115" rx="14" ry="16" fill="#ffffff" stroke="#0c1836" stroke-width="3.5"/>
+  <circle cx="173" cy="116" r="7" fill="#0984e3"/>
+  <circle cx="174" cy="112" r="3" fill="#ffffff"/>
+
+  <!-- Cejas de mando firmes -->
+  <path d="M 110,95 L 138,102" stroke="#0c1836" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 190,95 L 162,102" stroke="#0c1836" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Boca confiada -->
+  <path d="M 135,150 Q 150,162 165,150" stroke="#0c1836" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

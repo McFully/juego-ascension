@@ -1,0 +1,211 @@
+export const MINISTRY_METADATA = {
+  infra: {
+    name: 'Ministerio de Infraestructuras',
+    subtitle: 'Obras Primarias, Andamiajes y Robótica',
+    icon: '🏗️',
+    assetId: 'constructionCenter',
+    desc: 'Edifica andamiajes de nanitas, automatiza robots constructores y levanta las sedes operativas como el Laboratorio o el Astillero.',
+    bgImage: 'interior_infra.svg',
+    border: 'border-emerald-500/40',
+    badgeBg: 'bg-emerald-500/10 text-emerald-400',
+    accentColor: '#10b981'
+  },
+  resources: {
+    name: 'Ministerio de Minería y Recursos',
+    subtitle: 'Extracción Geológica y Pozos Térmicos',
+    icon: '⛏️',
+    assetId: 'automatedMine',
+    desc: 'Coordina la extracción de metal, depósitos de cristal y condensación de deuterio pesado en las colonias.',
+    bgImage: 'interior_economy.svg',
+    border: 'border-amber-500/40',
+    badgeBg: 'bg-amber-500/10 text-amber-400',
+    accentColor: '#d97706'
+  },
+  industry: {
+    name: 'Ministerio de Industria',
+    subtitle: 'Refinamiento y Manufactura Pesada',
+    icon: '🏭',
+    assetId: 'industrialComplex',
+    desc: 'Opera refinerías avanzadas, plantas químicas de procesamiento y reactores de enriquecimiento molecular.',
+    bgImage: 'interior_infra.svg',
+    border: 'border-orange-500/40',
+    badgeBg: 'bg-orange-500/10 text-orange-400',
+    accentColor: '#ea580c'
+  },
+  economy: {
+    name: 'Ministerio de Economía',
+    subtitle: 'Comercio Interestelar y Tesoro Imperial',
+    icon: '💼',
+    assetId: 'financeMinistry',
+    desc: 'Supervisa el mercado galáctico, transacciones de crédito y aranceles comerciales del borde exterior.',
+    bgImage: 'interior_economy.svg',
+    border: 'border-amber-500/40',
+    badgeBg: 'bg-amber-500/10 text-amber-400',
+    accentColor: '#f59e0b'
+  },
+  energy: {
+    name: 'Ministerio de Energía',
+    subtitle: 'Matrices de Fusión y Redes Cuánticas',
+    icon: '⚡',
+    assetId: 'quantumReactor',
+    desc: 'Regula la generación solar fotovoltaica, la estabilización de reactores de fusión y plantas de materia oscura.',
+    bgImage: 'interior_energy.svg',
+    border: 'border-yellow-500/40',
+    badgeBg: 'bg-yellow-500/10 text-yellow-400',
+    accentColor: '#eab308'
+  },
+  science: {
+    name: 'Ministerio de Ciencia',
+    subtitle: 'Física Teórica, Hiperespacio y Singularidad',
+    icon: '🔬',
+    assetId: 'expLab',
+    desc: 'Dirige los proyectos de astrofísica, motores de curvatura cuánticos y la ecuación de la Singularidad.',
+    bgImage: 'interior_science.svg',
+    border: 'border-cyan-500/40',
+    badgeBg: 'bg-cyan-500/10 text-cyan-400',
+    accentColor: '#06b6d4'
+  },
+  innovation: {
+    name: 'Ministerio de Innovación',
+    subtitle: 'Nanotecnología y Diseño Experimental',
+    icon: '💡',
+    assetId: 'nanoCenter',
+    desc: 'Aplica patentes industriales, sistemas de nano-reparación y prototipos cibernéticos avanzados.',
+    bgImage: 'interior_science.svg',
+    border: 'border-sky-500/40',
+    badgeBg: 'bg-sky-500/10 text-sky-400',
+    accentColor: '#38bdf8'
+  },
+  cybernetics: {
+    name: 'Ministerio de Cibernética e IA',
+    subtitle: 'Supercomputación y Redes Neuronales',
+    icon: '🧠',
+    assetId: 'aiCore',
+    desc: 'Gestiona los núcleos de inteligencia artificial, computación cuántica y automatización total del imperio.',
+    bgImage: 'interior_intel.svg',
+    border: 'border-indigo-500/40',
+    badgeBg: 'bg-indigo-500/10 text-indigo-400',
+    accentColor: '#818cf8'
+  },
+  defense: {
+    name: 'Ministerio de Defensa',
+    subtitle: 'Bastión Defensivo y Escudos de Superficie',
+    icon: '🛡️',
+    assetId: 'globalShieldProj',
+    desc: 'Supervisa los escudos planetarios, baterías de plasma de superficie y silos de misiles antibalísticos.',
+    bgImage: 'interior_defense.svg',
+    border: 'border-red-500/40',
+    badgeBg: 'bg-red-500/10 text-red-400',
+    accentColor: '#ef4444'
+  },
+  war: {
+    name: 'Ministerio de Guerra',
+    subtitle: 'Almirantazgo, Astillero y Flota Ofensiva',
+    icon: '⚔️',
+    assetId: 'militaryAcademy',
+    desc: 'Ensambla cruceros y destructores de batalla, entrena almirantes y calibra armamento balístico y de plasma.',
+    bgImage: 'interior_defense.svg',
+    border: 'border-rose-600/40',
+    badgeBg: 'bg-rose-600/10 text-rose-400',
+    accentColor: '#b91c1c'
+  },
+  transport: {
+    name: 'Ministerio de Transporte',
+    subtitle: 'Redes Maglev y Tránsito de Superficie',
+    icon: '🚄',
+    assetId: 'vacuumTransitTubes',
+    desc: 'Construye redes de hyperloop de vacío, catapultas electromagnéticas y agiliza la navegación estelar.',
+    bgImage: 'interior_transport.svg',
+    border: 'border-sky-500/40',
+    badgeBg: 'bg-sky-500/10 text-sky-400',
+    accentColor: '#0284c7'
+  },
+  logistics: {
+    name: 'Ministerio de Logística',
+    subtitle: 'Silos Estratégicos y Puertos Espaciales',
+    icon: '📦',
+    assetId: 'centralLogisticHub',
+    desc: 'Administra los almacenes de metal, cristal y deuterio, silos orbitales y la flota de cargueros de transporte.',
+    bgImage: 'interior_transport.svg',
+    border: 'border-cyan-500/40',
+    badgeBg: 'bg-cyan-500/10 text-cyan-400',
+    accentColor: '#0ea5e9'
+  },
+  biosphere: {
+    name: 'Ministerio de Biosfera y Ecología',
+    subtitle: 'Terraformación y Adaptación Planetaria',
+    icon: '🌍',
+    assetId: 'geosphericEcoPark',
+    desc: 'Transforma biomas coloniales hostiles, expande campos habitables y opera laboratorios de genética.',
+    bgImage: 'interior_agriculture.svg',
+    border: 'border-emerald-500/40',
+    badgeBg: 'bg-emerald-500/10 text-emerald-400',
+    accentColor: '#22c55e'
+  },
+  agriculture: {
+    name: 'Ministerio de Agricultura',
+    subtitle: 'Biosferas Agrícolas e Hidroponía',
+    icon: '🌱',
+    assetId: 'urbanHydroponic',
+    desc: 'Supervisa los anillos de cultivo verticales, la purificación de acuíferos y la reserva alimentaria colonial.',
+    bgImage: 'interior_agriculture.svg',
+    border: 'border-emerald-500/40',
+    badgeBg: 'bg-emerald-500/10 text-emerald-400',
+    accentColor: '#10b981'
+  },
+  civics: {
+    name: 'Ministerio de Asuntos Civiles',
+    subtitle: 'Población, Salud Pública y Bienestar',
+    icon: '🏛️',
+    assetId: 'townHall',
+    desc: 'Vela por los ayuntamientos coloniales, centros médicos de salud y la felicidad ciudadana en los mundos.',
+    bgImage: 'interior_justice.svg',
+    border: 'border-teal-500/40',
+    badgeBg: 'bg-teal-500/10 text-teal-400',
+    accentColor: '#14b8a6'
+  },
+  diplomacy: {
+    name: 'Ministerio Diplomático',
+    subtitle: 'Tratados, Embajadas y Senado Galáctico',
+    icon: '🤝',
+    assetId: 'permanentEmbassy',
+    desc: 'Mantiene acuerdos de no agresión, tratados de cooperación científica y consulados con imperios vecinos.',
+    bgImage: 'interior_culture.svg',
+    border: 'border-purple-500/40',
+    badgeBg: 'bg-purple-500/10 text-purple-400',
+    accentColor: '#a855f7'
+  },
+  intel: {
+    name: 'Ministerio de Inteligencia',
+    subtitle: 'Criptoanálisis y Red de Infiltración',
+    icon: '🕵️',
+    assetId: 'spyCenter',
+    desc: 'Interfiere señales enemigas, neutraliza espías rivales y comanda las sondas y misiles tácticos.',
+    bgImage: 'interior_intel.svg',
+    border: 'border-blue-500/40',
+    badgeBg: 'bg-blue-500/10 text-blue-400',
+    accentColor: '#3b82f6'
+  },
+  justice: {
+    name: 'Ministerio de Justicia y Orden Federal',
+    subtitle: 'Corte Suprema y Arbitraje Interestelar',
+    icon: '⚖️',
+    assetId: 'colonySupremeCourt',
+    desc: 'Aplica el código legal de la República, coordina la seguridad ciudadana y garantiza los acuerdos con facciones aliadas.',
+    bgImage: 'interior_justice.svg',
+    border: 'border-indigo-500/40',
+    badgeBg: 'bg-indigo-500/10 text-indigo-400',
+    accentColor: '#6366f1'
+  },
+  culture: {
+    name: 'Ministerio de Cultura y Propaganda',
+    subtitle: 'Cohesión Social y Prestigio Galáctico',
+    icon: '🎭',
+    assetId: 'stellarPhilosophyTemple',
+    desc: 'Fortalece la identidad federal, organiza galas de prestigio ante el Senado y mantiene la unidad civil en los mundos coloniales.',
+    bgImage: 'interior_culture.svg',
+    border: 'border-pink-500/40',
+    badgeBg: 'bg-pink-500/10 text-pink-400',
+    accentColor: '#ec4899'
+  }
+};

@@ -1,6 +1,12 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getVirginPlanet, getPOIAtCoordinates } from '../core.jsx';
+import { useNavigation } from '../components/navigation/NavigationContext.jsx';
+import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
+import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
+import { GalaxyNavConsole } from '../components/galaxy/GalaxyNavConsole.jsx';
+import { DebrisFieldVisualization } from '../components/galaxy/DebrisFieldVisualization.jsx';
+import { transitionToCosmicSilence } from '../audio.js';
 
 const getPlanetStyle = (planet) => {
   const biome = planet?.biome || 'barren';
@@ -12,8 +18,8 @@ const getPlanetStyle = (planet) => {
   hash = Math.abs(hash);
 
   const angle = hash % 360;
-  const sizeVar = 90 + (hash % 15); // 90% to 105%
-  const ring = (hash % 8) === 0; // 12.5% chance of rings
+  const sizeVar = 90 + (hash % 15);
+  const ring = (hash % 8) === 0;
 
   let gradient = '';
   let atmosphereColor = '';
@@ -64,7 +70,6 @@ const PlanetIcon = ({ planet }) => {
   const { gradient, atmosphereColor, sizeVar, ring, angle } = getPlanetStyle(planet);
   return (
     <div className="relative flex items-center justify-center w-8 h-8 shrink-0">
-      {/* Atmosphere Glow */}
       <div 
         className="absolute rounded-full" 
         style={{
@@ -74,7 +79,6 @@ const PlanetIcon = ({ planet }) => {
           opacity: 0.8
         }}
       />
-      {/* Planet Body */}
       <div 
         className="absolute rounded-full shadow-[inset_-3px_-3px_6px_rgba(0,0,0,0.8)]" 
         style={{
@@ -83,7 +87,6 @@ const PlanetIcon = ({ planet }) => {
           background: gradient,
         }}
       />
-      {/* Rings */}
       {ring && (
         <div 
           className="absolute border border-white/20 rounded-full pointer-events-none" 
@@ -99,21 +102,35 @@ const PlanetIcon = ({ planet }) => {
   );
 };
 
-
 const SYS_MAX = { 1: 500, 2: 389, 3: 389, 4: 389, 5: 389, 6: 389, 7: 389, 8: 389, 9: 389, 10: 389 };
-const GALS = [1,2,3,4,5,6,7,8,9,10];
 
-const GalaxyPage = ({ state, dispatch, currentPlanet, setSelectedTarget, setActiveTab, S, fmt, fmtTime }) => {
+export const GalaxyPage = ({
+  state,
+  dispatch,
+  currentPlanet,
+  production,
+  setSelectedTarget,
+  setActiveTab,
+  S,
+  fmt,
+  fmtTime
+}) => {
+  const { navigateTo, navigateBack } = useNavigation();
   const [galaxy, setGalaxy] = useState(currentPlanet.galaxy);
   const [system, setSystem] = useState(currentPlanet.system);
   const [hoveredPos, setHoveredPos] = useState(null);
+
+  // Silencio cósmico profundo en el mapa estelar galáctico
+  useEffect(() => {
+    transitionToCosmicSilence(true);
+    return () => transitionToCosmicSilence(false);
+  }, []);
 
   const positions = useMemo(() => Array.from({ length: 15 }, (_, i) => i + 1), []);
   const sysMax = useMemo(() => SYS_MAX[galaxy] || 499, [galaxy]);
   const myPlanets = useMemo(() => state.planets.filter(p => p.galaxy === galaxy && p.system === system), [state.planets, galaxy, system]);
   const aiInSystem = useMemo(() => state.aiPlanets.filter(p => p.galaxy === galaxy && p.system === system), [state.aiPlanets, galaxy, system]);
 
-  // Fleet missions involving this system
   const missionsHere = useMemo(() => (state.fleetMissions || []).filter(m => {
     if (m.isAI) return false;
     return (m.to.galaxy === galaxy && m.to.system === system) ||
@@ -121,21 +138,30 @@ const GalaxyPage = ({ state, dispatch, currentPlanet, setSelectedTarget, setActi
   }), [state.fleetMissions, galaxy, system]);
 
   const selectTarget = useCallback((pos, occupied, isAI) => {
+    if (window.playSfx) window.playSfx('click');
     setSelectedTarget({ galaxy, system, position: pos, occupied, isAI });
     setActiveTab('fleet');
   }, [galaxy, system, setSelectedTarget, setActiveTab]);
 
   const quickSpy = useCallback((pos, ai) => {
-    if (!currentPlanet.fleet.espionageProbe) return;
-    dispatch({ type: 'SEND_FLEET', fromId: currentPlanet.id, to: { galaxy, system, position: pos }, fleet: { espionageProbe: Math.min(5, currentPlanet.fleet.espionageProbe) }, missionType: 'espionage', missionSpeed: 10 });
+    if (window.playSfx) window.playSfx('click');
+    if (!currentPlanet.fleet?.espionageProbe) return;
+    dispatch({
+      type: 'SEND_FLEET',
+      fromId: currentPlanet.id,
+      to: { galaxy, system, position: pos },
+      fleet: { espionageProbe: Math.min(5, currentPlanet.fleet.espionageProbe) },
+      missionType: 'espionage',
+      missionSpeed: 10
+    });
   }, [currentPlanet, dispatch, galaxy, system]);
 
   const quickAttack = useCallback((pos, ai) => {
+    if (window.playSfx) window.playSfx('click');
     setSelectedTarget({ galaxy, system, position: pos, occupied: true, isAI: true });
     setActiveTab('fleet');
   }, [galaxy, system, setSelectedTarget, setActiveTab]);
 
-  // Galaxy-level summary (exclude virgin planets from AI count)
   const gSum = useCallback((g) => {
     const myG = state.planets.filter(p => p.galaxy === g);
     const aiG = state.aiPlanets.filter(p => p.galaxy === g && !p.isVirgin);
@@ -143,227 +169,259 @@ const GalaxyPage = ({ state, dispatch, currentPlanet, setSelectedTarget, setActi
   }, [state.planets, state.aiPlanets]);
 
   return (
-    <div className="space-y-4">
-      {/* Galaxy selector with mini-map */}
-      <div className={S.card}>
-        <div className="flex flex-wrap items-center gap-4 mb-4">
-          <div>
-            <label className="text-xs text-slate-400 block mb-1">Galaxia</label>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setGalaxy(g => Math.max(1, g - 1))} className={S.btnGhost + ' ' + S.btn}>←</button>
-              <span className="font-mono text-cyan-400 text-xl w-16 text-center">{galaxy}</span>
-              <button onClick={() => setGalaxy(g => Math.min(10, g + 1))} className={S.btnGhost + ' ' + S.btn}>→</button>
-            </div>
-            <div className="flex gap-1 mt-2">
-              {GALS.map(g => (
-                <button key={g} onClick={() => setGalaxy(g)}
-                  className={`w-6 h-6 text-[10px] rounded ${g === galaxy ? 'glass border border-[var(--ue-accent)]/40 text-[var(--ue-accent)] emissive-cyan fresnel specular' : 'glass-deep border-white/10 text-slate-400 hover:text-slate-200 fresnel specular'}`}>
-                  {g}
-                </button>
-              ))}
-            </div>
+    <div className="space-y-4 view-enter">
+      {/* DOM Superior Estandarizado con VOLVER A ALTO MANDO */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle={`Navegación y Galaxia · [${galaxy}:${system}]`}
+        breadcrumbIcon="🌌"
+        showBackToAltoMando={true}
+        onBackToAltoMando={() => {
+          if (navigateBack) navigateBack();
+          else if (navigateTo) navigateTo('government');
+          else if (setActiveTab) setActiveTab('government');
+        }}
+        rightSlot={
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">
+            <span className="text-slate-400">Tránsito local:</span>
+            <span className="font-bold text-cyan-300">{missionsHere.length} Flotas</span>
           </div>
-          <div>
-            <label className="text-xs text-slate-400 block mb-1">Sistema Solar</label>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setSystem(s => Math.max(1, s - 10))} className={S.btnGhost + ' ' + S.btn}>⟪</button>
-              <button onClick={() => setSystem(s => Math.max(1, s - 1))} className={S.btnGhost + ' ' + S.btn}>←</button>
-              <span className="font-mono text-cyan-400 text-xl w-20 text-center">{system}</span>
-              <button onClick={() => setSystem(s => Math.min(sysMax, s + 1))} className={S.btnGhost + ' ' + S.btn}>→</button>
-              <button onClick={() => setSystem(s => Math.min(sysMax, s + 10))} className={S.btnGhost + ' ' + S.btn}>⟫</button>
-            </div>
-            <div className="flex gap-1 mt-2">
-              <input type="number" min={1} max={sysMax} value={system}
-                onChange={e => setSystem(Math.max(1, Math.min(sysMax, parseInt(e.target.value) || 1)))}
-                className={S.input + ' w-20 text-xs py-1 text-center text-[var(--ue-accent)] font-mono'} />
-            </div>
+        }
+      />
+
+      {/* Consola de Navegación Estelar */}
+      <GalaxyNavConsole
+        state={state}
+        galaxy={galaxy}
+        setGalaxy={setGalaxy}
+        system={system}
+        setSystem={setSystem}
+        sysMax={sysMax}
+        gSum={gSum}
+        currentPlanet={currentPlanet}
+        onGoToCurrentPlanet={() => {
+          setGalaxy(currentPlanet.galaxy);
+          setSystem(currentPlanet.system);
+        }}
+        navigateTo={navigateTo}
+        setActiveTab={setActiveTab}
+        S={S}
+      />
+
+      {/* Flotas en Tránsito en este Sistema */}
+      {missionsHere.length > 0 && (
+        <div className="p-3 rounded-xl bg-cyan-950/20 border border-cyan-500/30 flex flex-col gap-1.5 font-mono">
+          <div className="text-xs text-cyan-400 font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span>Tránsito de Flotas en el Sistema [{galaxy}:{system}]:</span>
           </div>
-          <div className="text-xs text-slate-500 ml-auto text-right">
-            <div>🏠 {gSum(galaxy).my} colonias</div>
-            <div>👾 {gSum(galaxy).ai} planetas IA</div>
-          </div>
+          {missionsHere.map(m => {
+            const remaining = Math.max(0, ((m.returning ? m.returnTime : m.arrivalTime) - Date.now()) / 1000);
+            const ships = Object.values(m.fleet || {}).reduce((a, b) => a + b, 0);
+            return (
+              <div key={m.id} className="text-[11px] text-slate-300 flex justify-between bg-black/30 p-2 rounded-lg border border-white/5">
+                <span>{m.returning ? '↩ Retorno' : '↪ Despliegue'} {m.type} • {ships} naves</span>
+                <span className="text-cyan-400 font-bold">⏱ {fmtTime ? fmtTime(remaining) : Math.round(remaining) + 's'}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Visualización Dinámica de Campo de Escombros si existen residuos */}
+      {((state.debrisField?.metal || 0) > 0 || (state.debrisField?.crystal || 0) > 0) && (
+        <DebrisFieldVisualization
+          metal={state.debrisField?.metal || 0}
+          crystal={state.debrisField?.crystal || 0}
+          fmt={fmt}
+          hasRecycler={(currentPlanet.fleet?.recycler || 0) > 0}
+          onRecycleClick={() => {
+            selectTarget(1, false, false);
+            if (navigateTo) navigateTo('fleet');
+            else if (setActiveTab) setActiveTab('fleet');
+          }}
+        />
+      )}
+
+      {/* Rejilla Orbital Original de 15 Posiciones */}
+      <div className="bg-[#0a0d1a]/85 border border-white/10 rounded-2xl p-4 shadow-xl backdrop-blur-md space-y-2">
+        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono mb-2 px-1">
+          Órbitas Planetarias del Sistema [{galaxy}:{system}]
         </div>
 
-        {/* Active missions in this system */}
-        {missionsHere.length > 0 && (
-          <div className="mb-3 p-2 glass-deep rounded-xl border border-[var(--ue-accent)]/20 fresnel specular emissive-cyan">
-            <div className="text-[11px] text-cyan-400 font-semibold mb-1">🛸 Flotas en este sistema</div>
-            {missionsHere.map(m => {
-              const remaining = Math.max(0, ((m.returning ? m.returnTime : m.arrivalTime) - Date.now()) / 1000);
-              const ships = Object.values(m.fleet).reduce((a, b) => a + b, 0);
-              return <div key={m.id} className="text-[10px] text-slate-400 flex justify-between">
-                <span>{m.returning ? '↩' : '↪'} {m.type} • {ships} naves</span>
-                <span className="text-cyan-400">{fmtTime(remaining)}</span>
-              </div>;
-            })}
-          </div>
-        )}
-
-        {/* Planet positions */}
-        <div className="space-y-1">
+        <div className="space-y-1.5 tile-stagger">
           {positions.map(pos => {
             const my = myPlanets.find(p => p.position === pos);
             const ai = aiInSystem.find(p => p.position === pos);
             const virgin = (!my && !ai) ? getVirginPlanet(galaxy, system, pos) : null;
             const poi = getPOIAtCoordinates(galaxy, system, pos);
             const hasMissions = missionsHere.some(m => m.to.position === pos || m.from.position === pos);
+
             return (
               <motion.div
                 key={pos}
                 onClick={() => {
-                  if (my) { dispatch({ type: 'SET_PLANET', payload: my.id }); return; }
+                  if (my) {
+                    // Si es el planeta donde estamos actualmente, cambiar/permanecer activo
+                    if (my.id === currentPlanet.id) {
+                      dispatch({ type: 'SET_PLANET', payload: my.id });
+                      return;
+                    }
+                    // Si es otra colonia propia, seleccionarla como destino táctico de transporte
+                    selectTarget(pos, true, false);
+                    return;
+                  }
                   if (ai) { selectTarget(pos, true, true); return; }
                   if (virgin) { selectTarget(pos, false, true); return; }
                   if (poi) { selectTarget(pos, false, false); return; }
                   selectTarget(pos, false, false);
                 }}
-                whileHover={{ scale: 1.01 }}
+                whileHover={{ scale: 1.008 }}
                 onMouseEnter={() => setHoveredPos(pos)}
                 onMouseLeave={() => setHoveredPos(null)}
-                className={`p-2 rounded-lg cursor-pointer transition-all flex items-center justify-between ${
-                  my ? 'glass-deep border border-[var(--ue-accent)]/30 fresnel specular emissive-cyan' :
-                  ai ? 'bg-red-500/10 border border-red-500/30' :
-                  virgin ? 'bg-emerald-500/5 border border-emerald-500/20 hover:border-emerald-500/40' :
-                  poi ? 'bg-purple-500/10 border border-purple-500/30 hover:border-purple-500/55' :
-                  'glass-deep border border-white/10 hover:border-[var(--ue-accent)]/30 fresnel specular'
+                className={`p-3 rounded-xl cursor-pointer transition-all flex items-center justify-between border ${
+                  my ? 'bg-cyan-950/20 border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.15)]' :
+                  ai ? 'bg-red-950/20 border-red-500/30 hover:border-red-500/50' :
+                  virgin ? 'bg-emerald-950/15 border-emerald-500/30 hover:border-emerald-500/50' :
+                  poi ? 'bg-purple-950/20 border-purple-500/30 hover:border-purple-500/60' :
+                  'bg-[#05070f]/50 border-white/5 hover:border-white/20'
                 }`}
               >
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="font-mono text-sm text-slate-400 w-8">{pos}</div>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="font-mono font-bold text-xs text-slate-500 w-6 text-center">{pos}</div>
+
                   {my ? (
                     <>
                       <PlanetIcon planet={my} />
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-cyan-300 flex items-center gap-2 truncate">
                           <span>{my.name}</span>
-                          {poi && <span className="text-[10px] glass-deep text-[var(--ue-accent)] px-1 py-0.5 rounded border border-[var(--ue-accent)]/30 holo-text fresnel specular font-normal">{poi.icon} {poi.name}</span>}
+                          <span className="text-[9px] font-mono uppercase bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30">Tu Colonia</span>
+                          {(() => {
+                            const plPatrol = (state.patrols || []).find(p => p.planetId === my.id && p.status === 'active');
+                            const sysPatrol = (state.patrols || []).find(p => p.galaxy === galaxy && p.system === system && p.status === 'active' && p.patrolType === 'system');
+                            if (plPatrol) {
+                              return (
+                                <span className="text-[9px] font-mono uppercase bg-cyan-950/80 text-cyan-200 px-1.5 py-0.5 rounded border border-cyan-400/60 flex items-center gap-1 shadow-sm">
+                                  <span>🛡️</span> Órbita Custodiada
+                                </span>
+                              );
+                            }
+                            if (sysPatrol) {
+                              return (
+                                <span className="text-[9px] font-mono uppercase bg-blue-950/80 text-blue-200 px-1.5 py-0.5 rounded border border-blue-400/60 flex items-center gap-1 shadow-sm">
+                                  <span>🚨</span> Policía de Sistema
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
-                        <div className="text-[11px] text-slate-405">Tu planeta</div>
-                        {hoveredPos === pos && (
-                          <div className="mt-1 flex gap-3 text-[10px] text-slate-500">
-                            <span className="text-amber-400">⛏️{fmt(my.resources?.metal || 0)}</span>
-                            <span className="text-cyan-400">💎{fmt(my.resources?.crystal || 0)}</span>
-                            <span className="text-emerald-400">⚗️{fmt(my.resources?.deuterium || 0)}</span>
-                            <span>🚀{Object.values(my.fleet || {}).reduce((a, b) => a + b, 0)}</span>
-                            <span>🛡️{Object.values(my.defenses || {}).reduce((a, b) => a + b, 0)}</span>
-                          </div>
-                        )}
+                        <div className="text-[10px] text-slate-400 font-mono">Bioma {my.biome} • {my.temperature}°C</div>
                       </div>
                     </>
                   ) : ai ? (
                     <>
                       <PlanetIcon planet={ai} />
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-red-300 flex items-center gap-2 truncate">
                           <span>{ai.name}</span>
-                          {poi && <span className="text-[10px] bg-purple-900/60 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/30 font-normal">{poi.icon} {poi.name}</span>}
+                          <span className="text-[9px] font-mono uppercase bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded border border-red-500/30">Imperio IA</span>
                         </div>
-                        <div className="text-[11px] text-slate-400">IA Nv{ai.aiLevel} • {ai.temperature}°C</div>
-                        {hoveredPos === pos && (
-                          <div className="mt-1 flex gap-3 text-[10px] text-slate-500">
-                            <span className="text-amber-400">⛏️{fmt(ai.resources?.metal || 0)}</span>
-                            <span className="text-cyan-400">💎{fmt(ai.resources?.crystal || 0)}</span>
-                            <span className="text-emerald-400">⚗️{fmt(ai.resources?.deuterium || 0)}</span>
-                            <span>🚀{Object.values(ai.fleet || {}).reduce((a, b) => a + b, 0)}</span>
-                            <span>🛡️{Object.values(ai.defenses || {}).reduce((a, b) => a + b, 0)}</span>
-                          </div>
-                        )}
+                        <div className="text-[10px] text-slate-400 font-mono">Nivel {ai.aiLevel} • {ai.temperature}°C</div>
                       </div>
                     </>
                   ) : virgin ? (
                     <>
                       <PlanetIcon planet={virgin} />
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-emerald-300 flex items-center gap-2">
-                          <span>Planeta Virgen</span>
-                          {poi && <span className="text-[10px] bg-cyan-900/60 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30 font-normal">{poi.icon} {poi.name}</span>}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-emerald-300 flex items-center gap-2 truncate">
+                          <span>Mundo Virgen Reclamable</span>
+                          <span className="text-[9px] font-mono uppercase bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30">Colonizable</span>
                         </div>
-                        <div className="text-[11px] text-slate-400">
-                          {virgin.biome} • {virgin.planetSize}km • {virgin.temperature}°C • {fmt(virgin.gravity)}g
-                          {virgin.trait ? ` • ✨ ${virgin.trait}` : ''}
-                        </div>
-                        {poi && <div className="text-[10px] text-cyan-400/80 mt-1 font-mono">{poi.desc}</div>}
-                        {hoveredPos === pos && (
-                          <div className="mt-1 text-[10px] text-emerald-400">🌱 Envía un Colonizador para reclamarlo</div>
-                        )}
+                        <div className="text-[10px] text-slate-400 font-mono">{virgin.biome} • {virgin.planetSize}km • {virgin.temperature}°C</div>
                       </div>
                     </>
                   ) : poi ? (
                     <>
                       <div className="text-2xl">{poi.icon}</div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-[var(--ue-accent)] holo-text flex items-center gap-2 emissive-cyan">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-purple-300 flex items-center gap-2 truncate">
                           <span>{poi.name}</span>
-                          <span className="text-[9px] bg-purple-900/60 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/30">Anomalía</span>
+                          <span className="text-[9px] font-mono uppercase bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/30">Anomalía</span>
                         </div>
-                        <div className="text-[11px] text-slate-400">{poi.desc}</div>
+                        <div className="text-[10px] text-slate-400 font-mono truncate">{poi.desc}</div>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="text-2xl opacity-30">·</div>
-                      <div className="text-slate-500 text-sm">Espacio vacío</div>
+                      <div className="text-slate-600 font-mono text-xl w-8 text-center">·</div>
+                      <div className="text-slate-500 text-xs font-mono">Espacio Profundo Desocupado</div>
                     </>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
-                  {hasMissions && <span className="text-[10px] text-cyan-400">🛸</span>}
+
+                {/* Acciones contextuales */}
+                <div className="flex items-center gap-2">
+                  {hasMissions && <span className="text-xs text-cyan-400 animate-pulse" title="Misión en ruta">🛸</span>}
                   {ai && (
-                    <>
-                      {(currentPlanet.fleet.espionageProbe || 0) > 0 && (
-                        <button onClick={e => { e.stopPropagation(); quickSpy(pos, ai); }}
-                          className="text-[11px] px-1.5 py-0.5 rounded glass border border-[var(--ue-accent)]/30 hover:border-[var(--ue-accent)]/50 text-[var(--ue-accent)] emissive-cyan fresnel specular">👁️</button>
+                    <div className="flex gap-1">
+                      {(currentPlanet.fleet?.espionageProbe || 0) > 0 && (
+                        <button
+                          onClick={e => { e.stopPropagation(); quickSpy(pos, ai); }}
+                          className="px-2 py-1 text-xs rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/20 focus-ring-game"
+                          title="Lanzar sondas de espionaje"
+                        >
+                          👁️ Espiar
+                        </button>
                       )}
-                      <button onClick={e => { e.stopPropagation(); quickAttack(pos, ai); }}
-                        className="text-[11px] px-1.5 py-0.5 rounded bg-red-500/20 hover:bg-red-500/40 text-red-300">⚔️</button>
-                    </>
+                      <button
+                        onClick={e => { e.stopPropagation(); quickAttack(pos, ai); }}
+                        className="px-2 py-1 text-xs rounded-lg bg-red-500/15 text-red-300 border border-red-500/30 hover:bg-red-500/25 focus-ring-game font-bold"
+                        title="Enviar flota de asalto"
+                      >
+                        ⚔️ Atacar
+                      </button>
+                    </div>
                   )}
                   {virgin && (
-                    <span className="text-[10px] text-emerald-400">🌱 Colonizable</span>
+                    <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/25">
+                      🌱 Reclamar
+                    </span>
                   )}
-                  {poi && !my && !ai && !virgin && (
-                    <span className="text-[10px] text-purple-400 font-medium">✨ Investigar</span>
+                  {my && (
+                    <div className="flex gap-1.5 items-center">
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          selectTarget(pos, true, false);
+                        }}
+                        className="px-2.5 py-1 text-xs rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 focus-ring-game font-bold flex items-center gap-1 shadow-sm"
+                        title="Enviar recursos o flotas a esta colonia"
+                      >
+                        📦 Enviar Flota
+                      </button>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          dispatch({ type: 'SET_PLANET', payload: my.id });
+                        }}
+                        className="px-2 py-1 text-xs rounded-lg bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10 hover:text-white focus-ring-game font-mono"
+                        title="Gestionar esta colonia (cambiar planeta activo)"
+                      >
+                        {my.id === currentPlanet.id ? '📍 Activo' : '🔎 Ver'}
+                      </button>
+                    </div>
                   )}
-                  {!my && !ai && !virgin && !poi && <span className="text-[10px] text-slate-500">🌌</span>}
-                  {my && <span className="text-[11px] text-slate-500">→</span>}
                 </div>
               </motion.div>
             );
           })}
         </div>
       </div>
-
-      {/* Nearby systems quick nav */}
-      <div className={S.card}>
-        <h3 className="text-sm font-semibold mb-2">🗺️ Sistemas cercanos</h3>
-        <div className="grid grid-cols-5 gap-1">
-          {[system-2, system-1, system, system+1, system+2].filter(s => s >= 1 && s <= sysMax).map(s => {
-            const myS = state.planets.filter(p => p.galaxy === galaxy && p.system === s);
-            const aiS = state.aiPlanets.filter(p => p.galaxy === galaxy && p.system === s);
-            return (
-              <button key={s} onClick={() => setSystem(s)}
-                className={`text-[10px] p-1 rounded border ${s === system ? 'glass border border-[var(--ue-accent)]/40 text-[var(--ue-accent)] emissive-cyan fresnel specular' : 'glass-deep border-white/10 text-slate-400 hover:border-[var(--ue-accent)]/20 fresnel specular'}`}>
-                {s}
-                <div className="flex gap-0.5 justify-center">
-                  {myS.length > 0 && <span className="text-cyan-400">{'🏠'.repeat(myS.length)}</span>}
-                  {aiS.length > 0 && <span className="text-red-400">{'👾'.repeat(Math.min(aiS.length, 3))}</span>}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Global debris */}
-      {(state.debrisField?.metal > 0 || state.debrisField?.crystal > 0) && (
-        <div className={S.card}>
-          <h3 className="font-semibold mb-2">♻️ Campo de Escombros</h3>
-          <div className="flex gap-4 text-sm">
-            <span className="text-amber-400">⛏️ {fmt(state.debrisField.metal)}</span>
-            <span className="text-cyan-400">💎 {fmt(state.debrisField.crystal)}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

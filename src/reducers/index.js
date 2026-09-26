@@ -5,6 +5,8 @@ import { fleetReducer } from './fleetReducer.js';
 import { diplomacyReducer } from './diplomacyReducer.js';
 import { eventReducer } from './eventReducer.js';
 import { governmentReducer } from './governmentReducer.js';
+import { councilReducer } from './councilReducer.js';
+import { sectorReducer } from './sectorReducer.js';
 import { shouldKeepNotification } from '../core.jsx';
 
 export const gameReducer = (state, action) => {
@@ -17,14 +19,14 @@ export const gameReducer = (state, action) => {
 
 const gameReducerInner = (state, action) => {
   // Capture user-initiated actions in eventLog for Replay System
-  const actionToLog = ['SET_PLANET', 'RENAME_PLANET', 'PLANET_SPECIALIZE', 'PLANET_TOGGLE_AUTOTRADE', 'START_BUILDING', 'START_RESEARCH', 'START_SHIP', 'START_DEFENSE', 'SEND_FLEET', 'ABANDON_PLANET', 'COLONIZE', 'SCRAP_SHIPS', 'SCRAP_DEFENSES', 'RETROFIT_FLEET', 'RETROFIT_DEFENSES', 'BUILD_MOON_BUILDING', 'JUMP_GATE_TRANSFER', 'BUILD_MISSILE', 'LAUNCH_MISSILE', 'SAVE_BLUEPRINT', 'DELETE_BLUEPRINT', 'BUILD_CUSTOM_SHIP', 'CANCEL_CUSTOM_SHIP_QUEUE', 'CANCEL_SHIP_QUEUE', 'CANCEL_DEFENSE_QUEUE', 'CANCEL_MISSION', 'REQUEST_REINFORCEMENTS', 'DIPLOMACY_TRADE', 'DIPLOMACY_TRIBUTE', 'DIPLOMACY_TREATY', 'DIPLOMACY_DECLARE_WAR', 'DIPLOMACY_BUY_SHIP', 'COUNCIL_PROPOSE_RESOLUTION', 'COUNCIL_VOTE', 'FORM_FEDERATION', 'CONTRIBUTE_TO_FEDERAL_FLEET', 'SPEND_INFLUENCE', 'RESOLVE_CRISIS', 'RESOLVE_DECISION_EVENT'];
+  const actionToLog = ['SET_PLANET', 'RENAME_PLANET', 'PLANET_SPECIALIZE', 'PLANET_TOGGLE_AUTOTRADE', 'START_BUILDING', 'START_RESEARCH', 'START_SHIP', 'START_DEFENSE', 'SEND_FLEET', 'ABANDON_PLANET', 'COLONIZE', 'SCRAP_SHIPS', 'SCRAP_DEFENSES', 'RETROFIT_FLEET', 'RETROFIT_DEFENSES', 'BUILD_MOON_BUILDING', 'JUMP_GATE_TRANSFER', 'BUILD_MISSILE', 'LAUNCH_MISSILE', 'SAVE_BLUEPRINT', 'DELETE_BLUEPRINT', 'BUILD_CUSTOM_SHIP', 'CANCEL_CUSTOM_SHIP_QUEUE', 'CANCEL_SHIP_QUEUE', 'CANCEL_DEFENSE_QUEUE', 'CANCEL_MISSION', 'REQUEST_REINFORCEMENTS', 'DEPLOY_PATROL', 'RECALL_PATROL', 'REINFORCE_PATROL', 'DIPLOMACY_TRADE', 'DIPLOMACY_TRIBUTE', 'DIPLOMACY_TREATY', 'DIPLOMACY_DECLARE_WAR', 'DIPLOMACY_BUY_SHIP', 'COUNCIL_PROPOSE_RESOLUTION', 'COUNCIL_VOTE', 'FORM_FEDERATION', 'CONTRIBUTE_TO_FEDERAL_FLEET', 'SPEND_INFLUENCE', 'RESOLVE_CRISIS', 'RESOLVE_DECISION_EVENT'];
 
   let workingState = state;
   if (actionToLog.includes(action.type) && state.gameStarted) {
     const newEvent = { tick: state.gameTick, type: action.type, payload: action };
     workingState = {
       ...state,
-      eventLog: [...(state.eventLog || []), newEvent].slice(-10000)
+      eventLog: [...(state.eventLog || []), newEvent].slice(-500)
     };
   }
 
@@ -34,6 +36,7 @@ const gameReducerInner = (state, action) => {
     case 'RESET_GAME':
     case 'LOAD':
     case 'TICK':
+    case 'APPLY_TICK_STATE':
       return systemReducer(workingState, action);
 
     // --- ECONOMY ---
@@ -76,6 +79,10 @@ const gameReducerInner = (state, action) => {
     case 'COMPLETE_MISSION':
     case 'SAVE_FLEET_PRESET':
     case 'DELETE_FLEET_PRESET':
+    case 'DEPLOY_PATROL':
+    case 'RECALL_PATROL':
+    case 'REINFORCE_PATROL':
+    case 'INTERCEPT_INVASION':
       return fleetReducer(workingState, action);
 
     // --- DIPLOMACY ---
@@ -108,6 +115,8 @@ const gameReducerInner = (state, action) => {
     case 'CLEAR_ACTIVE_EVENT':
     case 'DISMISS_FIRST_CONTACT':
     case 'DISMISS_TRANSMISSION':
+    case 'DISMISS_TACTICAL_EVENT':
+    case 'DISMISS_ALL_TACTICAL_EVENTS':
     case 'RESOLVE_DECISION_EVENT':
     case 'RESOLVE_NARRATIVE_EVENT':
     case 'MINISTRY_PROJECT':
@@ -120,7 +129,27 @@ const gameReducerInner = (state, action) => {
     case 'TOGGLE_MINISTRY_DIRECTIVE':
     case 'TOGGLE_MINISTRY_AUTOMATION':
     case 'BUY_CIVIL_BUSINESS':
+    case 'SET_PLANET_GOVERNOR_DIRECTIVE_MODE':
+    case 'SET_PLANET_AUTO_GOVERNANCE':
+    case 'SET_EMPEROR_DIRECTIVE_MODE':
+    case 'SET_EMPEROR_AUTO_GOVERNANCE':
+    case 'SET_BUILDING_MODE':
+    case 'TOGGLE_AUTOMATION_RESTRICTION':
       return governmentReducer(workingState, action);
+
+    // --- IMPERIAL COUNCIL & SENATE (10+ PLANETS) ---
+    case 'APPOINT_IMPERIAL_MINISTER':
+    case 'VOTE_SENATE_BILL':
+    case 'RESOLVE_COLONY_DEMAND':
+      return councilReducer(workingState, action);
+
+    // --- SECTORS & VICEROYS ---
+    case 'CREATE_SECTOR':
+    case 'ASSIGN_PLANET_TO_SECTOR':
+    case 'APPOINT_VICEROY':
+    case 'SET_SECTOR_DOCTRINE':
+    case 'DELETE_SECTOR':
+      return sectorReducer(workingState, action);
 
     default:
       return state; // Retornar el state original e inmutable si la acción no coincide
