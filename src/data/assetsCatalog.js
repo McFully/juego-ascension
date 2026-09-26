@@ -428,6 +428,9 @@ export const REAL_IMAGES = {
   weapon_opt: asset('weapon_opt.webp'),
   shield_freq: asset('shield_freq.webp'),
   def_grid: asset('def_grid.webp'),
+  neural_quantum: asset('neural_quantum.webp'),
+  reactor_tech: asset('reactor_tech.webp'),
+  physics_lab: asset('physics_lab.webp'),
 
   // Decretos Ministeriales (Gabinete)
   dir_overmine: asset('dir_overmine.webp'),

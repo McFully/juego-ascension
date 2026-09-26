@@ -73,11 +73,11 @@ Este documento recopila todos los prompts listos para generar las imágenes corr
 ## 4. Ministerio de Ciencia (`science`)
 
 ### Programas
-- [ ] **`neural_quantum` (Red Neuronal Cuántica)**
+- [x] **`neural_quantum` (Red Neuronal Cuántica)**
   > Futuristic quantum supercomputer core room, massive glowing blue quantum processor submerged in transparent liquid coolant, holographic neural network nodes pulsating with computational data, sterile sci-fi research facility, 8k render.
-- [ ] **`reactor_tech` (Fusión de Helio-3 Avanzada)**
+- [x] **`reactor_tech` (Fusión de Helio-3 Avanzada)**
   > Sci-fi advanced Helium-3 magnetic pulse fusion reactor, colossal spherical containment torus with blinding incandescent plasma stream, heavy cryogenic conduits and monitoring consoles, cinematic sci-fi energy chamber, 8k render.
-- [ ] **`physics_lab` (Laboratorio de Micro-gravedad)**
+- [x] **`physics_lab` (Laboratorio de Micro-gravedad)**
   > Zero-gravity orbital physics laboratory inside an orbiting space station, floating scientific instruments, laser interferometers probing graviton particles, astronaut scientists in suits analyzing anomalies, Earth visible through observation dome, 8k render.
 - [ ] **`nanobot_reconstruct` (Nanobots de Reparación)**
   > Microscopic futuristic nanobots weaving and repairing molecular lattices of a damaged starship hull, glowing cyan micro-lasers welding titanium alloy, extreme close-up high-tech macro photography style, 8k render.
