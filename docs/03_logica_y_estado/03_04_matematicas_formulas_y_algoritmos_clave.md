@@ -31,3 +31,15 @@ Ubicadas en `src/utils/formulas/flightFormulas.js`:
 - Ponderación de tecnología militar: Armas (+10% daño por nivel), Escudos (+10% absorción por nivel), Blindaje (+10% integridad de casco por nivel).
 - Mecánica de Fuego Rápido (Rapid Fire) entre clases de naves específicas.
 - Cálculo de campo de escombros orbital: 30% del metal y cristal invertido en naves destruidas.
+
+## 5. SISTEMA DE ESCORIA Y ECONOMÍA CIRCULAR
+Ubicado en `src/utils/formulas/productionFormulas.js`:
+- **Generación Bruta de Escoria:** Generada proporcionalmente por refinerías y complejos industriales pesados según su consumo de materias primas y factor de degradación de maquinaria.
+- **Capacidad de Reciclaje Activo:** Calculada a partir de plantas de tratamiento y tecnologías de reciclaje ministerial.
+- **Escoria Neta Acumulada:**
+  $$Escoria_{neta} = \max(0, Escoria_{bruta} - CapacidadReciclaje)$$
+- **Revalorización de Residuos:** El material reciclado se devuelve al ciclo productivo activo con un rendimiento constante:
+  - 70% reintegrado como Metal refinado.
+  - 25% reintegrado como Cristal purificado.
+- **Penalización por Saturación:** Si los depósitos de escoria superan el límite de tolerancia ecológica del planeta, la producción minera sufre un decremento porcentual por degradación ambiental.
+
