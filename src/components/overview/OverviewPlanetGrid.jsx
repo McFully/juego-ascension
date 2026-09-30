@@ -265,6 +265,7 @@ export const OverviewPlanetGrid = ({
         <PlanetFullDetailModal
           planet={selectedPlanetDetail}
           state={state}
+          dispatch={dispatch}
           onClose={() => setSelectedPlanetDetail(null)}
           onSelectPlanet={handleSelectPlanetAndNavigate}
           fmt={fmt}

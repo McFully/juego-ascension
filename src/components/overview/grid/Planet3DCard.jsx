@@ -58,8 +58,30 @@ export const Planet3DCard = React.memo(function Planet3DCard({
       }}
       className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border transition-all duration-300 select-none cursor-pointer text-left focus:outline-none w-full bg-[#080d1e]/95 border-white/10 hover:border-cyan-400 hover:bg-[#0c142b] hover:shadow-[0_0_35px_rgba(6,182,212,0.25)] p-4"
     >
-      {/* Badge superior derecho: Botón Gobernador a la derecha del todo */}
-      <div className="absolute top-3.5 right-3.5 z-20 flex items-center">
+      {/* Badges superiores: Botón Auto-Comercio (en colonias) y Botón Gobernador */}
+      <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
+        {!planet.isHome && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (dispatch) {
+                dispatch({ type: 'PLANET_TOGGLE_AUTOTRADE', planetId: planet.id });
+                if (window.playSfx) window.playSfx('click');
+              }
+            }}
+            title={planet.autoTrade ? "Auto-Comercio ACTIVO: envía excedentes a la capital al superar 75% de almacén. Clic para desactivar" : "Auto-Comercio INACTIVO. Clic para activar envío automático de excedentes a capital"}
+            className={`px-3 py-1 rounded-xl text-xs font-mono font-black uppercase tracking-wider backdrop-blur-md border shadow-lg transition-all cursor-pointer select-none flex items-center gap-1.5 ${
+              planet.autoTrade
+                ? 'bg-indigo-600 text-white border-indigo-400 hover:bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] scale-105'
+                : 'bg-black/85 text-slate-300 border-white/30 hover:border-indigo-400 hover:text-indigo-200 hover:bg-indigo-950/40'
+            }`}
+          >
+            <span>🚚</span>
+            <span>{planet.autoTrade ? 'Auto-Ruta: ACTIVA' : 'Auto-Ruta: OFF'}</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={(e) => {

@@ -26,7 +26,7 @@ Documentos asociados:
 | **09** | Bastión y Silos | ✅ **COMPLETE** | — |
 | **10** | Fleet Hangar 50/50 | ✅ **COMPLETE** | — |
 | **11** | Supply Routes reales | ✅ **COMPLETE** | — |
-| **12** | Autotrade y Capítulo 6 | ⬜ NOT_STARTED | dep. 01 |
+| **12** | Autotrade y Capítulo 6 | ✅ **COMPLETE** | — |
 | **13** | Sistema de investigación | ⬜ NOT_STARTED | — |
 | **14** | Auditoría research + ministries | ⬜ NOT_STARTED | — |
 | **15** | Save vs Commander | ⬜ NOT_STARTED | dep. 02 |
@@ -37,7 +37,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 12 de 22 fases (54,5 %).**
+**Avance: 13 de 22 fases (59,1 %).**
 
 ---
 
@@ -1792,6 +1792,116 @@ PROCEED
 
 ---
 
+## FASE 12 — AUTOTRADE Y MISIÓN CAPÍTULO 6
+
+```text
+PHASE:        12
+Nombre:       Autotrade accesible, cargueros balanceados y misiones de capítulo 6
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Habilitar el control directo de autotrade en todas las vistas de colonias (tarjetas 3D,
+tabla, modal de detalle y matriz de red colonial), corregir el algoritmo de asignación de
+cargueros para evitar desperdicio de capacidad combinando cargueros grandes y pequeños,
+y endurecer la misión de capítulo 6 para exigir rutas activas con al menos una entrega real.
+
+SOURCE OF TRUTH:
+src/reducers/tick/automation/autoTradeRoutesTick.js
+src/data/missionsData.js
+src/components/overview/grid/Planet3DCard.jsx
+src/components/overview/grid/PlanetTableView.jsx
+src/components/colonyNetwork/ColonyMatrixView.jsx
+src/components/planet/PlanetFullDetailModal.jsx
+src/__tests__/autotradeMissionsContract.test.js
+
+DEPENDENCIES:
+Fase 01 (router de acciones), Fase 11 (supply routes reales).
+
+FILES INSPECTED:
+  src/reducers/tick/automation/autoTradeRoutesTick.js
+  src/data/missionsData.js
+  src/components/overview/grid/Planet3DCard.jsx
+  src/components/overview/grid/PlanetTableView.jsx
+  src/components/overview/OverviewPlanetGrid.jsx
+  src/components/colonyNetwork/ColonyMatrixView.jsx
+  src/components/planet/PlanetFullDetailModal.jsx
+  src/pages/ColonyNetworkPage.jsx
+
+FILES MODIFIED:
+  src/reducers/tick/automation/autoTradeRoutesTick.js
+  src/data/missionsData.js
+  src/components/overview/grid/Planet3DCard.jsx
+  src/components/overview/grid/PlanetTableView.jsx
+  src/components/overview/OverviewPlanetGrid.jsx
+  src/components/colonyNetwork/ColonyMatrixView.jsx
+  src/components/planet/PlanetFullDetailModal.jsx
+  src/pages/ColonyNetworkPage.jsx
+  src/__tests__/autotradeMissionsContract.test.js (nuevo)
+
+DATABASE CHANGES:
+  Ninguna (autoTrade se almacena limpiamente en planets.data_json).
+
+MIGRATIONS:
+  Ninguna requerida.
+
+IMPLEMENTATION:
+  1. Toggle accesible de Auto-Comercio:
+     - Añadido botón interactivo con estado e indicador LED pulsante en Planet3DCard,
+       PlanetTableView, ColonyMatrixView y PlanetFullDetailModal para colonias (!planet.isHome).
+     - Pasado dispatch a través de OverviewPlanetGrid y ColonyNetworkPage.
+  2. Asignación óptima de cargueros:
+     - En autoTradeRoutesTick.js se reemplazó Math.ceil por Math.floor para largeNeeded,
+       permitiendo que los cargueros pequeños completen el remanente de carga sin sobredimensionar
+       ni dejar cargueros pequeños ociosos.
+  3. Misiones de Capítulo 6 verificadas y robustecidas:
+     - m6_3_autotrade: verifica colonias con autoTrade activo.
+     - m6_4_supply_route: endurecida para exigir rutas con deliveriesCount >= 1.
+  4. Suite de contrato TDD:
+     - Creado autotradeMissionsContract.test.js demostrando asignación óptima de flota,
+       persistencia de flag autoTrade y cumplimiento honesto de misiones de capítulo 6.
+
+TESTS:
+  src/__tests__/autotradeMissionsContract.test.js
+  Suite completa npm test
+
+TEST RESULTS:
+  327 tests pasados, 34 test files, 0 fallos.
+
+KNOWN ISSUES:
+  Ninguno.
+
+HARD BLOCKERS:
+  Ninguno.
+
+SOFT ISSUES:
+  Ninguno.
+
+DELIVERABLES:
+  - Toggle de autoTrade en toda la interfaz de colonias y red colonial.
+  - autoTradeRoutesTick con cálculo de cargueros combinados sin desperdicio.
+  - m6_4_supply_route verificada en ejecución real.
+  - Suite de contrato TDD pasando 100%.
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (327/327)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -1808,7 +1918,8 @@ PROCEED
 | 2026-09-30 | `30b1836` | Fase 08 completada: separacion imperio/planeta, jerarquia unificada, verdad impositiva, 316/316 verdes |
 | 2026-09-30 | `c146aa0` | Fase 09 completada: bastion directo, telemetria de defensa efectiva, validacion balistica en silos, 319/319 verdes |
 | 2026-09-30 | `46e8c9a` | Fase 10 completada: hangar split 50/50, clasificacion naval y props vivas, 321/321 verdes |
-| 2026-09-30 | — | Fase 11 completada: supply routes reales con despacho de convoyes, tiempos de vuelo y persistencia, 324/324 verdes |
+| 2026-09-30 | `bfdd590` | Fase 11 completada: supply routes reales con despacho de convoyes, tiempos de vuelo y persistencia, 324/324 verdes |
+| 2026-09-30 | — | Fase 12 completada: autotrade en tarjetas de colonias, optimizacion de cargueros y misiones cap 6, 327/327 verdes |
 
 ---
 

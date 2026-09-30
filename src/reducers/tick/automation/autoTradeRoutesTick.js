@@ -48,13 +48,19 @@ export const processAutoTradeRoutesTick = (state) => {
     deutToSend = Math.floor(excess.deuterium * ratio);
 
     let remainingCargoNeeded = carryAmount;
-    const largeNeeded = Math.min(largeCargos, Math.ceil(remainingCargoNeeded / largeCap));
+    const largeNeeded = Math.min(largeCargos, Math.floor(remainingCargoNeeded / largeCap));
     largeUsed = largeNeeded;
     remainingCargoNeeded -= largeUsed * largeCap;
 
     if (remainingCargoNeeded > 0) {
       const smallNeeded = Math.min(smallCargos, Math.ceil(remainingCargoNeeded / smallCap));
       smallUsed = smallNeeded;
+      remainingCargoNeeded -= smallUsed * smallCap;
+    }
+
+    // Si aún queda carga por transportar y sobran grandes cargueros
+    if (remainingCargoNeeded > 0 && largeCargos > largeUsed) {
+      largeUsed += 1;
     }
 
     const dispatchedFleet = {};

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const ColonyMatrixView = ({ planets, currentPlanet, fmt, onSelectPlanet }) => {
+export const ColonyMatrixView = ({ planets, currentPlanet, fmt, onSelectPlanet, dispatch }) => {
   const isSingleWorld = (planets || []).length <= 1;
 
   return (
@@ -87,6 +87,24 @@ export const ColonyMatrixView = ({ planets, currentPlanet, fmt, onSelectPlanet }
             </div>
 
             <div className="flex gap-2 pt-2 border-t border-white/10">
+              {!p.isHome && dispatch && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dispatch({ type: 'PLANET_TOGGLE_AUTOTRADE', planetId: p.id });
+                  }}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                    p.autoTrade
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10'
+                  }`}
+                  title={p.autoTrade ? 'Auto-Comercio activado: gestiona envíos automáticos de excedentes' : 'Auto-Comercio desactivado'}
+                >
+                  <span className={`w-2 h-2 rounded-full ${p.autoTrade ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                  {p.autoTrade ? 'Auto-Comercio ON' : 'Auto-Comercio OFF'}
+                </button>
+              )}
               <button
                 onClick={() => onSelectPlanet(p.id)}
                 disabled={isSelected}

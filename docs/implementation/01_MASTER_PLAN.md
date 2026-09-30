@@ -301,6 +301,7 @@ FASE 21  Verificación final ← requiere 20
 ---
 
 ### FASE 12 — AUTOTRADE Y MISIÓN CAPÍTULO 6
+**Estado:** ✅ **COMPLETE** (2026-09-30) · Suite: `src/__tests__/autotradeMissionsContract.test.js` (327/327 verdes)
 
 **Objetivo:** que `AUTOTRADE_ACTIVE` exista, persista y la misión lo reconozca.
 

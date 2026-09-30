@@ -96,25 +96,46 @@ export function PlanetTableView({
                     {pEnergy >= 0 ? `+${fmt(pEnergy)}` : fmt(pEnergy)}
                   </td>
                   <td className="py-3 px-4 text-center">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (dispatch) {
-                          dispatch({ type: 'SET_PLANET_AUTO_GOVERNANCE', planetId: planet.id });
-                          if (window.playSfx) window.playSfx('click');
-                        }
-                      }}
-                      title={planet.autoGovernance ? "Gobernador IA activo. Clic para cambiar a Manual" : "Modo Manual. Clic para activar Gobernador IA"}
-                      className={`px-3 py-1 rounded-xl text-[11px] font-mono font-black uppercase tracking-wider border transition-all cursor-pointer select-none inline-flex items-center gap-1.5 shadow-md ${
-                        planet.autoGovernance
-                          ? 'bg-emerald-600 text-white border-emerald-400 hover:bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]'
-                          : 'bg-black/80 text-slate-300 border-white/20 hover:border-cyan-400 hover:text-cyan-200'
-                      }`}
-                    >
-                      <span>{planet.autoGovernance ? '🤖' : '👤'}</span>
-                      <span>{planet.autoGovernance ? 'IA Activa' : 'Manual'}</span>
-                    </button>
+                    <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      {!planet.isHome && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (dispatch) {
+                              dispatch({ type: 'PLANET_TOGGLE_AUTOTRADE', planetId: planet.id });
+                              if (window.playSfx) window.playSfx('click');
+                            }
+                          }}
+                          title={planet.autoTrade ? "Auto-Comercio ACTIVO (>75% almacén). Clic para desactivar" : "Auto-Comercio INACTIVO. Clic para activar"}
+                          className={`px-2 py-1 rounded-xl text-[10px] font-mono font-black uppercase tracking-wider border transition-all cursor-pointer select-none inline-flex items-center gap-1 shadow-md ${
+                            planet.autoTrade
+                              ? 'bg-indigo-600 text-white border-indigo-400 hover:bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]'
+                              : 'bg-black/80 text-slate-400 border-white/20 hover:border-indigo-400 hover:text-indigo-200'
+                          }`}
+                        >
+                          <span>🚚</span>
+                          <span>{planet.autoTrade ? 'Auto' : 'Off'}</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (dispatch) {
+                            dispatch({ type: 'SET_PLANET_AUTO_GOVERNANCE', planetId: planet.id });
+                            if (window.playSfx) window.playSfx('click');
+                          }
+                        }}
+                        title={planet.autoGovernance ? "Gobernador IA activo. Clic para cambiar a Manual" : "Modo Manual. Clic para activar Gobernador IA"}
+                        className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-black uppercase tracking-wider border transition-all cursor-pointer select-none inline-flex items-center gap-1.5 shadow-md ${
+                          planet.autoGovernance
+                            ? 'bg-emerald-600 text-white border-emerald-400 hover:bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+                            : 'bg-black/80 text-slate-300 border-white/20 hover:border-cyan-400 hover:text-cyan-200'
+                        }`}
+                      >
+                        <span>{planet.autoGovernance ? '🤖' : '👤'}</span>
+                        <span>{planet.autoGovernance ? 'IA Activa' : 'Manual'}</span>
+                      </button>
+                    </div>
                   </td>
                   <td className="py-3 px-4 text-center">
                     <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>

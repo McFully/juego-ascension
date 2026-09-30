@@ -181,6 +181,7 @@ export const ColonyNetworkPage = ({
           planets={planets}
           currentPlanet={currentPlanet}
           fmt={fmt}
+          dispatch={dispatch}
           onSelectPlanet={handleSelectPlanet}
         />
       )}

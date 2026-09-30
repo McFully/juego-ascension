@@ -11,6 +11,7 @@ import { fmt as defaultFmt } from '../../core.jsx';
 export const PlanetFullDetailModal = ({
   planet,
   state,
+  dispatch,
   onClose,
   onSelectPlanet,
   fmt = defaultFmt
@@ -166,7 +167,7 @@ export const PlanetFullDetailModal = ({
                 <p className="text-xs font-mono text-cyan-300">Bioma {BIOMES[planet.biome]?.name || planet.biome || 'Templado'}</p>
               </div>
 
-              {/* Indicador de Gobernador */}
+              {/* Indicador de Gobernador y Auto-Comercio */}
               <div className="w-full p-3 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between text-xs font-mono">
                 <span className="text-slate-400">Modo de Mando:</span>
                 {planet.autoGovernance ? (
@@ -178,6 +179,33 @@ export const PlanetFullDetailModal = ({
                   <span className="text-slate-300 font-bold">👤 Control Manual</span>
                 )}
               </div>
+
+              {!planet.isHome && (
+                <div className="w-full p-3 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between text-xs font-mono">
+                  <div className="space-y-0.5">
+                    <span className="text-slate-300 font-bold flex items-center gap-1.5">
+                      <span>🚚</span> Auto-Comercio Colonial
+                    </span>
+                    <p className="text-[10px] text-slate-500">Envío automático si almacén &gt;75%</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (dispatch) {
+                        dispatch({ type: 'PLANET_TOGGLE_AUTOTRADE', planetId: planet.id });
+                        if (window.playSfx) window.playSfx('click');
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider text-[11px] border transition-all cursor-pointer ${
+                      planet.autoTrade
+                        ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.5)]'
+                        : 'bg-white/5 text-slate-400 border-white/10 hover:border-indigo-400 hover:text-white'
+                    }`}
+                  >
+                    {planet.autoTrade ? '✓ Activado' : 'Desactivado'}
+                  </button>
+                </div>
+              )}
 
               {/* Censo y Demografía */}
               <div className="w-full p-3.5 rounded-2xl bg-black/40 border border-white/10 space-y-2 text-xs font-mono">
