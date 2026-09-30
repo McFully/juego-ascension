@@ -1,7 +1,9 @@
 import {
   SHIP_CHASSIS, SHIP_WEAPONS, SHIP_ENGINES, SHIP_SHIELDS, SHIP_MODULES,
-  AI_STRATEGIES, uid, calcDistance, calcFlightTime, fleetSpeed
+  AI_STRATEGIES, uid, calcDistance, calcFlightTime, fleetSpeed,
+  RESEARCH, canAfford, deduct, clampResources, GAME_SPEED
 } from '../../../core.jsx';
+import { rankResearch, AI_STRATEGY_CATEGORY_WEIGHTS } from './researchScoring.js';
 
 export const processAIEmpireTick = (state) => {
   let newState = { ...state };
@@ -151,17 +153,43 @@ export const processAIEmpireTick = (state) => {
   }
 
   // AI research and expansion priority
+  // 1.4: la decisión la toma researchScoring, igual que el jugador y los ministros.
+  // El azar solo marca el ritmo (cada cuántos ticks investigar), nunca la qué.
   newState.aiPlanets = (newState.aiPlanets || []).map(ai => {
     const newAi = { ...ai, research: { ...(ai.research || {}) }, fleet: { ...(ai.fleet || {}) } };
     const strat = AI_STRATEGIES[ai.strategy] || {};
     const aiLvl = ai.aiLevel || 1;
-    if (strat.weight?.mil > 0.4 && Math.random() < 0.02 * aiLvl) {
-      newAi.research.weapons = (newAi.research.weapons || 0) + 1;
-    } else if (strat.weight?.eco > 0.4 && Math.random() < 0.02 * aiLvl) {
-      newAi.research.plasma = (newAi.research.plasma || 0) + 1;
-    } else if (strat.weight?.tech > 0.4 && Math.random() < 0.02 * aiLvl) {
-      newAi.research.computer = (newAi.research.computer || 0) + 1;
+    const labLevel = ai.buildings?.researchLab || 0;
+
+    // Sin laboratorio no se investiga, igual que el jugador.
+    if (labLevel >= 1 && Math.random() < 0.02 * aiLvl) {
+      const catWeights = AI_STRATEGY_CATEGORY_WEIGHTS(strat.weight);
+      // El estado de investigación de la IA es el suyo propio, no el del jugador.
+      const config = {
+        state: null,
+        research: newAi.research,
+        buildings: ai.buildings || {},
+        planetResources: ai.resources || {},
+        labLevel,
+        constructionCenterLvl: ai.buildings?.constructionCenter || 0,
+        categoryWeights: catWeights,
+        // Una estrategia beligerante (warTendency alto) prioriza lo defensivo.
+        threat: strat.warTendency || 0,
+        GAME_SPEED,
+        ministries: {},
+      };
+      const candidates = Object.keys(RESEARCH).filter(id => newAi.research[id] === undefined || newAi.research[id] < 20);
+      const ranked = rankResearch(config, candidates);
+
+      // La primera viable y pagable es la que elige la IA.
+      for (const { id, cost } of ranked) {
+        if (!canAfford(ai.resources, cost)) continue;
+        newAi.research[id] = (newAi.research[id] || 0) + 1;
+        newAi.resources = clampResources(deduct(ai.resources, cost));
+        break;
+      }
     }
+
     if (strat.name === 'Expansionista' && Math.random() < 0.005 * aiLvl && newState.planets.length < 25) {
       newAi.fleet.colonizer = (newAi.fleet.colonizer || 0) + 1;
     }

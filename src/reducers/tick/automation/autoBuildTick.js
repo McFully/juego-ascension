@@ -1,7 +1,8 @@
 import {
-  BUILDINGS, buildingCost, clampResources, deduct, canAfford, meetsReq,
+  BUILDINGS, buildingCost, clampResources, deduct, canAfford, meetsResearchReq,
   calcBuildTime, uid, GAME_SPEED, calcRequiredPopulation
 } from '../../../core.jsx';
+import { stampTimeMult } from '../queues/queueTiming.js';
 
 export const processAutoBuildTick = (state, prodCache, storageCache) => {
   let newState = { ...state };
@@ -75,7 +76,7 @@ export const processAutoBuildTick = (state, prodCache, storageCache) => {
         : ['solarPlant', 'fusionReactor', 'geoPlant', 'orbitalEnergy'];
       for (const pId of energySources) {
         if (isAlreadyBuildingType(pId)) continue;
-        if (meetsReq(BUILDINGS[pId] ? BUILDINGS[pId].req : null, { ...planet.buildings, ...newState.research })) {
+        if (meetsResearchReq(BUILDINGS[pId] ? BUILDINGS[pId].req : null, { ...planet.buildings, ...newState.research })) {
           candidates.push(pId);
           break;
         }
@@ -154,13 +155,13 @@ export const processAutoBuildTick = (state, prodCache, storageCache) => {
       
       if (currentPop >= requiredPopulation) {
         const cost = buildingCost(bId, targetLvl - 1, buildings?.constructionCenter || 0);
-        if (canAfford(planet.resources, cost) && meetsReq(BUILDINGS[bId] ? BUILDINGS[bId].req : null, { ...planet.buildings, ...newState.research })) {
+        if (canAfford(planet.resources, cost) && meetsResearchReq(BUILDINGS[bId] ? BUILDINGS[bId].req : null, { ...planet.buildings, ...newState.research })) {
           const newRes = clampResources(deduct(planet.resources, cost));
           const buildTimeVal = calcBuildTime(cost, buildings.robotFactory || 0, buildings.naniteFactory || 0, GAME_SPEED, buildings.constructionCenter || 0, {}, newState.research, buildings);
           const startTime = Date.now();
           const endTime = startTime + buildTimeVal * 1000;
           
-          newState.buildQueue = [...newState.buildQueue, {
+          newState.buildQueue = [...newState.buildQueue, stampTimeMult(newState, 'build', {
             id: uid(),
             planetId: planet.id,
             buildingId: bId,
@@ -168,7 +169,7 @@ export const processAutoBuildTick = (state, prodCache, storageCache) => {
             endTime,
             level: targetLvl,
             auto: true
-          }];
+          })];
           
           didQueue = true;
           return { ...planet, resources: newRes };
@@ -205,13 +206,13 @@ export const processAutoBuildTick = (state, prodCache, storageCache) => {
         const requiredPopulation = calcRequiredPopulation(bId, targetLvl);
         if (currentPop >= requiredPopulation) {
           const cost = buildingCost(bId, targetLvl - 1, buildings?.constructionCenter || 0);
-          if (BUILDINGS[bId] && canAfford(planet.resources, cost) && meetsReq(BUILDINGS[bId].req, { ...planet.buildings, ...newState.research })) {
+          if (BUILDINGS[bId] && canAfford(planet.resources, cost) && meetsResearchReq(BUILDINGS[bId].req, { ...planet.buildings, ...newState.research })) {
             const newRes = clampResources(deduct(planet.resources, cost));
             const buildTimeVal = calcBuildTime(cost, buildings.robotFactory || 0, buildings.naniteFactory || 0, GAME_SPEED, buildings.constructionCenter || 0, {}, newState.research, buildings);
             const startTime = Date.now();
             const endTime = startTime + buildTimeVal * 1000;
 
-            newState.buildQueue = [...newState.buildQueue, {
+            newState.buildQueue = [...newState.buildQueue, stampTimeMult(newState, 'build', {
               id: uid(),
               planetId: planet.id,
               buildingId: bId,
@@ -219,7 +220,7 @@ export const processAutoBuildTick = (state, prodCache, storageCache) => {
               endTime,
               level: targetLvl,
               auto: true
-            }];
+            })];
             return { ...planet, resources: newRes };
           }
         }

@@ -29,7 +29,7 @@ const {
   FACTIONS,
   AI_STRATEGIES,
   fmt, fmtTime,
-  buildingCost, researchCost, shipCost, defenseCost, canAfford, meetsReq,
+  buildingCost, researchCost, shipCost, defenseCost, canAfford, meetsResearchReq,
   constructionDiscount,
   calcProduction, calcStorage,
   shipTimeBonus,
@@ -55,7 +55,7 @@ function App() {
   }, [state, activeTab]);
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [renaming, setRenaming] = useState(false);
-  const [acceptTransmission, setAcceptTransmission] = useState(false);
+  // 3.4-a — `acceptTransmission` eliminado: nada de aperturas automáticas.
   const [menuScreen, setMenuScreen] = useState("main");
   const [introComplete, setIntroComplete] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -84,9 +84,9 @@ function App() {
 
   const currentPlanet = state.planets?.find(p => p.id === state.currentPlanetId) || state.planets?.[0];
 
-  const ItemCardWithCodex = useCallback((props) => (
-    <ItemCard {...props} onOpenCodex={onOpenCodex} planetResources={currentPlanet?.resources} />
-  ), [onOpenCodex, currentPlanet?.resources]);
+  // ItemCard se usa directamente como referencia estable a nivel de módulo (importado en línea 15).
+  // Las props onOpenCodex y planetResources se pasan desde cada página que lo necesita.
+  const ItemCardWithCodex = ItemCard;
 
   const safeCalcProduction = useCallback((...args) => {
     try {
@@ -196,11 +196,8 @@ function App() {
     } catch (_) {}
   }, [setAvailableSaves, setLastSaveName]);
 
-  useEffect(() => {
-    if (!state.activeTransmission) {
-      setAcceptTransmission(false);
-    }
-  }, [state.activeTransmission]);
+  // 3.4-a — Se eliminó el flag `acceptTransmission` y el efecto que lo forzaba a
+  // false: las transmisiones ya no se abren solas, se leen desde la bandeja.
 
   const visibleTabs = useMemo(() => GAME_TABS.filter(t => isTabUnlocked(t.id, currentPlanet, state)), [state.planets, state.currentPlanetId, state.research, state.aiPlanets, state.combatsWon, state.combatsLost, currentPlanet]);
 
@@ -221,6 +218,8 @@ function App() {
   };
 
   const unreadNotifs = (state.notifications || []).filter(n => !n.read && n.type !== "success").length;
+  // 3.5-a — El contador real de la bandeja: la verdad es contar los !read del log.
+  const unreadComms = (state.tacticalEventLog || []).filter(e => !e.read).length;
   const attackMissions = (state.fleetMissions || []).filter(m => m.type === "attack" && m.isAI && m.remainingTicks <= 300);
 
   useGameKeyboardShortcuts({
@@ -360,8 +359,6 @@ function App() {
         settingsTab={settingsTab}
         activeCodexId={activeCodexId}
         setActiveCodexId={setActiveCodexId}
-        acceptTransmission={acceptTransmission}
-        setAcceptTransmission={setAcceptTransmission}
         BUILDINGS={BUILDINGS}
         RESEARCH={RESEARCH}
         SHIPS={SHIPS}
@@ -404,7 +401,7 @@ function App() {
             ItemCardWithCodex={ItemCardWithCodex}
             buildingCost={buildingCost}
             calcBuildTime={calcBuildTime}
-            meetsReq={meetsReq}
+            meetsReq={meetsResearchReq}
             buildingProdInfo={buildingProdInfo}
             canAfford={canAfford}
             GAME_SPEED={GAME_SPEED}
@@ -432,7 +429,6 @@ function App() {
             getGalacticAlignment={getGalacticAlignment}
             onOpenSettings={() => setSettingsOpen(true)}
             onReturnToMenu={handleReturnToMenu}
-            setAcceptTransmission={setAcceptTransmission}
           />
             </div>
           </main>

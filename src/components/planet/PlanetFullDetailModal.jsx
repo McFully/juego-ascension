@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PlanetViewer3D } from '../3d/PlanetViewer3D.jsx';
 import { BIOMES, BUILDINGS, DEFENSES, SHIPS, RESEARCH, GAME_SPEED } from '../../data/gameData.js';
 import { calcProduction, calcPlanetMaxPop } from '../../utils/formulas/productionFormulas.js';
+import { fmt as defaultFmt } from '../../core.jsx';
 
 /**
  * PlanetFullDetailModal — Pantalla modal a pantalla completa con la ficha técnica
@@ -12,7 +13,7 @@ export const PlanetFullDetailModal = ({
   state,
   onClose,
   onSelectPlanet,
-  fmt = (n) => Number(n || 0).toLocaleString()
+  fmt = defaultFmt
 }) => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'buildings' | 'military' | 'defenses' | 'fleets'
 

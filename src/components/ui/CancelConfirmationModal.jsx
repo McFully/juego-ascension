@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * CancelConfirmationModal — Modal espacial para confirmar la cancelación de obras o investigaciones.
@@ -13,23 +14,38 @@ export const CancelConfirmationModal = ({
   itemLevel = null,
   type = "building" // "building" | "research"
 }) => {
+  const openTimeRef = useRef(0);
+
+  const stableClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
   useEffect(() => {
     if (!isOpen) return;
+    openTimeRef.current = Date.now();
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose();
+        stableClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, stableClose]);
 
   if (!isOpen) return null;
 
-  return (
+  const handleBackdropClick = () => {
+    // Evitar cierre accidental por click residual del gesto que abrió el modal
+    if (Date.now() - openTimeRef.current > 150) stableClose();
+  };
+
+  return createPortal(
     <div
       className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 w-screen h-screen animate-in fade-in duration-200"
-      onClick={onClose}
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
     >
       <div
         className="p-6 rounded-3xl bg-[#090d1f] border border-red-500/40 max-w-md w-full space-y-4 shadow-[0_0_50px_rgba(239,68,68,0.3)] relative my-auto animate-in zoom-in-95 duration-200 font-mono"
@@ -48,7 +64,7 @@ export const CancelConfirmationModal = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={stableClose}
             className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
             title="Cerrar (Escape)"
           >
@@ -74,15 +90,16 @@ export const CancelConfirmationModal = ({
 
         <div className="flex gap-2.5 pt-2">
           <button
-            onClick={onClose}
+            onClick={stableClose}
             className="flex-1 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
           >
             Continuar Orden
           </button>
           <button
+            autoFocus
             onClick={() => {
               onConfirm();
-              onClose();
+              stableClose();
             }}
             className="flex-1 py-2.5 px-4 rounded-xl bg-red-600/80 hover:bg-red-500 border border-red-400/50 text-white font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)] cursor-pointer"
           >
@@ -90,6 +107,7 @@ export const CancelConfirmationModal = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

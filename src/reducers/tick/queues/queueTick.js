@@ -1,6 +1,6 @@
 import {
   BUILDINGS, RESEARCH, SHIPS, DEFENSES,
-  uid, researchCost, clampResources, meetsReq, updatePlanet
+  uid, researchCost, clampResources, meetsResearchReq, updatePlanet
 } from '../../../core.jsx';
 import { getShipStats, getDefenseStats } from '../../../utils/formulas/combatFormulas.js';
 import {
@@ -180,7 +180,10 @@ export const processAllQueuesTick = (state) => {
 
     if (now >= item.endTime) {
       const rDef = RESEARCH[item.researchId];
-      const reqMet = !rDef || !rDef.req || meetsReq(rDef.req, newState.research);
+      const ownerPlanet = newState.planets?.find(pl => pl.id === item.planetId)
+        || newState.planets?.find(pl => pl.id === newState.currentPlanetId);
+      const reqCtx = { ...(ownerPlanet?.buildings || {}), ...(newState.research || {}) };
+      const reqMet = !rDef || !rDef.req || meetsResearchReq(rDef.req, reqCtx);
       if (!reqMet) {
         const p = newState.planets?.find(pl => pl.id === item.planetId);
         if (p) {

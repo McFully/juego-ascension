@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { DialogueBox2D } from './dialogue/DialogueBox2D.jsx';
 
-const ActiveTransmissionOverlay = ({ activeTransmission, dispatch }) => {
+/**
+ * ⚠️ SIN USO desde el paso 3.4 — no se monta en `AppOverlays.jsx`.
+ *
+ * Las transmisiones ya no se abren solas ni se "aceptan" desde una tarjeta: se
+ * vuelcan a `state.tacticalEventLog` (kind: 'transmission') y se leen en la
+ * bandeja, `src/pages/TelemetryPage.jsx`. El flag `acceptTransmission` se
+ * eliminó por completo.
+ *
+ * Se conserva, sin borrar, por el mismo motivo que los demás: la animación de
+ * decodificación y el guion son reutilizables.
+ */
+const ActiveTransmissionOverlay = ({ activeTransmission, dispatch, setAcceptTransmission }) => {
   const [decodingProgress, setDecodingProgress] = useState(0);
   const [isDecoding, setIsDecoding] = useState(true);
 
@@ -23,6 +34,7 @@ const ActiveTransmissionOverlay = ({ activeTransmission, dispatch }) => {
 
     // Safety timeout: auto-dismiss after 30 seconds if stuck
     const safetyTimer = setTimeout(() => {
+      if (setAcceptTransmission) setAcceptTransmission(false);
       dispatch({ type: 'DISMISS_TRANSMISSION' });
     }, 30000);
 
@@ -30,17 +42,18 @@ const ActiveTransmissionOverlay = ({ activeTransmission, dispatch }) => {
       clearInterval(interval);
       clearTimeout(safetyTimer);
     };
-  }, [dispatch]);
-
-  // 2. Control de cierre y ciclo de vida de la transmisión
-  useEffect(() => {
-    if (!activeTransmission) return;
-  }, [activeTransmission]);
+  }, [dispatch, setAcceptTransmission]);
 
   if (!activeTransmission) return null;
 
   const handleSelectOption = (action) => {
+    if (setAcceptTransmission) setAcceptTransmission(false);
     dispatch(action);
+  };
+
+  const handleClose = () => {
+    if (setAcceptTransmission) setAcceptTransmission(false);
+    dispatch({ type: 'DISMISS_TRANSMISSION' });
   };
 
   const getFactionColor = () => {
@@ -123,7 +136,7 @@ const ActiveTransmissionOverlay = ({ activeTransmission, dispatch }) => {
           handleSelectOption(opt.action);
         }
       }}
-      onClose={() => dispatch({ type: 'DISMISS_TRANSMISSION' })}
+      onClose={handleClose}
     />
   );
 };

@@ -221,11 +221,31 @@ function registerSaveIpc(getMainWindow) {
 
       const name = (data && data.playerName) ? String(data.playerName).trim() : "Partida";
       const slug = slugify(name);
-
       let finalSlug = slug;
+
+      // Si es una sesión existente (ya cargada), resolver slug excluyendo a sí misma
+      if (data._sessionId) {
+        const db = getDb();
+        const ownSession = db.prepare("SELECT slug FROM game_sessions WHERE id = ?").get(data._sessionId);
+        if (ownSession) {
+          // Solo buscar conflictos con OTRAS sesiones
+          let counter = 2;
+          let conflict = db.prepare("SELECT id FROM game_sessions WHERE slug = ? AND id != ?").get(finalSlug, data._sessionId);
+          while (conflict && counter < 1000) {
+            finalSlug = `${slug}-${counter}`;
+            conflict = db.prepare("SELECT id FROM game_sessions WHERE slug = ? AND id != ?").get(finalSlug, data._sessionId);
+            counter++;
+          }
+
+          createTimestampedBackup(getDatabasePath(), logToFile);
+          saveFullGameState(finalSlug, data);
+          return { success: true, slug: finalSlug };
+        }
+      }
+
+      // Nueva sesión — lógica original de colisión de slug
       let counter = 2;
       while (sessionExists(finalSlug) && counter < 1000) {
-        // Si ya existe y es del mismo jugador, sobrescribir
         const existing = loadFullGameState(finalSlug);
         if (existing && existing.playerName === name) break;
         finalSlug = `${slug}-${counter}`;
@@ -255,8 +275,29 @@ function registerSaveIpc(getMainWindow) {
 
       const name = (data && data.playerName) ? String(data.playerName).trim() : "Partida";
       const slug = slugify(name);
-
       let finalSlug = slug;
+
+      // Si es una sesión existente (ya cargada), resolver slug excluyendo a sí misma
+      if (data._sessionId) {
+        const db = getDb();
+        const ownSession = db.prepare("SELECT slug FROM game_sessions WHERE id = ?").get(data._sessionId);
+        if (ownSession) {
+          let counter = 2;
+          let conflict = db.prepare("SELECT id FROM game_sessions WHERE slug = ? AND id != ?").get(finalSlug, data._sessionId);
+          while (conflict && counter < 1000) {
+            finalSlug = `${slug}-${counter}`;
+            conflict = db.prepare("SELECT id FROM game_sessions WHERE slug = ? AND id != ?").get(finalSlug, data._sessionId);
+            counter++;
+          }
+
+          createTimestampedBackup(getDatabasePath(), logToFile);
+          saveFullGameState(finalSlug, data);
+          event.returnValue = { success: true, slug: finalSlug };
+          return;
+        }
+      }
+
+      // Nueva sesión
       let counter = 2;
       while (sessionExists(finalSlug) && counter < 1000) {
         const existing = loadFullGameState(finalSlug);

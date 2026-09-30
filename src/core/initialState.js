@@ -1,4 +1,5 @@
 import { generatePlanetName, generateGalaxy } from "./galaxyGenerator.js";
+import { buildMinistriesState, DECAY_MINISTRY_OVERRIDES } from "../data/ministryState.js";
 
 export const createInitial = (playerName, homeFaction = 'human', mode = 'standard') => {
   const homeId = Math.random().toString(36).slice(2, 11);
@@ -118,14 +119,7 @@ export const createInitial = (playerName, homeFaction = 'human', mode = 'standar
     diplomaticHistory: [],
     activeCrises: [],
     chatHistory: {},
-    ministries: {
-      economy: { taxRate: isDecay ? 0.3 : 0.1, tradeSubsidies: false, treasury: isDecay ? -50000 : 1000, gdp: 0 },
-      defense: { conscriptionLevel: 'volunteer', combatDoctrine: 'balanced', patrolIntensity: 1 },
-      science: { researchGrants: 0.05, techFocus: 'general', experimentalProjects: [] },
-      culture: { propagandaLevel: 1, socialUnity: isDecay ? 20 : 80, eventsActive: [] },
-      infra: { maintenanceBudget: isDecay ? 0.01 : 0.05, logisticsLevel: 1, orbitalNetwork: false },
-      intel: { espionageBudget: 0.1, counterIntelLevel: 1, sleeperCells: [] }
-    },
+    ministries: buildMinistriesState(null, isDecay ? DECAY_MINISTRY_OVERRIDES : {}),
     gameMode: mode,
     leaders: [],
     activeEvents: [],
@@ -158,6 +152,7 @@ export const createInitial = (playerName, homeFaction = 'human', mode = 'standar
     debrisField: { metal: 0, crystal: 0 },
     activeEvent: null,
     tacticalEvents: [],
+    tacticalEventLog: [],
     galacticEvents: [],
     tradeRoutes: [],
     totalAICount: aiPlanets.length,

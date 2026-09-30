@@ -1,7 +1,8 @@
 import {
-  DEFENSES, defenseCost, clampResources, deduct, canAfford, meetsReq,
+  DEFENSES, defenseCost, clampResources, deduct, canAfford, meetsResearchReq,
   calcDefenseTime, uid, GAME_SPEED
 } from '../../../core.jsx';
+import { stampTimeMult } from '../queues/queueTiming.js';
 
 export const processAutoEconomyDefenseTick = (state) => {
   let newState = { ...state };
@@ -59,13 +60,13 @@ export const processAutoEconomyDefenseTick = (state) => {
 
     const defenseId = 'rocketLauncher';
     const cost = defenseCost(defenseId, 1, planet.buildings?.constructionCenter || 0);
-    if (canAfford(planet.resources, cost) && meetsReq(DEFENSES[defenseId].req, { ...planet.buildings, ...newState.research })) {
+    if (canAfford(planet.resources, cost) && meetsResearchReq(DEFENSES[defenseId].req, { ...planet.buildings, ...newState.research })) {
       const newRes = clampResources(deduct(planet.resources, cost));
       const defenseTimeVal = calcDefenseTime(defenseId, 1, planet.buildings?.shipyard || 0, planet.buildings?.naniteFactory || 0, GAME_SPEED);
       const startTime = Date.now();
       const endTime = startTime + defenseTimeVal * 1000;
 
-      newState.defenseQueue = [...(newState.defenseQueue || []), {
+      newState.defenseQueue = [...(newState.defenseQueue || []), stampTimeMult(newState, 'defense', {
         id: uid(),
         planetId: planet.id,
         defenseId,
@@ -73,7 +74,7 @@ export const processAutoEconomyDefenseTick = (state) => {
         startTime,
         endTime,
         auto: true
-      }];
+      })];
 
       return {
         ...planet,

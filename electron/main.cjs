@@ -74,6 +74,7 @@ function createWindow() {
         ".ico": "image/x-icon",
         ".woff2": "font/woff2",
         ".avif": "image/avif",
+        ".webp": "image/webp",
         ".wav": "audio/wav",
         ".mp3": "audio/mpeg",
         ".ogg": "audio/ogg",

@@ -2,6 +2,17 @@ import React, { useEffect } from 'react';
 import { asset } from '../../assets.jsx';
 import { speakText } from '../../audio.js';
 
+/**
+ * ⚠️ SIN USO desde el paso 3.4 — no se monta en `AppOverlays.jsx`.
+ *
+ * Las narrativas con decisión pendiente ya no se abren solas: se acumulan en
+ * `state.tacticalEventLog` con `requiresDecision: true` y se leen (y resuelven)
+ * en la bandeja, `src/pages/TelemetryPage.jsx`. Sus botones de decisión están en
+ * `TacticalEventDetail.jsx`.
+ *
+ * Se conserva, sin borrar. Si vuelve a hacer falta un overlay modal, la UI de
+ * lectura ya está extraída en `TacticalEventDetail.jsx`.
+ */
 export const NarrativeEventOverlay = React.memo(({ event, dispatch, resources }) => {
   useEffect(() => {
     if (event?.title || event?.description) {

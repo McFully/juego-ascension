@@ -38,9 +38,11 @@ export const GalacticMarketPage = ({
     return { buyAmount: Math.max(0, netBuy), fee, rate };
   }, [sellRes, buyRes, sellAmount]);
 
+  const availableSell = sellRes === 'credits' ? (state.credits || 0) : (planetRes[sellRes] || 0);
+
   const handleExecuteTrade = () => {
     if (tradeCalculation.buyAmount <= 0) return;
-    if ((planetRes[sellRes] || 0) < sellAmount) {
+    if (availableSell < sellAmount) {
       if (window.playSfx) window.playSfx('uiError');
       return;
     }
@@ -150,6 +152,12 @@ export const GalacticMarketPage = ({
             <span className="text-slate-400">Deuterio:</span>{' '}
             <span className="text-amber-300 font-bold">{fmt(planetRes.deuterium)}</span>
           </div>
+          <span className="text-slate-600">|</span>
+          <div className="flex items-center gap-1">
+            <span className="text-amber-400">₢</span>{' '}
+            <span className="text-slate-400">Créditos:</span>{' '}
+            <span className="text-amber-300 font-bold">{fmt(state.credits || 0)}</span>
+          </div>
         </div>
       </div>
 
@@ -218,19 +226,19 @@ export const GalacticMarketPage = ({
               <h3 className="text-sm font-bold text-cyan-400 uppercase tracking-wide flex items-center gap-2">
                 <span>📤</span> Recurso a Entregar
               </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {['metal', 'crystal', 'deuterium'].map((r) => (
+              <div className="grid grid-cols-4 gap-2">
+                {['metal', 'crystal', 'deuterium', 'credits'].map((r) => (
                   <button
                     key={r}
                     disabled={sellRes === r}
                     onClick={() => setSellRes(r)}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold capitalize transition-all border ${
+                    className={`py-2 px-2 rounded-xl text-[11px] font-bold capitalize transition-all border text-center ${
                       sellRes === r
                         ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
                         : 'bg-black/40 text-slate-400 border-white/5 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    {r === 'metal' ? '⛏️ Metal' : r === 'crystal' ? '💎 Cristal' : '⚗️ Deuterio'}
+                    {r === 'metal' ? '⛏️ Metal' : r === 'crystal' ? '💎 Cristal' : r === 'deuterium' ? '⚗️ Deut' : '₢ Créditos'}
                   </button>
                 ))}
               </div>
@@ -267,19 +275,19 @@ export const GalacticMarketPage = ({
               <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-2">
                 <span>📥</span> Recurso a Recibir
               </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {['metal', 'crystal', 'deuterium'].map((r) => (
+              <div className="grid grid-cols-4 gap-2">
+                {['metal', 'crystal', 'deuterium', 'credits'].map((r) => (
                   <button
                     key={r}
                     disabled={buyRes === r}
                     onClick={() => setBuyRes(r)}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold capitalize transition-all border ${
+                    className={`py-2 px-2 rounded-xl text-[11px] font-bold capitalize transition-all border text-center ${
                       buyRes === r
                         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
                         : 'bg-black/40 text-slate-400 border-white/5 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    {r === 'metal' ? '⛏️ Metal' : r === 'crystal' ? '💎 Cristal' : '⚗️ Deuterio'}
+                    {r === 'metal' ? '⛏️ Metal' : r === 'crystal' ? '💎 Cristal' : r === 'deuterium' ? '⚗️ Deut' : '₢ Créditos'}
                   </button>
                 ))}
               </div>
@@ -316,9 +324,9 @@ export const GalacticMarketPage = ({
 
               <button
                 onClick={handleExecuteTrade}
-                disabled={sellRes === buyRes || (planetRes[sellRes] || 0) < sellAmount || sellAmount <= 0}
+                disabled={sellRes === buyRes || availableSell < sellAmount || sellAmount <= 0}
                 className={`w-full py-3 rounded-xl font-bold uppercase tracking-wider text-xs transition-all ${
-                  sellRes !== buyRes && (planetRes[sellRes] || 0) >= sellAmount && sellAmount > 0
+                  sellRes !== buyRes && availableSell >= sellAmount && sellAmount > 0
                     ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:brightness-110 active:scale-[0.98]'
                     : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
                 }`}

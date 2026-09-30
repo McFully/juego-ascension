@@ -3,7 +3,8 @@
 export const MARKET_BASE_VALUES = {
   metal: 1.0,
   crystal: 1.65,
-  deuterium: 3.3
+  deuterium: 3.3,
+  credits: 1.0
 };
 
 // Naves usadas y de ocasión disponibles en el bazar

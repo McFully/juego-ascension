@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DialogueBox2D } from './dialogue/DialogueBox2D.jsx';
 
+/**
+ * ⚠️ SIN USO desde el paso 3.4 — no se monta en `AppOverlays.jsx`.
+ *
+ * El primer contacto ya no interrumpe la partida: se vuelca a
+ * `state.tacticalEventLog` (kind: 'firstContact') y se lee en la bandeja,
+ * `src/pages/TelemetryPage.jsx`.
+ *
+ * Se conserva, sin borrar: los `FIRST_CONTACT_DIALOGUES` de aquí son guion, y
+ * `DialogueBox2D` sigue usándose (por ejemplo, para el ultimátum, que sí es
+ * bloqueante).
+ */
 
 const FIRST_CONTACT_DIALOGUES = {
   human: {

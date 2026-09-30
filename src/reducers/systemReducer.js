@@ -78,6 +78,32 @@ export const systemReducer = (state, action) => {
       });
     }
 
+    case 'SET_TUTORIAL_COMPLETE': {
+      return { ...state, showTutorial: false, tutorialCompleted: true };
+    }
+
+    case 'DISMISS_VICTORY_OVERLAY': {
+      return { ...state, victory: null, gameOver: null };
+    }
+
+    case 'RENAME_PLANET': {
+      const { planetId, name } = action;
+      if (!name || !planetId) return state;
+      return updatePlanet(state, planetId, p => ({
+        ...p,
+        name: name.trim()
+      }));
+    }
+
+    case 'SET_PLAYER_PROFILE': {
+      const { playerName, avatarUrl } = action.payload || {};
+      return {
+        ...state,
+        playerName: playerName !== undefined ? playerName : state.playerName,
+        avatarUrl: avatarUrl !== undefined ? avatarUrl : state.avatarUrl
+      };
+    }
+
     default:
       return state;
   }

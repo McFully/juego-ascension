@@ -6,6 +6,7 @@ import ResearchPage from "../../pages/ResearchPage";
 import ShipyardPage from "../../pages/ShipyardPage";
 import DefensePage from "../../pages/DefensePage";
 import { GovernmentPage } from "../../pages/GovernmentPage.jsx";
+import ImperialCommandPage from "../../pages/ImperialCommandPage.jsx";
 
 const MissilesPage = lazy(() => import("../../pages/MissilesPage"));
 const GalaxyPage = lazy(() => import("../../pages/GalaxyPage"));
@@ -18,6 +19,7 @@ const ShipDesignPage = lazy(() => import("../../pages/ShipDesignPage"));
 const ReplayPage = lazy(() => import("../../pages/ReplayPage"));
 const DiplomacyPage = lazy(() => import("../../pages/DiplomacyPage.jsx"));
 const CommunicationsPage = lazy(() => import("../../pages/CommunicationsPage.jsx").then(m => ({ default: m.CommunicationsPage })));
+const TelemetryPage = lazy(() => import("../../pages/TelemetryPage.jsx").then(m => ({ default: m.TelemetryPage })));
 const GalacticMarketPage = lazy(() => import("../../pages/GalacticMarketPage.jsx").then(m => ({ default: m.GalacticMarketPage })));
 const ColonyNetworkPage = lazy(() => import("../../pages/ColonyNetworkPage.jsx").then(m => ({ default: m.ColonyNetworkPage })));
 
@@ -80,8 +82,7 @@ export const GameViewports = ({
   calcCustomShipTime,
   getGalacticAlignment,
   onOpenSettings,
-  onReturnToMenu,
-  setAcceptTransmission
+  onReturnToMenu
 }) => {
   return (
     <Suspense fallback={<div className="text-center text-slate-500 py-12">Cargando módulo...</div>}>
@@ -99,10 +100,21 @@ export const GameViewports = ({
       {activeTab === "moon" && <MoonPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} MOON_BUILDINGS={MOON_BUILDINGS} S={S} fmt={fmt} fmtTime={fmtTime} meetsReq={meetsReq} canAfford={canAfford} constructionDiscount={constructionDiscount} onOpenCodex={onOpenCodex} />}
       {activeTab === "techTree" && <TechTreePage state={state} currentPlanet={currentPlanet} production={production} fmt={fmt} RESEARCH={RESEARCH} S={S} meetsReq={meetsReq} onOpenCodex={onOpenCodex} safeSetActiveTab={safeSetActiveTab} />}
       {activeTab === "shipDesign" && <ShipDesignPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} SHIP_CHASSIS={SHIP_CHASSIS} SHIP_WEAPONS={SHIP_WEAPONS} SHIP_ENGINES={SHIP_ENGINES} SHIP_SHIELDS={SHIP_SHIELDS} SHIP_MODULES={SHIP_MODULES} S={S} ProgressBar={ProgressBar} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} calcCustomShipStats={calcCustomShipStats} calcCustomShipCost={calcCustomShipCost} calcCustomShipTime={calcCustomShipTime} canAfford={canAfford} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />}
-      {activeTab === "communications" && <CommunicationsPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setAcceptTransmission={setAcceptTransmission} />}
+      {activeTab === "communications" && <CommunicationsPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
+      {activeTab === "telemetry" && <TelemetryPage state={state} dispatch={dispatch} safeSetActiveTab={safeSetActiveTab} />}
       {activeTab === "market" && <GalacticMarketPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
       {activeTab === "colony_network" && <ColonyNetworkPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
-      {(activeTab === "government" || activeTab === "government_ministries" || activeTab === "imperial_council" || activeTab === "imperial_senate" || activeTab.startsWith("ministry_")) && (
+      {(activeTab === "imperial_hub" || activeTab === "imperial_council" || activeTab === "imperial_senate") && (
+        <ImperialCommandPage
+          state={state}
+          dispatch={dispatch}
+          activeTab={activeTab}
+          setActiveTab={safeSetActiveTab}
+          production={production}
+          RESEARCH={RESEARCH}
+        />
+      )}
+      {(activeTab === "government" || activeTab === "government_ministries" || activeTab.startsWith("ministry_")) && (
         <GovernmentPage
           state={state}
           dispatch={dispatch}

@@ -110,11 +110,6 @@ export const ActiveOperationsSection = ({
     }
   };
 
-  const planets = state?.planets || [];
-  const buildQueue = state?.buildQueue || [];
-  const allShipQueues = [...(state?.shipQueue || []), ...(state?.customShipQueue || [])];
-  const allDefenseQueues = state?.defenseQueue || [];
-
   // Filtrado reactivo de items
   const filteredItems = React.useMemo(() => {
     if (!filter) return activeItems;
@@ -124,6 +119,9 @@ export const ActiveOperationsSection = ({
       }
       if (filter.type && filter.planetId !== undefined) {
         return item.type === filter.type && item.planetId === filter.planetId;
+      }
+      if (filter.type) {
+        return item.type === filter.type;
       }
       return true;
     });
@@ -151,91 +149,129 @@ export const ActiveOperationsSection = ({
     return 'No hay operaciones en curso en este momento';
   };
 
+  const buildCount = activeItems.filter(item => item.type === 'building').length;
+  const researchCount = activeItems.filter(item => item.type === 'research').length;
+  const defenseCount = activeItems.filter(item => item.type === 'defense').length;
+  const shipCount = activeItems.filter(item => item.type === 'ship').length;
+
+  const categories = [
+    {
+      type: 'research',
+      label: 'Investigaciones',
+      icon: '🔬',
+      imgId: 'researchLab',
+      count: researchCount,
+      theme: TYPE_THEMES.research,
+      activeBorder: 'border-purple-400',
+      activeBg: 'bg-[#150a2b]',
+      activeShadow: 'shadow-[0_0_25px_rgba(168,85,247,0.45)]',
+      hoverBorder: 'hover:border-purple-500/40',
+      hoverBg: 'hover:bg-[#1a0f35]',
+      activeText: 'text-purple-300',
+      activeGradient: 'bg-gradient-to-t from-black/60 via-black/30 to-black/20 group-hover:via-transparent',
+      inactiveGradient: 'bg-gradient-to-t from-black/65 via-black/35 to-black/25 group-hover:via-purple-950/20',
+      badgeActive: 'bg-purple-500/50 text-purple-100 border-purple-400'
+    },
+    {
+      type: 'building',
+      label: 'Construcciones',
+      icon: '🏗️',
+      imgId: 'constructionCenter',
+      count: buildCount,
+      theme: TYPE_THEMES.building,
+      activeBorder: 'border-cyan-400',
+      activeBg: 'bg-[#061426]',
+      activeShadow: 'shadow-[0_0_25px_rgba(6,182,212,0.45)]',
+      hoverBorder: 'hover:border-cyan-500/40',
+      hoverBg: 'hover:bg-[#0c1630]',
+      activeText: 'text-cyan-300',
+      activeGradient: 'bg-gradient-to-t from-black/60 via-black/30 to-black/20 group-hover:via-transparent',
+      inactiveGradient: 'bg-gradient-to-t from-black/65 via-black/35 to-black/25 group-hover:via-cyan-950/20',
+      badgeActive: 'bg-cyan-500/50 text-cyan-100 border-cyan-400'
+    },
+    {
+      type: 'defense',
+      label: 'Defensas',
+      icon: '🛡️',
+      imgId: 'defenseFields',
+      count: defenseCount,
+      theme: TYPE_THEMES.defense,
+      activeBorder: 'border-emerald-400',
+      activeBg: 'bg-[#051a14]',
+      activeShadow: 'shadow-[0_0_25px_rgba(16,185,129,0.45)]',
+      hoverBorder: 'hover:border-emerald-500/40',
+      hoverBg: 'hover:bg-[#0a261f]',
+      activeText: 'text-emerald-300',
+      activeGradient: 'bg-gradient-to-t from-black/60 via-black/30 to-black/20 group-hover:via-transparent',
+      inactiveGradient: 'bg-gradient-to-t from-black/65 via-black/35 to-black/25 group-hover:via-emerald-950/20',
+      badgeActive: 'bg-emerald-500/50 text-emerald-100 border-emerald-400'
+    },
+    {
+      type: 'ship',
+      label: 'Astillero',
+      icon: '🚀',
+      imgId: 'shipyard',
+      count: shipCount,
+      theme: TYPE_THEMES.ship,
+      activeBorder: 'border-amber-400',
+      activeBg: 'bg-[#241705]',
+      activeShadow: 'shadow-[0_0_25px_rgba(245,158,11,0.45)]',
+      hoverBorder: 'hover:border-amber-500/40',
+      hoverBg: 'hover:bg-[#1a1208]',
+      activeText: 'text-amber-300',
+      activeGradient: 'bg-gradient-to-t from-black/60 via-black/30 to-black/20 group-hover:via-transparent',
+      inactiveGradient: 'bg-gradient-to-t from-black/65 via-black/35 to-black/25 group-hover:via-amber-950/20',
+      badgeActive: 'bg-amber-500/50 text-amber-100 border-amber-400'
+    }
+  ];
+
   return (
     <section className="space-y-4 w-full pt-1 pb-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
-          {/* I+D Imperio */}
-          {(() => {
-            const isSelected = filter?.type === 'research';
-            return (
-              <button
-                type="button"
-                onClick={() => toggleFilter({ type: 'research' })}
-                className={`px-2 py-0.5 rounded-md flex items-center gap-1 transition-all cursor-pointer border ${
+      {/* Selector de Categorías de Operaciones en Curso (4 Botones con el mismo diseño que los superiores) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-2 bg-[#080d22]/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
+        {categories.map((cat) => {
+          const isSelected = filter?.type === cat.type;
+          return (
+            <button
+              key={cat.type}
+              type="button"
+              onClick={() => toggleFilter({ type: cat.type })}
+              className={`relative w-full min-h-[68px] sm:min-h-[80px] flex flex-col items-center justify-center p-2.5 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group text-center select-none border ${
+                isSelected
+                  ? `${cat.activeBorder} ${cat.activeBg} ${cat.activeShadow} scale-[1.01]`
+                  : `border-white/10 bg-[#060a16] ${cat.hoverBorder} ${cat.hoverBg}`
+              }`}
+            >
+              {/* Imagen de fondo nítida y visible */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <SafeImg
+                  id={cat.imgId}
+                  className="w-full h-full object-cover object-center opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                />
+                <div className={`absolute inset-0 transition-colors duration-300 ${
+                  isSelected ? cat.activeGradient : cat.inactiveGradient
+                }`} />
+              </div>
+
+              {/* Contenido frontal */}
+              <div className="relative z-10 flex items-center justify-center gap-2.5 w-full px-2 py-1 leading-none">
+                <span className="text-xl sm:text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">{cat.icon}</span>
+                <span className={`text-xs sm:text-sm lg:text-base font-mono font-black uppercase tracking-wider transition-colors drop-shadow-[0_2px_8px_rgba(0,0,0,1)] ${
+                  isSelected ? cat.activeText : 'text-white group-hover:text-slate-200'
+                }`}>
+                  {cat.label}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-black border shadow-lg backdrop-blur-md ${
                   isSelected
-                    ? 'text-purple-200 bg-purple-800 border-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.5)] scale-105'
-                    : 'text-purple-300 bg-purple-950/60 border-purple-500/30 hover:border-purple-400 hover:bg-purple-900/40'
-                }`}
-                title="Filtrar investigaciones de I+D (clic para alternar)"
-              >
-                <span>🔬</span>
-                <span>I+D Imperio: {(state?.researchQueue || []).length}/8</span>
-              </button>
-            );
-          })()}
-
-          {/* Obras, Defensas y Astillero agrupados por cada planeta */}
-          {planets.map(p => {
-            const buildCount = buildQueue.filter(q => q.planetId === p.id).length;
-            const isBuildSelected = filter?.type === 'building' && filter?.planetId === p.id;
-
-            const defCount = allDefenseQueues.filter(q => q.planetId === p.id).length;
-            const isDefSelected = filter?.type === 'defense' && filter?.planetId === p.id;
-
-            const shipCount = allShipQueues.filter(q => q.planetId === p.id).length;
-            const isShipSelected = filter?.type === 'ship' && filter?.planetId === p.id;
-
-            return (
-              <React.Fragment key={`planet-ops-${p.id}`}>
-                {/* Obras */}
-                <button
-                  type="button"
-                  onClick={() => toggleFilter({ type: 'building', planetId: p.id })}
-                  className={`px-2 py-0.5 rounded-md flex items-center gap-1 transition-all cursor-pointer border ${
-                    isBuildSelected 
-                      ? 'text-cyan-200 bg-cyan-800 border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.5)] scale-105' 
-                      : 'text-cyan-300 bg-cyan-950/60 border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-900/40'
-                  }`}
-                  title={`Filtrar obras en ${p.name} (clic para alternar)`}
-                >
-                  <span>🏗️</span>
-                  <span>Obras {p.name}: {buildCount}/8</span>
-                </button>
-
-                {/* Defensas */}
-                <button
-                  type="button"
-                  onClick={() => toggleFilter({ type: 'defense', planetId: p.id })}
-                  className={`px-2 py-0.5 rounded-md flex items-center gap-1 transition-all cursor-pointer border ${
-                    isDefSelected
-                      ? 'text-emerald-200 bg-emerald-800 border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.5)] scale-105'
-                      : 'text-emerald-300 bg-emerald-950/60 border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-900/40'
-                  }`}
-                  title={`Filtrar defensas en ${p.name} (clic para alternar)`}
-                >
-                  <span>🛡️</span>
-                  <span>Defensas {p.name}: {defCount}/8</span>
-                </button>
-
-                {/* Astillero / Naves (a la derecha de defensas) */}
-                <button
-                  type="button"
-                  onClick={() => toggleFilter({ type: 'ship', planetId: p.id })}
-                  className={`px-2 py-0.5 rounded-md flex items-center gap-1 transition-all cursor-pointer border ${
-                    isShipSelected
-                      ? 'text-amber-200 bg-amber-800 border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)] scale-105'
-                      : 'text-amber-300 bg-amber-950/60 border-amber-500/30 hover:border-amber-400 hover:bg-amber-900/40'
-                  }`}
-                  title={`Filtrar astillero/naves en ${p.name} (clic para alternar)`}
-                >
-                  <span>🚀</span>
-                  <span>Astillero {p.name}: {shipCount}/8</span>
-                </button>
-              </React.Fragment>
-            );
-          })}
-        </div>
+                    ? cat.badgeActive
+                    : 'bg-black/75 text-slate-200 border-white/30'
+                }`}>
+                  {cat.count}
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {!hasItems ? (

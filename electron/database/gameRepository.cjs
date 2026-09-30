@@ -25,7 +25,7 @@ const GLOBAL_STATE_KEYS = [
   "adventureLogs", "eventLog", "totalAICount", "blueprints",
   "combatLog", "spyReports", "events", "notifications",
   "activeEvents", "tacticalEvents", "activeMissions", "completedMissions",
-  "imperialCouncil", "chatMessages", "sectors",
+  "imperialCouncil", "chatMessages", "sectors", "avatarUrl",
 ];
 
 // Claves de colas de producción que se guardan en production_queues
@@ -55,7 +55,8 @@ function saveFullGameState(slug, state) {
     db.prepare(`
       INSERT INTO game_sessions (id, slug, player_name, version, game_started, game_tick, game_mode, created_at, updated_at, global_state_json)
       VALUES (@id, @slug, @playerName, @version, @gameStarted, @gameTick, @gameMode, @createdAt, @updatedAt, @globalStateJson)
-      ON CONFLICT(slug) DO UPDATE SET
+      ON CONFLICT(id) DO UPDATE SET
+        slug = @slug,
         player_name = @playerName,
         version = @version,
         game_started = @gameStarted,
@@ -150,17 +151,26 @@ function saveFullGameState(slug, state) {
       `);
 
       for (const m of state.fleetMissions) {
+        const fromPlanetId = typeof m.fromPlanetId === "string" ? m.fromPlanetId : (typeof m.from === "string" ? m.from : (m.from?.id || ""));
+        const toGalaxy = typeof m.toGalaxy === "number" ? m.toGalaxy : (typeof m.to === "number" ? m.to : (typeof m.to?.galaxy === "number" ? m.to.galaxy : (m.galaxy || 1)));
+        const toSystem = typeof m.toSystem === "number" ? m.toSystem : (typeof m.to?.system === "number" ? m.to.system : (m.system || 1));
+        const toPosition = typeof m.toPosition === "number" ? m.toPosition : (typeof m.to?.position === "number" ? m.to.position : (m.position || 1));
+        const missionType = String(m.missionType || m.type || "attack");
+        const startTime = Number(m.startTime || m.departureTime || m.departure || 0);
+        const arrivalTime = Number(m.arrivalTime || 0);
+        const returnTime = m.returnTime !== undefined && m.returnTime !== null ? Number(m.returnTime) : null;
+
         missionStmt.run({
-          id: m.id || `fm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          id: String(m.id || `fm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`),
           sessionId: sid,
-          fromPlanetId: m.fromPlanetId || m.from || "",
-          toGalaxy: m.toGalaxy || m.galaxy || 1,
-          toSystem: m.toSystem || m.system || 1,
-          toPosition: m.toPosition || m.position || 1,
-          missionType: m.missionType || m.type || "attack",
-          startTime: m.startTime || m.departureTime || 0,
-          arrivalTime: m.arrivalTime || 0,
-          returnTime: m.returnTime || null,
+          fromPlanetId: String(fromPlanetId),
+          toGalaxy: Number(toGalaxy) || 1,
+          toSystem: Number(toSystem) || 1,
+          toPosition: Number(toPosition) || 1,
+          missionType,
+          startTime,
+          arrivalTime,
+          returnTime,
           dataJson: JSON.stringify(m),
         });
       }

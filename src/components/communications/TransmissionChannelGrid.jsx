@@ -8,7 +8,7 @@ export const TransmissionChannelGrid = ({
   selectedCategory,
   onSelectCategory,
   activeTransmission,
-  onAcceptLiveTransmission,
+  onOpenInbox,
   onDismissLiveTransmission,
   onBack
 }) => {
@@ -22,26 +22,27 @@ export const TransmissionChannelGrid = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 w-full items-stretch pt-2 pb-4">
-        {/* Tarjeta Destacada de Transmisión en Vivo */}
+        {/*
+          3.4-a — La tarjeta "SEÑAL EN VIVO" que ofrecía "Aceptar Transmisión"
+          ya no tiene a qué aceptar: el overlay no se monta. Ahora la transmisión
+          pendiente es una entrada más de la bandeja y el botón lleva allí.
+        */}
         {activeTransmission && (
-          <div
-            onClick={onAcceptLiveTransmission}
-            className="group relative flex flex-col overflow-hidden rounded-3xl border border-cyan-400 bg-gradient-to-b from-[#132c52]/95 via-[#0c1c38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.5)] select-none cursor-pointer text-left focus:outline-none w-full h-full min-h-[260px] animate-pulse"
-          >
+          <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-cyan-400/60 bg-gradient-to-b from-[#132c52]/95 via-[#0c1c38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.35)] select-none w-full h-full min-h-[260px]">
             <div className="relative w-full h-36 md:h-40 overflow-hidden bg-[#05070f] border-b border-cyan-500/40">
               <SafeImg
                 id="quantumTelecom"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover"
               />
-              <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500 text-black text-[10px] font-mono font-black tracking-wider uppercase shadow-[0_0_15px_rgba(6,182,212,0.9)] animate-bounce">
-                <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                <span>Señal en Vivo</span>
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500 text-black text-[10px] font-mono font-black tracking-wider uppercase shadow-[0_0_15px_rgba(6,182,212,0.9)]">
+                <span className="w-2 h-2 rounded-full bg-white" />
+                <span>En Bandeja</span>
               </div>
             </div>
 
             <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
               <div>
-                <h4 className="text-base font-black text-cyan-200 uppercase tracking-wide group-hover:text-white transition-colors">
+                <h4 className="text-base font-black text-cyan-200 uppercase tracking-wide transition-colors">
                   {activeTransmission.name || 'Transmisión Entrante'}
                 </h4>
                 <p className="text-xs text-slate-300 font-mono mt-1.5 line-clamp-2 leading-relaxed">
@@ -50,9 +51,13 @@ export const TransmissionChannelGrid = ({
               </div>
 
               <div className="mt-4 pt-3 border-t border-cyan-500/30 flex items-center justify-between gap-2">
-                <span className="text-xs font-mono font-bold text-cyan-300 uppercase">
-                  Aceptar Transmisión
-                </span>
+                <button
+                  type="button"
+                  onClick={onOpenInbox}
+                  className="text-xs font-mono font-bold text-cyan-300 uppercase hover:text-cyan-200 transition-colors cursor-pointer"
+                >
+                  Leer en la bandeja
+                </button>
                 <button
                   onClick={onDismissLiveTransmission}
                   className="px-2.5 py-1 rounded-lg bg-black/60 hover:bg-red-950/60 border border-white/20 hover:border-red-500 text-slate-400 hover:text-red-300 font-mono text-[10px] uppercase transition-all cursor-pointer"

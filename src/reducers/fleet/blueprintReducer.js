@@ -3,6 +3,7 @@ import {
   shipTimeBonus, calcCustomShipCost, calcCustomShipTime
 } from '../../core.jsx';
 import { GAME_SPEED } from '../../data/gameData.js';
+import { stampTimeMult } from '../tick/queues/queueTiming.js';
 
 export const handleSaveBlueprint = (state, action) => {
   if (!action.blueprint) return state;
@@ -40,9 +41,9 @@ export const handleBuildCustomShip = (state, action) => {
   const endTime = Date.now() + time * 1000;
 
   let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: deduct(p.resources, totalCost) }));
-  newState.customShipQueue = [...state.customShipQueue, {
+  newState.customShipQueue = [...state.customShipQueue, stampTimeMult(newState, 'customShip', {
     id: uid(), planetId: planet.id, blueprintId, quantity, startTime: Date.now(), endTime,
-  }];
+  })];
   return newState;
 };
 

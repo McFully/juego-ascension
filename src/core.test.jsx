@@ -12,6 +12,7 @@ import {
   calcCustomShipCost,
   calcCustomShipStats,
   calcResearchTime,
+  buildingProdInfo,
   researchCost, shipCost, defenseCost, constructionDiscount, aiResearchDiscount
 } from './core.jsx';
 
@@ -414,6 +415,23 @@ describe('Ascensión Core Logic Tests', () => {
 
       expect(result.planets.length).toBe(1);
       expect(result.notifications.some(n => (n.message || '').includes('Límite imperial alcanzado'))).toBe(true);
+    });
+
+    it('buildingProdInfo handles deuterium mine with planet coordinates without ReferenceError', () => {
+      const planetWithCoords = {
+        galaxy: 1,
+        system: 1,
+        position: 3,
+        buildings: { deutSynth: 5, solarPlant: 10 },
+        faction: 'human',
+        biome: 'terran',
+        specialization: null,
+        taxRate: 0
+      };
+      const info = buildingProdInfo('deutSynth', 5, {}, 20, 1, planetWithCoords);
+      expect(info).toBeDefined();
+      expect(info.current).toBeDefined();
+      expect(info.current.prod).toBeGreaterThan(0);
     });
   });
 });

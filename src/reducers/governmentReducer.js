@@ -12,7 +12,10 @@ import {
 import { processMission, returnFleetToOrigin, processEvent } from '../missions.jsx';
 import { MINISTRY_MAPPING } from '../data/buildingOperationsData.js';
 import { CANDIDATES_POOL } from '../data/governmentPoliciesData.js';
-import { MINISTRY_BUILDING_REQS } from './colonyGovernor.js';
+// 1.6-3 — La fuente de los requisitos es `data/ministryState.js`, no
+// `colonyGovernor`. Antes salía de aquí y ese mapa duplicaba (y contradecía)
+// el `parentRequiredBuilding` que el propio MINISTRY_MAPPING ya declara.
+import { MINISTRY_BUILDING_REQS, buildPlanetMinistries } from '../data/ministryState.js';
 
 export const governmentReducer = (state, action) => {
   switch (action.type) {
@@ -33,7 +36,7 @@ export const governmentReducer = (state, action) => {
       const targetPlanetId = planetId || state.currentPlanetId;
       if (targetPlanetId && state.planets?.some(p => p.id === targetPlanetId)) {
         return updatePlanet(state, targetPlanetId, p => {
-          const pMins = p.ministries || state.ministries || {};
+          const pMins = p.ministries || buildPlanetMinistries(state.gameMode);
           return {
             ...p,
             ministries: {
@@ -63,7 +66,7 @@ export const governmentReducer = (state, action) => {
       const targetPlanetId = planetId || state.currentPlanetId;
       if (targetPlanetId && state.planets?.some(p => p.id === targetPlanetId)) {
         return updatePlanet(state, targetPlanetId, p => {
-          const pMins = p.ministries || state.ministries || {};
+          const pMins = p.ministries || buildPlanetMinistries(state.gameMode);
           const shouldAuto = Boolean(p.autoGovernance && minister);
           return {
             ...p,
@@ -95,7 +98,7 @@ export const governmentReducer = (state, action) => {
       const targetPlanetId = planetId || state.currentPlanetId;
       if (targetPlanetId && state.planets?.some(p => p.id === targetPlanetId)) {
         return updatePlanet(state, targetPlanetId, p => {
-          const pMins = p.ministries || state.ministries || {};
+          const pMins = p.ministries || buildPlanetMinistries(state.gameMode);
           const currentMin = pMins[ministryId] || {};
           const currentDirs = currentMin.directives || {};
           const nextVal = !currentDirs[directiveId];
@@ -198,6 +201,37 @@ export const governmentReducer = (state, action) => {
       };
     }
 
+    case 'SET_MINISTRY_STATE': {
+      // 1.6 — ajuste genérico de un ministerio (hoy, el "Foco científico" que
+      // researchScoring lee de verdad). Si el ministerio vive en un planeta, se
+      // guarda allí; si no, en el estado global, como el resto de ministerios.
+      const { ministryId, patch, planetId } = action;
+      if (!ministryId || !patch) return state;
+
+      const targetPlanetId = planetId || state.currentPlanetId;
+      if (targetPlanetId && state.planets?.some(p => p.id === targetPlanetId)) {
+        return updatePlanet(state, targetPlanetId, p => {
+          const pMins = p.ministries || {};
+          return {
+            ...p,
+            ministries: {
+              ...pMins,
+              [ministryId]: { ...(pMins[ministryId] || {}), ...patch }
+            }
+          };
+        });
+      }
+
+      const currentMin = state.ministries?.[ministryId] || {};
+      return {
+        ...state,
+        ministries: {
+          ...(state.ministries || {}),
+          [ministryId]: { ...currentMin, ...patch }
+        }
+      };
+    }
+
     case 'BUY_CIVIL_BUSINESS': {
       const { planetId, businessType, cost } = action;
       const planet = state.planets.find(p => p.id === planetId);
@@ -230,7 +264,7 @@ export const governmentReducer = (state, action) => {
       const targetPlanetId = planetId || state.currentPlanetId;
       const effectiveMode = directiveMode || 'autonomous_only';
       return updatePlanet(state, targetPlanetId, p => {
-        const currentMinistries = p.ministries || state.ministries || {};
+        const currentMinistries = p.ministries || buildPlanetMinistries(state.gameMode);
         const updatedMinistries = { ...currentMinistries };
         const b = p.buildings || {};
 
@@ -267,7 +301,7 @@ export const governmentReducer = (state, action) => {
       const effectiveMode = directiveMode || planet?.governorDirectiveMode || 'autonomous_only';
 
       return updatePlanet(state, targetPlanetId, p => {
-        const currentMinistries = p.ministries || state.ministries || {};
+        const currentMinistries = p.ministries || buildPlanetMinistries(state.gameMode);
         const updatedMinistries = { ...currentMinistries };
         const b = p.buildings || {};
 
@@ -323,7 +357,7 @@ export const governmentReducer = (state, action) => {
       const { directiveMode } = action;
       const effectiveMode = directiveMode || 'autonomous_only';
       const updatedPlanets = (state.planets || []).map(p => {
-        const currentMinistries = p.ministries || state.ministries || {};
+        const currentMinistries = p.ministries || buildPlanetMinistries(state.gameMode);
         const updatedMinistries = { ...currentMinistries };
         const b = p.buildings || {};
 
@@ -365,7 +399,7 @@ export const governmentReducer = (state, action) => {
       const effectiveMode = directiveMode || state.emperorDirectiveMode || 'autonomous_only';
 
       const updatedPlanets = planets.map(p => {
-        const currentMinistries = p.ministries || state.ministries || {};
+        const currentMinistries = p.ministries || buildPlanetMinistries(state.gameMode);
         const updatedMinistries = { ...currentMinistries };
         const b = p.buildings || {};
 

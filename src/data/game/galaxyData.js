@@ -109,14 +109,14 @@ export const GRAVITY_LEVELS = [
 
 export const PLANET_TRAITS = [
   null, null, null, null, null,
-  { name: 'Suelos Ricos', desc: '+10% producción metal', effect: p => ({ metal: 0.1 }) },
-  { name: 'Cristales Nativos', desc: '+10% producción cristal', effect: p => ({ crystal: 0.1 }) },
-  { name: 'Océanos de Deuterio', desc: '+15% producción deuterio', effect: p => ({ deuterium: 0.15 }) },
-  { name: 'Campo Magnético', desc: '-10% tiempo construcción', effect: p => ({ buildTime: -0.1 }) },
-  { name: 'Ruinas Antiguas', desc: '+10% investigación', effect: p => ({ research: 0.1 }) },
-  { name: 'Clima Extremo', desc: '-10% producción general', effect: p => ({ malus: 0.1 }) },
-  { name: 'Yermo Radioactivo', desc: '-15% producción, +5% defensa', effect: p => ({ malus: 0.15, defense: 0.05 }) },
-  { name: 'Ecosistema Frágil', desc: '-20% tamaño efectivo', effect: p => ({ sizeMalus: 0.2 }) },
+  { name: 'Suelos Ricos', desc: '+10% producción metal', effect: { metal: 0.1 } },
+  { name: 'Cristales Nativos', desc: '+10% producción cristal', effect: { crystal: 0.1 } },
+  { name: 'Océanos de Deuterio', desc: '+15% producción deuterio', effect: { deuterium: 0.15 } },
+  { name: 'Campo Magnético', desc: '-10% tiempo construcción', effect: { buildTime: -0.1 } },
+  { name: 'Ruinas Antiguas', desc: '+10% investigación', effect: { research: 0.1 } },
+  { name: 'Clima Extremo', desc: '-10% producción general', effect: { malus: 0.1 } },
+  { name: 'Yermo Radioactivo', desc: '-15% producción, +5% defensa', effect: { malus: 0.15, defense: 0.05 } },
+  { name: 'Ecosistema Frágil', desc: '-20% tamaño efectivo', effect: { sizeMalus: 0.2 } },
 ];
 
 export const AI_STRATEGIES = {

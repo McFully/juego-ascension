@@ -192,8 +192,9 @@ export const calcBuildTime = (cost, robot, nanite, speed = 1, construction = 0, 
   const fullAutoLvl = r.fullAuto || 0;
   const molecularVaporDepLvl = r.molecularVaporDep || 0;
   const adaptiveModularArchLvl = r.adaptiveModularArch || 0;
+  const industrialOptLvl = r.industrialOpt || 0;
   const courtLvl = b.colonySupremeCourt || 0;
-  const buildSpeedMult = 1 + fullAutoLvl * 0.05 + molecularVaporDepLvl * 0.03 + adaptiveModularArchLvl * 0.05 + courtLvl * 0.05;
+  const buildSpeedMult = 1 + fullAutoLvl * 0.05 + molecularVaporDepLvl * 0.03 + adaptiveModularArchLvl * 0.05 + industrialOptLvl * 0.10 + courtLvl * 0.05;
 
   const t = ((cost.metal + cost.crystal) / (2500 * (1 + robot * 1.5625) * (1 + nanite * 0.5) * (1 + construction * 1.5625) * speed * conscriptionBonus * govBuildSpeedMult * relicBuildMult * buildSpeedMult)) * 3600;
   return Math.max(1, Math.floor(t));

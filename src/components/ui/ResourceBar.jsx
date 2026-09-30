@@ -10,6 +10,7 @@ export const ResourceBadge = React.memo(({ icon, label, value, rate, color = 'cy
     crystal: { sym: '💎', textCol: 'text-cyan-400', border: 'border-cyan-500/25', bg: 'from-cyan-950/20' },
     deuterium: { sym: '⚗️', textCol: 'text-emerald-400', border: 'border-emerald-500/25', bg: 'from-emerald-950/20' },
     energy: { sym: '⚡', textCol: 'text-yellow-400', border: 'border-yellow-500/25', bg: 'from-yellow-950/20' },
+    slag: { sym: '🪨', textCol: 'text-orange-400', border: 'border-orange-500/25', bg: 'from-orange-950/20' },
     reputation: { sym: '🎖️', textCol: 'text-purple-400', border: 'border-purple-500/25', bg: 'from-purple-950/20' },
     population: { sym: '👥', textCol: 'text-teal-400', border: 'border-teal-500/25', bg: 'from-teal-950/20' },
   };
@@ -79,6 +80,7 @@ export const ResourceBar = React.memo(({ planet, research, reputation, taxRate =
   const netDeut = Math.max(0, prod.deuterium - popDeut);
 
   const maxPop = calcPlanetMaxPop(planet);
+  const netSlag = prod.slagNet !== undefined ? prod.slagNet : (prod.slag || 0);
 
   return (
     <div className="h-full flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-0.5">
@@ -86,6 +88,7 @@ export const ResourceBar = React.memo(({ planet, research, reputation, taxRate =
       <ResourceBadge icon="crystal" label="Cristal" value={planet.resources.crystal || 0} rate={netCrystal} />
       <ResourceBadge icon="deuterium" label="Deuterio" value={planet.resources.deuterium || 0} rate={netDeut} />
       <ResourceBadge icon="energy" label="Energía" value={`${energyPrefix}${fmt(prod.energyBalance)}`} />
+      <ResourceBadge icon="slag" label="Escoria" value={planet.resources.slag || 0} rate={netSlag} />
       <ResourceBadge icon="population" label="Censo" value={`${fmt(pop)}/${fmt(maxPop)}`} />
       <ResourceBadge icon="reputation" label="Reputación" value={`${repPrefix}${displayRep}`} />
     </div>

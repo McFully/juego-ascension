@@ -65,6 +65,12 @@ export const CODEX_SHIPS_DEFENSES_MOONS = {
     stats: "Nave consumible de colonización planetaria. Hull: 30,000 | Carga: 7,500",
     usage: "Enviada a posiciones vacías de la galaxia para fundar una nueva colonia imperial.",
   },
+  commercialColonizer: {
+    name: "Arca Mercantil",
+    lore: "El ápice de la ingeniería naval comercial. Un leviatán orbital con hiper-aleaciones cuyo coste supera en 1.000 veces a un colonizador común.",
+    stats: "Coste: 10M Metal, 20M Cristal, 10M Deuterio | Hull: 2.500.000 | Carga: 500.000 | Propulsión Hiperespacio",
+    usage: "Se despliega para fundar el único Planeta Lonja / Exchange por galaxia, creando un hub comercial con terminales AMM, parking logístico y gobernanza DAO.",
+  },
   recycler: {
     name: "Reciclador",
     lore: "Cargueros pesados modificados con brazos magnéticos y trituradoras moleculares para recolectar escombros.",

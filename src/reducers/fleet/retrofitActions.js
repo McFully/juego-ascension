@@ -9,6 +9,7 @@ import {
   calculateRetrofitUnitCost,
   calculateRetrofitUnitTime
 } from '../../utils/formulas/retrofitFormulas.js';
+import { stampTimeMult } from '../tick/queues/queueTiming.js';
 
 /**
  * Moderniza una variante de naves específica en el planeta
@@ -67,7 +68,7 @@ export const handleRetrofitShipVariant = (state, action) => {
     };
   });
 
-  newState.retrofitQueue = [...(state.retrofitQueue || []), {
+  newState.retrofitQueue = [...(state.retrofitQueue || []), stampTimeMult(newState, 'retrofit', {
     id: uid(),
     planetId: planet.id,
     type: 'ship_variant',
@@ -82,7 +83,7 @@ export const handleRetrofitShipVariant = (state, action) => {
     unitCost,
     startTime: Date.now(),
     endTime: Date.now() + totalTime * 1000,
-  }];
+  })];
 
   newState.notifications = [...(newState.notifications || []), {
     id: uid(),
@@ -150,7 +151,7 @@ export const handleRetrofitDefenseVariant = (state, action) => {
     };
   });
 
-  newState.retrofitQueue = [...(state.retrofitQueue || []), {
+  newState.retrofitQueue = [...(state.retrofitQueue || []), stampTimeMult(newState, 'retrofit', {
     id: uid(),
     planetId: planet.id,
     type: 'defense_variant',
@@ -165,7 +166,7 @@ export const handleRetrofitDefenseVariant = (state, action) => {
     unitCost,
     startTime: Date.now(),
     endTime: Date.now() + totalTime * 1000,
-  }];
+  })];
 
   newState.notifications = [...(newState.notifications || []), {
     id: uid(),

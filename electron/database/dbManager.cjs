@@ -6,7 +6,8 @@ const { app } = require("electron");
 let dbInstance = null;
 
 function getDatabaseDir() {
-  return path.join(app.getPath("userData"), "saves");
+  const userData = app ? app.getPath("userData") : (process.env.APPDATA ? path.join(process.env.APPDATA, "ascension") : path.join(__dirname, "..", "..", "saves"));
+  return path.join(userData, "saves");
 }
 
 function getDatabasePath(saveSlug = "universe") {

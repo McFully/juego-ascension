@@ -8,7 +8,7 @@ import {
   PLANET_TRAITS
 } from '../../data/gameData.js';
 import { EXPANDED_BUILDINGS } from '../../data/expandedContent.js';
-import { getPOIAtCoordinates } from '../formulas.js';
+import { getPOIAtCoordinates } from './coordinatesFormulas.js';
 
 const BUILDINGS = { ...BASE_BUILDINGS, ...EXPANDED_BUILDINGS };
 
@@ -120,7 +120,7 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
 
   let traitBonusMetal = 0, traitBonusCrystal = 0, traitBonusDeuterium = 0, traitMalus = 0;
   if (trait) {
-    const eff = trait.effect ? trait.effect({}) : {};
+    const eff = trait.effect ? (typeof trait.effect === 'function' ? trait.effect({}) : trait.effect) : {};
     traitBonusMetal = eff.metal || 0;
     traitBonusCrystal = eff.crystal || 0;
     traitBonusDeuterium = eff.deuterium || 0;

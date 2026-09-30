@@ -16,11 +16,12 @@ import {
 } from '../../audio.js';
 import { AudioMixerSettings } from '../settings/AudioMixerSettings.jsx';
 import { SaveLoadSettings } from '../settings/SaveLoadSettings.jsx';
+import { ProfileSettingsTab } from '../settings/ProfileSettingsTab.jsx';
 
 const APP_VERSION = (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev');
 const GAME_CREDITS = 'Aritz Bahamonde Larxé';
 
-export const GameSettingsModal = ({ onClose, onSave, onLoad, onImport, onExport, soundEnabled, onToggleSound, onReturnToMenu, initialTab = 'menu' }) => {
+export const GameSettingsModal = ({ onClose, onSave, onLoad, onImport, onExport, soundEnabled, onToggleSound, onReturnToMenu, initialTab = 'menu', state, dispatch }) => {
   const [tab, setTab] = useState(initialTab); // 'menu' | 'save' | 'load' | 'audio'
   const [saves, setSaves] = useState([]);
   const [saveName, setSaveName] = useState('');
@@ -247,6 +248,11 @@ export const GameSettingsModal = ({ onClose, onSave, onLoad, onImport, onExport,
               onWarChange={handleWarChange}
               onVoiceChange={handleVoiceChange}
               onOperationsChange={handleOperationsChange}
+            />
+
+            <ProfileSettingsTab
+              state={state}
+              dispatch={dispatch}
             />
           </div>
         )}

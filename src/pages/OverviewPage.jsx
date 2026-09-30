@@ -21,7 +21,6 @@ import { GAME_SPEED } from "../data/gameData.js";
 import { useActiveImperialQueues } from "../hooks/useActiveImperialQueues.js";
 import { EmperorDelegationModal } from "../components/government/GovernorDelegationModal.jsx";
 import { ImperialCommandHub } from "../components/government/ImperialCommandHub.jsx";
-import { PlanetarySenateModal } from "../components/planet/PlanetarySenateModal.jsx";
 
 /**
  * OverviewPage — Consola Central de Operaciones 100% Pantalla Completa.
@@ -64,7 +63,6 @@ const OverviewPage = ({
   const [activeSection, setActiveSection] = useState('command_hub'); // 'command_hub' | 'planets' | 'operations' | 'fleets'
   const [opFilter, setOpFilter] = useState(null);
   const [emperorModalOpen, setEmperorModalOpen] = useState(false);
-  const [planetarySenateOpen, setPlanetarySenateOpen] = useState(false);
   const activeItems = useActiveImperialQueues(state, BUILDINGS, RESEARCH, SHIPS, DEFENSES);
 
   // Escuchar evento de navegación directa de sección (ej: desde la miga de pan de HubTopBar)
@@ -295,6 +293,7 @@ const OverviewPage = ({
         handleOpenMenu={handleOpenMenu}
         handleLogout={onLogout || onReturnToMenu}
         onOpenSettings={onOpenSettings}
+        safeSetActiveTab={safeSetActiveTab}
       />
 
       {/* === BARRA DE MENÚ DE SECCIONES IMPERIALES (IMAGE BUTTONS GRANDES) === */}
@@ -475,21 +474,17 @@ const OverviewPage = ({
         </button>
       </div>
 
-      {/* === SUB-VISTA 0: MANDO IMPERIAL (TARJETAS DE ALTO MANDO) === */}
+      {/* === SUB-VISTA 0: MANDO IMPERIAL (sede central del imperio) === */}
       <div className={activeSection === 'command_hub' ? 'block animate-in fade-in duration-150' : 'hidden'}>
         <ImperialCommandHub
           state={state}
           dispatch={dispatch}
-          currentPlanet={currentPlanet}
           production={production}
           fmt={fmt}
           RESEARCH={RESEARCH}
-          onEnterMinistries={() => handleNavigate('government_ministries')}
-          onNavigateTab={handleNavigate}
-          onOpenPlanetarySenate={() => setPlanetarySenateOpen(true)}
+          onNavigateTab={(tab) => handleNavigate(tab)}
           onBackToEmpire={() => setActiveSection('planets')}
           showTopBar={false}
-          isImperialScreen={true}
         />
       </div>
 
@@ -535,16 +530,6 @@ const OverviewPage = ({
         onClose={() => setEmperorModalOpen(false)}
         state={state}
         dispatch={dispatch}
-      />
-
-      {/* Modal de Senado Planetario Local */}
-      <PlanetarySenateModal
-        isOpen={planetarySenateOpen}
-        onClose={() => setPlanetarySenateOpen(false)}
-        planet={currentPlanet}
-        state={state}
-        dispatch={dispatch}
-        fmt={fmt}
       />
     </div>
   );

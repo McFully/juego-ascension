@@ -1,7 +1,9 @@
 import {
-  RESEARCH, researchCost, clampResources, deduct, canAfford, meetsReq,
-  researchTimeBonus, calcResearchTime, uid, GAME_SPEED
+  RESEARCH, researchCost, clampResources, deduct, canAfford, meetsResearchReq, uid
 } from '../../../core.jsx';
+import { calcPlanetResearchTime } from '../../../utils/formulas/researchTiming.js';
+import { stampTimeMult } from '../queues/queueTiming.js';
+import { rankResearch, buildResearchScoreConfig } from '../ai/researchScoring.js';
 
 export const processAutoResearchTick = (state) => {
   let newState = { ...state };
@@ -13,10 +15,8 @@ export const processAutoResearchTick = (state) => {
     if (!cpScience?.automationEnabled) continue;
 
     const isAlreadyResearchingType = (rId) => (newState.researchQueue || []).some(q => q.researchId === rId);
-    let bestResearch = null;
-    let lowestPriorityScore = Infinity;
 
-    // Detectar si alguna misión activa pide una investigación específica
+    // Detectar techs priorizadas por misiones activas
     const activeMissionIds = newState.activeMissions || [];
     const prioritizedTechs = new Set();
     if (newState.missions) {
@@ -27,25 +27,21 @@ export const processAutoResearchTick = (state) => {
       });
     }
 
-    for (const [id, r] of Object.entries(RESEARCH)) {
-      if (isAlreadyResearchingType(id)) continue;
-      if (cp.automatedExclusions?.[id]) continue;
-      
-      const currentLvl = newState.research[id] || 0;
-      const cost = researchCost(id, currentLvl, newState.research?.aiStrategy || 0, cp.buildings?.constructionCenter || 0);
-      const costSum = (cost.metal || 0) + (cost.crystal || 0) * 1.5 + (cost.deuterium || 0) * 3;
-      
-      // Si la investigación es prioritaria por misión activa, reducimos drásticamente su score para que gane
-      const priorityMultiplier = prioritizedTechs.has(id) ? 0.01 : 1.0;
-      const finalScore = costSum * priorityMultiplier;
+    // Construir lista de candidatos: todas las investigaciones no en cola y no excluidas
+    const allCandidates = Object.keys(RESEARCH).filter(id => {
+      if (isAlreadyResearchingType(id)) return false;
+      if (cp.automatedExclusions?.[id]) return false;
+      return true;
+    });
 
-      if (finalScore < lowestPriorityScore && canAfford(cp.resources, cost) && meetsReq(r.req, { ...cp.buildings, ...newState.research })) {
-        bestResearch = id;
-        lowestPriorityScore = finalScore;
-      }
-    }
-    
-    const cheapestResearch = bestResearch;
+    // Usar scoring real (incluye misiones, costes, prerrequisitos, unlocks, etc.)
+    const scoreConfig = buildResearchScoreConfig(newState, cp, {
+      prioritizedTechs,
+      exclude: cp.automatedExclusions,
+    });
+    const ranked = rankResearch(scoreConfig, allCandidates);
+
+    const cheapestResearch = ranked.length > 0 ? ranked[0].id : null;
     
     if (cheapestResearch) {
       const currentLvl = newState.research[cheapestResearch] || 0;
@@ -54,14 +50,14 @@ export const processAutoResearchTick = (state) => {
       const newRes = clampResources(deduct(cp.resources, cost));
       newState.planets = newState.planets.map(p => p.id === cp.id ? { ...p, resources: newRes } : p);
       
-      const speedBonus = researchTimeBonus(cp.buildings, newState.research);
-      const totalSpeedMultiplier = (1 + speedBonus) * (1 + (cpScience?.researchGrants || 0.05));
-      const researchTimeVal = calcResearchTime(cost, cp.buildings?.researchLab || 0, GAME_SPEED, totalSpeedMultiplier, newState.research);
-      
+      // Fuente única de verdad: incluye techs de investigación, researchGrants,
+      // ministro de ciencia, synchronousOptical, facción y especialización.
+      const researchTimeVal = calcPlanetResearchTime(newState, cp, cost);
+
       const startTime = Date.now();
       const endTime = startTime + researchTimeVal * 1000;
-      
-      newState.researchQueue = [...(newState.researchQueue || []), {
+
+      newState.researchQueue = [...(newState.researchQueue || []), stampTimeMult(newState, 'research', {
         id: uid(),
         planetId: cp.id,
         researchId: cheapestResearch,
@@ -69,7 +65,7 @@ export const processAutoResearchTick = (state) => {
         endTime,
         level: targetLvl,
         auto: true
-      }];
+      })];
     }
   }
   return newState;

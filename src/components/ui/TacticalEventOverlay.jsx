@@ -3,6 +3,20 @@ import { asset, REAL_IMAGES } from '../../assets.jsx';
 import { sfx, speakText } from '../../audio.js';
 import { fmt } from '../../utils/formulas.js';
 
+/**
+ * ⚠️ SIN USO desde el paso 3.4 — no se monta en `AppOverlays.jsx`.
+ *
+ * Los informes de misión ya no se abren solos: se acumulan en
+ * `state.tacticalEventLog` y se leen en la bandeja
+ * (`src/pages/TelemetryPage.jsx`).
+ *
+ * La UI de lectura vive ahora en `TacticalEventDetail.jsx`, que es la misma
+ * presentación sin el overlay de pantalla completa y con el sonido y la voz
+ * disparados AL ABRIR el mensaje, no al recibirlo. Si algo vuelve a necesitar un
+ * overlay modal de informes, reutiliza ese componente en lugar de resucitar este.
+ *
+ * Se conserva, sin borrar, para no perder trabajo de presentación.
+ */
 export const TacticalEventOverlay = React.memo(({ events = [], onDismiss, onDismissAll, onNavigatePlanet }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const totalEvents = events?.length || 0;

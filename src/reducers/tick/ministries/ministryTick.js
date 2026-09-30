@@ -1,21 +1,28 @@
+import { buildMinistriesState } from '../../../data/ministryState.js';
+import { MINISTRY_MAPPING } from '../../../data/buildingOperationsData.js';
+import { uid } from '../../../core.jsx';
+
+/**
+ * 1.6-2 — Rellena los ministerios que falten.
+ *
+ * Antes solo se reparaban 6 de los 17 a mano. `buildMinistriesState` completa
+ * todos los de `MINISTRY_MAPPING` conservando lo que ya tuviera, así que una
+ * partida vieja gana estado donde le faltaba sin perder lo que tenía.
+ */
 export const ensureMinistries = (state) => {
-  let newState = { ...state };
-  if (!newState.ministries) {
-    newState.ministries = {
-      economy: { taxRate: 0.1, tradeSubsidies: false, treasury: 1000, gdp: 0, automationEnabled: false },
-      defense: { conscriptionLevel: 'volunteer', combatDoctrine: 'balanced', patrolIntensity: 1, automationEnabled: false },
-      science: { researchGrants: 0.05, techFocus: 'general', experimentalProjects: [], automationEnabled: false },
-      culture: { propagandaLevel: 1, socialUnity: 80, eventsActive: [], automationEnabled: false },
-      infra: { maintenanceBudget: 0.05, logisticsLevel: 1, orbitalNetwork: false, automationEnabled: false },
-      intel: { espionageBudget: 0.1, counterIntelLevel: 1, sleeperCells: [], automationEnabled: false }
-    };
+  const newState = { ...state };
+  const before = newState.ministries || {};
+  const after = buildMinistriesState(before);
+
+  // Solo se devuelve un estado nuevo si de verdad ha cambiado algo: los ticks
+  // dependents comparan por referencia.
+  let changed = !newState.ministries;
+  if (!changed) {
+    for (const k of Object.keys(after)) {
+      if (before[k] !== after[k]) { changed = true; break; }
+    }
   }
-  if (!newState.ministries.economy) newState.ministries.economy = { taxRate: 0.1, treasury: 1000, gdp: 0, automationEnabled: false };
-  if (!newState.ministries.defense) newState.ministries.defense = { conscriptionLevel: 'volunteer', combatDoctrine: 'balanced', patrolIntensity: 1, automationEnabled: false };
-  if (!newState.ministries.science) newState.ministries.science = { researchGrants: 0.05, techFocus: 'general', experimentalProjects: [], automationEnabled: false };
-  if (!newState.ministries.culture) newState.ministries.culture = { propagandaLevel: 1, socialUnity: 80, eventsActive: [], automationEnabled: false };
-  if (!newState.ministries.infra) newState.ministries.infra = { maintenanceBudget: 0.05, logisticsLevel: 1, orbitalNetwork: false, automationEnabled: false };
-  if (!newState.ministries.intel) newState.ministries.intel = { espionageBudget: 0.1, counterIntelLevel: 1, sleeperCells: [], automationEnabled: false };
+  if (changed) newState.ministries = after;
   return newState;
 };
 
@@ -23,6 +30,44 @@ export const processMinistriesTick = (state, newPlanets, prodCache) => {
   let newState = { ...state };
   const mins = newState.ministries || {};
   const taxRate = mins.economy?.taxRate || 0.1;
+
+  // 1.6-7 — Automatización sin ministro = ministerio inerte, y no se decía nada.
+  //
+  // El jugador podía activar "autónomo" en un ministerio sin ministro nombrado
+  // y ver que no pasaba nada, sin ninguna pista de por qué. Ahora se avisa una
+  // sola vez por ministerio (no cada tick, que sería spam) y se deja constancia
+  // para que la UI pueda marcarlo en rojo.
+  const sinMinistro = [];
+  for (const [minId, data] of Object.entries(mins)) {
+    if (!data) continue;
+    // El caso que avisa: autónomo ACTIVADO y sin ministro. Sin ministro el
+    // ministerio no hace nada, y el jugador no tenía por qué saberlo.
+    if (!data.automationEnabled) continue;
+    if (data.minister) continue;
+    if (newState.ministryNoopWarnings?.[minId]) continue; // ya avisado
+    sinMinistro.push(minId);
+  }
+  if (sinMinistro.length > 0) {
+    newState.ministryNoopWarnings = { ...(newState.ministryNoopWarnings || {}) };
+    for (const minId of sinMinistro) newState.ministryNoopWarnings[minId] = true;
+
+    const nombres = sinMinistro.map(id => MINISTRY_MAPPING[id]?.name || id);
+    newState.notifications = [...(newState.notifications || []), {
+      id: uid(),
+      type: 'warning',
+      message: `⚠️ Automatización activa sin ministro en: ${nombres.join(', ')}. Nomina un ministro o desactiva el autónomo, o no harán nada.`,
+      timestamp: Date.now(),
+    }];
+  }
+  // Si el jugador ya nombró ministro (o desactivó el autónomo), se olvida el
+  // aviso para que pueda volver a activarse más adelante si vuelve a dejarlo solo.
+  for (const [minId, data] of Object.entries(mins)) {
+    if (!newState.ministryNoopWarnings?.[minId]) continue;
+    if (data?.minister || !data?.automationEnabled) {
+      newState.ministryNoopWarnings = { ...newState.ministryNoopWarnings };
+      delete newState.ministryNoopWarnings[minId];
+    }
+  }
   
   // Economy: Tax collection based on metal production + civil businesses
   const totalMetalProd = newPlanets.reduce((acc, p) => {
@@ -38,8 +83,10 @@ export const processMinistriesTick = (state, newPlanets, prodCache) => {
   newState.ministries = {
     ...newState.ministries,
     economy: {
-      ...newState.ministries.economy,
-      treasury: (mins.economy.treasury || 0) + taxIncome,
+      ...mins.economy,
+      // Antes: `mins.economy.treasury`, que reventaba si el ministerio faltaba.
+      // Una partida vieja podría llegar sin él.
+      treasury: (mins.economy?.treasury || 0) + taxIncome,
       gdp: totalMetalProd * 3600,
     }
   };

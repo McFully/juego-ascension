@@ -1,5 +1,5 @@
 import {
-  updatePlanet, uid, constructionDiscount, canAfford, deduct, meetsReq
+  updatePlanet, uid, constructionDiscount, canAfford, deduct, meetsResearchReq
 } from '../../core.jsx';
 import { MOON_BUILDINGS } from '../../data/gameData.js';
 
@@ -13,7 +13,7 @@ export const handleBuildMoonBuilding = (state, action) => {
   const mDisc = constructionDiscount(planet.buildings?.constructionCenter || 0);
   const cost = { metal: Math.floor(b.cost.m * Math.pow(b.factor, lvl) * mDisc), crystal: Math.floor(b.cost.c * Math.pow(b.factor, lvl) * mDisc), deuterium: Math.floor((b.cost.d || 0) * Math.pow(b.factor, lvl) * mDisc) };
   if (!canAfford(planet.resources, cost)) return state;
-  if (!meetsReq(b.req, planet.moon.buildings)) return state;
+  if (!meetsResearchReq(b.req, { ...planet.moon.buildings, ...planet.buildings, ...state.research })) return state;
   if (b.max && lvl >= b.max) return state;
   
   const newRes = deduct(planet.resources, cost);

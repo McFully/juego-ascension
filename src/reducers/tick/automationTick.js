@@ -1,6 +1,6 @@
 import {
   BUILDINGS, RESEARCH, DEFENSES, uid, clampResources, deduct, canAfford,
-  meetsReq, calcStorage, buildingCost, researchCost, defenseCost,
+  meetsResearchReq, calcStorage, buildingCost, researchCost, defenseCost,
   calcBuildTime, calcResearchTime, calcDefenseTime, researchTimeBonus,
   calcDistance, fleetSpeed, calcFlightTime, fmt, GAME_SPEED
 } from '../../core.jsx';
@@ -112,7 +112,7 @@ export const processAutoResearch = (newState) => {
       const currentLvl = newState.research[id] || 0;
       const cost = researchCost(id, currentLvl, newState.research?.aiStrategy || 0, cp.buildings?.constructionCenter || 0);
       const costSum = (cost.metal || 0) + (cost.crystal || 0) * 1.5 + (cost.deuterium || 0) * 3;
-      if (costSum < lowestCostValue && canAfford(cp.resources, cost) && meetsReq(r.req, { ...cp.buildings, ...newState.research })) {
+      if (costSum < lowestCostValue && canAfford(cp.resources, cost) && meetsResearchReq(r.req, { ...cp.buildings, ...newState.research })) {
         cheapestResearch = id;
         lowestCostValue = costSum;
       }
@@ -171,7 +171,7 @@ export const processAutoBuildAndDefenses = (newState, prodCache, storageCache) =
         : ['solarPlant', 'fusionReactor', 'geoPlant', 'orbitalEnergy'];
       for (const pId of energySources) {
         if (isAlreadyBuildingType(pId)) continue;
-        if (meetsReq(BUILDINGS[pId] ? BUILDINGS[pId].req : null, { ...planet.buildings, ...newState.research })) {
+        if (meetsResearchReq(BUILDINGS[pId] ? BUILDINGS[pId].req : null, { ...planet.buildings, ...newState.research })) {
           candidates.push(pId);
           break;
         }
@@ -208,7 +208,7 @@ export const processAutoBuildAndDefenses = (newState, prodCache, storageCache) =
       if (didQueue) break;
       const targetLvl = (buildings[bId] || 0) + 1;
       const cost = buildingCost(bId, targetLvl - 1, buildings?.constructionCenter || 0);
-      if (BUILDINGS[bId] && canAfford(planet.resources, cost) && meetsReq(BUILDINGS[bId].req, { ...planet.buildings, ...newState.research })) {
+      if (BUILDINGS[bId] && canAfford(planet.resources, cost) && meetsResearchReq(BUILDINGS[bId].req, { ...planet.buildings, ...newState.research })) {
         const newRes = clampResources(deduct(planet.resources, cost));
         const buildTimeVal = calcBuildTime(cost, buildings.robotFactory || 0, buildings.naniteFactory || 0, GAME_SPEED, buildings.constructionCenter || 0, {}, newState.research, buildings);
         const startTime = Date.now();
@@ -267,7 +267,7 @@ export const processAutoBuildAndDefenses = (newState, prodCache, storageCache) =
 
     const defenseId = 'rocketLauncher';
     const cost = defenseCost(defenseId, 1, planet.buildings?.constructionCenter || 0);
-    if (canAfford(planet.resources, cost) && meetsReq(DEFENSES[defenseId].req, { ...planet.buildings, ...newState.research })) {
+    if (canAfford(planet.resources, cost) && meetsResearchReq(DEFENSES[defenseId].req, { ...planet.buildings, ...newState.research })) {
       const newRes = clampResources(deduct(planet.resources, cost));
       const defenseTimeVal = calcDefenseTime(defenseId, 1, planet.buildings?.shipyard || 0, planet.buildings?.naniteFactory || 0, GAME_SPEED);
       const startTime = Date.now();

@@ -19,10 +19,12 @@ export const ACHIEVEMENTS = [
   { id: 'millionaire', name: 'Multimillonario', icon: '💰', desc: 'Acumula 10M de recursos totales', check: s => (s.metalGathered + s.crystalGathered + s.deuteriumGathered) >= 1e7 },
   { id: 'retrofitter', name: 'Modernizador', icon: '🔧', desc: 'Completa tu primera modernización', check: s => s.retrofitsCompleted >= 1 },
   { id: 'alien_artifact', name: 'Arqueólogo', icon: '🛸', desc: 'Encuentra un artefacto alienígena en expedición', check: s => s.artifactsFound >= 1 },
+  { id: 'exchange_founder', name: 'Magnate de la Lonja', icon: '🏛️', desc: 'Despliega un Arca Mercantil y funda el Planeta Lonja', check: s => (s.planets || []).some(p => p.isExchangePlanet) },
+  { id: 'dao_major_shareholder', name: 'Accionista Mayoritario', icon: '💎', desc: 'Alcanza al menos un 20% de participación en el pool del DAO', check: s => ((s.playerDaoShares || 0) / (s.daoShares || 1)) >= 0.2 },
 ];
 
-export const RES_NAMES = { metal: 'Metal', crystal: 'Cristal', deuterium: 'Deuterio' };
-export const RES_ICONS = { metal: '⛏️', crystal: '💎', deuterium: '⚗️', energy: '⚡' };
+export const RES_NAMES = { metal: 'Metal', crystal: 'Cristal', deuterium: 'Deuterio', credits: 'Créditos Estelares' };
+export const RES_ICONS = { metal: '⛏️', crystal: '💎', deuterium: '⚗️', energy: '⚡', credits: '₢' };
 
 export const NARRATIVE_EVENTS = [
   {

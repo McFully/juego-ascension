@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getRustEngineVersion } from "../services/tauriBridge.js";
 import { processColonyGovernor } from "../reducers/colonyGovernor.js";
 import { auditGameState, logTelemetry } from "../utils/telemetry.js";
 import {
   sfx, startAmbient, stopAmbient, setMuted,
-  playMenuMusic, playInGameMusic, stopMenuMusic
+  playMenuMusic, playInGameMusic, stopMenuMusic,
+  playSystemMusic, stopSystemMusic
 } from "../audio.js";
 
 export function useGameLifecycle({
@@ -68,11 +68,7 @@ export function useGameLifecycle({
           window.electronAPI.logError(`Boot error: ${e?.message || e}`, e?.stack || "", "boot-load");
         }
       }
-      try {
-        const engineVer = await getRustEngineVersion();
-        console.log("[Ascensión] Motor Simulación:", engineVer);
-        setEngineInfo(engineVer);
-      } catch (_) {}
+      setEngineInfo("Ascension Simulation Engine v4.0");
       console.log("[Ascensión] Boot: listo");
       setReady(true);
     })();
@@ -192,7 +188,8 @@ export function useGameLifecycle({
     };
 
     let completed = 0;
-    const CHUNK = 200;
+    const CHUNK = 50;
+    let timerId = null;
     const tickBatch = () => {
       const limit = Math.min(completed + CHUNK, totalTicks);
       for (let i = completed; i < limit; i++) {
@@ -209,7 +206,7 @@ export function useGameLifecycle({
       }
       completed = limit;
       if (completed < totalTicks) {
-        requestAnimationFrame(tickBatch);
+        timerId = setTimeout(tickBatch, 16);
       } else {
         const hours = Math.floor(totalTicks / 3600);
         const mins = Math.floor((totalTicks % 3600) / 60);
@@ -242,8 +239,10 @@ export function useGameLifecycle({
         offlineEventsBeforeRef.current = null;
       }
     };
-    const rafId = requestAnimationFrame(tickBatch);
-    return () => cancelAnimationFrame(rafId);
+    timerId = setTimeout(tickBatch, 32);
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
   }, [ready]);
 
   // Auto-save every 30s
@@ -402,6 +401,7 @@ export function useGameLifecycle({
     } else {
       playMenuMusic();
       stopAmbient();
+      stopSystemMusic();
     }
     
     return () => {
@@ -409,8 +409,24 @@ export function useGameLifecycle({
       document.removeEventListener("keydown", handleFirstInteraction);
       stopAmbient();
       stopMenuMusic();
+      stopSystemMusic();
     };
   }, [state.gameStarted, effectiveSoundEnabled]);
+
+  // Música contextual de sistemas/pantallas tácticas
+  useEffect(() => {
+    if (!state.gameStarted) return;
+    const isGovSection = activeTab === "government" || activeTab === "government_ministries" || (typeof activeTab === "string" && activeTab.startsWith("ministry_"));
+    if (isGovSection) {
+      // El módulo de gobierno gestiona su propia música (stopSystemMusic para permitir ministerios)
+      stopSystemMusic(false);
+      return;
+    }
+
+    if (activeTab) {
+      playSystemMusic(activeTab);
+    }
+  }, [state.gameStarted, activeTab]);
 
   // Tab and planet switch sfx
   const prevTab = useRef(activeTab);

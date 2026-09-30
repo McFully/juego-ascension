@@ -1,7 +1,75 @@
 import { BIOME_KEYS, uid } from '../core.jsx';
 import { migrateLegacyColonization } from '../utils/formulas.js';
+import { buildMinistriesState, buildPlanetMinistries, DECAY_MINISTRY_OVERRIDES } from '../data/ministryState.js';
 
 const PLANET_SIZES = [80, 100, 120, 150, 180, 200];
+
+/**
+ * 3.3 — Reconstruye el registro de comunicaciones de una partida guardada antes
+ * de que existiera. Sin esto, un `activeEvent` o `activeTransmission` con
+ * decisiones pendientes se perdería en silencio al cargar: el overlay ya no se
+ * montará (3.4) y, si no se vuelcan al log, el jugador no volvería a verlos.
+ */
+const buildMigratedEventLog = (payload) => {
+  const seen = new Set();
+  const out = [];
+
+  // `read` por defecto: lo que ya venía en el log se respeta; lo que se recoge
+  // de la cola o de un slot sin mirar se da por NO leído (que es lo que era).
+  const push = (raw, kind, defaultRead) => {
+    if (!raw || typeof raw !== 'object') return;
+    const id = raw.id || uid();
+    if (seen.has(id)) return;
+    seen.add(id);
+    const options = Array.isArray(raw.options) && raw.options.length > 0 ? raw.options : null;
+    out.push({
+      ...raw,
+      id,
+      kind,
+      type: raw.type || 'info',
+      title: raw.title || raw.text || 'Comunicación entrante',
+      subtitle: raw.subtitle || '',
+      description: raw.description || '',
+      read: typeof raw.read === 'boolean' ? raw.read : defaultRead,
+      receivedAt: raw.receivedAt || Date.now(),
+      options,
+      requiresDecision: Boolean(options) || Boolean(raw.requiresDecision),
+      priority: ['baja', 'media', 'alta', 'critica'].includes(raw.priority) ? raw.priority : 'media',
+    });
+  };
+
+  // 1. El log ya existente manda: es el más completo y conserva su estado.
+  for (const e of Array.isArray(payload.tacticalEventLog) ? payload.tacticalEventLog : []) {
+    push(e, e.kind || 'tactical', false);
+  }
+  // 2. La cola de no leídos, si la partida los tenía.
+  for (const e of Array.isArray(payload.tacticalEvents) ? payload.tacticalEvents : []) {
+    push(e, 'tactical', false);
+  }
+  // 3. Los slots huérfanos, con su tipo real para que la bandeja los clasifique.
+  push(payload.activeEvent, 'narrative', false);
+  push(payload.activeFirstContact, 'firstContact', false);
+  push(payload.activeTransmission, 'transmission', false);
+
+  return out;
+};
+
+const sanitizeTrait = (trait) => {
+  if (!trait || typeof trait !== 'object') return null;
+  let effect = trait.effect;
+  if (typeof effect === 'function') {
+    try {
+      effect = effect({});
+    } catch (_) {
+      effect = {};
+    }
+  }
+  return {
+    name: trait.name || '',
+    desc: trait.desc || '',
+    effect: effect && typeof effect === 'object' ? { ...effect } : {}
+  };
+};
 
 export const migrateLoadState = (payload = {}) => {
   const defaults = {
@@ -29,7 +97,7 @@ export const migrateLoadState = (payload = {}) => {
       biome: p.biome || 'temperate',
       planetSize: p.planetSize || 100,
       gravity: p.gravity !== undefined ? p.gravity : 2,
-      trait: p.trait || null,
+      trait: sanitizeTrait(p.trait),
       biosphere: p.biosphere || {
         pressureAtm: p.biome === 'barren' ? 0.05 : 1.0,
         o2Level: p.biome === 'barren' || p.biome === 'toxic' ? 0.02 : 0.21,
@@ -85,7 +153,7 @@ export const migrateLoadState = (payload = {}) => {
         biome: p.biome || BIOME_KEYS[Math.floor(Math.random() * BIOME_KEYS.length)],
         planetSize: p.planetSize || PLANET_SIZES[Math.floor(Math.random() * PLANET_SIZES.length)],
         gravity: p.gravity !== undefined ? p.gravity : Math.floor(Math.random() * 5),
-        trait: p.trait || null,
+        trait: sanitizeTrait(p.trait),
         totalWins: p.totalWins || 0,
         totalLosses: p.totalLosses || 0,
         warsDeclared: p.warsDeclared || 0,
@@ -117,6 +185,12 @@ export const migrateLoadState = (payload = {}) => {
     relics: Array.isArray(payload.relics) ? payload.relics : [],
     activeEvents: Array.isArray(payload.activeEvents) ? payload.activeEvents : [],
     tacticalEvents: Array.isArray(payload.tacticalEvents) ? payload.tacticalEvents : [],
+    // 3.3 — Registro persistente de comunicaciones. En partidas viejas no existe,
+    // así que se reconstruye: lo que había en la cola de no leídos entra tal cual,
+    // y los slots huérfanos (narrativa / primer contacto / transmisión que el
+    // jugador no estaba mirando cuando se guardó) se vuelcan al log para que
+    // no se pierdan.
+    tacticalEventLog: buildMigratedEventLog(payload),
     totalAICount: payload.totalAICount || (payload.aiPlanets || []).length,
     // New diplomacy and narrative fields for compatibility
     influence: payload.influence ?? 50,
@@ -128,26 +202,70 @@ export const migrateLoadState = (payload = {}) => {
     federalFleet: payload.federalFleet || { metal: 0, crystal: 0, deuterium: 0, ships: {} },
     diplomaticHistory: payload.diplomaticHistory || [],
     activeCrises: payload.activeCrises || [],
-    ministries: payload.ministries || {
-      economy: { taxRate: payload.gameMode === 'decay' ? 0.3 : 0.1, tradeSubsidies: false, treasury: payload.gameMode === 'decay' ? -50000 : 1000, gdp: 0, automationEnabled: false },
-      defense: { conscriptionLevel: 'volunteer', combatDoctrine: 'balanced', patrolIntensity: 1, automationEnabled: false },
-      science: { researchGrants: 0.05, techFocus: 'general', experimentalProjects: [], automationEnabled: false },
-      culture: { propagandaLevel: 1, socialUnity: payload.gameMode === 'decay' ? 20 : 80, eventsActive: [], automationEnabled: false },
-      infra: { maintenanceBudget: payload.gameMode === 'decay' ? 0.01 : 0.05, logisticsLevel: 1, orbitalNetwork: false, automationEnabled: false },
-      intel: { espionageBudget: 0.1, counterIntelLevel: 1, sleeperCells: [], automationEnabled: false }
-    },
+    // 1.6-2 — `buildMinistriesState` completa los 17 ministerios conservando lo
+    // que la partida ya tenía, en vez de hardcodear 6 defaults aquí.
+    ministries: buildMinistriesState(payload.ministries, payload.gameMode === 'decay' ? DECAY_MINISTRY_OVERRIDES : {}),
+    // Inicialización del ecosistema financiero y Planeta Lonja
+    credits: payload.credits !== undefined ? payload.credits : 10000,
+    exchangeOrders: Array.isArray(payload.exchangeOrders) ? payload.exchangeOrders : [],
+    daoShares: payload.daoShares || 1000,
+    playerDaoShares: payload.playerDaoShares || 100,
+    daoDividendPool: payload.daoDividendPool !== undefined ? payload.daoDividendPool : 250000,
+    exchangeProjects: payload.exchangeProjects || {},
   };
 
-  // Amnistía Imperial: asegurar compatibilidad con expansiones previas
+// Amnistía Imperial: asegurar compatibilidad con expansiones previas
   const stateWithAmnesty = migrateLegacyColonization(migrated);
 
+  // 1.7 — Cada planeta es dueño de su gabinete y sus programas.
+  const stateWithMinistryScope = migrateMinistryScope(stateWithAmnesty);
+
   return {
-    ...stateWithAmnesty,
+    ...stateWithMinistryScope,
     notifications: [
       { id: uid(), type: 'success', message: '💾 Partida cargada con éxito (v4)', timestamp: Date.now() },
-      ...(stateWithAmnesty.notifications || [])
+      ...(stateWithMinistryScope.notifications || [])
     ]
   };
+};
+
+/**
+ * 1.7 — Los ministerios y sus programas pasan a ser estado del planeta.
+ *
+ * Antes `ministryUpgrades` vivía en el estado global, así que un programa
+ * subido en un mundo aparecía comprado en todos los demás, y un planeta sin
+ * `ministries` heredaba el gabinete mutado del último mundo jugado.
+ *
+ * En las partidas viejas no hay forma de saber en qué mundo se subió cada
+ * programa (no se guardaba el `planetId`). Se asigna al planeta que estaba
+ * activo al guardar, que es el único que el jugador puede reconocer como suyo,
+ * y el resto arranca en blanco. Es la única pérdida posible de esta migración y
+ * ocurre solo con partidas anteriores a este cambio.
+ */
+const migrateMinistryScope = (state) => {
+  const legacyUpgrades = state.ministryUpgrades;
+  const hasLegacyUpgrades = legacyUpgrades && Object.keys(legacyUpgrades).length > 0;
+  const homePlanetId = state.currentPlanetId;
+
+  const planets = (state.planets || []).map((p) => {
+    const mergedMinistries = buildPlanetMinistries(state.gameMode);
+    const ownMinistries = p.ministries && Object.keys(p.ministries).length > 0
+      ? { ...mergedMinistries, ...p.ministries }
+      : mergedMinistries;
+
+    const keepsLegacyUpgrades = hasLegacyUpgrades && p.id === homePlanetId && (!p.ministryUpgrades || Object.keys(p.ministryUpgrades).length === 0);
+
+    return {
+      ...p,
+      ministries: ownMinistries,
+      ministryUpgrades: keepsLegacyUpgrades ? legacyUpgrades : (p.ministryUpgrades || {}),
+    };
+  });
+
+  // El estado global deja de ser la fuente: el imperial ya no tiene gabinete.
+  const { ministryUpgrades, ...rest } = state;
+
+  return { ...rest, planets };
 };
 
 export default migrateLoadState;

@@ -1,6 +1,7 @@
 import React from 'react';
-import { ResourceBreakdownTooltip } from '../ui/ResourceBreakdownTooltip.jsx';
+import { TacticalResourceRow } from '../ui/TacticalResourceRow.jsx';
 import { SafeImg } from '../../assets.jsx';
+import { calcPlanetMaxPop } from '../../core.jsx';
 
 export const FederalDistrictHeader = ({
   currentPlanet,
@@ -16,113 +17,12 @@ export const FederalDistrictHeader = ({
     <section className="relative z-30 flex flex-col xl:flex-row items-stretch justify-between bg-black/85 backdrop-blur-md rounded-2xl border border-white/10 text-xs font-mono shadow-2xl">
       {/* === SECTOR IZQUIERDO: RECURSOS Y EXPLORADOR === */}
       <div className="flex-1 flex flex-col justify-between min-w-0">
-        {/* FILA SUPERIOR: Recursos */}
-        <div className="flex items-center gap-1 sm:gap-2 px-4 py-2 border-b border-white/10 flex-wrap bg-black/40 relative z-40">
-          {/* Metal */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⛏️</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
-              <span className="font-black text-amber-400 text-base md:text-lg">
-                {fmt ? fmt(currentPlanet?.resources?.metal || 0) : (currentPlanet?.resources?.metal || 0)}
-              </span>
-              {production?.metal !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
-                  +{fmt ? fmt(production.metal) : production.metal}
-                </span>
-              )}
-            </div>
-            <div className="hidden group-hover/res:block">
-              <ResourceBreakdownTooltip
-                resourceType="metal"
-                breakdown={production?.breakdown}
-                currentAmount={currentPlanet?.resources?.metal}
-                prodVal={production?.metal}
-              />
-            </div>
-          </div>
-
-          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
-
-          {/* Cristal */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">💎</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
-              <span className="font-black text-cyan-400 text-base md:text-lg">
-                {fmt ? fmt(currentPlanet?.resources?.crystal || 0) : (currentPlanet?.resources?.crystal || 0)}
-              </span>
-              {production?.crystal !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
-                  +{fmt ? fmt(production.crystal) : production.crystal}
-                </span>
-              )}
-            </div>
-            <div className="hidden group-hover/res:block">
-              <ResourceBreakdownTooltip
-                resourceType="crystal"
-                breakdown={production?.breakdown}
-                currentAmount={currentPlanet?.resources?.crystal}
-                prodVal={production?.crystal}
-              />
-            </div>
-          </div>
-
-          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
-
-          {/* Deuterio */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⚗️</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
-              <span className="font-black text-emerald-400 text-base md:text-lg">
-                {fmt ? fmt(currentPlanet?.resources?.deuterium || 0) : (currentPlanet?.resources?.deuterium || 0)}
-              </span>
-              {production?.deuterium !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
-                  +{fmt ? fmt(production.deuterium) : production.deuterium}
-                </span>
-              )}
-            </div>
-            <div className="hidden group-hover/res:block">
-              <ResourceBreakdownTooltip
-                resourceType="deuterium"
-                breakdown={production?.breakdown}
-                currentAmount={currentPlanet?.resources?.deuterium}
-                prodVal={production?.deuterium}
-              />
-            </div>
-          </div>
-
-          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
-
-          {/* Energía */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⚡</span>
-            <div className="flex items-baseline leading-none">
-              <span className="font-black text-yellow-400 text-base md:text-lg">
-                {((production?.energyBalance ?? 0) >= 0 ? '+' : '')}{fmt ? fmt(production?.energyBalance ?? 0) : (production?.energyBalance ?? 0)}
-              </span>
-            </div>
-            <div className="hidden group-hover/res:block">
-              <ResourceBreakdownTooltip
-                resourceType="energy"
-                breakdown={production?.breakdown}
-                currentAmount={production?.energyBalance}
-                prodVal={production?.energyBalance}
-              />
-            </div>
-          </div>
-
-          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
-
-          {/* Reputación */}
-          <div className="flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap shrink-0" title="Reputación Imperial">
-            <span className="text-xl">🎖️</span>
-            <div className="flex items-baseline leading-none">
-              <span className="font-black text-purple-400 text-base md:text-lg">
-                {((Math.round(state?.reputation || 0)) > 0 ? '+' : '')}{Math.round(state?.reputation || 0)}
-              </span>
-            </div>
-          </div>
-        </div>
+        <TacticalResourceRow
+          currentPlanet={currentPlanet}
+          production={production}
+          state={state}
+          fmt={fmt}
+        />
 
         {/* FILA INFERIOR: Explorador de navegación */}
         <div className="flex items-center gap-2 px-4 py-2 flex-wrap bg-black/20">
@@ -136,10 +36,18 @@ export const FederalDistrictHeader = ({
                 className="flex items-center gap-2 px-2.5 py-1 rounded-xl transition-all text-slate-300 hover:text-white hover:bg-white/10 font-bold cursor-pointer text-sm"
                 title="Volver a la superficie del Planeta"
               >
-                <span className="text-base">🪐</span>
+                <span className="text-base">⚜️</span>
                 <span>Imperio</span>
               </button>
               <span className="text-slate-600 font-bold text-sm">/</span>
+
+              {/* Etiqueta del Planeta */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-bold text-xs" title="Planeta actual">
+                <span className="text-sm">🌍</span>
+                <span>{currentPlanet?.name || state?.planets?.find(p => p.isHome)?.name || 'Capital'}</span>
+              </div>
+              <span className="text-slate-600 font-bold text-sm">/</span>
+
               <button
                 onClick={() => {
                   if (window.playSfx) window.playSfx('click');

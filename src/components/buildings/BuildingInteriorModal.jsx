@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BUILDING_OPERATIONS, MINISTRY_MAPPING } from '../../data/buildingOperationsData.js';
-import { buildingCost, canAfford, calcRequiredPopulation, meetsReq, fmt, BUILDINGS } from '../../core.jsx';
+import { buildingCost, canAfford, calcRequiredPopulation, meetsResearchReq, fmt, BUILDINGS } from '../../core.jsx';
 
 export const BuildingInteriorModal = ({
   buildingId,
@@ -89,7 +89,7 @@ export const BuildingInteriorModal = ({
   const bData = buildingData || (BUILDINGS && BUILDINGS[buildingId]) || {};
   const cost = buildingCost ? buildingCost(buildingId, nextLvl - 1, planet?.buildings?.constructionCenter || 0) : {};
   const affordable = canAfford ? canAfford(planet?.resources || {}, cost) : false;
-  const meets = meetsReq ? meetsReq(bData?.req, { ...(planet?.buildings || {}), ...(state?.research || {}) }) : true;
+  const meets = meetsResearchReq ? meetsResearchReq(bData?.req, { ...(planet?.buildings || {}), ...(state?.research || {}) }) : true;
   const currentPop = planet?.population || 1000;
   const reqPop = calcRequiredPopulation ? calcRequiredPopulation(buildingId, nextLvl) : 0;
   const hasPop = currentPop >= reqPop;

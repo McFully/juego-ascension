@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getVirginPlanet, getPOIAtCoordinates } from '../core.jsx';
+import { getVirginPlanet } from '../core.jsx';
+import { getPOIAtCoordinates } from '../utils/formulas/coordinatesFormulas.js';
 import { useNavigation } from '../components/navigation/NavigationContext.jsx';
 import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';

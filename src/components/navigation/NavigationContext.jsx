@@ -8,6 +8,10 @@ import React, { createContext, useContext, useCallback, useMemo, useReducer } fr
 
 const LABELS = {
   overview: '⚜️ Imperio',
+  imperial_hub: '👑 Mando Imperial',
+  imperial_council: '⚖️ Consejo Imperial',
+  imperial_senate: '🏛️ Senado Imperial',
+  // El gobierno es el Alto Mando de un mundo concreto, nunca del imperio.
   government: '👑 Alto Mando',
   ministry_infra: '🏗️ Infraestructuras',
   ministry_resources: '⛏️ Minería y Recursos',
@@ -50,6 +54,9 @@ const LABELS = {
 
 // Jerarquía de navegación — define qué padre tiene cada vista
 const PARENT_MAP = {
+  // Órganos del imperio: cuelgan del Mando Imperial, no del gabinete de un mundo.
+  imperial_council: 'imperial_hub',
+  imperial_senate: 'imperial_hub',
   missions: 'government',
   stats: 'government',
   diplomacy: 'government',

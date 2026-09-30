@@ -10,3 +10,4 @@ export { CodexModal } from './components/ui/CodexModal.jsx';
 export { NarrativeEventOverlay } from './components/ui/NarrativeEventOverlay.jsx';
 export { TacticalEventOverlay } from './components/ui/TacticalEventOverlay.jsx';
 export { VirtualList } from './components/ui/VirtualList.jsx';
+export { NavigationTile } from './components/ui/NavigationTile.jsx';

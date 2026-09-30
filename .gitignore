@@ -43,3 +43,7 @@
 .DS_Store
 Thumbs.db
 .vercel
+desktop.ini
+
+# Saves locales exportados desde el juego (no son codigo fuente)
+/ascension_*.json

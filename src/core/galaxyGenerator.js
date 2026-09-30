@@ -38,10 +38,15 @@ export const generateAIPlanet = (level, coords, empireName, aiIndex) => {
   const baseMetal = 1000 * level;
   const baseCrystal = Math.floor(600 * level);
   const baseDeuterium = Math.floor(300 * level);
-  const metalBonus = (biome.bonus?.metal || 0) + (trait?.effect?.({})?.metal || 0) + (gravity.mult.prod - 1);
-  const crystalBonus = (biome.bonus?.crystal || 0) + (trait?.effect?.({})?.crystal || 0);
-  const deutBonus = (biome.bonus?.deuterium || 0) + (trait?.effect?.({})?.deuterium || 0);
-  const malus = trait?.effect?.({})?.malus || 0;
+  const getTraitEff = (t) => {
+    if (!t || !t.effect) return {};
+    return typeof t.effect === 'function' ? t.effect({}) : t.effect;
+  };
+  const tEff = getTraitEff(trait);
+  const metalBonus = (biome.bonus?.metal || 0) + (tEff.metal || 0) + (gravity.mult.prod - 1);
+  const crystalBonus = (biome.bonus?.crystal || 0) + (tEff.crystal || 0);
+  const deutBonus = (biome.bonus?.deuterium || 0) + (tEff.deuterium || 0);
+  const malus = tEff.malus || 0;
 
   return {
     id: Math.random().toString(36).slice(2, 11),

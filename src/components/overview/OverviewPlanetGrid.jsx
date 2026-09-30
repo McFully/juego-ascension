@@ -69,6 +69,9 @@ export const OverviewPlanetGrid = ({
   };
 
   const handleSelectPlanetAndNavigate = (planetId) => {
+    // El reducer actualiza `currentPlanetId` en el mismo lote que la
+    // navegación, así que el Alto Mando que se monte a continuación ya es el
+    // de este mundo y no el que estaba activo antes.
     if (dispatch) {
       dispatch({ type: "SET_PLANET", payload: planetId, planetId });
     }

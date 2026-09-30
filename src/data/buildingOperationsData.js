@@ -1,6 +1,16 @@
 /**
  * Catálogo de Operaciones y Consolas de Edificios de Ascensión.
  * Asocia cada edificio con su Ministerio de Estado rector, modos operativos, calibraciones y acciones interactivas.
+ *
+ * NOTA SOBRE `research`: los arrays están ordenados por COSTE PONDERADO ASCENDENTE
+ * (metal + cristal*1.5 + deuterio*3) calculado sobre el dataset real. Es una red de
+ * seguridad: la decisión la toma `researchScoring.js`, pero si el scoring se desactiva
+ * o no hay laboratorio, recorrer el array en orden barato da un comportamiento decente.
+ * `science` incluye `combustion`/`impulse` a propósito: son su prerrequisito más barato
+ * y sin ellos Astrofísica (que exige impulse:3) quedaba bloqueada para siempre.
+ *
+ * Ministerios SIN array `research` a propósito (solo construyen):
+ *   - Ninguno. Los 17 tienen al menos 2 technologies coherentes con su función.
  */
 
 export const MINISTRY_MAPPING = {
@@ -12,7 +22,8 @@ export const MINISTRY_MAPPING = {
     buildings: [
       'constructionCenter', 'robotFactory', 'naniteFactory', 'assemblyCenter',
       'modularFactory', 'industrialComplex', 'researchLab', 'shipyard'
-    ]
+    ],
+    research: ['energy', 'miningAuto', 'modularEng', 'expDesign']
   },
   resources: {
     id: 'resources',
@@ -53,6 +64,17 @@ export const MINISTRY_MAPPING = {
       'solarPlant', 'fusionReactor', 'geoPlant', 'orbitalEnergy',
       'quantumReactor', 'darkMatterPlant'
     ],
+    research: ['energy', 'miningAuto', 'industrialOpt', 'galacticTrade', 'advLogistics']
+  },
+  energy: {
+    id: 'energy',
+    name: 'Ministerio de Energía',
+    icon: '⚡',
+    color: '#eab308',
+    buildings: [
+      'solarPlant', 'fusionReactor', 'geoPlant', 'orbitalEnergy',
+      'quantumReactor', 'darkMatterPlant'
+    ],
     research: ['energy', 'advReactors', 'quantumEnergy', 'quantumNetworks']
   },
   science: {
@@ -64,7 +86,7 @@ export const MINISTRY_MAPPING = {
     buildings: [
       'advResearchCenter', 'expLab'
     ],
-    research: ['astrophysics', 'hyperspace', 'quantumDrive', 'dimensionalExploration', 'singularity']
+    research: ['combustion', 'impulse', 'astrophysics', 'hyperspace', 'galacticCartography', 'quantumDrive', 'dimensionalExploration', 'singularity']
   },
   innovation: {
     id: 'innovation',
@@ -75,7 +97,7 @@ export const MINISTRY_MAPPING = {
     buildings: [
       'nanoCenter'
     ],
-    research: ['nanoTech', 'nanoRepair', 'expDesign', 'cyberIntegration']
+    research: ['industrialOpt', 'nanoRepair', 'nanoTech', 'modularEng', 'expDesign', 'cyberIntegration']
   },
   cybernetics: {
     id: 'cybernetics',
@@ -99,7 +121,7 @@ export const MINISTRY_MAPPING = {
     defenses: [
       'rocketLauncher', 'lightLaser', 'heavyLaser', 'gaussCannon', 'ionCannon', 'plasmaTurret', 'smallShieldDome', 'largeShieldDome'
     ],
-    research: ['shields', 'armour', 'defenseFields', 'fortressTech']
+    research: ['shields', 'weapons', 'armour', 'nanoRepair', 'defenseFields', 'fortressTech']
   },
   war: {
     id: 'war',
@@ -113,7 +135,7 @@ export const MINISTRY_MAPPING = {
     ships: [
       'lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'bomber', 'destroyer', 'deathstar', 'planetDestroyer'
     ],
-    research: ['weapons', 'laser', 'ion', 'plasma', 'combustion', 'impulse', 'ballisticWeapons', 'advMissiles', 'orbitalArtillery']
+    research: ['laser', 'combustion', 'impulse', 'plasma', 'ion', 'ballisticWeapons', 'advMissiles', 'orbitalArtillery']
   },
   transport: {
     id: 'transport',
@@ -146,7 +168,8 @@ export const MINISTRY_MAPPING = {
     parentRequiredBuilding: 'researchLab',
     buildings: [
       'terraformer', 'geneticLab', 'biomeDomeSimulation', 'geosphericEcoPark', 'planetaryClimatizer', 'pollutionScrubbers'
-    ]
+    ],
+    research: ['deepScanner', 'advColonization', 'galacticCartography', 'dimensionalExploration']
   },
   agriculture: {
     id: 'agriculture',
@@ -155,7 +178,8 @@ export const MINISTRY_MAPPING = {
     color: '#10b981',
     buildings: [
       'urbanHydroponic', 'waterTreatmentPlant', 'urbanGarbageRecycler'
-    ]
+    ],
+    research: ['miningAuto', 'advColonization', 'galacticCartography']
   },
   civics: {
     id: 'civics',
@@ -164,7 +188,8 @@ export const MINISTRY_MAPPING = {
     color: '#14b8a6',
     buildings: [
       'townHall', 'prefabHousingUnit', 'arcologyAlpha', 'healthCenter', 'bioRegenClinic', 'civilPowerGrid', 'vacuumTransitTubes', 'communityCenter'
-    ]
+    ],
+    research: ['astrophysics', 'galacticTrade', 'advColonization']
   },
   diplomacy: {
     id: 'diplomacy',
@@ -173,7 +198,8 @@ export const MINISTRY_MAPPING = {
     color: '#a855f7',
     buildings: [
       'diploCenter', 'permanentEmbassy', 'consulateHeadquarters', 'treatyCoordinationOffice', 'humanitarianAssistance'
-    ]
+    ],
+    research: ['advColonization', 'galacticCartography', 'dimensionalExploration']
   },
   intel: {
     id: 'intel',
@@ -198,7 +224,8 @@ export const MINISTRY_MAPPING = {
     color: '#6366f1',
     buildings: [
       'commandCenter', 'colonySupremeCourt', 'civilGuardCommand', 'galacticArbitrageCourt'
-    ]
+    ],
+    research: ['shields', 'computer', 'galacticCrypto']
   },
   culture: {
     id: 'culture',
@@ -207,7 +234,8 @@ export const MINISTRY_MAPPING = {
     color: '#ec4899',
     buildings: [
       'leisureCenter', 'holographicLeisure', 'stellarProjectionTheater', 'zeroGravityGym', 'schoolEduCenter', 'stellarPhilosophyTemple', 'historicImperialArchive'
-    ]
+    ],
+    research: ['astrophysics', 'advSensors', 'galacticCrypto', 'galacticCartography']
   }
 };
 

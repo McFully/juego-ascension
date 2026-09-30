@@ -2,6 +2,7 @@ import {
   uid, updatePlanet, calcFuel, calcDistance, calcFlightTime, fleetSpeed,
   getEffectiveTech, simulateCombat, fmt
 } from '../../core.jsx';
+import { eventReducer } from '../eventReducer.js';
 
 /**
  * Reducer para gestionar despliegues, retornos, refuerzos e intercepciones de Patrullas
@@ -431,6 +432,11 @@ export const handleInterceptInvasion = (state, action) => {
   };
 
   newState.tacticalEvents = [...(newState.tacticalEvents || []), tacticalEvent];
+  // 3.3 — también al registro persistente de la bandeja.
+  newState = eventReducer(newState, {
+    type: 'APPEND_TACTICAL_EVENT_LOG',
+    payload: { ...tacticalEvent, kind: 'tactical', read: false, priority: 'alta' },
+  });
   newState.notifications = [
     ...(newState.notifications || []),
     {

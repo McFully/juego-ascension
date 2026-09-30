@@ -162,14 +162,104 @@ export function stopMinistryMusic(resumeMenu = false) {
   }
 }
 
+export const SYSTEM_AUDIO_FILES = {
+  galaxy: 'musica-sistema-galaxia.ogg',
+  colony_network: 'musica-sistema-colonias.ogg',
+  overview: 'musica-sistema-planeta.ogg',
+  fleet: 'musica-sistema-flota.ogg',
+  shipyard: 'musica-sistema-astillero.ogg',
+  shipDesign: 'musica-sistema-diseno-naves.ogg',
+  combat: 'musica-sistema-combate.ogg',
+  defense: 'musica-sistema-defensas.ogg',
+  missiles: 'musica-sistema-misiles.ogg',
+  research: 'musica-sistema-investigacion.ogg',
+  techTree: 'musica-sistema-investigacion.ogg',
+  market: 'musica-sistema-mercado.ogg',
+  blackMarket: 'musica-sistema-mercado-negro.ogg',
+  diplomacy: 'musica-sistema-diplomacia.ogg',
+  communications: 'musica-sistema-comunicaciones.ogg',
+  missions: 'musica-sistema-misiones.ogg',
+  moon: 'musica-sistema-luna.ogg',
+  ascension: 'musica-sistema-ascension.ogg',
+  stats: 'musica-sistema-archivo-stats.ogg'
+};
+
+let currentSystemMusic = null;
+let currentSystemId = null;
+
+export function getCurrentSystemMusic() { return currentSystemMusic; }
+
+export function playSystemMusic(systemId) {
+  if (!systemId) return;
+  const fileName = SYSTEM_AUDIO_FILES[systemId];
+  if (!fileName) return;
+
+  if (currentSystemId === systemId && currentSystemMusic) {
+    if (currentSystemMusic.paused) {
+      currentSystemMusic.play().catch(() => {});
+    }
+    return;
+  }
+
+  stopMenuMusic();
+  stopMinistryMusic();
+  stopSystemMusic();
+
+  try {
+    const context = getCtx();
+    if (context && context.state === 'suspended') {
+      context.resume().catch(() => {});
+    }
+
+    const targetVol = muted ? 0 : (musicVol * BASE_MUSIC_MAX);
+    const audioPath = `./audio/systems/${fileName}`;
+    const audio = new Audio(audioPath);
+    audio.loop = true;
+    audio.volume = targetVol;
+    audio.muted = muted;
+
+    currentSystemMusic = audio;
+    currentSystemId = systemId;
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        const fallbackAudio = new Audio(`/audio/systems/${fileName}`);
+        fallbackAudio.loop = true;
+        fallbackAudio.volume = targetVol;
+        fallbackAudio.muted = muted;
+        currentSystemMusic = fallbackAudio;
+        fallbackAudio.play().catch(() => {});
+      });
+    }
+  } catch (err) {
+    console.warn('[Audio] No se pudo reproducir música de sistema:', systemId, err);
+  }
+}
+
+export function stopSystemMusic(resumeMenu = false) {
+  if (currentSystemMusic) {
+    try {
+      currentSystemMusic.pause();
+      currentSystemMusic.currentTime = 0;
+      currentSystemMusic = null;
+      currentSystemId = null;
+    } catch (_) {}
+  }
+  if (resumeMenu) {
+    playInGameMusic();
+  }
+}
+
 /**
  * Punto 49: Transición al silencio cósmico profundo al abrir el mapa estelar.
- * Reduce el volumen de música de fondo a un sutil murmullo (15%) para sumergir al comandante en el vacío galáctico.
+ * Reduce el volumen de música de fondo a un sutil murmullo (18%) para sumergir al comandante en el vacío galáctico.
  */
 export function transitionToCosmicSilence(isCosmic = true) {
-  const targetBg = currentMinistryMusic || currentBgMusic;
+  const targetBg = currentSystemMusic || currentMinistryMusic || currentBgMusic;
   if (!targetBg) return;
   const baseTarget = muted ? 0 : (musicVol * BASE_MUSIC_MAX);
   const finalVol = isCosmic ? (baseTarget * 0.18) : baseTarget;
   targetBg.volume = finalVol;
 }
+

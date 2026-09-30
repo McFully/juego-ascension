@@ -1,11 +1,35 @@
 import React from 'react';
 import { HubCard } from './HubCard.jsx';
+import { sharedCommandCards } from './sharedCommandCards.jsx';
 
 /**
- * buildCommandHubCards — Generador declarativo y modular de tarjetas para ImperialCommandHub.
- * Desacopla la vista de la configuración de tarjetas para mejorar la velocidad de renderizado.
+ * Catálogo del Alto Mando de un mundo.
+ *
+ * Todo lo que se gobierna en un planeta: su gabinete de ministerios, su senado
+ * local, sus defensas, su flota y sus industries. La última tarjeta es el
+ * retorno al Imperio y es inamovible.
+ *
+ * El orden de estas tarjetas se guarda por `planetId`: cada mundo tiene su
+ * propio tablero aunque dos mundos se llamen igual.
  */
-export function buildCommandHubCards({
+export const PLANETARY_COMMAND_CARDS = [
+  'ministries',
+  'planetary_senate',
+  'galaxy',
+  'market',
+  'defense',
+  'missiles',
+  'shipyard',
+  'fleet',
+  'moon',
+  'debris',
+  'back_to_empire'
+];
+
+export const planetaryCommandStorageKey = (planetId) =>
+  `ascension_cmd_hub_planet_${planetId || 'unknown'}_v1`;
+
+export function buildPlanetaryCommandCards({
   onEnterMinistries,
   onNavigateTab,
   onOpenPlanetarySenate,
@@ -13,12 +37,9 @@ export function buildCommandHubCards({
   ministryCount,
   activeMinistersCount,
   autoMinistriesCount,
-  readyMissions,
-  claimedCount,
-  missions,
   fmt,
   state,
-  currentPlanet,
+  planet,
   fleets,
   shipyardLevel,
   siloLevel,
@@ -51,58 +72,22 @@ export function buildCommandHubCards({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              if (dispatch && currentPlanet) {
-                dispatch({ type: 'SET_PLANET_AUTO_GOVERNANCE', planetId: currentPlanet.id });
+              if (dispatch && planet) {
+                dispatch({ type: 'SET_PLANET_AUTO_GOVERNANCE', planetId: planet.id });
                 if (window.playSfx) window.playSfx('click');
               }
             }}
-            title={currentPlanet?.autoGovernance ? "Gobernador IA activo. Clic para cambiar a Manual" : "Gobernador Manual. Clic para activar Gobernador IA con todos los ministros"}
+            title={planet?.autoGovernance ? "Gobernador IA activo. Clic para cambiar a Manual" : "Gobernador Manual. Clic para activar Gobernador IA con todos los ministros"}
             className={`w-full py-1.5 px-3 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              currentPlanet?.autoGovernance
+              planet?.autoGovernance
                 ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900/90 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
                 : 'bg-[#080d1e] border-white/20 text-slate-300 hover:border-cyan-400 hover:text-cyan-200'
             }`}
           >
-            <span>{currentPlanet?.autoGovernance ? '🤖' : '👤'}</span>
-            <span>{currentPlanet?.autoGovernance ? 'Gobernador IA: Activo' : 'Activar Gobernador IA'}</span>
+            <span>{planet?.autoGovernance ? '🤖' : '👤'}</span>
+            <span>{planet?.autoGovernance ? 'Gobernador IA: Activo' : 'Activar Gobernador IA'}</span>
           </button>
         }
-      />
-    ),
-    missions: (
-      <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('missions')}
-        borderColor="border-amber-500/30"
-        hoverBorderColor="hover:border-amber-400"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(245,158,11,0.3)]"
-        assetId="councilChamber"
-        badgeText={readyMissions > 0 ? `⭐ ${readyMissions} POR RECLAMAR` : 'DIRECTIVAS'}
-        badgeClasses={readyMissions > 0 ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.7)] animate-pulse' : 'bg-black/70 text-amber-300 border border-amber-500/40'}
-        title="Misiones y Directivas"
-        icon="📜"
-        titleHoverColor="group-hover:text-amber-300"
-        description="Órdenes supremas de colonización, expansión militar y desarrollo tecnológico con recompensas sustanciales."
-        footerLabel="Progreso de campaña:"
-        footerValue={`${claimedCount}/${missions.length} completadas`}
-        footerValueClasses="text-amber-300"
-      />
-    ),
-    diplomacy: (
-      <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('diplomacy')}
-        borderColor="border-purple-500/30"
-        hoverBorderColor="hover:border-purple-400"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(168,85,247,0.3)]"
-        assetId="permanentEmbassy"
-        badgeText="EXTERIOR"
-        badgeClasses="bg-purple-950/80 text-purple-300 border border-purple-500/50"
-        title="Diplomacia y Alianzas"
-        icon="🤝"
-        titleHoverColor="group-hover:text-purple-300"
-        description="Relaciones interestelares, tratados de paz, pactos comerciales de cooperación y diplomacia exterior."
-        footerLabel="Influencia Política:"
-        footerValue={`${fmt ? fmt(state?.influence || 0) : (state?.influence || 0)} Ptos`}
-        footerValueClasses="text-purple-300"
       />
     ),
     planetary_senate: (
@@ -117,9 +102,9 @@ export function buildCommandHubCards({
         title="Senado Planetario"
         icon="🏛️"
         titleHoverColor="group-hover:text-cyan-300"
-        description={`Asamblea local de ${currentPlanet?.name || 'este mundo'}: pacto tributario, moral ciudadana y delegación de procuradores.`}
+        description={`Asamblea local de ${planet?.name || 'este mundo'}: pacto tributario, moral ciudadana y delegación de procuradores.`}
         footerLabel="Procuradores al Trono:"
-        footerValue={`${Math.max(1, Math.floor(((currentPlanet?.population || 1000) / 10000)) + 1)} Escaños`}
+        footerValue={`${Math.max(1, Math.floor(((planet?.population || 1000) / 10000)) + 1)} Escaños`}
         footerValueClasses="text-cyan-300"
       />
     ),
@@ -155,7 +140,7 @@ export function buildCommandHubCards({
         titleHoverColor="group-hover:text-emerald-300"
         description="Bolsa de valores espacial, intercambio de excedentes por créditos o deuterio y fletamento de transportes mercantes."
         footerLabel="Rutas comerciales:"
-        footerValue={currentPlanet?.autoTrade ? 'Automatizadas' : 'Manual'}
+        footerValue={planet?.autoTrade ? 'Automatizadas' : 'Manual'}
         footerValueClasses="text-emerald-300"
       />
     ),
@@ -237,78 +222,6 @@ export function buildCommandHubCards({
         footerValueClasses="text-cyan-300"
       />
     ),
-    shipDesign: (
-      <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('shipDesign')}
-        borderColor="border-teal-500/30"
-        hoverBorderColor="hover:border-teal-400"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(20,184,166,0.3)]"
-        assetId="robotFactory"
-        badgeText="INGENIERÍA"
-        badgeClasses="bg-teal-950/80 text-teal-300 border border-teal-500/50"
-        title="Diseñador de Naves"
-        icon="🔧"
-        titleHoverColor="group-hover:text-teal-300"
-        description="Taller naval de ingeniería: crea planos personalizados combinando armamento, escudos y motores avanzados."
-        footerLabel="Planos guardados:"
-        footerValue={`${(state?.blueprints || []).length} configurados`}
-        footerValueClasses="text-teal-300"
-      />
-    ),
-    combat: (
-      <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('combat')}
-        borderColor="border-red-500/30"
-        hoverBorderColor="hover:border-red-400"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(239,68,68,0.3)]"
-        assetId="plasmaTurret"
-        badgeText="TÁCTICA"
-        badgeClasses="bg-red-950/80 text-red-300 border border-red-500/50"
-        title="Simulador de Batalla"
-        icon="⚔️"
-        titleHoverColor="group-hover:text-red-300"
-        description="Predicción balística de combate espacial: simula enfrentamientos, porcentaje de bajas y botín estimado."
-        footerLabel="Historial bélico:"
-        footerValue={`${state?.combatsWon || 0}V / ${state?.combatsLost || 0}D`}
-        footerValueClasses="text-red-300"
-      />
-    ),
-    colony_network: (
-      <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('colony_network')}
-        borderColor="border-indigo-500/30"
-        hoverBorderColor="hover:border-indigo-400"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(99,102,241,0.3)]"
-        assetId="terraformer"
-        badgeText="LOGÍSTICA"
-        badgeClasses="bg-indigo-950/80 text-indigo-300 border border-indigo-500/50"
-        title="Red de Colonias"
-        icon="🪐"
-        titleHoverColor="group-hover:text-indigo-300"
-        description="Gestión logística interplanetaria: rutas automáticas de transporte, nivelación de recursos y despliegue rápido de flotas."
-        footerLabel="Mundos federados:"
-        footerValue={`${(state?.planets || []).length} mundos`}
-        footerValueClasses="text-indigo-300"
-      />
-    ),
-    stats: (
-      <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('stats')}
-        borderColor="border-emerald-600/30"
-        hoverBorderColor="hover:border-emerald-300"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(16,185,129,0.3)]"
-        assetId="sectorGovPalace"
-        badgeText="STATS"
-        badgeClasses="bg-emerald-950/80 text-emerald-300 border border-emerald-500/50"
-        title="Estadísticas del Imperio"
-        icon="📊"
-        titleHoverColor="group-hover:text-emerald-300"
-        description="Registro histórico de combates, balance global de producción de recursos y censo colonial detallado."
-        footerLabel="Logros imperiales:"
-        footerValue={`${(state?.achievements || []).length} desbloqueados`}
-        footerValueClasses="text-emerald-300"
-      />
-    ),
     moon: (
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('moon')}
@@ -349,46 +262,6 @@ export function buildCommandHubCards({
         footerValueClasses="text-amber-300"
       />
     ),
-    imperial_council: (
-      <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('imperial_council')}
-        isLocked={(state?.planets || []).length < 10 && !state?.imperialCouncilUnlocked}
-        lockReason="Requiere administrar un Imperio de al menos 10 mundos para convocar el Consejo de Ministros Supremos."
-        borderColor="border-amber-500/30"
-        hoverBorderColor="hover:border-amber-400"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(245,158,11,0.3)]"
-        assetId="councilChamber"
-        badgeText="ALTA REPÚBLICA"
-        badgeClasses="bg-amber-950/80 text-amber-300 border border-amber-500/50"
-        title="Consejo Imperial"
-        icon="👑"
-        titleHoverColor="group-hover:text-amber-300"
-        description="Gabinete federal supremo: ministros globales cuyas directivas y bonificaciones aplican a todos los mundos simultáneamente."
-        footerLabel="Estado del Consejo:"
-        footerValue={`${Object.keys(state?.imperialCouncil?.ministers || {}).length}/5 Ministros Supremos`}
-        footerValueClasses="text-amber-300"
-      />
-    ),
-    imperial_senate: (
-      <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('imperial_senate')}
-        isLocked={(state?.planets || []).length < 10 && !state?.imperialCouncilUnlocked}
-        lockReason="Requiere administrar un Imperio de al menos 10 mundos para constituir la Cámara Alta Federal del Senado."
-        borderColor="border-purple-500/30"
-        hoverBorderColor="hover:border-purple-400"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(168,85,247,0.3)]"
-        assetId="permanentEmbassy"
-        badgeText="LEGISLATURA"
-        badgeClasses="bg-purple-950/80 text-purple-300 border border-purple-500/50"
-        title="Senado Imperial"
-        icon="🏛️"
-        titleHoverColor="group-hover:text-purple-300"
-        description="Cámara alta de delegados planetarios: debate leyes federales y utiliza Influencia política para orientar la votación."
-        footerLabel="Leyes en Vigor:"
-        footerValue={`${(state?.imperialCouncil?.passedBills || []).length} promulgadas`}
-        footerValueClasses="text-purple-300"
-      />
-    ),
     back_to_empire: (
       <HubCard
         onClick={onBackToEmpire}
@@ -406,6 +279,7 @@ export function buildCommandHubCards({
         footerValue="Imperio General"
         footerValueClasses="text-cyan-300"
       />
-    )
+    ),
+    ...sharedCommandCards({ onNavigateTab, fmt, state })
   };
 }

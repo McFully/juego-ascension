@@ -1,6 +1,7 @@
 import React from 'react';
 import { PlanetViewer3D } from '../../3d/PlanetViewer3D.jsx';
 import { BIOMES } from '../../../data/gameData.js';
+import { ResourceBreakdownTooltip } from '../../ui/ResourceBreakdownTooltip.jsx';
 
 /**
  * Planet3DCard — Tarjeta 3D interactiva para renderizado individual de mundos.
@@ -28,8 +29,9 @@ export const Planet3DCard = React.memo(function Planet3DCard({
   const pDefenses = Object.values(planet.defenses || {}).reduce((a, b) => a + Number(b || 0), 0);
 
   let pEnergy = 0;
+  let pProd = null;
   try {
-    const pProd = calcProduction(
+    pProd = calcProduction(
       planet.buildings || {},
       state?.research || {},
       planet.temperature || 20,
@@ -91,10 +93,10 @@ export const Planet3DCard = React.memo(function Planet3DCard({
         </button>
       </div>
 
-      {/* SECCIÓN SUPERIOR: 3 Columnas Horizontales */}
-      <div className="grid grid-cols-12 gap-2 items-center min-h-[160px] pt-1 pb-1">
-        {/* Columna Izquierda: Telemetría / Coordenadas / Población / Niveles */}
-        <div className="col-span-4 flex flex-col justify-center gap-1.5 font-mono z-10">
+      {/* SECCIÓN SUPERIOR: 3 Columnas Horizontales con altura completa */}
+      <div className="grid grid-cols-12 gap-2 items-stretch min-h-[175px] flex-1 pt-1 pb-1">
+        {/* Columna Izquierda: Telemetría / Coordenadas / Población / Niveles (Centrado en altura de la tarjeta) */}
+        <div className="col-span-4 flex flex-col justify-center gap-1.5 font-mono z-10 my-auto">
           <div className="bg-[#050814]/80 border border-cyan-500/30 rounded-lg px-2.5 py-1 text-xs">
             <span className="text-slate-400 font-semibold">Coordenadas </span>
             <span className="text-cyan-300 font-black">[{planet.galaxy}:{planet.system}:{planet.position}]</span>
@@ -121,18 +123,18 @@ export const Planet3DCard = React.memo(function Planet3DCard({
           </div>
         </div>
 
-        {/* Columna Centro: Esfera Planetaria 3D Grande */}
-        <div className="col-span-4 flex items-center justify-center relative pointer-events-none">
+        {/* Columna Centro: Esfera Planetaria 3D Grande (Centrado en altura de la tarjeta) */}
+        <div className="col-span-4 flex items-center justify-center relative pointer-events-none my-auto">
           <div className="relative flex items-center justify-center w-36 h-36">
             <div className="absolute inset-0 bg-cyan-500/10 rounded-full blur-xl pointer-events-none" />
             <PlanetViewer3D biome={planet.biome || "temperate"} name={planet.name} size={145} />
           </div>
         </div>
 
-        {/* Columna Derecha: Nombre del Planeta y Renombrar alineados a la altura de coordenadas, y Botón Ficha Completa abajo */}
-        <div className="col-span-4 flex flex-col items-center justify-between h-full text-center px-1 z-10 pt-7 pb-0">
+        {/* Columna Derecha: Nombre y Renombrar centrados en altura, y Botón Ficha Completa abajo del todo encima del separador */}
+        <div className="col-span-4 flex flex-col items-center justify-between text-center px-1 z-10 pt-7 pb-0 min-h-full">
           {isEditing ? (
-            <div className="flex flex-col items-center gap-2 w-full my-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col items-center justify-center gap-2 w-full my-auto" onClick={(e) => e.stopPropagation()}>
               <input
                 type="text"
                 autoFocus
@@ -163,11 +165,18 @@ export const Planet3DCard = React.memo(function Planet3DCard({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-between h-full w-full">
-              <div className="flex flex-col items-center gap-1.5 mt-1">
+            <div className="flex flex-col items-center justify-between flex-1 w-full">
+              {/* Bloque centralizado: Nombre del planeta y botón Renombrar justo debajo */}
+              <div className="my-auto flex flex-col items-center justify-center gap-1.5 pt-1">
                 <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider group-hover:text-cyan-300 transition-colors drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] leading-tight text-center">
                   {planet.name}
                 </h4>
+
+                {planet.isExchangePlanet && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.35)]">
+                    🏛️ Lonja Galáctica
+                  </span>
+                )}
 
                 <button
                   type="button"
@@ -183,7 +192,7 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                 </button>
               </div>
 
-              {/* Botón Ficha Completa alineado abajo justo sobre la línea separadora */}
+              {/* Botón Ficha Completa anclado abajo del todo, justo por encima del separador */}
               <button
                 type="button"
                 onClick={(e) => handleOpenDetail(e, planet)}
@@ -200,25 +209,75 @@ export const Planet3DCard = React.memo(function Planet3DCard({
 
       {/* SECCIÓN INFERIOR: Recursos */}
       <div className="grid grid-cols-5 gap-1.5 mt-3 pt-2.5 border-t border-white/10 font-mono">
-        <div className="bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center">
+        <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">METAL</span>
           <span className="text-white font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{fmt(planet.resources?.metal || 0)}</span>
+          {pProd?.breakdown && (
+            <div className="hidden group-hover/res:block z-[150]">
+              <ResourceBreakdownTooltip
+                resourceType="metal"
+                breakdown={pProd.breakdown}
+                currentAmount={planet.resources?.metal}
+                prodVal={pProd.metal}
+              />
+            </div>
+          )}
         </div>
-        <div className="bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center">
+        <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">CRISTAL</span>
           <span className="text-cyan-300 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{fmt(planet.resources?.crystal || 0)}</span>
+          {pProd?.breakdown && (
+            <div className="hidden group-hover/res:block z-[150]">
+              <ResourceBreakdownTooltip
+                resourceType="crystal"
+                breakdown={pProd.breakdown}
+                currentAmount={planet.resources?.crystal}
+                prodVal={pProd.crystal}
+              />
+            </div>
+          )}
         </div>
-        <div className="bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center">
+        <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">DEUTERIO</span>
           <span className="text-emerald-300 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{fmt(planet.resources?.deuterium || 0)}</span>
+          {pProd?.breakdown && (
+            <div className="hidden group-hover/res:block z-[150]">
+              <ResourceBreakdownTooltip
+                resourceType="deuterium"
+                breakdown={pProd.breakdown}
+                currentAmount={planet.resources?.deuterium}
+                prodVal={pProd.deuterium}
+              />
+            </div>
+          )}
         </div>
-        <div className="bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center">
+        <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">ESCORIA</span>
           <span className="text-amber-500 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{fmt(planet.resources?.slag || 0)}</span>
+          {pProd?.breakdown && (
+            <div className="hidden group-hover/res:block z-[150]">
+              <ResourceBreakdownTooltip
+                resourceType="slag"
+                breakdown={pProd.breakdown}
+                currentAmount={planet.resources?.slag}
+                prodVal={pProd.slag}
+              />
+            </div>
+          )}
         </div>
-        <div className="bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center">
+        <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">ENERGÍA</span>
           <span className="text-yellow-400 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{energySign}{fmt(pEnergy)}</span>
+          {pProd?.breakdown && (
+            <div className="hidden group-hover/res:block z-[150]">
+              <ResourceBreakdownTooltip
+                resourceType="energy"
+                breakdown={pProd.breakdown}
+                currentAmount={pEnergy}
+                prodVal={pEnergy}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,9 +1,14 @@
 import React from 'react';
-import { ResourceBreakdownTooltip } from '../../ui/ResourceBreakdownTooltip.jsx';
+import { TacticalResourceRow } from '../../ui/TacticalResourceRow.jsx';
 import { SafeImg } from '../../../assets.jsx';
+import { calcPlanetMaxPop } from '../../../core.jsx';
 
 /**
- * HubTopBar — Barra superior estandarizada con telemetría de recursos y navegación de ImperialCommandHub.
+ * HubTopBar — Barra superior estandarizada con telemetría de recursos y navegación de los hubs de mando.
+ *
+* `hubLabel` distingue el Mando Imperial del Alto Mando de un mundo, y
+ * `showResources` oculta los recursos del planeta cuando el hub es el del
+ * imperio: allí no hay un planeta al que pertenecer.
  */
 export const HubTopBar = React.memo(({
   currentPlanet,
@@ -11,123 +16,52 @@ export const HubTopBar = React.memo(({
   state,
   fmt,
   onBackToEmpire,
+  hubLabel = 'Alto Mando',
+  showResources = true,
   isReordering,
   onToggleReorder,
   onResetOrder
 }) => {
   return (
     <section className="relative z-30 flex flex-col xl:flex-row items-stretch justify-between bg-black/85 backdrop-blur-md rounded-2xl border border-white/10 text-xs font-mono shadow-2xl">
-      <div className="flex-1 flex flex-col justify-between min-w-0">
-        {/* Fila 1: Recursos */}
-        <div className="flex items-center gap-1 sm:gap-2 px-4 py-2 border-b border-white/10 flex-wrap bg-black/40 relative z-40">
-          {/* Metal */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⛏️</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
-              <span className="font-black text-amber-400 text-base md:text-lg">
-                {fmt ? fmt(currentPlanet?.resources?.metal || 0) : (currentPlanet?.resources?.metal || 0)}
-              </span>
-              {production?.metal !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
-                  +{fmt ? fmt(production.metal) : production.metal}
+<div className="flex-1 flex flex-col justify-between min-w-0">
+        {showResources ? (
+          <TacticalResourceRow
+            currentPlanet={currentPlanet}
+            production={production}
+            state={state}
+            fmt={fmt}
+          >
+            <div className="w-[1px] h-5 bg-white/15 shrink-0" />
+            {/* Influencia */}
+            <div className="relative flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap shrink-0">
+              <span className="text-xl">🏛️</span>
+              <div className="flex items-baseline gap-1.5 leading-none">
+                <span className="font-black text-purple-400 text-base md:text-lg">
+                  {fmt ? fmt(state?.influence || 0) : (state?.influence || 0)}
                 </span>
-              )}
-            </div>
-            <div className="hidden group-hover/res:block">
-              <ResourceBreakdownTooltip
-                resourceType="metal"
-                breakdown={production?.breakdown}
-                currentAmount={currentPlanet?.resources?.metal}
-                prodVal={production?.metal}
-              />
-            </div>
-          </div>
-
-          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
-
-          {/* Cristal */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">💎</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
-              <span className="font-black text-cyan-400 text-base md:text-lg">
-                {fmt ? fmt(currentPlanet?.resources?.crystal || 0) : (currentPlanet?.resources?.crystal || 0)}
-              </span>
-              {production?.crystal !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
-                  +{fmt ? fmt(production.crystal) : production.crystal}
+                <span className="text-[10px] text-purple-300/80 font-bold uppercase tracking-wider">
+                  Influencia
                 </span>
-              )}
+              </div>
             </div>
-            <div className="hidden group-hover/res:block">
-              <ResourceBreakdownTooltip
-                resourceType="crystal"
-                breakdown={production?.breakdown}
-                currentAmount={currentPlanet?.resources?.crystal}
-                prodVal={production?.crystal}
-              />
-            </div>
-          </div>
-
-          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
-
-          {/* Deuterio */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⚗️</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
-              <span className="font-black text-emerald-400 text-base md:text-lg">
-                {fmt ? fmt(currentPlanet?.resources?.deuterium || 0) : (currentPlanet?.resources?.deuterium || 0)}
-              </span>
-              {production?.deuterium !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
-                  +{fmt ? fmt(production.deuterium) : production.deuterium}
-                </span>
-              )}
-            </div>
-            <div className="hidden group-hover/res:block">
-              <ResourceBreakdownTooltip
-                resourceType="deuterium"
-                breakdown={production?.breakdown}
-                currentAmount={currentPlanet?.resources?.deuterium}
-                prodVal={production?.deuterium}
-              />
-            </div>
-          </div>
-
-          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
-
-          {/* Energía */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⚡</span>
-            <div className="flex items-baseline leading-none">
-              <span className="font-black text-yellow-400 text-base md:text-lg">
-                {((production?.energyBalance ?? 0) >= 0 ? '+' : '')}{fmt ? fmt(production?.energyBalance ?? 0) : (production?.energyBalance ?? 0)}
-              </span>
-            </div>
-            <div className="hidden group-hover/res:block">
-              <ResourceBreakdownTooltip
-                resourceType="energy"
-                breakdown={production?.breakdown}
-                currentAmount={production?.energyBalance}
-                prodVal={production?.energyBalance}
-              />
-            </div>
-          </div>
-
-          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
-
-          {/* Influencia */}
-          <div className="relative flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap shrink-0">
+          </TacticalResourceRow>
+        ) : (
+          <div className="flex items-center gap-2 px-4 py-2">
             <span className="text-xl">🏛️</span>
             <div className="flex items-baseline gap-1.5 leading-none">
               <span className="font-black text-purple-400 text-base md:text-lg">
                 {fmt ? fmt(state?.influence || 0) : (state?.influence || 0)}
               </span>
               <span className="text-[10px] text-purple-300/80 font-bold uppercase tracking-wider">
-                Influencia
+                Influencia Imperial
               </span>
             </div>
+            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {state?.planets?.length || 0} mundos · sin sede planetaria
+            </span>
           </div>
-        </div>
+        )}
 
         {/* Fila 2: Miga de Pan */}
         <div className="flex items-center gap-2 px-4 py-2 text-xs flex-wrap">
@@ -154,24 +88,18 @@ export const HubTopBar = React.memo(({
               <span className="text-slate-600 font-bold text-sm">/</span>
             </>
           )}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-cyan-950/50 border border-cyan-500/40 text-cyan-300 font-bold text-sm shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+<div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-cyan-950/50 border border-cyan-500/40 text-cyan-300 font-bold text-sm shadow-[0_0_15px_rgba(6,182,212,0.2)]">
             <span className="text-base">👑</span>
-            <span>Alto Mando</span>
+            <span>{hubLabel}</span>
           </div>
         </div>
       </div>
 
-      {/* Indicador opcional de Consejo Imperial o botón Restablecer cuando esté activo */}
-      {(((state?.planets || []).length >= 10 || state?.imperialCouncilUnlocked) || (isReordering && onResetOrder)) && (
+      {/* Botón Restablecer cuando reordenación esté activa */}
+      {(isReordering && onResetOrder) && (
         <>
           <div className="hidden xl:block w-[1px] bg-white/15 self-stretch" />
           <div className="flex items-center justify-between xl:justify-end gap-2 px-3 py-2 bg-black/50 shrink-0 border-t xl:border-t-0 border-white/10">
-            {((state?.planets || []).length >= 10 || state?.imperialCouncilUnlocked) && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                <span>🏛️</span>
-                <span className="font-bold">Consejo Imperial</span>
-              </div>
-            )}
 
             {isReordering && onResetOrder && (
               <button

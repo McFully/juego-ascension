@@ -41,6 +41,7 @@ export const ItemCard = React.memo(({
 }) => {
   const [clicked, setClicked] = useState(false);
   const [selectedCancelItem, setSelectedCancelItem] = useState(null);
+  const handleCancelClose = React.useCallback(() => setSelectedCancelItem(null), []);
   const cardRef = React.useRef(null);
 
   const handleMouseMove = React.useCallback((e) => {
@@ -203,12 +204,12 @@ export const ItemCard = React.memo(({
       {selectedCancelItem && (
         <CancelConfirmationModal
           isOpen={Boolean(selectedCancelItem)}
-          onClose={() => setSelectedCancelItem(null)}
+          onClose={handleCancelClose}
           onConfirm={() => {
             if (onCancelQueue) onCancelQueue(selectedCancelItem.id);
             setSelectedCancelItem(null);
           }}
-          title={category === 'science' || category === 'power' && selectedCancelItem.researchId ? 'Cancelar Investigación' : 'Cancelar Construcción'}
+          title={selectedCancelItem.researchId ? 'Cancelar Investigación' : 'Cancelar Construcción'}
           itemName={name}
           itemLevel={selectedCancelItem.level}
           type={selectedCancelItem.researchId ? 'research' : 'building'}

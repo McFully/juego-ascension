@@ -46,7 +46,7 @@ export const DefenseGrid = ({
         {Object.entries(DEFENSES).map(([id, d]) => {
           const cost = defenseCost(id, 1, currentPlanet.buildings?.constructionCenter || 0);
           const time = calcDefenseTime(id, 1, currentPlanet.buildings.shipyard, currentPlanet.buildings.naniteFactory || 0, GAME_SPEED, bonus);
-          const meets = meetsReq(d.req, state.research);
+          const meets = meetsReq(d.req, { ...currentPlanet.buildings, ...state.research });
           const count = currentPlanet.defenses[id] || 0;
           const maxReached = (d.max && count >= d.max) || false;
           const affordable1 = canAfford(currentPlanet.resources, cost);

@@ -4,7 +4,6 @@ import { IMPERIAL_COUNCIL_PORTFOLIOS, IMPERIAL_COUNCIL_CANDIDATES } from '../../
 export const ImperialCouncilCabinet = ({
   state,
   dispatch,
-  currentPlanet,
   fmt,
   onBackToGoov
 }) => {

@@ -39,7 +39,7 @@ const playTransmissionSound = () => {
   } catch (_) {}
 };
 
-export const CommunicationsPage = ({ state, dispatch, currentPlanet, production, fmt, S, onOpenDiplomacy, setAcceptTransmission }) => {
+export const CommunicationsPage = ({ state, dispatch, currentPlanet, production, fmt, S, onOpenDiplomacy, setActiveTab }) => {
   const { navigateTo, navigateBack } = useNavigation();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedNotifId, setSelectedNotifId] = useState(null);
@@ -125,11 +125,9 @@ export const CommunicationsPage = ({ state, dispatch, currentPlanet, production,
     }
   };
 
-  const handleAcceptLiveTransmission = () => {
-    if (setAcceptTransmission) {
-      setAcceptTransmission(true);
-    }
-    playTransmissionSound();
+  // 3.4-a — La transmisión ya no se "acepta": se lee en la bandeja.
+  const handleOpenInbox = () => {
+    if (setActiveTab) setActiveTab('telemetry');
   };
 
   const handleDismissLiveTransmission = (e) => {
@@ -178,7 +176,7 @@ export const CommunicationsPage = ({ state, dispatch, currentPlanet, production,
           playTransmissionSound();
         }}
         activeTransmission={activeTransmission}
-        onAcceptLiveTransmission={handleAcceptLiveTransmission}
+        onOpenInbox={handleOpenInbox}
         onDismissLiveTransmission={handleDismissLiveTransmission}
         onBack={() => {
           if (navigateBack) navigateBack();

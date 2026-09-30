@@ -15,6 +15,44 @@ import {
 import { processMission, returnFleetToOrigin, processEvent } from '../missions.jsx';
 
 
+/**
+ * 3.3 — Normaliza una entrada del registro táctico.
+ *
+ * Cada communication entrante (informe de misión, narrativa, primer contacto,
+ * transmisión, crisis) acaba con la misma forma, para que la bandeja pueda
+ * ordenarlas, contarlas y abrirlas sin conocer el origen.
+ *
+ * `read` viaja EN la entrada: es lo que permite "marcar leído" sin borrar, que es
+ * justo lo que `state.notifications` no puede hacer (allí `read` se ponía a
+ *_true_ en bloque y se perdía el historial).
+ */
+const VALID_PRIORITIES = ['baja', 'media', 'alta', 'critica'];
+
+const normalizeLogEntry = (raw) => {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const options = Array.isArray(raw.options) && raw.options.length > 0 ? raw.options : null;
+
+  return {
+    // Conserva los campos que cada generador ya produce (manifiesto, bajas,
+    // escombros, ficha de planeta,returnedFleet...) y añade los nuevos.
+    ...raw,
+    id: raw.id || uid(),
+    kind: raw.kind || 'tactical',
+    type: raw.type || 'info',
+    title: raw.title || raw.text || 'Comunicación entrante',
+    subtitle: raw.subtitle || '',
+    description: raw.description || '',
+    read: Boolean(raw.read),
+    receivedAt: raw.receivedAt || Date.now(),
+    options,
+    // Una entrada con opciones sin resolver es una decisión pendiente: no se
+    // descarta sola y el contador va en rojo.
+    requiresDecision: Boolean(options) || Boolean(raw.requiresDecision),
+    priority: VALID_PRIORITIES.includes(raw.priority) ? raw.priority : 'media',
+  };
+};
+
 export const eventReducer = (state, action) => {
   const getCurrentPlanet = () => state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
   let newState = { ...state };
@@ -63,14 +101,18 @@ export const eventReducer = (state, action) => {
       return workingState;
     }
 
+    // 3.1 — Cada case toca SOLO su propio slot. Antes los tres borrados
+    // (CLEAR_ACTIVE_EVENT / DISMISS_FIRST_CONTACT / DISMISS_TRANSMISSION) limpiaban
+    // los tres campos, así que descartar uno se llevaba por delante un mensaje
+    // pendiente que nadie había leído.
     case 'CLEAR_ACTIVE_EVENT':
-      return { ...state, activeEvent: null, activeFirstContact: null, activeTransmission: null };
+      return { ...state, activeEvent: null };
 
     case 'DISMISS_FIRST_CONTACT':
-      return { ...state, activeFirstContact: null, activeEvent: null, activeTransmission: null };
+      return { ...state, activeFirstContact: null };
 
     case 'DISMISS_TRANSMISSION':
-      return { ...state, activeTransmission: null, activeEvent: null, activeFirstContact: null };
+      return { ...state, activeTransmission: null };
 
     case 'DISMISS_TACTICAL_EVENT': {
       const eventId = action.payload || action.id;
@@ -86,6 +128,45 @@ export const eventReducer = (state, action) => {
         tacticalEvents: []
       };
 
+    // --- 3.5-c Bandeja de comunicaciones ---------------------------------
+    // `tacticalEventLog` es el histórico persistente: no se vacía al descartar.
+    // `read` va en la entrada; la verdad del contador es contar los !read.
+
+    case 'MARK_TACTICAL_EVENT_READ': {
+      const eventId = action.payload || action.id;
+      if (!eventId) return state;
+      return {
+        ...state,
+        tacticalEventLog: (state.tacticalEventLog || []).map(e =>
+          e.id === eventId ? { ...e, read: true } : e
+        )
+      };
+    }
+
+    case 'MARK_ALL_TACTICAL_EVENTS_READ':
+      return {
+        ...state,
+        tacticalEventLog: (state.tacticalEventLog || []).map(e => ({ ...e, read: true }))
+      };
+
+    case 'CLEAR_READ_TACTICAL_EVENTS':
+      return {
+        ...state,
+        tacticalEventLog: (state.tacticalEventLog || []).filter(e => !e.read)
+      };
+
+    case 'APPEND_TACTICAL_EVENT_LOG': {
+      // Punto único de entrada al log. Lo usan el orquestador y las facciones
+      // para no duplicar la normalización de la entrada.
+      const entry = normalizeLogEntry(action.payload || action.entry);
+      if (!entry) return state;
+      const log = [...(state.tacticalEventLog || [])];
+      // Un id repetido no debe crear dos entradas.
+      if (log.some(e => e.id === entry.id)) return state;
+      log.push(entry);
+      return { ...state, tacticalEventLog: log };
+    }
+
     case 'RESOLVE_DECISION_EVENT': {
       const { option } = action;
       const planet = getCurrentPlanet();
@@ -94,7 +175,8 @@ export const eventReducer = (state, action) => {
       const ev = state.activeEvent;
       const opt = ev.options[option];
 
-      let workingState = { ...state, activeEvent: null, activeFirstContact: null, activeTransmission: null };
+      // 3.1 — igual que arriba: solo se vacía el slot de la narrativa.
+      let workingState = { ...state, activeEvent: null };
 
       // Apply resource changes to current planet
       if (opt.cost) {
@@ -181,8 +263,14 @@ export const eventReducer = (state, action) => {
     }
 
     case 'MINISTRY_PROJECT': {
-      const { ministryId, cost, effect } = action;
-      const planet = getCurrentPlanet();
+      const { ministryId, cost, effect, planetId } = action;
+      // Los programas de ministerio son estado del planeta que los financia,
+      // no del imperio. Sin `planetId` explícito se cae al planeta activo solo
+      // como ultimo recurso, para que la acción siga siendo válida.
+      const targetPlanetId = planetId || state.currentPlanetId;
+      const planet = targetPlanetId
+        ? (state.planets || []).find(p => p.id === targetPlanetId)
+        : getCurrentPlanet();
       if (!planet) return state;
 
       const playerInfluence = state.influence || 0;
@@ -204,18 +292,20 @@ export const eventReducer = (state, action) => {
         workingState.influence = (workingState.influence || 0) + effect.influence;
       }
 
-      // Track active programs/projects upgrades inside the state
-      const upgrades = workingState.ministryUpgrades || {};
-      const ministryUps = upgrades[ministryId] || {};
+      // Los niveles de programa viven en el planeta: subir un programa en un
+      // mundo no debe alterar los Programas de los demás mundos del imperio.
       if (effect && effect.programId) {
-        const nextLvl = (ministryUps[effect.programId] || 0) + 1;
-        workingState.ministryUpgrades = {
-          ...upgrades,
-          [ministryId]: {
-            ...ministryUps,
-            [effect.programId]: nextLvl
+        const nextLvl = ((planet.ministryUpgrades?.[ministryId] || {})[effect.programId] || 0) + 1;
+        workingState = updatePlanet(workingState, planet.id, p => ({
+          ...p,
+          ministryUpgrades: {
+            ...(p.ministryUpgrades || {}),
+            [ministryId]: {
+              ...(p.ministryUpgrades?.[ministryId] || {}),
+              [effect.programId]: nextLvl
+            }
           }
-        };
+        }));
       }
 
       // Record in diplomatic history for narrative context

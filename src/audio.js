@@ -38,10 +38,14 @@ import {
   stopMenuMusic,
   playMinistryMusic,
   stopMinistryMusic,
+  playSystemMusic,
+  stopSystemMusic,
   transitionToCosmicSilence,
   MINISTRY_AUDIO_FILES,
+  SYSTEM_AUDIO_FILES,
   getCurrentBgMusic,
-  getCurrentMinistryMusic
+  getCurrentMinistryMusic,
+  getCurrentSystemMusic
 } from './audio/audioMusic.js';
 
 import {
@@ -63,6 +67,11 @@ export function setMuted(value) {
   if (minBg) {
     minBg.muted = !!value;
     minBg.volume = effectiveMusic;
+  }
+  const sysBg = getCurrentSystemMusic();
+  if (sysBg) {
+    sysBg.muted = !!value;
+    sysBg.volume = effectiveMusic;
   }
   const voice = getCurrentVoiceAudio();
   if (voice) {
@@ -103,6 +112,8 @@ export function setMusicVolume(val) {
   if (bg) bg.volume = effective;
   const minBg = getCurrentMinistryMusic();
   if (minBg) minBg.volume = effective;
+  const sysBg = getCurrentSystemMusic();
+  if (sysBg) sysBg.volume = effective;
   persistAudio();
 }
 
@@ -145,12 +156,17 @@ export {
   stopMenuMusic,
   playMinistryMusic,
   stopMinistryMusic,
+  playSystemMusic,
+  stopSystemMusic,
   transitionToCosmicSilence,
   playVoice,
   stopVoice,
   speakText,
   getCurrentBgMusic,
-  MINISTRY_AUDIO_FILES
+  getCurrentMinistryMusic,
+  getCurrentSystemMusic,
+  MINISTRY_AUDIO_FILES,
+  SYSTEM_AUDIO_FILES
 };
 
 // Global helper for quick access

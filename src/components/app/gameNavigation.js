@@ -22,11 +22,16 @@ export const GAME_TABS = [
   { id: "ministry_justice", label: "⚖️ Justicia y Orden Federal", quadrant: "gov", parent: "government" },
   { id: "ministry_culture", label: "🎭 Cultura y Propaganda", quadrant: "gov", parent: "government" },
   { id: "colony_network", label: "🪐 Red de Colonias", quadrant: "gov", parent: "overview" },
-  { id: "imperial_council", label: "👑 Consejo Imperial", quadrant: "gov", parent: "government" },
-  { id: "imperial_senate", label: "🏛️ Senado Imperial", quadrant: "gov", parent: "government" },
   { id: "market", label: "💼 Mercado Galáctico", quadrant: "gov", parent: "overview" },
   { id: "missions", label: "🎯 Misiones y Objetivos", quadrant: "gov", parent: "overview" },
   { id: "stats", label: "📊 Estadísticas del Imperio", quadrant: "gov", parent: "overview" },
+
+  // === I.b. MANDO IMPERIAL ===
+  // Órganos del imperio. Sin `parent`: no cuelgan del gabinete de un planeta
+  // porque no son asunto de ningún mundo. Se abren desde `ImperialCommandPage`.
+  { id: "imperial_hub", label: "👑 Mando Imperial", quadrant: "imperial" },
+  { id: "imperial_council", label: "⚖️ Consejo Imperial", quadrant: "imperial", parent: "imperial_hub" },
+  { id: "imperial_senate", label: "🏛️ Senado Imperial", quadrant: "imperial", parent: "imperial_hub" },
 
   // === II. INFRAESTRUCTURA & CIENCIA ===
   { id: "buildings", label: "🏗️ Complejo de Obras", quadrant: "infra" },
@@ -45,6 +50,9 @@ export const GAME_TABS = [
   { id: "galaxy", label: "🌌 Mapa Estelar", quadrant: "galaxy" },
   { id: "diplomacy", label: "🤝 Cuerpo Diplomático", quadrant: "galaxy" },
   { id: "communications", label: "📡 Red de Inteligencia", quadrant: "galaxy", parent: "diplomacy" },
+  // 3.5-b — Bandeja de comunicaciones. Vive junto a la Red de Inteligencia
+  // porque es donde el jugador va a leer lo que antes saltaba solo en pantalla.
+  { id: "telemetry", label: "📥 Registro Táctico", quadrant: "galaxy", parent: "communications" },
 ];
 
 export const isTabUnlocked = (id, currentPlanet, state) => {

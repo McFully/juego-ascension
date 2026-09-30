@@ -1,13 +1,14 @@
-import { uid, updatePlanet, shipCost, defenseCost, canAfford, deduct, meetsReq, calcShipTime, calcDefenseTime, shipTimeBonus } from '../../core.jsx';
+import { uid, updatePlanet, shipCost, defenseCost, canAfford, deduct, meetsResearchReq, calcShipTime, calcDefenseTime, shipTimeBonus } from '../../core.jsx';
 import { SHIPS, DEFENSES, GAME_SPEED } from '../../data/gameData.js';
 import { extractShipTechSnapshot, extractDefenseTechSnapshot, calculateTechGeneration } from '../../utils/formulas/retrofitFormulas.js';
+import { stampTimeMult } from '../tick/queues/queueTiming.js';
 
 export const handleStartShip = (state, action) => {
   const { shipId, quantity, planetId } = action;
   const planet = (planetId ? state.planets.find(p => p.id === planetId) : null) || state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
   if (!planet || !planet.buildings.shipyard) return state;
   const s = SHIPS[shipId];
-  if (!meetsReq(s?.req, { ...planet.buildings, ...state.research })) return state;
+  if (!meetsResearchReq(s?.req, { ...planet.buildings, ...state.research })) return state;
   const cost = shipCost(shipId, quantity, planet.buildings?.constructionCenter || 0);
   if (!canAfford(planet.resources, cost)) return state;
   if (state.shipQueue.length >= 5) return state;
@@ -23,7 +24,7 @@ export const handleStartShip = (state, action) => {
     const newEndTime = existing.startTime + time * 1000;
     let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: deduct(p.resources, cost) }));
     const newQueue = [...state.shipQueue];
-    newQueue[existingIdx] = { ...existing, quantity: newQty, endTime: newEndTime };
+    newQueue[existingIdx] = stampTimeMult(newState, 'ship', { ...existing, quantity: newQty, endTime: newEndTime });
     newState.shipQueue = newQueue;
     return newState;
   }
@@ -36,10 +37,10 @@ export const handleStartShip = (state, action) => {
   const techGen = calculateTechGeneration(techSnapshot);
 
   let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: newRes }));
-  newState.shipQueue = [...state.shipQueue, {
+  newState.shipQueue = [...state.shipQueue, stampTimeMult(newState, 'ship', {
     id: uid(), planetId: planet.id, shipId, quantity, startTime: Date.now(), endTime,
     techSnapshot, techGen
-  }];
+  })];
   return newState;
 };
 
@@ -48,7 +49,7 @@ export const handleStartDefense = (state, action) => {
   const planet = (planetId ? state.planets.find(p => p.id === planetId) : null) || state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
   if (!planet || !planet.buildings.shipyard) return state;
   const d = DEFENSES[defenseId];
-  if (!meetsReq(d?.req, state.research)) return state;
+  if (!meetsResearchReq(d?.req, { ...planet.buildings, ...state.research })) return state;
   if (d?.max && (planet.defenses[defenseId] || 0) >= d.max) return state;
   const cost = defenseCost(defenseId, quantity, planet.buildings?.constructionCenter || 0);
   if (!canAfford(planet.resources, cost)) return state;
@@ -65,7 +66,7 @@ export const handleStartDefense = (state, action) => {
     const newEndTime = existing.startTime + time * 1000;
     let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: deduct(p.resources, cost) }));
     const newQueue = [...state.defenseQueue];
-    newQueue[existingIdx] = { ...existing, quantity: newQty, endTime: newEndTime };
+    newQueue[existingIdx] = stampTimeMult(newState, 'defense', { ...existing, quantity: newQty, endTime: newEndTime });
     newState.defenseQueue = newQueue;
     return newState;
   }
@@ -78,9 +79,9 @@ export const handleStartDefense = (state, action) => {
   const techGen = calculateTechGeneration(techSnapshot);
 
   let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: newRes }));
-  newState.defenseQueue = [...state.defenseQueue, {
+  newState.defenseQueue = [...state.defenseQueue, stampTimeMult(newState, 'defense', {
     id: uid(), planetId: planet.id, defenseId, quantity, startTime: Date.now(), endTime,
     techSnapshot, techGen
-  }];
+  })];
   return newState;
 };

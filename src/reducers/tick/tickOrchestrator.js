@@ -8,7 +8,9 @@ import { processPlanetTick } from './populationTick.js';
 import { processLivingPlanetTick } from './livingPlanetTick.js';
 import { ensureMinistries, processMinistriesTick } from './ministries/ministryTick.js';
 import { processAllQueuesTick } from './queues/queueTick.js';
+import { reconcileQueueTimings } from './queues/queueTiming.js';
 import { processAIEmpireTick } from './ai/aiEmpireTick.js';
+import { eventReducer } from '../eventReducer.js';
 import { processFederationTick } from './ai/federationTick.js';
 import { processDialogueTransmissionTick } from './events/dialogueTransmissionTick.js';
 import { processPatrolsTick } from './patrolTick.js';
@@ -16,6 +18,8 @@ import { processAutoBuildTick } from './automation/autoBuildTick.js';
 import { processAutoEconomyDefenseTick } from './automation/autoEconomyDefenseTick.js';
 import { processAutoTradeRoutesTick } from './automation/autoTradeRoutesTick.js';
 import { processAutoResearchTick } from './automation/autoResearchTick.js';
+import { processExchangeOrdersTick } from './exchangeOrdersTick.js';
+import { processPirateRaidTick } from './pirateRaidTick.js';
 
 export const processTick = (state) => {
   const now = Date.now();
@@ -24,16 +28,71 @@ export const processTick = (state) => {
   // 1. Hardening & Ministries setup
   newState = ensureMinistries(newState);
 
+  // 1.1 3.6 — Estados continuos del mundo, anotados en la bandeja.
+  //
+  // El aviso de invasión (`RedAlertOverlay`) y el de crisis energética
+  // (`PerimeterEmergencyAlert`) NO pasan a la bandeja: son overlays que se quedan
+  // mientras dura el estado, que es lo correcto. Pero 3.6 pide que además quede
+  // RASTRO, para que el jugador pueda revisar después qué pasó y por qué.
+  // Se registra una entrada al empezar el estado y otra al terminarlo, y no se
+  // repite cada tick (`alreadyLogged` evita el spam).
+  const invasionMsgs = (newState.fleetMissions || [])
+    .filter(m => m.type === 'attack' && m.isAI && m.remainingTicks <= 300);
+  const hayInvasion = invasionMsgs.length > 0;
+  const crisisEnergia = (newState.planets || [])
+    .some(p => (p.production?.energyBalance ?? 0) < 0);
+
+  const registrarEstadoMundo = (key, entry) => {
+    const yaEstaba = Boolean(newState.worldAlertLog?.[key]);
+    const ahora = Boolean(entry);
+    if (yaEstaba === ahora) return;
+    newState.worldAlertLog = { ...(newState.worldAlertLog || {}), [key]: ahora };
+    newState = eventReducer(newState, {
+      type: 'APPEND_TACTICAL_EVENT_LOG',
+      payload: { ...entry, kind: 'tactical', read: false, priority: 'critica' },
+    });
+  };
+
+  registrarEstadoMundo('invasion', hayInvasion && {
+    id: `alert-invasion-${now}`,
+    type: 'invasion',
+    title: 'Invasión detectada',
+    subtitle: 'Flota hostil en Sector Perimetral',
+    description: invasionMsgs.length > 1
+      ? `${invasionMsgs.length} flotas hostiles se aproximan a tus planetas.`
+      : 'Una flota hostil se aproxima a tus planetas. El aviso se mantiene mientras dure el ataque.',
+  });
+  registrarEstadoMundo('crisisEnergia', crisisEnergia && {
+    id: `alert-energia-${now}`,
+    type: 'crisis_energetica',
+    title: 'Crisis energética',
+    subtitle: 'Balance de energía negativo',
+    description: 'Alguno de tus planetas consume más energía de la que produce. El aviso se mantiene mientras dure la crisis.',
+  });
+
   // 2. Narrative events check
-  if (newState.gameTick > 0 && newState.gameTick % 60 === 0 && !newState.activeEvent && !newState.activeFirstContact && !newState.activeTransmission) {
+  // 3.6 — La guarda ya no mira slots efímeros (`activeEvent` etc.), que con 3.4
+  // dejan de montarse: si se apoyara en ellos, se podrían encadenar ilimitadas
+  // narrativas con decisión pendiente. Ahora pregunta al log, que es donde vive
+  // de verdad lo que el jugador aún no ha mirado.
+  const hayDecisionPendiente = (newState.tacticalEventLog || []).some(e => !e.read && e.requiresDecision);
+
+  if (newState.gameTick > 0 && newState.gameTick % 60 === 0 && !hayDecisionPendiente) {
     for (const event of NARRATIVE_EVENTS) {
       if (!newState.triggeredNarrativeEvents?.includes(event.id) && event.triggerCondition(newState)) {
-        newState.activeEvent = event;
+        const { triggerCondition, ...serializableEvent } = event;
+        newState.activeEvent = serializableEvent;
         newState.triggeredNarrativeEvents = [...(newState.triggeredNarrativeEvents || []), event.id];
+        // La narrativa va también a la bandeja: ya no se abre sola, y si el
+        // jugador no la mira, se queda ahí con el contador en rojo.
+        newState = eventReducer(newState, {
+          type: 'APPEND_TACTICAL_EVENT_LOG',
+          payload: { ...serializableEvent, kind: 'narrative', read: false, priority: 'alta' },
+        });
         newState.notifications = [...(newState.notifications || []), {
           id: uid(),
           type: event.type === 'crisis' ? 'error' : 'info',
-          message: `📡 TRANSMISIÓN URGENTE: ${event.title}. Requiere tu atención inmediata en Visión General.`,
+          message: `📡 TRANSMISIÓN URGENTE: ${event.title}. Requiere tu atención en el Registro Táctico.`,
           timestamp: now
         }];
         break;
@@ -82,6 +141,11 @@ export const processTick = (state) => {
 
   // 7. Queues processing (build, research, retrofit, ships, defenses, custom)
   newState = processAllQueuesTick(newState);
+
+  // 7.1 Reajuste de tiempos: si en este tick se mejoró un edificio o una tech que
+  //     reduce tiempos (laboratorio, fábrica de robots/nanobots, astillero, centro de
+  //     construcción...), lo que quedaba de las operaciones EN CURSO se acorta.
+  newState = reconcileQueueTimings(newState);
 
   // 8. Fleet missions processing
   if (Array.isArray(state.fleetMissions) && state.fleetMissions.length > 0) {
@@ -171,6 +235,11 @@ export const processTick = (state) => {
                 }
               }
               newState.tacticalEvents = [...(newState.tacticalEvents || []), returnEvent];
+              // 3.3 — también al registro persistente de la bandeja.
+              newState = eventReducer(newState, {
+                type: 'APPEND_TACTICAL_EVENT_LOG',
+                payload: { ...returnEvent, kind: 'tactical', read: false },
+              });
             }
           }
         } else {
@@ -251,6 +320,13 @@ export const processTick = (state) => {
               }
             }
             newState.tacticalEvents = [...(newState.tacticalEvents || []), enrichedEvent];
+            // 3.3 — además va al registro persistente. `tacticalEvents` es la cola
+            // de lo no leído (sigue alimentando el overlay hasta que 3.4 lo
+            // desmonte); el log es el histórico que sostiene la bandeja.
+            newState = eventReducer(newState, {
+              type: 'APPEND_TACTICAL_EVENT_LOG',
+              payload: { ...enrichedEvent, kind: 'tactical', read: false },
+            });
           }
         }
       } else {
@@ -320,6 +396,12 @@ export const processTick = (state) => {
     });
   }
 
+  // 12.5. Órdenes Limit y tarifas de parking de la Lonja Galáctica
+  newState = processExchangeOrdersTick(newState);
+
+  // 12.6. Amenaza pirata y asaltos corsarios a la Lonja Galáctica
+  newState = processPirateRaidTick(newState);
+
   // 13. Diálogos y transmisiones proactivas
   newState = processDialogueTransmissionTick(newState);
 
@@ -335,6 +417,38 @@ export const processTick = (state) => {
   }
   if (Array.isArray(newState.events) && newState.events.length > 25) {
     newState.events = newState.events.slice(-25);
+  }
+
+  // 16. 3.4 — Vuelco a la bandeja de los slots de comunicación que nadie ha mirado.
+  //
+  // Hay ocho sitios repartidos (transmissionsAndFirstContact, dialogueTransmissionTick,
+  // el paso 2 de más arriba…) que aún escriben en `activeEvent`,
+  // `activeFirstContact` y `activeTransmission`. Con 3.4 esos overlays ya no se
+  // montan, así que un mensaje que landing en cualquiera de ellos se quedaría
+  // invisible para siempre. En vez de editar los ocho (y arriesgar la lógica de
+  // aparición), se normaliza aquí: al final de cada tick, cualquier slot
+  // pendiente entra en el log y se vacía el slot.
+  //
+  // Así la bandeja es la única puerta de entrada, y el `id` estable hace que
+  // volcar el mismo mensaje dos ticks seguidos no duplique la entrada.
+  for (const { slot, kind, clearAction } of [
+    { slot: 'activeEvent', kind: 'narrative', clearAction: 'CLEAR_ACTIVE_EVENT' },
+    { slot: 'activeFirstContact', kind: 'firstContact', clearAction: 'DISMISS_FIRST_CONTACT' },
+    { slot: 'activeTransmission', kind: 'transmission', clearAction: 'DISMISS_TRANSMISSION' },
+  ]) {
+    const pending = newState[slot];
+    if (pending) {
+      newState = eventReducer(newState, {
+        type: 'APPEND_TACTICAL_EVENT_LOG',
+        payload: { ...pending, kind, read: false, priority: pending.options ? 'alta' : 'media' },
+      });
+      newState = eventReducer(newState, { type: clearAction });
+    }
+  }
+  // Poda del log: el histórico no crece sin límite, pero tampoco se pierde lo
+  // reciente. 300 entradas ≈ varios días de partida.
+  if (Array.isArray(newState.tacticalEventLog) && newState.tacticalEventLog.length > 300) {
+    newState.tacticalEventLog = newState.tacticalEventLog.slice(-300);
   }
 
   return newState;

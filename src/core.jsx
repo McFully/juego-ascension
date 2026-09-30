@@ -50,7 +50,8 @@ export {
   buildingCost, researchCost, shipCost, defenseCost, constructionDiscount, aiResearchDiscount,
   calcRequiredPopulation,
   fmt, fmtTime, uid, getGalacticAlignment, getPOIAtCoordinates,
-  canAfford, deduct, calcResourceValueForAI, clampResources, meetsReq, calcProduction
+  canAfford, deduct, calcResourceValueForAI, clampResources, meetsReq, meetsResearchReq,
+  unmetReqList, reqLabel, resolveReqKey, calcProduction
 } from "./utils/formulas.js";
 
 export { getEffectiveTech, isOutdated } from "./utils/formulas/combatFormulas.js";

@@ -93,39 +93,42 @@ export const GovernorDelegationModal = ({
             Selecciona la <strong className="text-white">Directriz de Mando</strong> que determinará cómo la IA del Gobernador coordina los ministerios de esta colonia:
           </p>
           
-          {/* Selector de 3 Opciones de Directriz */}
-          <div className="space-y-2.5">
+          {/* Selector de 3 Opciones de Directriz Verticales (Izquierda, Centro y Derecha) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 items-stretch">
             {DIRECTIVE_OPTIONS.map(opt => {
               const isSelected = currentMode === opt.id;
               return (
                 <div
                   key={opt.id}
                   onClick={() => handleSelectMode(opt.id)}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[220px] select-none text-left ${
                     isSelected
-                      ? 'bg-cyan-950/40 border-cyan-400/80 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
-                      : 'bg-[#05070f] border-white/10 hover:border-white/20 hover:bg-white/5'
+                      ? 'bg-cyan-950/50 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] scale-[1.01]'
+                      : 'bg-[#05070f] border-white/10 hover:border-cyan-500/40 hover:bg-[#0c1630]'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{opt.icon}</span>
-                      <span className={`font-bold text-xs ${isSelected ? 'text-cyan-300' : 'text-white'}`}>
-                        {opt.title}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{opt.icon}</span>
+                      <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${
+                        isSelected
+                          ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400/50 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                          : 'bg-black/60 text-slate-400 border-white/10'
+                      }`}>
+                        {isSelected ? '✓ Activa' : 'Elegir'}
                       </span>
                     </div>
-                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
-                      isSelected
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40'
-                        : 'bg-slate-800 text-slate-400 border border-white/5'
-                    }`}>
-                      {isSelected ? '✓ Seleccionada' : 'Elegir'}
-                    </span>
+
+                    <div className={`font-black text-xs sm:text-sm tracking-wide leading-snug ${isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                      {opt.title}
+                    </div>
+
+                    <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                      {opt.summary}
+                    </p>
                   </div>
-                  <p className="text-[11px] text-slate-300 pl-7 leading-relaxed">
-                    {opt.summary}
-                  </p>
-                  <p className="text-[10px] text-slate-500 pl-7 leading-tight italic">
+
+                  <p className="text-[10px] text-slate-500 leading-tight italic pt-2 border-t border-white/5">
                     {opt.detail}
                   </p>
                 </div>
@@ -295,38 +298,42 @@ export const EmperorDelegationModal = ({
             Selecciona la <strong className="text-white">Directriz Suprema</strong> que determinará cómo la IA del Emperador coordina todos los planetas y ministerios:
           </p>
           
-          <div className="space-y-2.5">
+          {/* Selector de 3 Opciones de Directriz Verticales (Izquierda, Centro y Derecha) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 items-stretch">
             {DIRECTIVE_OPTIONS.map(opt => {
               const isSelected = currentMode === opt.id;
               return (
                 <div
                   key={opt.id}
                   onClick={() => handleSelectMode(opt.id)}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[220px] select-none text-left ${
                     isSelected
-                      ? 'bg-cyan-950/40 border-cyan-400/80 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
-                      : 'bg-[#05070f] border-white/10 hover:border-white/20 hover:bg-white/5'
+                      ? 'bg-cyan-950/50 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] scale-[1.01]'
+                      : 'bg-[#05070f] border-white/10 hover:border-cyan-500/40 hover:bg-[#0c1630]'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{opt.icon}</span>
-                      <span className={`font-bold text-xs ${isSelected ? 'text-cyan-300' : 'text-white'}`}>
-                        {opt.title}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{opt.icon}</span>
+                      <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${
+                        isSelected
+                          ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400/50 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                          : 'bg-black/60 text-slate-400 border-white/10'
+                      }`}>
+                        {isSelected ? '✓ Activa' : 'Elegir'}
                       </span>
                     </div>
-                    <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
-                      isSelected
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40'
-                        : 'bg-slate-800 text-slate-400 border border-white/5'
-                    }`}>
-                      {isSelected ? '✓ Seleccionada' : 'Elegir'}
-                    </span>
+
+                    <div className={`font-black text-xs sm:text-sm tracking-wide leading-snug ${isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                      {opt.title}
+                    </div>
+
+                    <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                      {opt.summary}
+                    </p>
                   </div>
-                  <p className="text-[11px] text-slate-300 pl-7 leading-relaxed">
-                    {opt.summary}
-                  </p>
-                  <p className="text-[10px] text-slate-500 pl-7 leading-tight italic">
+
+                  <p className="text-[10px] text-slate-500 leading-tight italic pt-2 border-t border-white/5">
                     {opt.detail}
                   </p>
                 </div>

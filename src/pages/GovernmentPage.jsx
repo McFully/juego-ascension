@@ -2,21 +2,23 @@ import { MINISTRY_PROGRAMS } from '../data/ministriesData.js';
 export { MINISTRY_PROGRAMS };
 
 import React, { useState } from 'react';
+import { fmt } from '../core.jsx';
 import { MinisterCandidateModal } from '../components/government/MinisterCandidateModal';
 import { MinistryPerformanceMetrics } from '../components/government/MinistryPerformanceMetrics';
 import { CANDIDATES_POOL, MINISTRY_DIRECTIVES } from '../data/governmentPoliciesData.js';
 import { playVoice, playMinistryMusic, stopMinistryMusic } from '../audio.js';
 
-import { ImperialCommandHub } from '../components/government/ImperialCommandHub';
-import { ImperialCouncilCabinet } from '../components/government/council/ImperialCouncilCabinet';
-import { ImperialSenateView } from '../components/government/council/ImperialSenateView';
+import { PlanetaryCommandHub } from '../components/government/PlanetaryCommandHub';
+import { ExchangeCommandHubView } from '../components/market/ExchangeCommandHubView';
 import { FederalDistrictView } from '../components/government/FederalDistrictView';
 import { MinistryBuildingInterior } from '../components/government/MinistryBuildingInterior';
 import { MinistryDeskView } from '../components/government/MinistryDeskView';
 import { MinistryBuildingsSection } from '../components/government/MinistryBuildingsSection';
 import { MinistryResearchSection } from '../components/government/MinistryResearchSection';
 import { GovernmentBreadcrumbs } from '../components/government/GovernmentBreadcrumbs';
+import { PlanetarySenateModal } from '../components/planet/PlanetarySenateModal';
 import { MINISTRY_METADATA } from '../data/ministryMetadata.js';
+import { buildPlanetMinistries } from '../data/ministryState.js';
 export { MINISTRY_METADATA };
 
 export const GovernmentPage = ({
@@ -40,19 +42,20 @@ export const GovernmentPage = ({
   calcResearchTime,
   researchEffectInfo
 }) => {
-  // Navegación Espacial por Niveles:
-  // Nivel 0: Alto Mando Imperial (Hub de Mando y Órganos de Estado)
+// Navegación Espacial por Niveles, siempre dentro de UN mundo:
+  // Nivel 0: Alto Mando del planeta (hub local del mundo activo)
   // Nivel 1: Distrito Federal Exterior (19 Sedes Ministeriales)
   // Nivel 2: Interior del Edificio Ministerial
   // Nivel 3: Despacho de Acción (Programas, Decretos, Edificios, I+D)
-  // Nivel 4: Consejo Imperial de Ministros Supremos (10+ Planetas)
-  // Nivel 5: Senado Imperial Interplanetario (10+ Planetas)
+  //
+  // El Mando Imperial, el Consejo Imperial y el Senado Imperial NO viven aquí:
+  // son órganos del imperio y se abren desde `ImperialCommandPage`. Antes
+  // colgaban de esta página, que es la de un planeta, y por eso compartían
+  // gabinete y recursos con el mundo activo.
   const [navLevel, setNavLevel] = useState(() => {
-    if (activeTab === 'imperial_council') return 4;
-    if (activeTab === 'imperial_senate') return 5;
     if (activeTab && activeTab.startsWith('ministry_')) return 2;
     if (activeTab === 'government_ministries') return 1;
-    return 0; // Alto Mando Imperial por defecto al acceder a gobierno/imperio
+    return 0; // Alto Mando del planeta por defecto
   });
   const [activeMinistry, setActiveMinistry] = useState(() => {
     if (activeTab && activeTab.startsWith('ministry_')) {
@@ -62,13 +65,10 @@ export const GovernmentPage = ({
   });
   const [activeSubview, setActiveSubview] = useState('overview'); // 'overview' | 'programs' | 'directives'
   const [candidateModal, setCandidateModal] = useState(null);
+  const [planetarySenateOpen, setPlanetarySenateOpen] = useState(false);
 
   React.useEffect(() => {
-    if (activeTab === 'imperial_council') {
-      setNavLevel(4);
-    } else if (activeTab === 'imperial_senate') {
-      setNavLevel(5);
-    } else if (activeTab && activeTab.startsWith('ministry_')) {
+    if (activeTab && activeTab.startsWith('ministry_')) {
       const minKey = activeTab.replace('ministry_', '');
       setActiveMinistry(prevMin => {
         if (prevMin !== minKey) {
@@ -84,6 +84,14 @@ export const GovernmentPage = ({
       setNavLevel(0);
     }
   }, [activeTab]);
+
+  // Cambiar de mundo reinicia la navegación: el gabinete, el distrito y el
+  // despacho pertenecen al planeta, no al jugador.
+  React.useEffect(() => {
+    setNavLevel(0);
+    setActiveSubview('overview');
+    setCandidateModal(null);
+  }, [state.currentPlanetId]);
 
   // Gestión de música de ministerios: al estar en nivel >= 2 suena el ministerio de forma continua.
   // Solo se detiene al salir del ministerio (navLevel < 2) o al desmontar GovernmentPage.
@@ -109,10 +117,12 @@ export const GovernmentPage = ({
   const planetResources = currentPlanet?.resources || { metal: 0, crystal: 0, deuterium: 0 };
   const playerInfluence = state.influence || 0;
 
-  const ministries = currentPlanet?.ministries || state.ministries || {};
-  const upgrades = state.ministryUpgrades || {};
+// El gabinete es del planeta: si no, al caer a `state.ministries` el ministro
+  // de un mundo aparecía en todos los demás.
+  const ministries = currentPlanet?.ministries || buildPlanetMinistries(state.gameMode);
+  const upgrades = currentPlanet?.ministryUpgrades || {};
 
-  const fmt = (n) => new Intl.NumberFormat().format(Math.floor(n));
+  // fmt se recibe por props o se importa desde core.jsx (con abreviaturas K/M/B/T)
 
   const getMinistryState = (id) => {
     const minObj = ministries[id] || {};
@@ -237,10 +247,11 @@ export const GovernmentPage = ({
       return;
     }
 
-    if (window.playSfx) window.playSfx('success');
+if (window.playSfx) window.playSfx('success');
     dispatch({
       type: 'MINISTRY_PROJECT',
       ministryId: activeMinistry,
+      planetId: currentPlanet?.id,
       cost,
       effect: {
         programId: progObj.id,
@@ -285,26 +296,39 @@ export const GovernmentPage = ({
         />
       )}
 
-      {/* LEVEL 0: Alto Mando Imperial - Sede Central de Mando del Imperio */}
+{/* NIVEL 0: Alto Mando del planeta activo */}
       {navLevel === 0 && (
-        <ImperialCommandHub
-          state={state}
-          currentPlanet={currentPlanet}
-          production={production}
-          fmt={fmt}
-          RESEARCH={RESEARCH}
-          onEnterMinistries={() => handleNavigate(1)}
-          onNavigateTab={(tab) => {
-            if (setActiveTab) {
-              setActiveTab(tab);
-            }
-          }}
-          onBackToEmpire={() => {
-            if (setActiveTab) setActiveTab('overview');
-            if (window.playSfx) window.playSfx('click');
-          }}
-          ministryCount={Object.keys(MINISTRY_METADATA).length}
-        />
+        currentPlanet?.isExchangePlanet ? (
+          <ExchangeCommandHubView
+            state={state}
+            dispatch={dispatch}
+            currentPlanet={currentPlanet}
+            fmt={fmt}
+            onNavigateTab={(tab) => {
+              if (setActiveTab) setActiveTab(tab);
+            }}
+          />
+        ) : (
+          <PlanetaryCommandHub
+            state={state}
+            dispatch={dispatch}
+            planet={currentPlanet}
+            production={production}
+            fmt={fmt}
+            onEnterMinistries={() => handleNavigate(1)}
+            onNavigateTab={(tab) => {
+              if (setActiveTab) {
+                setActiveTab(tab);
+              }
+            }}
+            onOpenPlanetarySenate={() => setPlanetarySenateOpen(true)}
+            onBackToEmpire={() => {
+              if (setActiveTab) setActiveTab('overview');
+              if (window.playSfx) window.playSfx('click');
+            }}
+            ministryCount={Object.keys(MINISTRY_METADATA).length}
+          />
+        )
       )}
 
       {/* LEVEL 1: Vista Exterior - Avenida de las Sedes Ministeriales */}
@@ -404,29 +428,7 @@ export const GovernmentPage = ({
         />
       )}
 
-      {/* LEVEL 4: Consejo Imperial de Ministros Supremos (10+ Planetas) */}
-      {navLevel === 4 && (
-        <ImperialCouncilCabinet
-          state={state}
-          dispatch={dispatch}
-          currentPlanet={currentPlanet}
-          fmt={fmt}
-          onBackToGoov={() => handleNavigate(0)}
-        />
-      )}
-
-      {/* LEVEL 5: Senado Imperial Interplanetario (10+ Planetas) */}
-      {navLevel === 5 && (
-        <ImperialSenateView
-          state={state}
-          dispatch={dispatch}
-          currentPlanet={currentPlanet}
-          fmt={fmt}
-          onBackToGoov={() => handleNavigate(0)}
-        />
-      )}
-
-      {/* Candidate Modal */}
+{/* Candidate Modal */}
       {candidateModal && (
         <MinisterCandidateModal
           candidates={candidateModal.candidates}
@@ -436,6 +438,16 @@ export const GovernmentPage = ({
           playerInfluence={playerInfluence}
         />
       )}
+
+      {/* Senado Planetario del mundo activo */}
+      <PlanetarySenateModal
+        isOpen={planetarySenateOpen}
+        onClose={() => setPlanetarySenateOpen(false)}
+        planet={currentPlanet}
+        state={state}
+        dispatch={dispatch}
+        fmt={fmt}
+      />
     </div>
   );
 };

@@ -4,19 +4,180 @@ import {
   NARRATIVE_EVENTS, EVENTS, checkAchievements, checkMissions, clampResources,
   fmt, uid, buildingCost, researchCost, shipCost, defenseCost, canAfford, deduct,
   calcRequiredPopulation,
-  calcResourceValueForAI, meetsReq, calcProduction, calcStorage, shipTimeBonus,
+  calcResourceValueForAI, meetsResearchReq, calcProduction, calcStorage, shipTimeBonus,
   researchTimeBonus, calcCustomShipCost, calcCustomShipTime, calcBuildTime,
   calcResearchTime, calcShipTime, calcDefenseTime, calcDistance, calcFlightTime,
   calcFuel, fleetSpeed, getPOIAtCoordinates, getVirginPlanet,
   updatePlanet, shouldKeepNotification
 } from '../core.jsx';
 import { processMission, returnFleetToOrigin, processEvent } from '../missions.jsx';
+import { stampTimeMult } from './tick/queues/queueTiming.js';
 
 
 export const economyReducer = (state, action) => {
   const getCurrentPlanet = () => state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
   let newState = { ...state };
   switch (action.type) {
+    case 'CLAIM_DAO_DIVIDENDS': {
+      const claimAmount = Number(action.amount || 0);
+      if (claimAmount <= 0) return state;
+      const currentCredits = state.credits || 0;
+      return {
+        ...state,
+        credits: currentCredits + claimAmount,
+        daoDividendPool: Math.max(0, (state.daoDividendPool || 250000) - claimAmount),
+        notifications: [...(state.notifications || []), {
+          id: uid(),
+          type: 'success',
+          message: `💎 Dividendos del Exchange liquidados: +${fmt(claimAmount)} Créditos Estelares ingresados al Tesoro Imperial.`,
+          timestamp: Date.now()
+        }]
+      };
+    }
+
+    case 'CREATE_LIMIT_ORDER': {
+      const { orderType, resource, amount, targetPrice, hasParkedShip, destinationPlanetId } = action;
+      if (!resource || amount <= 0 || targetPrice <= 0) return state;
+
+      const currentCredits = state.credits || 0;
+      let newCredits = currentCredits;
+
+      if (orderType === 'buy_limit') {
+        const requiredCredits = Math.floor(amount * targetPrice);
+        if (currentCredits < requiredCredits) {
+          return {
+            ...state,
+            notifications: [...(state.notifications || []), {
+              id: uid(),
+              type: 'warning',
+              message: `⚠️ Fondos insuficientes para la orden Limit (${fmt(requiredCredits)} ₢ requeridos).`,
+              timestamp: Date.now()
+            }]
+          };
+        }
+        newCredits -= requiredCredits;
+      }
+
+      const newOrder = {
+        id: uid(),
+        type: orderType, // 'buy_limit' | 'sell_limit'
+        resource,
+        amount,
+        targetPrice,
+        reservedCredits: orderType === 'buy_limit' ? Math.floor(amount * targetPrice) : 0,
+        hasParkedShip: !!hasParkedShip,
+        destinationPlanetId: destinationPlanetId || state.currentPlanetId,
+        createdAt: Date.now()
+      };
+
+      return {
+        ...state,
+        credits: newCredits,
+        exchangeOrders: [...(state.exchangeOrders || []), newOrder],
+        notifications: [...(state.notifications || []), {
+          id: uid(),
+          type: 'info',
+          message: `📜 Orden Limit programada: ${orderType === 'buy_limit' ? 'Comprar' : 'Vender'} ${fmt(amount)} ${resource} a umbral de ${targetPrice} ₢.`,
+          timestamp: Date.now()
+        }]
+      };
+    }
+
+    case 'CANCEL_LIMIT_ORDER': {
+      const { orderId } = action;
+      const order = (state.exchangeOrders || []).find(o => o.id === orderId);
+      if (!order) return state;
+
+      const currentCredits = state.credits || 0;
+      const refund = order.reservedCredits || 0;
+
+      return {
+        ...state,
+        credits: currentCredits + refund,
+        exchangeOrders: (state.exchangeOrders || []).filter(o => o.id !== orderId),
+        notifications: [...(state.notifications || []), {
+          id: uid(),
+          type: 'info',
+          message: `🚫 Orden Limit cancelada. Saldo reembolsado (+${fmt(refund)} ₢).`,
+          timestamp: Date.now()
+        }]
+      };
+    }
+
+    case 'CONTRIBUTE_EXCHANGE_PROJECT': {
+      const { buildingId, amount, resource } = action;
+      const exchangePlanet = (state.planets || []).find(p => p.isExchangePlanet);
+      if (!exchangePlanet || !buildingId || amount <= 0) return state;
+
+      const currentPlanet = state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
+      const resKey = resource || 'metal';
+
+      if ((currentPlanet.resources[resKey] || 0) < amount) {
+        return {
+          ...state,
+          notifications: [...(state.notifications || []), {
+            id: uid(),
+            type: 'warning',
+            message: `⚠️ Recursos insuficientes en ${currentPlanet.name} para aportar al proyecto (${fmt(amount)} ${resKey} requeridos).`,
+            timestamp: Date.now()
+          }]
+        };
+      }
+
+      // Descontar recursos del planeta aportante
+      let updatedPlanets = state.planets.map(p => {
+        if (p.id === currentPlanet.id) {
+          return {
+            ...p,
+            resources: {
+              ...p.resources,
+              [resKey]: Math.max(0, (p.resources[resKey] || 0) - amount)
+            }
+          };
+        }
+        return p;
+      });
+
+      // Calcular acciones ganadas (1 acción por cada 50.000 recursos aportados)
+      const sharesEarned = Math.max(1, Math.floor(amount / 50000));
+      const playerShares = (state.playerDaoShares || 100) + sharesEarned;
+      const totalShares = (state.daoShares || 1000) + sharesEarned;
+
+      // Actualizar progreso del edificio en la Lonja
+      const projects = { ...(state.exchangeProjects || {}) };
+      const currentProgress = (projects[buildingId] || 0) + amount;
+      const reqForLevel = 50000000; // 50M base por hito de crowdfunding
+
+      let updatedExchangePlanet = updatedPlanets.find(p => p.isExchangePlanet);
+      let levelUpMessage = '';
+
+      if (currentProgress >= reqForLevel) {
+        projects[buildingId] = currentProgress - reqForLevel;
+        const currentLvl = updatedExchangePlanet.buildings?.[buildingId] || 1;
+        updatedExchangePlanet.buildings = {
+          ...updatedExchangePlanet.buildings,
+          [buildingId]: currentLvl + 1
+        };
+        levelUpMessage = ` ¡La mega-estructura ha subido al Nivel ${currentLvl + 1}!`;
+      } else {
+        projects[buildingId] = currentProgress;
+      }
+
+      return {
+        ...state,
+        planets: updatedPlanets,
+        playerDaoShares: playerShares,
+        daoShares: totalShares,
+        exchangeProjects: projects,
+        notifications: [...(state.notifications || []), {
+          id: uid(),
+          type: 'success',
+          message: `🏛️ Aporte al Crowdfunding registrado: -${fmt(amount)} ${resKey}. Has recibido +${sharesEarned} Acciones DAO.${levelUpMessage}`,
+          timestamp: Date.now()
+        }]
+      };
+    }
+
     case 'SET_PLANET': {
       const targetId = action.payload || action.planetId;
       return targetId ? { ...state, currentPlanetId: targetId } : state;
@@ -101,7 +262,7 @@ export const economyReducer = (state, action) => {
       const cost = buildingCost(buildingId, targetLvl - 1, planet.buildings?.constructionCenter || 0);
       
       if (!canAfford(planet.resources, cost)) return state;
-      if (!meetsReq(b.req, { ...planet.buildings, ...state.research })) return state;
+      if (!meetsResearchReq(b.req, { ...planet.buildings, ...state.research })) return state;
       if (planetBuildQueue.length >= 8) return state;
 
       const newRes = clampResources(deduct(planet.resources, cost));
@@ -111,9 +272,10 @@ export const economyReducer = (state, action) => {
       const endTime = startTime + time * 1000;
 
       let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: newRes }));
-      newState.buildQueue = [...state.buildQueue, {
+      const queued = stampTimeMult(newState, 'build', {
         id: uid(), planetId: planet.id, buildingId, startTime, endTime, level: targetLvl,
-      }];
+      });
+      newState.buildQueue = [...state.buildQueue, queued];
       return newState;
     }
 
@@ -140,12 +302,17 @@ export const economyReducer = (state, action) => {
         [buyResource]: (targetPlanet.resources[buyResource] || 0) + buyAmount
       };
 
-      const resNames = { metal: 'Metal', crystal: 'Cristal', deuterium: 'Deuterio' };
+      const resNames = { metal: 'Metal', crystal: 'Cristal', deuterium: 'Deuterio', credits: 'Créditos Estelares' };
       let newState = updatePlanet(state, targetPlanet.id, p => ({ ...p, resources: newRes }));
+      if (buyResource === 'credits' || sellResource === 'credits') {
+        const currentCredits = state.credits || 0;
+        const delta = (buyResource === 'credits' ? buyAmount : 0) - (sellResource === 'credits' ? sellAmount : 0);
+        newState.credits = Math.max(0, currentCredits + delta);
+      }
       newState.notifications = [...(newState.notifications || []), {
         id: uid(),
         type: 'success',
-        message: `💼 Transacción completada: -${fmt(sellAmount)} ${resNames[sellResource]} -> +${fmt(buyAmount)} ${resNames[buyResource]}`,
+        message: `💼 Transacción completada: -${fmt(sellAmount)} ${resNames[sellResource] || sellResource} -> +${fmt(buyAmount)} ${resNames[buyResource] || buyResource}`,
         timestamp: Date.now()
       }];
       return newState;

@@ -6,6 +6,7 @@ import { GameCarousel } from '../components/ui/GameCarousel.jsx';
 import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 import { PlanetTerraformingView } from '../components/planet/PlanetTerraformingView.jsx';
+import { ExchangeCommandHubView } from '../components/market/ExchangeCommandHubView.jsx';
 
 /**
  * BuildingsPage — Hub de Complejo de Obras a Pantalla Completa y Ancho Máximo.
@@ -79,8 +80,15 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
         breadcrumbIcon="🏗️"
       />
 
-      {/* Si el planeta es inhóspito y requiere acondicionamiento previo */}
-      {currentPlanet?.requiresConditioning && !currentPlanet?.terraformed ? (
+      {/* Si es un Planeta Lonja / Exchange (Mega-Infraestructuras comerciales sin minas) */}
+      {currentPlanet?.isExchangePlanet ? (
+        <ExchangeCommandHubView
+          state={state}
+          dispatch={dispatch}
+          currentPlanet={currentPlanet}
+          fmt={fmt}
+        />
+      ) : currentPlanet?.requiresConditioning && !currentPlanet?.terraformed ? (
         <PlanetTerraformingView
           planet={currentPlanet}
           dispatch={dispatch}

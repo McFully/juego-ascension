@@ -18,6 +18,7 @@ import {
 } from '../data/gameData.js';
 import { EXPANDED_BUILDINGS, EXPANDED_RESEARCH } from '../data/expandedContent.js';
 import { calcBuildingEnergyDemand } from './formulas/productionFormulas.js';
+import { getPOIAtCoordinates } from './formulas/coordinatesFormulas.js';
 
 export { calcBuildingEnergyDemand };
 
@@ -48,6 +49,8 @@ export {
   shipSpeed,
   fleetSpeed
 } from './formulas/flightFormulas.js';
+
+export { getPOIAtCoordinates } from './formulas/coordinatesFormulas.js';
 
 export {
   SHIP_TECH_KEYS,
@@ -125,38 +128,6 @@ export const getGalacticAlignment = (reputation) => {
   return { title: 'Azote Estelar', color: 'text-rose-500', icon: 'skull' };
 };
 
-export const getPOIAtCoordinates = (galaxy, system, position) => {
-  const seed = (galaxy * 10000) + (system * 100) + position;
-  const hash = Math.sin(seed) * 10000;
-  const rand = hash - Math.floor(hash);
-
-  if (rand < 0.15) {
-    if (rand < 0.05) {
-      return {
-        type: 'wormhole',
-        name: 'Agujero de Gusano',
-        icon: '🌀',
-        desc: 'Una singularidad estable que pliega el espacio-tiempo. Los viajes hacia este sistema consumen un 50% menos de Deuterio y tardan un 50% menos.'
-      };
-    } else if (rand < 0.10) {
-      return {
-        type: 'helium_belt',
-        name: 'Cinturón de Helio-3',
-        icon: '🌌',
-        desc: 'Una densa corriente de gases interestelares ricos en Helio-3. La producción de Deuterio en las colonias fundadas aquí aumenta un 50%.'
-      };
-    } else {
-      return {
-        type: 'precursor_ruins',
-        name: 'Ruinas Ancestrales',
-        icon: '🏛️',
-        desc: 'Estructuras abandonadas de una civilización extinta altamente avanzada. Las expediciones a este sistema tienen el doble de probabilidad de encontrar tecnología o naves abandonadas.'
-      };
-    }
-  }
-  return null;
-};
-
 export const calcResourceValueForAI = (aiPlanet, offer) => {
   let metalWeight = 1.0;
   let crystalWeight = 2.0;
@@ -206,6 +177,78 @@ export const clampResources = (res) => ({
 export const meetsReq = (req, research) => {
   if (!req) return true;
   return Object.entries(req).every(([k, v]) => (research[k] || 0) >= v);
+};
+
+const _warnedReqKeys = new Set();
+
+/**
+ * Resuelve una clave de `req` contra el catálogo: primero edificios, luego investigaciones.
+ * Devuelve el id del catálogo o `null` si la clave no existe en ninguno.
+ */
+export const resolveReqKey = (key) => {
+  if (BUILDINGS[key]) return key;
+  if (RESEARCH[key]) return key;
+  return null;
+};
+
+/**
+ * ÚNICO validador de requisitos del juego. Un `req` puede mezclar investigaciones y
+ * edificios, así que la clave se resuelve contra ambos catálogos antes de mirar niveles.
+ *
+ * Reglas:
+ *  - `req` vacío o ausente => true.
+ *  - Clave desconocida en ambos catálogos => NO bloquea (devuelve true) y avisa por consola
+ *    una sola vez. Evita dejar una partida encerrada por un id mal escrito.
+ *  - El contexto se recibe ya mergeado ({...buildings, ...research}) desde el call site.
+ */
+export const meetsResearchReq = (req, ctx = {}) => {
+  if (!req) return true;
+  return Object.entries(req).every(([key, needed]) => {
+    const resolved = resolveReqKey(key);
+    if (!resolved) {
+      if (typeof key === 'string' && !_warnedReqKeys.has(key)) {
+        _warnedReqKeys.add(key);
+        console.warn(
+          `[Ascensión][REQ] Clave desconocida en el catálogo de edificios e investigaciones: "${key}". ` +
+          'Se ignora el requisito para no bloquear la partida.'
+        );
+      }
+      return true;
+    }
+    return (ctx[key] || 0) >= needed;
+  });
+};
+
+/**
+ * Igual que `meetsResearchReq` pero devolviendo además el desglose de requisitos que NO se
+ * cumplen. Lo usan las UIs para pintar "Req: Nv.5 (Tienes: 0)" sin recalcular a mano.
+ */
+export const unmetReqList = (req, ctx = {}) => {
+  if (!req) return [];
+  const missing = [];
+  for (const [key, needed] of Object.entries(req)) {
+    const resolved = resolveReqKey(key);
+    if (!resolved) continue;
+    const have = ctx[key] || 0;
+    if (have < needed) {
+      missing.push({
+        id: key,
+        needed,
+        have,
+        isBuilding: !!BUILDINGS[key],
+        name: BUILDINGS[key]?.name || RESEARCH[key]?.name || key,
+      });
+    }
+  }
+  return missing;
+};
+
+/** Etiqueta legible de un requisito: "Fábrica de Robots Nv.5 (Tienes: 0)". */
+export const reqLabel = (key, needed, ctx = {}) => {
+  const resolved = resolveReqKey(key);
+  if (!resolved) return null;
+  const name = BUILDINGS[key]?.name || RESEARCH[key]?.name || key;
+  return `${name} Nv.${needed} (Tienes: ${ctx[key] || 0})`;
 };
 
 export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME_SPEED, planet = {}) => {

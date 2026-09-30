@@ -1,10 +1,29 @@
 import React from "react";
-import { CodexModal, NarrativeEventOverlay, RedAlertOverlay, PerimeterEmergencyAlert, TacticalEventOverlay } from "../../ui.jsx";
+import { CodexModal, RedAlertOverlay, PerimeterEmergencyAlert } from "../../ui.jsx";
 import { GameSettingsModal } from "./GameSettingsModal";
-import FirstContactOverlay from "../FirstContactOverlay";
-import ActiveTransmissionOverlay from "../ActiveTransmissionOverlay";
 import { DialogueBox2D } from "../dialogue/DialogueBox2D.jsx";
+import { VictoryOverlay } from "./VictoryOverlay.jsx";
+import { TutorialOverlay } from "./TutorialOverlay.jsx";
 
+/**
+ * AppOverlays — 3.4-a: nada de comunicación entrante se abre sola.
+ *
+ * Se han desmontado cuatro overlays que saltaban sin que el jugador los pidiera:
+ *   - TacticalEventOverlay   (informes de misión)
+ *   - NarrativeEventOverlay  (narrativas con decisión)
+ *   - FirstContactOverlay    (primer contacto)
+ *   - ActiveTransmissionOverlay (transmisiones en vivo)
+ *
+ * Todos ellos se acumulan ahora en `state.tacticalEventLog` y se leen desde la
+ * bandeja de Telemetría, con contador de pendientes. El sonido y la voz pasan a
+ * sonar al ABRIR un mensaje, no al recibirlo.
+ *
+ * Se dejan intactos, porque perderlos costaría caro al jugador:
+ *   - PerimeterEmergencyAlert / RedAlertOverlay: estados continuos del mundo.
+ *   - El ultimátum: expirar una decisión destructiva por no mirar un popup sería
+ *     peor que el popup. Además queda anotado en la bandeja.
+ *   - Tutorial, Victoria, ajustes y codex: fuera del alcance.
+ */
 export const AppOverlays = ({
   attackMissions,
   state,
@@ -22,8 +41,6 @@ export const AppOverlays = ({
   settingsTab,
   activeCodexId,
   setActiveCodexId,
-  acceptTransmission,
-  setAcceptTransmission,
   BUILDINGS,
   RESEARCH,
   SHIPS,
@@ -40,19 +57,6 @@ export const AppOverlays = ({
       {/* Alerta Roja de Emergencia */}
       <RedAlertOverlay missions={attackMissions} />
       
-      {/* Tactical Events Overlay (Colonización, Manifiestos de Carga, Expediciones y Reciclaje) tiene prioridad máxima para reportes de misiones */}
-      <TacticalEventOverlay 
-        events={state.tacticalEvents}
-        onDismiss={(id) => dispatch({ type: 'DISMISS_TACTICAL_EVENT', payload: id })}
-        onDismissAll={() => dispatch({ type: 'DISMISS_ALL_TACTICAL_EVENTS' })}
-        onNavigatePlanet={(planetId) => dispatch({ type: 'SET_PLANET', planetId })}
-      />
-
-      {/* Narrative Events Overlay (solo visible cuando no hay eventos tácticos bloqueando la vista) */}
-      {(!state.tacticalEvents || state.tacticalEvents.length === 0) && (
-        <NarrativeEventOverlay event={state.activeEvent} dispatch={dispatch} resources={currentPlanet?.resources} />
-      )}
-
       {/* In-Game Settings Menu (modal) */}
       {settingsOpen && (
         <GameSettingsModal
@@ -65,6 +69,8 @@ export const AppOverlays = ({
           onToggleSound={toggleSound}
           onReturnToMenu={handleReturnToMenu}
           initialTab={settingsTab}
+          state={state}
+          dispatch={dispatch}
         />
       )}
 
@@ -80,23 +86,7 @@ export const AppOverlays = ({
         />
       )}
 
-      {/* Primer Contacto */}
-      {state.activeFirstContact && (
-        <FirstContactOverlay 
-          activeFirstContact={state.activeFirstContact}
-          dispatch={dispatch}
-        />
-      )}
-
-      {/* Transmisiones en Vivo: sólo se muestra el visor interactivo cuando se acepta desde su tarjeta */}
-      {state.activeTransmission && acceptTransmission && (
-        <ActiveTransmissionOverlay
-          activeTransmission={state.activeTransmission}
-          dispatch={dispatch}
-        />
-      )}
-
-      {/* Ultimátums */}
+      {/* Ultimátums — siguen siendo bloqueantes (ver el comentario de cabecera) */}
       {state.activeUltimatum && (
         <DialogueBox2D
           isOpen={true}
@@ -125,6 +115,23 @@ export const AppOverlays = ({
             dispatch({ type: "DISMISS_ULTIMATUM" });
           }}
           onClose={() => dispatch({ type: "DISMISS_ULTIMATUM" })}
+        />
+      )}
+
+      {/* Tutorial Inicial Guiado */}
+      {state.showTutorial && (
+        <TutorialOverlay
+          onComplete={() => dispatch({ type: "SET_TUTORIAL_COMPLETE" })}
+        />
+      )}
+
+      {/* Fin de Partida / Victoria Imperial */}
+      {(state.victory || state.gameOver) && (
+        <VictoryOverlay
+          victory={state.victory}
+          gameOver={state.gameOver}
+          onRestart={handleReturnToMenu}
+          onClose={() => dispatch({ type: "DISMISS_VICTORY_OVERLAY" })}
         />
       )}
     </>
