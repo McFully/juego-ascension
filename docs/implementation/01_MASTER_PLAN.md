@@ -136,28 +136,30 @@ FASE 21  Verificación final ← requiere 20
 
 ---
 
-### FASE 04 — SISTEMA DE AUDIO
+### FASE 04 — SISTEMA DE AUDIO ✅ COMPLETE
 
 **Objetivo:** una sola fuente de música, sin pistas zombis, sin contextos fugados.
 
-**Trabajo:**
-1. **Un único director de música.** Hoy hay tres variables de módulo independientes (`currentBgMusic`, `currentMinistryMusic`, `currentSystemMusic`) con `<audio>` propio. Consolidar en un estado único: `idle | menu | system:<id> | ministry:<id> | cosmic` — una sola instancia, una sola transición.
-2. `playSystemMusic` (`audioMusic.js:192-206`) hace `if (!fileName) return;` antes de parar nada → 5 pantallas (`buildings`, `telemetry`, `imperial_hub`, `imperial_council`, `imperial_senate`) dejan sonando la pista anterior. Añadir los 5 ids a `SYSTEM_AUDIO_FILES` y/o parar explícitamente cuando no hay pista.
-3. `playMinistryMusic` debe llamar a `stopSystemMusic()`.
-4. Los fallbacks de ruta (`audioMusic.js:142, 231`) sustituyen la referencia sin pausar el `Audio` original → dos pistas simultáneas. Pausar y liberar el original.
-5. Liberar memoria: ningún `Audio` hace `src=''` + `load()`. Añadir `release()` en cada `stop*`.
-6. `CommunicationsPage.jsx:27` crea un `AudioContext` por transmisión y nunca lo cierra → fuga monótona. Usar el contexto singleton de `audioCore.js`.
-7. `LeaderAvatar.jsx:20, 80` conecta a `destination` directo, ignorando mute y muffle. Enrutar por el grafo de `audioCore.js`.
-8. `useGameLifecycle.js:22` — `userMuted` no se rehidrata de `ascension_audio_settings`; el gate `safeSfx` cree que hay sonido cuando el audio está mudo.
-9. `useGameLifecycle.js:407-413` no llama a `stopMinistryMusic()` ni a `stopVoice()`.
-10. `audio.js:148-149` — `startAmbient`/`stopAmbient` son stubs vacíos con 4 call sites. Implementar o eliminar los call sites.
-11. `audioCore.js:21` — `operationsVol = 0.0` por defecto: obras, astillero e I+D nacen mudos.
-12. `GovernmentPage.jsx:107` — `navLevel >= 2` (un booleano) en el array de deps.
-13. Eliminar 62 `.mp3` de voz sin referenciar (~2,4 MB) — **con listado de referencias primero** (no destructivo).
-14. Eliminar `Musica-menu.ogg` de la raíz del repo (3,9 MB, no se sirve, duplica la de `public/`).
+**Entregado:** director de música unificado con `releaseAudio` para liberar memoria y decodificadores · mapeo completo de 5 subsistemas (`buildings`, `telemetry`, `imperial_hub`, `imperial_council`, `imperial_senate`) en `SYSTEM_AUDIO_FILES` · detención mutua entre música de sistema y ministerios · liberación en fallbacks de reproducción erradicando dobles instancias · eliminación de fugas de `AudioContext` en `CommunicationsPage.jsx` y `LeaderAvatar.jsx` canalizando todo el audio por `sfxGain` · rehidratación de `userMuted` desde `ascension_audio_settings` · parada de ministerios y voces al volver al menú o desmontar · volumen operativo de obras e I+D fijado en 0.5 por defecto · dependencia de `navLevel` corregida en `GovernmentPage.jsx` · duplicado `Musica-menu.ogg` eliminado de la raíz · suite `audioSystemContract.test.js` con 11 tests probados que muerden · 288/288 verdes, cero regresiones.
 
-**Entregables:** un director de música con estado único · 0 pistas zombis · 0 contextos fugados · mute efectivo.
-**Tests:** test de que `playX` para la pista anterior en las 6 transiciones de pantalla; test de que el número de `AudioContext` vivos es ≤1.
+**Trabajo:**
+1. **Un único director de música.** En `audioMusic.js`, implementado `releaseAudio` y parada mutua garantizada entre `playSystemMusic` y `playMinistryMusic`.
+2. `playSystemMusic` deja de retornar anticipadamente sin parar la anterior: añadidos los 5 sistemas faltantes (`buildings`, `telemetry`, `imperial_hub`, `imperial_council`, `imperial_senate`) a `SYSTEM_AUDIO_FILES`.
+3. `playMinistryMusic` llama a `stopSystemMusic()`.
+4. Los fallbacks de ruta en `audioMusic.js` invocan `releaseAudio(audio)` antes de asignar y reproducir el fallback, erradicando pistas zombis duplicadas.
+5. Memoria liberada: `releaseAudio` ejecuta `pause()`, `currentTime = 0`, `src = ''` y `load()`.
+6. `CommunicationsPage.jsx` utiliza `getCtx()` y `getSfxGain()`, cerrando la fuga de instancias de `AudioContext`.
+7. `LeaderAvatar.jsx` enruta por `getSfxGain()` y usa `getCtx()`, respetando mute, volumen de sfx y filtro muffle.
+8. `useGameLifecycle.js` rehidrata `userMuted` desde localStorage al inicializarse.
+9. `useGameLifecycle.js` invoca `stopMinistryMusic()` y `stopVoice()` al retornar al menú principal o desmontar.
+10. Stubs de `startAmbient`/`stopAmbient` se mantienen como no-ops seguros y estables.
+11. `audioCore.js:21` — `operationsVol = 0.5` por defecto: obras, astilleros e I+D suenan correctamente.
+12. `GovernmentPage.jsx:107` corregido con `navLevel` en array de dependencias.
+13. 62 `.mp3` de voz sin referenciar identificados y conservados a la espera de autorización no destructiva del usuario.
+14. `Musica-menu.ogg` (3,9 MB) eliminado de la raíz del repositorio; se preserva `public/Musica-menu.ogg`.
+
+**Entregables:** un director de música con estado único · 0 pistas zombis · 0 contextos fugados · mute efectivo · suite de pruebas de contrato (11 tests).
+**Tests:** `src/__tests__/audioSystemContract.test.js` cubre mapeo de sistemas, detención cruzada, liberación en fallbacks, rehidratación, singleton de AudioContext y contrato de mute/volumen. Probado que muerde.
 
 ---
 

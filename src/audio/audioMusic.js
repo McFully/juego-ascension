@@ -1,11 +1,21 @@
-import inGameMusicUrl from '/Musica-menu.ogg?url';
-import mainMenuMusicUrl from '/main-menu.ogg?url';
+const inGameMusicUrl = './Musica-menu.ogg';
+const mainMenuMusicUrl = './main-menu.ogg';
 import { getCtx, muted, musicVol, BASE_MUSIC_MAX } from './audioCore.js';
 
 let currentBgMusic = null;
 let currentBgMusicType = null; // 'main_menu' | 'in_game'
 let currentMinistryMusic = null;
 let currentMinistryId = null;
+
+export function releaseAudio(audio) {
+  if (!audio) return;
+  try {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = '';
+    if (typeof audio.load === 'function') audio.load();
+  } catch (_) {}
+}
 
 export function getCurrentBgMusic() { return currentBgMusic; }
 export function getCurrentMinistryMusic() { return currentMinistryMusic; }
@@ -32,12 +42,9 @@ export function playTrack(type = 'main_menu') {
       return;
     }
 
-    // Si había otro track sonando, detenerlo
+    // Si había otro track sonando, detenerlo y liberarlo
     if (currentBgMusic) {
-      try {
-        currentBgMusic.pause();
-        currentBgMusic.currentTime = 0;
-      } catch (_) {}
+      releaseAudio(currentBgMusic);
       currentBgMusic = null;
     }
 
@@ -72,11 +79,11 @@ export function playInGameMusic() {
 }
 
 export function stopMenuMusic() {
-  try {
-    if (currentBgMusic && !currentBgMusic.paused) {
-      currentBgMusic.pause();
-    }
-  } catch (e) {}
+  if (currentBgMusic) {
+    releaseAudio(currentBgMusic);
+    currentBgMusic = null;
+    currentBgMusicType = null;
+  }
 }
 
 export const MINISTRY_AUDIO_FILES = {
@@ -102,9 +109,16 @@ export const MINISTRY_AUDIO_FILES = {
 };
 
 export function playMinistryMusic(ministryId) {
-  if (!ministryId) return;
+  stopSystemMusic();
+  if (!ministryId) {
+    stopMinistryMusic();
+    return;
+  }
   const fileName = MINISTRY_AUDIO_FILES[ministryId];
-  if (!fileName) return;
+  if (!fileName) {
+    stopMinistryMusic();
+    return;
+  }
 
   if (currentMinistryId === ministryId && currentMinistryMusic) {
     if (currentMinistryMusic.paused) {
@@ -135,12 +149,15 @@ export function playMinistryMusic(ministryId) {
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(err => {
-        const fallbackAudio = new Audio(`/audio/ministries/${fileName}`);
-        fallbackAudio.loop = true;
-        fallbackAudio.volume = targetVol;
-        fallbackAudio.muted = muted;
-        currentMinistryMusic = fallbackAudio;
-        fallbackAudio.play().catch(() => {});
+        if (currentMinistryMusic === audio) {
+          releaseAudio(audio);
+          const fallbackAudio = new Audio(`/audio/ministries/${fileName}`);
+          fallbackAudio.loop = true;
+          fallbackAudio.volume = targetVol;
+          fallbackAudio.muted = muted;
+          currentMinistryMusic = fallbackAudio;
+          fallbackAudio.play().catch(() => {});
+        }
       });
     }
   } catch (err) {
@@ -150,12 +167,9 @@ export function playMinistryMusic(ministryId) {
 
 export function stopMinistryMusic(resumeMenu = false) {
   if (currentMinistryMusic) {
-    try {
-      currentMinistryMusic.pause();
-      currentMinistryMusic.currentTime = 0;
-      currentMinistryMusic = null;
-      currentMinistryId = null;
-    } catch (_) {}
+    releaseAudio(currentMinistryMusic);
+    currentMinistryMusic = null;
+    currentMinistryId = null;
   }
   if (resumeMenu) {
     playInGameMusic();
@@ -181,7 +195,12 @@ export const SYSTEM_AUDIO_FILES = {
   missions: 'musica-sistema-misiones.ogg',
   moon: 'musica-sistema-luna.ogg',
   ascension: 'musica-sistema-ascension.ogg',
-  stats: 'musica-sistema-archivo-stats.ogg'
+  stats: 'musica-sistema-archivo-stats.ogg',
+  buildings: 'musica-sistema-planeta.ogg',
+  telemetry: 'musica-sistema-archivo-stats.ogg',
+  imperial_hub: 'musica-sistema-planeta.ogg',
+  imperial_council: 'musica-sistema-diplomacia.ogg',
+  imperial_senate: 'musica-sistema-diplomacia.ogg'
 };
 
 let currentSystemMusic = null;
@@ -190,9 +209,16 @@ let currentSystemId = null;
 export function getCurrentSystemMusic() { return currentSystemMusic; }
 
 export function playSystemMusic(systemId) {
-  if (!systemId) return;
+  stopMinistryMusic();
+  if (!systemId) {
+    stopSystemMusic();
+    return;
+  }
   const fileName = SYSTEM_AUDIO_FILES[systemId];
-  if (!fileName) return;
+  if (!fileName) {
+    stopSystemMusic();
+    return;
+  }
 
   if (currentSystemId === systemId && currentSystemMusic) {
     if (currentSystemMusic.paused) {
@@ -202,7 +228,6 @@ export function playSystemMusic(systemId) {
   }
 
   stopMenuMusic();
-  stopMinistryMusic();
   stopSystemMusic();
 
   try {
@@ -224,12 +249,15 @@ export function playSystemMusic(systemId) {
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(err => {
-        const fallbackAudio = new Audio(`/audio/systems/${fileName}`);
-        fallbackAudio.loop = true;
-        fallbackAudio.volume = targetVol;
-        fallbackAudio.muted = muted;
-        currentSystemMusic = fallbackAudio;
-        fallbackAudio.play().catch(() => {});
+        if (currentSystemMusic === audio) {
+          releaseAudio(audio);
+          const fallbackAudio = new Audio(`/audio/systems/${fileName}`);
+          fallbackAudio.loop = true;
+          fallbackAudio.volume = targetVol;
+          fallbackAudio.muted = muted;
+          currentSystemMusic = fallbackAudio;
+          fallbackAudio.play().catch(() => {});
+        }
       });
     }
   } catch (err) {
@@ -239,12 +267,9 @@ export function playSystemMusic(systemId) {
 
 export function stopSystemMusic(resumeMenu = false) {
   if (currentSystemMusic) {
-    try {
-      currentSystemMusic.pause();
-      currentSystemMusic.currentTime = 0;
-      currentSystemMusic = null;
-      currentSystemId = null;
-    } catch (_) {}
+    releaseAudio(currentSystemMusic);
+    currentSystemMusic = null;
+    currentSystemId = null;
   }
   if (resumeMenu) {
     playInGameMusic();

@@ -18,7 +18,7 @@ export let musicVol = savedAudio && typeof savedAudio.musicVolume === 'number' ?
 export let sfxVol = savedAudio && typeof savedAudio.sfxVolume === 'number' ? savedAudio.sfxVolume : 0.5;
 export let warVol = savedAudio && typeof savedAudio.warVolume === 'number' ? savedAudio.warVolume : 0.6;
 export let voiceVol = savedAudio && typeof savedAudio.voiceVolume === 'number' ? savedAudio.voiceVolume : 0.5;
-export let operationsVol = savedAudio && typeof savedAudio.operationsVolume === 'number' ? savedAudio.operationsVolume : 0.0;
+export let operationsVol = savedAudio && typeof savedAudio.operationsVolume === 'number' ? savedAudio.operationsVolume : 0.5;
 
 export function persistAudio() {
   try {

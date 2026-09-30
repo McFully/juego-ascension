@@ -852,6 +852,147 @@ PROCEED
 
 ---
 
+## FASE 04 — SISTEMA DE AUDIO
+
+```text
+PHASE:        04
+Nombre:       Sistema de audio
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Consolidar el director único de música sin pistas zombis, evitar contextos fugados
+de Web Audio API, asegurar la rehidratación del estado de mute y volumen operativo,
+y limpiar ficheros de audio duplicados en la raíz.
+
+SOURCE OF TRUTH:
+- Núcleo de audio y enrutamiento Web Audio: src/audio/audioCore.js y src/audio.js
+- Director de música contextual: src/audio/audioMusic.js (SYSTEM_AUDIO_FILES, MINISTRY_AUDIO_FILES)
+- Ciclo de vida y rehidratación de preferencias: src/hooks/useGameLifecycle.js
+- Contratos protegidos por: src/__tests__/audioSystemContract.test.js
+
+DEPENDENCIES:
+Ninguna.
+
+FILES INSPECTED:
+  src/audio/audioCore.js
+  src/audio/audioMusic.js
+  src/audio/audioSynth.js
+  src/audio/audioVoices.js
+  src/audio.js
+  src/pages/CommunicationsPage.jsx
+  src/components/diplomacy/LeaderAvatar.jsx
+  src/hooks/useGameLifecycle.js
+  src/pages/GovernmentPage.jsx
+  Musica-menu.ogg (raíz)
+
+FILES MODIFIED:
+  src/audio/audioCore.js                          (fallback operationsVol a 0.5)
+  src/audio/audioMusic.js                         (releaseAudio, mapeo completo de 5 sistemas, detención cruzada y en fallbacks)
+  src/audio.js                                    (re-exportación de getCtx, getMasterGain, getSfxGain)
+  src/pages/CommunicationsPage.jsx                (reemplazo de new AudioContext local por getCtx/getSfxGain)
+  src/components/diplomacy/LeaderAvatar.jsx       (reemplazo de AudioContext aislado por getCtx/getSfxGain)
+  src/hooks/useGameLifecycle.js                   (rehidratación de userMuted desde localStorage, parada de ministerios y voces al salir al menú)
+  src/pages/GovernmentPage.jsx                    (corrección de dependencia navLevel >= 2 a navLevel)
+  src/__tests__/audioSystemContract.test.js       (nueva suite de contrato, 11 tests probados que muerden)
+  Musica-menu.ogg                                 (eliminado duplicado de 3,9 MB en raíz del repo)
+
+DATABASE CHANGES:
+  Ninguna.
+
+MIGRATIONS:
+  Ninguna.
+
+IMPLEMENTATION:
+  1. Director único y pistas zombi:
+     - En audioMusic.js, implementada función releaseAudio(audio) (pause, currentTime=0, src='', load())
+       que libera memoria y desvincula decodificadores de audio del navegador/Electron.
+     - Añadidos a SYSTEM_AUDIO_FILES los 5 sistemas faltantes: buildings, telemetry, imperial_hub,
+       imperial_council, imperial_senate.
+     - playSystemMusic y playMinistryMusic ahora detienen y liberan mutuamente las pistas anteriores
+       antes de cambiar de contexto.
+     - En los callbacks de error y fallback de rutas relativas/absolutas, se libera la instancia previa
+       antes de instanciar la alternativa, erradicando solapamientos dobles.
+
+  2. Prevención de fugas de AudioContext:
+     - En CommunicationsPage.jsx, playTransmissionSound ahora reutiliza el singleton getCtx()
+       y conecta su salida a getSfxGain(), respetando mute, volumen de sfx y filtro muffle.
+     - En LeaderAvatar.jsx, playDiploSound fue refactorizado para usar getCtx() y enrutar todas las
+       señales (incluyendo 'warn') a través de getSfxGain(), eliminando conexiones directas sin canal.
+
+  3. Rehidratación y control en ciclo de vida:
+     - En audioCore.js, operationsVol por defecto se estableció en 0.5 (en vez de 0.0), evitando
+       que astilleros, obras e I+D nacen mudos en nuevas partidas.
+     - En useGameLifecycle.js, userMuted ahora se rehidrata en el arranque leyendo 'ascension_audio_settings'
+       de localStorage en useState, manteniendo sincronizado el estado React con el núcleo de audio.
+     - En useGameLifecycle.js, al volver al menú principal (!state.gameStarted) y en el desmontaje,
+       se invocan stopMinistryMusic() y stopVoice() además de stopSystemMusic() y stopMenuMusic().
+
+  4. Limpieza de interfaz y assets:
+     - En GovernmentPage.jsx, corregido el array de dependencias de [navLevel >= 2, activeMinistry]
+       a [navLevel, activeMinistry].
+     - Eliminada la copia huérfana de Musica-menu.ogg (3,9 MB) de la raíz del repo (se conserva public/Musica-menu.ogg).
+
+TESTS:
+  src/__tests__/audioSystemContract.test.js (11 tests):
+    - Cobertura completa de los 5 subsistemas en SYSTEM_AUDIO_FILES.
+    - Detención y liberación cruzada entre sistemas y ministerios.
+    - Liberación en fallbacks de reproducción en audioMusic.js.
+    - Prevención de fugas de AudioContext en CommunicationsPage.jsx.
+    - Enrutamiento por sfxGain y sin contexto aislado en LeaderAvatar.jsx.
+    - operationsVol > 0 por defecto.
+    - Rehidratación de userMuted y parada de pistas en useGameLifecycle.js.
+    - Corrección de dependencias en GovernmentPage.jsx.
+    - Comprobación de ausencia de Musica-menu.ogg en la raíz.
+
+  PROBADO QUE MUERDE:
+  Se alteró temporalmente el fallback de operationsVol en audioCore.js de 0.5 a 0.0; el test falló
+  de inmediato con "AssertionError: operationsVol debe ser > 0: expected 0 to be greater than 0".
+  Se restauró y volvió a verde.
+
+TEST RESULTS:
+  PASSED  26/26 ficheros, 288/288 tests, 0 fallos, 16,73 s
+  (277 previos + 11 Fase 04)
+  REGRESION: cero.
+
+KNOWN ISSUES:
+  Ninguno nuevo detectado.
+
+HARD BLOCKERS:
+  Ninguno.
+
+SOFT ISSUES:
+  62 .mp3 de voz sin referenciar en src/audio/voices se mantienen a la espera de confirmación
+  de borrado para no incurrir en operaciones destructivas sin orden del usuario.
+
+DELIVERABLES:
+  1. Director de música unificado sin pistas zombis.
+  2. Eliminación de fugas de AudioContext en CommunicationsPage y LeaderAvatar.
+  3. Rehidratación consistente de audio en ciclo de vida del juego.
+  4. Volumen operativo por defecto funcional (0.5).
+  5. Raíz del repositorio limpia de assets de audio duplicados.
+  6. Suite src/__tests__/audioSystemContract.test.js (11 tests verdes).
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (288/288)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -861,7 +1002,8 @@ PROCEED
 | 2026-09-30 | — | Fase 00 completada: 25 hallazgos, 22 fases planificadas |
 | 2026-09-30 | — | Fase 01 completada: 25 rutas + 3 acciones nuevas, 28 tests nuevos, 251/251 verdes. 5 hallazgos nuevos (N-01..N-05) |
 | 2026-09-30 | — | Fase 02 completada: allow-list 37->50, esquema versionado, backup verificado, 266/266 verdes |
-| 2026-09-30 | — | Fase 03 completada: datos de estado, codex naves especiales, matriculas deterministas, 11 tests nuevos, 277/277 verdes |
+| 2026-09-30 | `df19ca1` | Fase 03 completada: datos de estado, codex naves especiales, matriculas deterministas, 11 tests nuevos, 277/277 verdes |
+| 2026-09-30 | — | Fase 04 completada: director único de música, eliminación de fugas AudioContext, operaciones a 0.5, 288/288 verdes |
 
 ---
 

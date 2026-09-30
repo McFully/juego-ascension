@@ -5,6 +5,8 @@
  */
 import {
   getCtx,
+  getMasterGain,
+  getSfxGain,
   muted,
   masterVol,
   musicVol,
@@ -149,6 +151,9 @@ export function startAmbient() {}
 export function stopAmbient() {}
 
 export {
+  getCtx,
+  getMasterGain,
+  getSfxGain,
   sfx,
   playTrack,
   playMenuMusic,

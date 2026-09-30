@@ -104,7 +104,7 @@ export const GovernmentPage = ({
     } else {
       stopMinistryMusic(true);
     }
-  }, [navLevel >= 2, activeMinistry]);
+  }, [navLevel, activeMinistry]);
 
   React.useEffect(() => {
     return () => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { playVoice } from '../audio.js';
+import { playVoice, getCtx, getSfxGain } from '../audio.js';
 import { GameCarousel } from '../components/ui/GameCarousel.jsx';
 import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { useNavigation } from '../components/navigation/NavigationContext.jsx';
@@ -22,18 +22,18 @@ const FACTIONS_LORE = {
 
 const playTransmissionSound = () => {
   try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
+    const ctx = getCtx();
+    if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    const targetNode = getSfxGain() || ctx.destination;
     osc.type = 'sine';
     osc.frequency.setValueAtTime(1200, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
     gain.gain.setValueAtTime(0.04, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(targetNode);
     osc.start();
     osc.stop(ctx.currentTime + 0.16);
   } catch (_) {}

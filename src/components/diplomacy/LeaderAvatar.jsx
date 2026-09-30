@@ -1,23 +1,16 @@
 import React from "react";
+import { getCtx, getSfxGain } from "../../audio.js";
 
-let _diploCtx = null;
-export const getDiploCtx = () => {
-  if (!_diploCtx || _diploCtx.state === "closed") {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return null;
-    _diploCtx = new AudioContextClass();
-  }
-  if (_diploCtx.state === "suspended") _diploCtx.resume();
-  return _diploCtx;
-};
+export const getDiploCtx = () => getCtx();
 
 export const playDiploSound = (type) => {
   try {
-    const ctx = getDiploCtx();
+    const ctx = getCtx();
     if (!ctx) return;
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0.12, ctx.currentTime);
-    masterGain.connect(ctx.destination);
+    const targetNode = getSfxGain() || ctx.destination;
+    const diploSfxGain = ctx.createGain();
+    diploSfxGain.gain.setValueAtTime(0.12, ctx.currentTime);
+    diploSfxGain.connect(targetNode);
 
     if (type === "connect") {
       const osc = ctx.createOscillator();
@@ -28,7 +21,7 @@ export const playDiploSound = (type) => {
       filter.type = "lowpass";
       filter.frequency.setValueAtTime(1000, ctx.currentTime);
       osc.connect(filter);
-      filter.connect(masterGain);
+      filter.connect(diploSfxGain);
       osc.start();
       osc.stop(ctx.currentTime + 0.15);
       setTimeout(() => {
@@ -37,7 +30,7 @@ export const playDiploSound = (type) => {
           osc2.type = "sine";
           osc2.frequency.setValueAtTime(650, ctx.currentTime);
           osc2.frequency.exponentialRampToValueAtTime(1300, ctx.currentTime + 0.1);
-          osc2.connect(masterGain);
+          osc2.connect(diploSfxGain);
           osc2.start();
           osc2.stop(ctx.currentTime + 0.1);
         } catch (_) {}
@@ -47,7 +40,7 @@ export const playDiploSound = (type) => {
       osc.type = "triangle";
       osc.frequency.setValueAtTime(800, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.05);
-      osc.connect(masterGain);
+      osc.connect(diploSfxGain);
       osc.start();
       osc.stop(ctx.currentTime + 0.05);
     } else if (type === "success") {
@@ -60,7 +53,7 @@ export const playDiploSound = (type) => {
         gainNode.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.05);
         gainNode.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + i * 0.05 + 0.2);
         osc.connect(gainNode);
-        gainNode.connect(masterGain);
+        gainNode.connect(diploSfxGain);
         osc.start(ctx.currentTime + i * 0.05);
         osc.stop(ctx.currentTime + i * 0.05 + 0.2);
       });
@@ -77,7 +70,7 @@ export const playDiploSound = (type) => {
       gainNode.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.3);
       osc.connect(filter);
       filter.connect(gainNode);
-      gainNode.connect(ctx.destination);
+      gainNode.connect(diploSfxGain);
       osc.start();
       osc.stop(ctx.currentTime + 0.3);
     }

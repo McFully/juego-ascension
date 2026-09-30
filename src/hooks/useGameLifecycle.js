@@ -5,7 +5,8 @@ import { setSessionId, clearSessionId, withSessionIdentity } from "../utils/sess
 import {
   sfx, startAmbient, stopAmbient, setMuted,
   playMenuMusic, playInGameMusic, stopMenuMusic,
-  playSystemMusic, stopSystemMusic
+  stopMinistryMusic, playSystemMusic, stopSystemMusic,
+  stopVoice
 } from "../audio.js";
 
 export function useGameLifecycle({
@@ -20,7 +21,15 @@ export function useGameLifecycle({
   const [engineInfo, setEngineInfo] = useState("Detectando...");
   const [availableSaves, setAvailableSaves] = useState([]);
   const [lastSaveName, setLastSaveName] = useState("");
-  const [userMuted, setUserMuted] = useState(false);
+  const [userMuted, setUserMuted] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ascension_audio_settings');
+        if (raw) return !!JSON.parse(raw).muted;
+      }
+    } catch (_) {}
+    return false;
+  });
   const [lastSave, setLastSave] = useState(Date.now());
 
   const soundEnabled = true;
@@ -413,6 +422,8 @@ export function useGameLifecycle({
       playMenuMusic();
       stopAmbient();
       stopSystemMusic();
+      stopMinistryMusic();
+      stopVoice();
     }
     
     return () => {
@@ -421,6 +432,8 @@ export function useGameLifecycle({
       stopAmbient();
       stopMenuMusic();
       stopSystemMusic();
+      stopMinistryMusic();
+      stopVoice();
     };
   }, [state.gameStarted, effectiveSoundEnabled]);
 
