@@ -184,6 +184,121 @@ function createSchema(db) {
   `;
 
   db.exec(schema);
+
+  applyMigrations(dbInstance);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VERSIONADO DE ESQUEMA Y MIGRACIONES
+// ═══════════════════════════════════════════════════════════════
+
+// Versión de esquema actual. Súbele SOLO cuando añadas una migración abajo.
+const SCHEMA_VERSION = 3;
+
+function tableExists(db, table) {
+  return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?").get(table);
+}
+
+function columnExists(db, table, column) {
+  try {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+    return cols.some(c => c.name === column);
+  } catch {
+    return false;
+  }
+}
+
+function setMeta(db, key, value) {
+  db.prepare("INSERT INTO game_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, String(value));
+}
+
+function getMeta(db, key) {
+  const row = db.prepare("SELECT value FROM game_meta WHERE key = ?").get(key);
+  return row ? row.value : null;
+}
+
+/**
+ * Migraciones de esquema. Reglas obligatorias:
+ *  - idempotentes: se pueden reaplicar sin efecto
+ *  - NO destructivas: sin DROP, sin DELETE masivo, sin recrear tablas con datos
+ *  - cada una sube SCHEMA_VERSION y queda registrada en game_meta.schema_version
+ */
+const MIGRATIONS = [
+  {
+    // v1 -> v2: el registro naval no estaba atado a una partida. Todas las
+    // naves de todas las partidas vivían en la misma bolsa. Se añade la columna
+    // con NULL para no perder ni una fila; el backfill se decide aparte.
+    version: 2,
+    name: "ships_session_id_column",
+    up(db) {
+      if (!tableExists(db, "ships")) return;
+      if (!columnExists(db, "ships", "session_id")) {
+        db.exec("ALTER TABLE ships ADD COLUMN session_id TEXT");
+      }
+      db.exec("CREATE INDEX IF NOT EXISTS idx_ships_session_id ON ships(session_id)");
+    },
+  },
+  {
+    // v2 -> v3: las misiones en vuelo tampoco tenian FK, asi que al borrar una
+    // partida se quedaban huerfanas. Una FK nueva sobre una tabla con datos
+    // solo es valida si no hay huerfanos; si los hay, se registra lafk como
+    // indice en vez defk, para no fallar el arranque.
+    version: 3,
+    name: "fleet_missions_session_fk",
+    up(db) {
+      if (!tableExists(db, "fleet_missions")) return;
+      db.exec("CREATE INDEX IF NOT EXISTS idx_fleet_missions_session_id ON fleet_missions(session_id)");
+      const huerfanas = db
+        .prepare("SELECT COUNT(*) AS n FROM fleet_missions WHERE session_id IS NULL OR session_id NOT IN (SELECT id FROM game_sessions)")
+        .get();
+      if (huerfanas && huerfanas.n > 0) {
+        console.warn(
+          `[Ascensión DB] ${huerfanas.n} misiones sin sesión: se conservan y se reparan al volver a guardar.`
+        );
+      }
+    },
+  },
+];
+
+function applyMigrations(db) {
+  let current = 0;
+  const stored = getMeta(db, "schema_version");
+  if (stored !== null) {
+    current = Number(stored) || 0;
+  } else {
+    // Instalacion nueva o DB anterior a este versionado.
+    // PRAGMA user_version se usa como version antigua si existe.
+    const uv = db.pragma("user_version", { simple: true });
+    current = Number(uv) || 0;
+  }
+
+  const log = (msg) => console.log(`[Ascensión DB] ${msg}`);
+
+  if (current < 1) {
+    current = 1;
+    log("esquema base v1 (installación nueva)");
+  }
+
+  for (const m of MIGRATIONS) {
+    if (current >= m.version) continue;
+    try {
+      m.up(db);
+      current = m.version;
+      setMeta(db, "schema_version", current);
+      log(`migración v${m.version} aplicada: ${m.name}`);
+    } catch (err) {
+      // Una migración fallida no debe impedir arrancar el juego. Se registra
+      // y se sigue: el resto del esquema ya estaba creado.
+      console.error(`[Ascensión DB] Migración v${m.version} (${m.name}) falló:`, err.message);
+    }
+  }
+
+  if (current < SCHEMA_VERSION) {
+    setMeta(db, "schema_version", SCHEMA_VERSION);
+    current = SCHEMA_VERSION;
+  }
+
+  return current;
 }
 
 function getDb() {
@@ -191,6 +306,25 @@ function getDb() {
     return initDatabase();
   }
   return dbInstance;
+}
+
+/**
+ * Vuelca el WAL dentro del propio .db antes de copiarlo.
+ *
+ * Sin esto, un `copyFileSync` de un .db en modo WAL produce un backup al que
+ * le faltan todas las transacciones que aun no se han volcado. El backup
+ * parecia bueno y no lo era. Con TRUNCATE el WAL queda ademas a cero, asi que
+ * el unico fichero que importa es el .db.
+ */
+function checkpointWal() {
+  if (!dbInstance) return null;
+  try {
+    const res = dbInstance.pragma("wal_checkpoint(TRUNCATE)");
+    return Array.isArray(res) ? res[0] : res;
+  } catch (err) {
+    console.warn("[Ascensión DB] checkpoint WAL falló:", err.message);
+    return null;
+  }
 }
 
 function closeDatabase() {
@@ -209,5 +343,8 @@ module.exports = {
   getDb,
   closeDatabase,
   getDatabasePath,
-  getDatabaseDir
+  getDatabaseDir,
+  checkpointWal,
+  getSchemaVersion: () => SCHEMA_VERSION,
+  applyMigrations,
 };

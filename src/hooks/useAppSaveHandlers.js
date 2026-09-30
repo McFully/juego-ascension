@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { stopAmbient } from "../audio.js";
+import { setSessionId, withSessionIdentity } from "../utils/sessionIdentity.js";
 
 export function useAppSaveHandlers({
   state,
@@ -103,13 +104,14 @@ export function useAppSaveHandlers({
     }
 
     const snap = {
-      ...currentSave,
+      ...withSessionIdentity(currentSave),
       playerName: name,
       version: 4,
       gameStarted: true
     };
     const result = await window.electronAPI.saveGameNamed(snap);
     if (result.success) {
+      if (result.sessionId) setSessionId(result.sessionId);
       const list = await window.electronAPI.listSaves();
       if (list.success) {
         setAvailableSaves(list.saves || []);

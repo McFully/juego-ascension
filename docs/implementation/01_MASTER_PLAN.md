@@ -84,9 +84,15 @@ FASE 21  Verificación final ← requiere 20
 
 ---
 
-### FASE 02 — PERSISTENCIA Y ESQUEMA
+### FASE 02 — PERSISTENCIA Y ESQUEMA ✅ COMPLETE CON RESERVA
 
 **Objetivo:** que lo que se muestra y lo que se usa sobrevivan a cerrar y abrir, y que el esquema pueda evolucionar sin romper bases existentes.
+
+**Entregado:** allow-list 37 → 50 claves protegida por test · identidad de sesión estable entre guardados · import/export que ya no destruye la partida origen · versionado de esquema + 2 migraciones idempotentes · backup con `wal_checkpoint` real y sin sidecars huérfanos · validación también al cargar · borrado de misiones y naves por sesión · CSP + window open + will-navigate + slug saneado · IAs deterministas · 15 tests de contrato probados que muerden · 266/266 verdes, cero regresiones.
+
+**Reserva:** las migraciones están escritas y verificadas por contrato, pero **no se han ejecutado contra un `universe.db` real**, porque el usuario pidió no tocar su base. Se aplicarán solas al abrir el juego.
+
+**Desbloquea:** 15.
 
 **Trabajo:**
 1. **Allow-list (`gameRepository.cjs:19-29`):** añadir `currentPlanetId`, `patrols`, `tacticalEventLog`, `lastTick`, `credits`, `exchangeOrders`, `daoShares`, `playerDaoShares`, `daoDividendPool`, `exchangeProjects`, `victory`, `gameOver`, `showTutorial`, `tutorialCompleted`, `worldAlertLog`, `triggeredNarrativeEvents`, `tradeRoutes` (verificar que ya está). Preferir **deny-list explícita** sobre allow-list para que ninguna clave nueva se pierda en silencio.

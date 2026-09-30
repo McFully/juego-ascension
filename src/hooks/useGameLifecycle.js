@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { processColonyGovernor } from "../reducers/colonyGovernor.js";
 import { auditGameState, logTelemetry } from "../utils/telemetry.js";
+import { setSessionId, clearSessionId, withSessionIdentity } from "../utils/sessionIdentity.js";
 import {
   sfx, startAmbient, stopAmbient, setMuted,
   playMenuMusic, playInGameMusic, stopMenuMusic,
@@ -43,6 +44,12 @@ export function useGameLifecycle({
   const saveRef = useRef(state);
   if (state && (state.gameStarted || (state.planets && state.planets.length > 0))) {
     saveRef.current = state;
+  }
+
+  // Al volver al menu la sesion deja de existir: si no se limpia, una partida
+  // nueva heredaria el id de la anterior y la machacaria al primer guardado.
+  if (state && !state.gameStarted) {
+    clearSessionId();
   }
 
   const resettingRef = useRef(false);
@@ -251,12 +258,15 @@ export function useGameLifecycle({
 
     const interval = setInterval(() => {
       if (resettingRef.current) return;
-      const snap = saveRef.current;
+      const snap = withSessionIdentity(saveRef.current);
       const missions = (snap.fleetMissions || []).length;
       const qLens = `b${(snap.buildQueue||[]).length}s${(snap.shipQueue||[]).length}r${(snap.researchQueue||[]).length}`;
       console.log(`[Ascensión] Auto-save start | missions=${missions} queues=${qLens}`);
       window.electronAPI.saveGameNamed(snap).then(r => {
         if (r.success) {
+          // Guardar el id devuelto es lo que evita que el siguiente
+          // auto-guardado abra una sesión nueva.
+          if (r.sessionId) setSessionId(r.sessionId);
           setLastSave(Date.now());
           console.log("[Ascensión] Auto-save ok");
         } else if (window.electronAPI.logError) {
@@ -279,11 +289,12 @@ export function useGameLifecycle({
     const handler = () => {
       if (resettingRef.current) return;
       if (window.electronAPI) {
-        const snap = saveRef.current;
+        const snap = withSessionIdentity(saveRef.current);
         const missions = (snap.fleetMissions || []).length;
         console.log(`[Ascensión] Save-on-unload | missions=${missions}`);
         try {
-          window.electronAPI.saveGameNamedSync(snap);
+          const r = window.electronAPI.saveGameNamedSync(snap);
+          if (r && r.success && r.sessionId) setSessionId(r.sessionId);
         } catch (e) {
           if (window.electronAPI.logError) {
             window.electronAPI.logError(`Save-on-unload error: ${e?.message || e}`, e?.stack || "", `missions=${missions}`);

@@ -8,14 +8,17 @@ const {
   deleteGameSession,
   renameGameSession,
   exportSessionToJson,
+  toExportPayload,
   importSessionFromJson,
   sessionExists,
 } = require("../database/gameRepository.cjs");
 const {
   createTimestampedBackup,
   getLatestBackup,
+  findOrphanSidecars,
+  pruneOrphanSidecars,
 } = require("./backupManager.cjs");
-const { getDatabasePath, getDb } = require("../database/dbManager.cjs");
+const { getDatabasePath, getDb, checkpointWal } = require("../database/dbManager.cjs");
 
 function slugify(name) {
   return String(name)
@@ -202,8 +205,14 @@ function registerSaveIpc(getMainWindow) {
       if (!data) {
         return { success: false, error: "Partida no encontrada" };
       }
+      // Validar tambien al cargar. Antes solo se validaba al guardar, asi que
+      // un save corrupto entraba entero en el estado del juego.
+      const validation = validateSaveData(data);
+      if (!validation.valid) {
+        return { success: false, error: `Partida corrupta: ${validation.error}` };
+      }
       const corrected = correctResearchLevels(data);
-      return { success: true, data: corrected };
+      return { success: true, data: corrected, slug: safeSlug, sessionId: data._sessionId };
     } catch (err) {
       return { success: false, error: err.message };
     }
@@ -237,9 +246,9 @@ function registerSaveIpc(getMainWindow) {
             counter++;
           }
 
-          createTimestampedBackup(getDatabasePath(), logToFile);
-          saveFullGameState(finalSlug, data);
-          return { success: true, slug: finalSlug };
+          createTimestampedBackup(getDatabasePath(), logToFile, checkpointWal);
+          const saved = saveFullGameState(finalSlug, data);
+          return { success: true, slug: finalSlug, sessionId: saved.sessionId };
         }
       }
 
@@ -253,10 +262,10 @@ function registerSaveIpc(getMainWindow) {
       }
 
       // Backup de la DB antes de sobrescribir
-      createTimestampedBackup(getDatabasePath(), logToFile);
+      createTimestampedBackup(getDatabasePath(), logToFile, checkpointWal);
 
-      saveFullGameState(finalSlug, data);
-      return { success: true, slug: finalSlug };
+      const saved = saveFullGameState(finalSlug, data);
+      return { success: true, slug: finalSlug, sessionId: saved.sessionId };
     } catch (err) {
       return { success: false, error: err.message };
     }
@@ -290,9 +299,9 @@ function registerSaveIpc(getMainWindow) {
             counter++;
           }
 
-          createTimestampedBackup(getDatabasePath(), logToFile);
-          saveFullGameState(finalSlug, data);
-          event.returnValue = { success: true, slug: finalSlug };
+          createTimestampedBackup(getDatabasePath(), logToFile, checkpointWal);
+          const saved = saveFullGameState(finalSlug, data);
+          event.returnValue = { success: true, slug: finalSlug, sessionId: saved.sessionId };
           return;
         }
       }
@@ -306,9 +315,9 @@ function registerSaveIpc(getMainWindow) {
         counter++;
       }
 
-      createTimestampedBackup(getDatabasePath(), logToFile);
-      saveFullGameState(finalSlug, data);
-      event.returnValue = { success: true, slug: finalSlug };
+      createTimestampedBackup(getDatabasePath(), logToFile, checkpointWal);
+      const saved = saveFullGameState(finalSlug, data);
+      event.returnValue = { success: true, slug: finalSlug, sessionId: saved.sessionId };
     } catch (err) {
       event.returnValue = { success: false, error: err.message };
     }
@@ -357,7 +366,10 @@ function registerSaveIpc(getMainWindow) {
         filters: [{ name: "Ascensión Save", extensions: ["json"] }],
       });
       if (result.canceled) return { success: false, canceled: true };
-      fs.writeFileSync(result.filePath, JSON.stringify(data, null, 2), "utf-8");
+      // toExportPayload quita `_sessionId`. Sin esto, el JSON exportado lleva
+      // la identidad de la sesion original y al importarlo machaca la partida
+      // de la que se exporto.
+      fs.writeFileSync(result.filePath, JSON.stringify(toExportPayload(data), null, 2), "utf-8");
       return { success: true, path: result.filePath };
     } catch (err) {
       return { success: false, error: err.message };
@@ -397,7 +409,32 @@ function registerSaveIpc(getMainWindow) {
 
       // Recargar la partida importada para devolver al renderer
       const imported = loadFullGameState(finalSlug);
-      return { success: true, data: imported, slug: finalSlug };
+      return { success: true, data: imported, slug: finalSlug, sessionId: imported?._sessionId };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // BACKUPS: INSPECCIONAR Y PODAR SIDECARS HUERFANOS
+  //
+  // Son los <backup>.bak-wal que creo una version anterior del backup manager:
+  // se copiaba el WAL a un lado que nadie sabia leer ni borrar. Solo se ofrecen
+  // como accion explicita; nada se borra en el arranque.
+  // ═══════════════════════════════════════════════════════════════
+  ipcMain.handle("inspect-backup-sidecars", async () => {
+    try {
+      const info = findOrphanSidecars(getDatabasePath(), logToFile);
+      return { success: true, count: info.count, bytes: info.bytes };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle("prune-backup-sidecars", async () => {
+    try {
+      const res = pruneOrphanSidecars(getDatabasePath(), logToFile);
+      return { success: true, ...res };
     } catch (err) {
       return { success: false, error: err.message };
     }

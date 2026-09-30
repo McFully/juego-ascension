@@ -10,19 +10,24 @@ function generateRegistryCode(faction = "HUM", planetIndex = 1, chassisId = "LF"
 }
 
 // Inserción por lotes atómica y ultrarrápida en SQLite para cientos o miles de naves
-function insertShipsBatch(ships = []) {
+function insertShipsBatch(ships = [], sessionId = null) {
   if (!Array.isArray(ships) || ships.length === 0) return { inserted: 0 };
   const db = getDb();
 
+  // Sin esto, el registro naval es una bolsa global: las naves de la partida
+  // nueva se mezclaban con las de la anterior y `delete` de una sesión no las
+  // tocaba. El id de sesión lo aporta quien inserta.
+  const sid = sessionId || ships.find(s => s && s.sessionId)?.sessionId || null;
+
   const insertStmt = db.prepare(`
     INSERT OR REPLACE INTO ships (
-      id, registry_code, custom_name, chassis_id, class_category,
+      id, session_id, registry_code, custom_name, chassis_id, class_category,
       origin_planet_id, origin_tick, owner_id, controller_id,
       status, current_planet_id, current_fleet_id,
       hull_percent, veterancy_level, kills_count, battles_survived,
       tech_generation, metadata_json
     ) VALUES (
-      @id, @registry_code, @custom_name, @chassis_id, @class_category,
+      @id, @session_id, @registry_code, @custom_name, @chassis_id, @class_category,
       @origin_planet_id, @origin_tick, @owner_id, @controller_id,
       @status, @current_planet_id, @current_fleet_id,
       @hull_percent, @veterancy_level, @kills_count, @battles_survived,
@@ -34,6 +39,7 @@ function insertShipsBatch(ships = []) {
     for (const ship of rows) {
       insertStmt.run({
         id: ship.id,
+        session_id: ship.sessionId || ship.session_id || sid,
         registry_code: ship.registryCode || ship.registry_code,
         custom_name: ship.customName || ship.custom_name || null,
         chassis_id: ship.chassisId || ship.chassis_id,

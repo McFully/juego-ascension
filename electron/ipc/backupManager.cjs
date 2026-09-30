@@ -23,6 +23,8 @@ function cleanupOldBackups(filePath, keep = 5, logToFile = () => {}) {
     for (const b of toDelete) {
       try {
         fs.unlinkSync(b.path);
+        // El sidecar de un .bak podado tambien debe irse.
+        try { fs.unlinkSync(b.path + "-wal"); } catch { /* no existia */ }
         const logMsg = `[Ascensión] Old backup pruned: ${b.name}`;
         console.log(logMsg);
         logToFile(logMsg);
@@ -35,22 +37,21 @@ function cleanupOldBackups(filePath, keep = 5, logToFile = () => {}) {
   }
 }
 
-function createTimestampedBackup(filePath, logToFile = () => {}) {
+function createTimestampedBackup(filePath, logToFile = () => {}, beforeCopy = null) {
   try {
     if (!fs.existsSync(filePath)) return null;
 
-    // WAL checkpoint para consistencia del .db antes de copiar
     const ext = path.extname(filePath).toLowerCase();
-    if (ext === ".db") {
+
+    // Volcar el WAL ANTES de copiar. Copiar un .db en modo WAL sin checkpoint
+    // deja fuera del backup todas las transacciones aun no volcadas. Ademas
+    // evita tener que copiar sidecars: con TRUNCATE el WAL queda a cero.
+    if (ext === ".db" && typeof beforeCopy === "function") {
       try {
-        // Intentar checkpoint WAL si es SQLite
-        const walPath = filePath + "-wal";
-        const shmPath = filePath + "-shm";
-        // El checkpoint se hace a nivel de motor, aquí solo nos aseguramos
-        // de copiar también los archivos WAL/SHM si existen
-        const extraFiles = [];
-        if (fs.existsSync(walPath)) extraFiles.push(walPath);
-        if (fs.existsSync(shmPath)) extraFiles.push(shmPath);
+        const res = beforeCopy();
+        if (res) {
+          logToFile(`[Ascensión] WAL checkpoint: ${JSON.stringify(res)}`);
+        }
       } catch (walErr) {
         logToFile(`[Ascensión] WAL checkpoint warning: ${walErr.message}`);
       }
@@ -64,11 +65,16 @@ function createTimestampedBackup(filePath, logToFile = () => {}) {
 
     fs.copyFileSync(filePath, backupPath);
 
-    // Copiar archivos WAL/SHM asociados si existen (para backups de .db)
-    if (ext === ".db") {
-      const walPath = filePath + "-wal";
-      if (fs.existsSync(walPath)) {
-        fs.copyFileSync(walPath, backupPath + "-wal");
+    // Sidecars huerfanos de backups antiguos (creados por la version previa,
+    // que copiaba el WAL a <backup>.bak-wal y nunca los borraba). Se eliminan
+    // junto con su .bak para no acumular GB sin uso.
+    const sidecar = backupPath + "-wal";
+    if (fs.existsSync(sidecar)) {
+      try {
+        fs.unlinkSync(sidecar);
+        logToFile(`[Ascensión] Sidecar huérfano eliminado: ${path.basename(sidecar)}`);
+      } catch (e) {
+        logToFile(`[Ascensión] No se pudo borrar el sidecar: ${e.message}`);
       }
     }
 
@@ -93,7 +99,7 @@ function listRecentBackups(filePath, logToFile = () => {}) {
     if (!fs.existsSync(dir)) return [];
 
     const files = fs.readdirSync(dir)
-      .filter(f => f.startsWith(base + "_") && f.endsWith(".bak") && !f.endsWith("-wal"))
+      .filter(f => f.startsWith(base + "_") && f.endsWith(".bak"))
       .map(f => {
         const full = path.join(dir, f);
         try {
@@ -118,9 +124,54 @@ function getLatestBackup(filePath, logToFile = () => {}) {
   return backups.length > 0 ? backups[0] : null;
 }
 
+/**
+ * Localiza los sidecars `<backup>.bak-wal` que ninguna version del juego sabe
+ * leer: se crean al copiar el WAL y jamas se aplican. Solo informa.
+ */
+function findOrphanSidecars(filePath, logToFile = () => {}) {
+  const dir = getBackupDir(filePath);
+  const base = getBackupBase(filePath);
+  if (!fs.existsSync(dir)) return { count: 0, bytes: 0, files: [] };
+  const files = [];
+  let bytes = 0;
+  for (const f of fs.readdirSync(dir)) {
+    if (f.startsWith(base + "_") && f.endsWith(".bak-wal")) {
+      const full = path.join(dir, f);
+      const st = fs.statSync(full);
+      bytes += st.size;
+      files.push({ name: f, path: full, bytes: st.size });
+    }
+  }
+  return { count: files.length, bytes, files };
+}
+
+/**
+ * BORRA los sidecars huerfanos. Es destructivo, asi que NO se llama en el
+ * arranque: se expone como accion explicita (ver canal `prune-backup-sidecars`)
+ * para que el jugador la ejecute a proposito y vea antes cuanto se va a liberar.
+ */
+function pruneOrphanSidecars(filePath, logToFile = () => {}) {
+  const { files, bytes } = findOrphanSidecars(filePath, logToFile);
+  let freed = 0;
+  for (const f of files) {
+    try {
+      fs.unlinkSync(f.path);
+      freed += f.bytes;
+    } catch (e) {
+      logToFile(`[Ascensión] No se pudo borrar ${f.name}: ${e.message}`);
+    }
+  }
+  const msg = `[Ascensión] Sidecars huérfanos eliminados: ${files.length} ficheros, ${(freed / 1048576).toFixed(1)} MB liberados`;
+  console.log(msg);
+  logToFile(msg);
+  return { removed: files.length, bytes: freed, totalBytes: bytes };
+}
+
 module.exports = {
   createTimestampedBackup,
   listRecentBackups,
   cleanupOldBackups,
   getLatestBackup,
+  findOrphanSidecars,
+  pruneOrphanSidecars,
 };

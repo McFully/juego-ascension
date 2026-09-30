@@ -108,13 +108,32 @@ function createWindow() {
       }
 
       const data = fs.readFileSync(filePath);
-      return new Response(data, {
-        headers: {
-          "Content-Type": contentType,
-          "Content-Length": fileSize.toString(),
-          "Accept-Ranges": "bytes"
-        }
-      });
+      const headers = {
+        "Content-Type": contentType,
+        "Content-Length": fileSize.toString(),
+        "Accept-Ranges": "bytes"
+      };
+      // La CSP va como cabecera y no como <meta> en index.html a proposito:
+      // Vite inyecta scripts en linea en desarrollo, y una meta los bloquearia
+      // en `npm run dev`. En la app empaquetada todo se sirve por aqui, asi
+      // que la politica estricta si aplica.
+      if (ext === ".html") {
+        headers["Content-Security-Policy"] = [
+          "default-src 'self'",
+          "script-src 'self'",
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' data: blob:",
+          "media-src 'self' data: blob:",
+          "font-src 'self' data:",
+          "worker-src 'self' blob:",
+          "connect-src 'self'",
+          "object-src 'none'",
+          "frame-src 'none'",
+          "base-uri 'none'",
+          "form-action 'none'",
+        ].join("; ");
+      }
+      return new Response(data, { headers });
     } catch (e) {
       return new Response("Not Found", { status: 404 });
     }
@@ -140,6 +159,13 @@ function createWindow() {
       sandbox: true,
       autoplayPolicy: "no-user-gesture-required",
     },
+  });
+
+  // El renderer no debe poder abrir ventanas ni navegar fuera del juego.
+  // Sin esto, un window.open o un location= desde la UI se salen del juego.
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  mainWindow.webContents.on("will-navigate", (event) => {
+    event.preventDefault();
   });
 
   Menu.setApplicationMenu(null);
@@ -329,7 +355,13 @@ ipcMain.handle("db-scrap-ships", async (_event, payload) => {
 
 ipcMain.handle("db-migrate-json", async (_event, saveSlug) => {
   try {
-    const slug = saveSlug || "partida";
+    const slug = String(saveSlug || "partida");
+    // El slug se interpola en una ruta de disco. Sin esta comprobacion,
+    // "../../victima" escribia "<victima>.legacy_v3.bak" fuera de la carpeta
+    // de partidas. Mismo criterio que assertSafeSlug del resto de canales.
+    if (!/^[a-z0-9-]{1,80}$/.test(slug) || slug.includes("..")) {
+      return { success: false, error: "Slug de save no válido" };
+    }
     const savesDir = path.join(app.getPath("userData"), "saves");
     const jsonPath = path.join(savesDir, `${slug}.json`);
     return migrateJsonToSqlite(jsonPath, slug);

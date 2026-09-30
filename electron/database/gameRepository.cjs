@@ -16,16 +16,41 @@ function now() {
 
 // Claves del state global que NO se guardan como tablas separadas
 // (se serializan dentro de global_state_json)
+//
+// REGLA: esta lista es la fuente de verdad de lo que sobrevive a guardar.
+// Cualquier clave viva que se escriba en un reducer y NO esté aquí se pierde
+// al guardar. El test electron/persistenceContract.test.cjs falla si eso pasa.
+//
+// Orden: estado de sesion, progresion, mundo, economia, militar, exterior.
 const GLOBAL_STATE_KEYS = [
-  "research", "stats", "governmentPolicies", "debrisField",
-  "achievements", "fleetPresets", "activeEvent", "influence",
-  "reputation", "galacticCouncil", "federations", "federalFleet",
-  "diplomaticHistory", "activeCrises", "ministries", "clans",
-  "galacticEvents", "tradeRoutes", "leaders", "relics",
-  "adventureLogs", "eventLog", "totalAICount", "blueprints",
-  "combatLog", "spyReports", "events", "notifications",
-  "activeEvents", "tacticalEvents", "activeMissions", "completedMissions",
-  "imperialCouncil", "chatMessages", "sectors", "avatarUrl",
+  // Sesion y navegacion
+  "currentPlanetId", "lastTick", "lastSave", "gameMode",
+
+  // Progresion
+  "research", "stats", "achievements", "completedMissions", "activeMissions",
+  "victory", "gameOver", "showTutorial", "tutorialCompleted",
+
+  // Mundo y gobierno
+  "governmentPolicies", "ministries", "influence", "reputation",
+  "reputationHistory", "sectors", "leaders", "clans", "chatHistory",
+  "chatMessages", "avatarUrl",
+
+  // Economia imperial
+  "credits", "exchangeOrders", "daoShares", "playerDaoShares",
+  "daoDividendPool", "exchangeProjects", "debrisField", "relics",
+
+  // Militar
+  "fleetPresets", "patrols", "blueprints", "combatLog", "spyReports",
+  "tradeRoutes", "federalFleet", "diplomaticHistory",
+
+  // Eventos y avisos
+  "events", "notifications", "eventLog", "tacticalEvents", "tacticalEventLog",
+  "activeEvents", "activeEvent", "activeFirstContact", "activeTransmission",
+  "activeCrises", "galacticEvents", "galacticCouncil", "federations",
+  "imperialCouncil", "imperialCouncilUnlocked", "finalCrisis",
+  "activeUltimatum", "worldAlertLog", "triggeredNarrativeEvents",
+  "ministryNoopWarnings", "adventureLogs", "totalAICount",
+  "emperorAutoGovernance", "emperorDirectiveMode",
 ];
 
 // Claves de colas de producción que se guardan en production_queues
@@ -142,9 +167,11 @@ function saveFullGameState(slug, state) {
     }
 
     // 6. Fleet missions
+    // El borrado va FUERA del condicional: si el jugador lanza su ultima
+    // mision y guarda, las misiones viejas tienen que desaparecer. Dentro,
+    // una lista vacia dejaba las anteriores en la tabla para siempre.
+    db.prepare("DELETE FROM fleet_missions WHERE session_id = ?").run(sid);
     if (Array.isArray(state.fleetMissions) && state.fleetMissions.length > 0) {
-      // Limpiar misiones anteriores de esta sesión
-      db.prepare("DELETE FROM fleet_missions WHERE session_id = ?").run(sid);
       const missionStmt = db.prepare(`
         INSERT OR REPLACE INTO fleet_missions (id, session_id, from_planet_id, to_galaxy, to_system, to_position, mission_type, start_time, arrival_time, return_time, data_json)
         VALUES (@id, @sessionId, @fromPlanetId, @toGalaxy, @toSystem, @toPosition, @missionType, @startTime, @arrivalTime, @returnTime, @dataJson)
@@ -277,8 +304,15 @@ function deleteGameSession(slug) {
   const session = db.prepare("SELECT id FROM game_sessions WHERE slug = ?").get(slug);
   if (!session) return { success: false, error: "Sesión no encontrada" };
 
+  // Las naves no tienen FK contra game_sessions (para no perder filas de
+  // instalaciones antiguas), así que la cascada las ignora. Se borran a mano
+  // y SOLO las que tienen id de sesión: las que valen NULL (partidas antiguas)
+  // no se tocan jamás.
+  db.prepare("DELETE FROM ships WHERE session_id = ?").run(session.id);
+  db.prepare("DELETE FROM ship_logs WHERE ship_id NOT IN (SELECT id FROM ships)").run();
+  db.prepare("DELETE FROM fleet_missions WHERE session_id = ?").run(session.id);
+
   db.prepare("DELETE FROM game_sessions WHERE id = ?").run(session.id);
-  // CASCADE eliminará planets, production_queues, game_logs asociados
   return { success: true };
 }
 
@@ -313,23 +347,43 @@ function renameGameSession(oldSlug, newName, newSlug) {
 // ═══════════════════════════════════════════════════════════════
 // EXPORTAR A JSON (para export manual a disco)
 // ═══════════════════════════════════════════════════════════════
-function exportSessionToJson(slug) {
-  const state = loadFullGameState(slug);
-  if (!state) return null;
 
-  // Limpiar campos internos
+/**
+ * Quita del estado los campos de identidad interna de la sesion.
+ *
+ * Es OBLIGATORIO hacerlo al exportar. Si el JSON conserva `_sessionId`, al
+ * importarlo `saveFullGameState` lo reutiliza y el `ON CONFLICT(id) DO UPDATE`
+ * machaca la partida de la que se exporto, que desaparece de la lista.
+ */
+function toExportPayload(state) {
   const exportData = { ...state };
   delete exportData._sessionId;
   delete exportData._createdAt;
-  exportData.version = 3; // Exportar como v3 para compatibilidad
+  // v3 es la version que el cargador de save reconoce como legacy migrable.
+  exportData.version = 3;
   return exportData;
+}
+
+function exportSessionToJson(slug) {
+  const state = loadFullGameState(slug);
+  if (!state) return null;
+  return toExportPayload(state);
 }
 
 // ═══════════════════════════════════════════════════════════════
 // IMPORTAR DESDE JSON (para import desde disco)
 // ═══════════════════════════════════════════════════════════════
+
+/**
+ * Importa un save como partida NUEVA. El `_sessionId` que venga en el archivo
+ * se descarta a proposito: una importacion crea su propia sesion y jamás debe
+ * sobrescribir otra.
+ */
 function importSessionFromJson(jsonData, slug) {
-  return saveFullGameState(slug, jsonData);
+  const payload = { ...(jsonData || {}) };
+  delete payload._sessionId;
+  delete payload._createdAt;
+  return saveFullGameState(slug, payload);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -348,6 +402,7 @@ module.exports = {
   deleteGameSession,
   renameGameSession,
   exportSessionToJson,
+  toExportPayload,
   importSessionFromJson,
   sessionExists,
   generateSessionId,

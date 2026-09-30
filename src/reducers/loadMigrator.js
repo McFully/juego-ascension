@@ -5,6 +5,39 @@ import { buildMinistriesState, buildPlanetMinistries, DECAY_MINISTRY_OVERRIDES }
 const PLANET_SIZES = [80, 100, 120, 150, 180, 200];
 
 /**
+ * Generador pseudoaleatorio determinista.
+ *
+ * Los defaults de una IA (estrategia, agresividad, bioma, tamano, gravedad) se
+ * rellenaba con `Math.random()`. Consecuencia: cargar la misma partida dos
+ * veces producia imperios enemigos distintos, con biomas y temperamentos
+ * cambiados entre una sesion y la siguiente. No es un detalle estetico: la
+ * dificultad y el mapa cambian solos.
+ *
+ * Aqui la semilla sale de la propia partida, asi que el mismo save produce
+ * siempre las mismas IAs, y dos saves distintos producen IAs distintas.
+ */
+const makeRng = (seedInput) => {
+  const text = String(seedInput || 'ascension');
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  // mulberry32: rapido, 32 bits de estado, sin dependencias.
+  let a = (h >>> 0) || 0x9e3779b9;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), 1 | t);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const sessionSeed = (payload) =>
+  `${payload?._sessionId || ''}|${payload?._saveSlug || ''}|${payload?.gameMode || ''}|${payload?.createdAt || ''}`;
+
+/**
  * 3.3 — Reconstruye el registro de comunicaciones de una partida guardada antes
  * de que existiera. Sin esto, un `activeEvent` o `activeTransmission` con
  * decisiones pendientes se perdería en silencio al cargar: el overlay ya no se
@@ -136,7 +169,8 @@ export const migrateLoadState = (payload = {}) => {
       defenseVariants: p.defenseVariants || {},
     })),
     aiPlanets: (Array.isArray(payload.aiPlanets) ? payload.aiPlanets : []).filter(p => p && typeof p === 'object' && !p.isVirgin).map(p => {
-      const strategyKey = p.strategy || ['expansionist','militarist','merchant','technocrat','diplomat','clanist','chaotic'][Math.floor(Math.random() * 7)];
+      const rng = makeRng(`${sessionSeed(payload)}|${p.id || p.name || 'ai'}`);
+      const strategyKey = p.strategy || ['expansionist','militarist','merchant','technocrat','diplomat','clanist','chaotic'][Math.floor(rng() * 7)];
       const personality = p.aiPersonality || (
         (strategyKey === 'militarist' || strategyKey === 'expansionist') ? 'bélico' :
         (strategyKey === 'merchant' || strategyKey === 'diplomat') ? 'mercantilista' : 'pacífico'
@@ -147,12 +181,12 @@ export const migrateLoadState = (payload = {}) => {
         discovered: p.discovered !== undefined ? p.discovered : true,
         strategy: strategyKey,
         aiPersonality: personality,
-        aggression: p.aggression !== undefined ? p.aggression : (0.3 + Math.random() * 0.5),
-        riskTolerance: p.riskTolerance !== undefined ? p.riskTolerance : (0.3 + Math.random() * 0.5),
-        lossTolerance: p.lossTolerance !== undefined ? p.lossTolerance : (0.2 + Math.random() * 0.4),
-        biome: p.biome || BIOME_KEYS[Math.floor(Math.random() * BIOME_KEYS.length)],
-        planetSize: p.planetSize || PLANET_SIZES[Math.floor(Math.random() * PLANET_SIZES.length)],
-        gravity: p.gravity !== undefined ? p.gravity : Math.floor(Math.random() * 5),
+        aggression: p.aggression !== undefined ? p.aggression : (0.3 + rng() * 0.5),
+        riskTolerance: p.riskTolerance !== undefined ? p.riskTolerance : (0.3 + rng() * 0.5),
+        lossTolerance: p.lossTolerance !== undefined ? p.lossTolerance : (0.2 + rng() * 0.4),
+        biome: p.biome || BIOME_KEYS[Math.floor(rng() * BIOME_KEYS.length)],
+        planetSize: p.planetSize || PLANET_SIZES[Math.floor(rng() * PLANET_SIZES.length)],
+        gravity: p.gravity !== undefined ? p.gravity : Math.floor(rng() * 5),
         trait: sanitizeTrait(p.trait),
         totalWins: p.totalWins || 0,
         totalLosses: p.totalLosses || 0,

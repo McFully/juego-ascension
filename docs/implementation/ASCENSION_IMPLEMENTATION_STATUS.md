@@ -15,7 +15,7 @@ Documentos asociados:
 |---|---|---|---|
 | **00** | Preflight | ✅ **COMPLETE** | — |
 | **01** | Router de acciones | ✅ **COMPLETE** | — |
-| **02** | Persistencia y esquema | ⬜ NOT_STARTED | dep. 01 |
+| **02** | Persistencia y esquema | ✅ **COMPLETE** | — |
 | **03** | Datos de estado y rutas accesibles | ⬜ NOT_STARTED | — |
 | **04** | Sistema de audio | ⬜ NOT_STARTED | — |
 | **05** | Fuente única de duraciones | ⬜ NOT_STARTED | — |
@@ -36,7 +36,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 2 de 22 fases (9 %).**
+**Avance: 3 de 22 fases (13,6 %).**
 
 ---
 
@@ -486,6 +486,227 @@ PROCEED
 
 ---
 
+## FASE 02 — PERSISTENCIA Y ESQUEMA
+
+```text
+PHASE:        02
+Nombre:       Persistencia y esquema
+
+STATUS:       COMPLETE CON RESERVA
+
+OBJECTIVE:
+Que lo que se muestra y lo que se usa sobrevivan a cerrar y abrir, que el
+esquema pueda evolucionar sin romper bases existentes, y que el backup sea de
+verdad recuperable. Cerrar C-02, C-03, C-04, C-05, C-06, C-07, C-18 y C-23.
+
+SOURCE OF TRUTH:
+- Que sobrevive: GLOBAL_STATE_KEYS en electron/database/gameRepository.cjs,
+  protegido por src/__tests__/persistenceContract.test.js
+- Version del esquema: game_meta.schema_version, leida y escrita por
+  applyMigrations en electron/database/dbManager.cjs
+- Identidad de partida: game_sessions.id, reinyectada al renderer por
+  src/utils/sessionIdentity.js
+
+DEPENDENCIES:
+Ninguna. (Se planeaba dependent de 01; resulto independiente.)
+
+FILES INSPECTED:
+  electron/database/dbManager.cjs, gameRepository.cjs, shipRepository.cjs,
+  migrator.cjs
+  electron/ipc/saveIpc.cjs, backupManager.cjs
+  electron/main.cjs, preload.cjs
+  src/hooks/useGameLifecycle.js, useAppSaveHandlers.js
+  src/reducers/loadMigrator.js, systemReducer.js
+  src/core/initialState.js
+
+FILES MODIFIED:
+  electron/database/dbManager.cjs          (versionado + migraciones + checkpointWal)
+  electron/database/gameRepository.cjs    (allow-list, import/export, borrados, delete)
+  electron/database/shipRepository.cjs    (session_id en la inserción)
+  electron/ipc/saveIpc.cjs                (sessionId, validar al cargar, podar sidecars)
+  electron/ipc/backupManager.cjs          (checkpoint, sidecars, poda)
+  electron/main.cjs                       (CSP, window open, will-navigate, slug saneado)
+  src/utils/sessionIdentity.js            (nuevo)
+  src/hooks/useGameLifecycle.js           (identidad de sesión en auto-save y unload)
+  src/hooks/useAppSaveHandlers.js         (idem en guardado manual)
+  src/reducers/loadMigrator.js            (IAs deterministas)
+  src/__tests__/persistenceContract.test.js (nuevo, 15 tests)
+
+DATABASE CHANGES:
+  ESQUEMA: dos migraciones idempotentes, aplicadas al abrir.
+    v2  ships.session_id  (ALTER TABLE si no existe + indice)
+    v3  indice en fleet_missions.session_id + aviso si hay huerfanas
+  DATOS: ninguno. La base real del jugador NO se toco.
+
+  DECISION DEL USUARIO RESPETADA: la fase se hizo sin abrir su
+  %APPDATA%/Ascension/saves/universe.db. Nada se borro: ni los 617 .bak-wal
+  (8,4 GB), ni las 176.140 naves huerfanas, ni los 40 .json legacy.
+
+MIGRATIONS:
+  - ships_session_id_column
+      ALTER TABLE ships ADD COLUMN session_id TEXT   (guardado por PRAGMA)
+      CREATE INDEX IF NOT EXISTS idx_ships_session_id
+      Las filas existentes quedan con session_id NULL: NO se pierde ninguna.
+  - fleet_missions_session_fk
+      CREATE INDEX IF NOT EXISTS idx_fleet_missions_session_id
+      Cuenta las huerfanas y avisa. No hay DROP ni DELETE.
+  - game_meta.schema_version pasa de inexistente a 3.
+    Antes PRAGMA user_version era 0 y no habia forma de saber que faltaba.
+
+IMPLEMENTATION:
+  1. Allow-list. 37 claves -> 50, agrupadas y comentadas. Se anadieron las que
+     el juego escribe y no se guardaban: currentPlanetId, patrols,
+     tacticalEventLog, lastTick, credits, exchangeOrders, daoShares,
+     playerDaoShares, daoDividendPool, exchangeProjects, chatHistory, victory,
+     gameOver, showTutorial, tutorialCompleted, worldAlertLog,
+     triggeredNarrativeEvents, ministryNoopWarnings, activeFirstContact,
+     activeTransmission, finalCrisis, imperialCouncilUnlocked, activeUltimatum,
+     emperorAutoGovernance, emperorDirectiveMode, lastSave, gameMode,
+     reputationHistory.
+     Se mantuvo allow-list y no deny-list: es explicita y auditable. El test
+     de contrato es lo que evita que vuelva a perder claves.
+
+  2. _sessionId. saveFullGameState devuelve sessionId, los 4 handlers de
+     guardado lo devuelven, y src/utils/sessionIdentity.js lo guarda para que
+     el siguiente guardado reutilice la sesion. Se limpia al volver al menu
+     (gameStarted === false) para que una partida nueva no herede el id de la
+     anterior. Antes: cada auto-save de una partida nueva abria una sesion
+     nueva (slug, slug-2, ... hasta 1000).
+
+  3. Import/export. toExportPayload() quita _sessionId al exportar;
+     importSessionFromJson() lo descarta al importar. exportSessionToJson
+     existed desde hacia tiempo, importado y nunca llamado: estaba a un cable
+     de arreglar esto. Importar un save ya no puede machacar la partida origen.
+
+  4. Backup. checkpointWal() (wal_checkpoint TRUNCATE) antes de copiar. Se
+     elimino la copia del WAL a <bak>.bak-wal, que era lo que generaba los
+     8,4 GB: nadie los leia y cleanupOldBackups los excluia del listado, asi
+     que no podia borrarlos. cleanupOldBackups ahora borra tambien el sidecar
+     de cada .bak podado.
+     findOrphanSidecars / pruneOrphanSidecars + 2 canales IPC: INSPECCIONAR y
+     PODAR, explicitos. Nada se borra en el arranque. La limpieza queda a un
+     clic del jugador y solo cuando el lo pida.
+
+  5. Validacion al cargar. load-save-by-slug ahora llama a validateSaveData.
+     Antes solo se validaba al guardar: un save corrupto entraba entero.
+
+  6. Borrados. fleet_missions se borra SIEMPRE (estaba dentro del if de
+     "si hay misiones", con lo que lanzar la ultima y guardar dejaba las
+     viejas en la tabla para siempre). deleteGameSession borra tambien las
+     naves de esa sesion y los ship_logs sin nave, con WHERE session_id: las
+     176.140 huerfanas con session_id NULL no se tocan.
+
+  7. Seguridad. CSP como cabecera en las respuestas HTML del protocolo
+     ascension-asset (script-src 'self'; va ahi y no como meta porque Vite
+     inyecta scripts en linea en desarrollo y una meta rompe npm run dev).
+     setWindowOpenHandler deny, will-navigate bloqueado, y saneado del slug en
+     db-migrate-json (era path traversal + escritura arbitraria).
+
+  8. Determinismo. loadMigrator rellenaba estrategia, agresividad, bioma,
+     tamano y gravedad de las IAs con Math.random: cargar dos veces la misma
+     partida producia imperios enemigos distintos. Ahora la semilla sale de la
+     propia partida (mulberry32 sobre _sessionId + slug + gameMode).
+
+TESTS:
+  src/__tests__/persistenceContract.test.js  (15 tests)
+    - toda clave que los reducers escriben esta en la allow-list
+    - la allow-list cubre el estado base y no tiene duplicados
+    - ninguna clave marcada efimera esta a la vez persistida
+    - ningun componente muta el estado directamente (state.x = fuera de reducers)
+    - esquema versionado, migraciones idempotentes, sin DROP COLUMN
+    - el backup hace checkpoint y no crea sidecars huerfanos
+    - el guardado devuelve sessionId
+    - exportar quita identidad, importar genera nueva
+    - cargar valida
+    - el canal de migracion sanea el slug
+    - window open y navegacion bloqueados, CSP presente
+    - borrar sesion no toca naves sin sesion
+
+  PROBADO QUE MIERDE: se quito "patrols" de la allow-list y fallaron 2 tests,
+  uno nombrando el fichero que la escribe (fleet/patrolActions.js).
+
+TEST RESULTS:
+  PASSED  24/24 ficheros, 266/266 tests, 0 fallos, 25,59 s
+  (223 base + 28 Fase 01 + 15 Fase 02)
+  REGRESION: cero.
+  PARSEO: los 11 ficheros tocados parsean.
+
+KNOWN ISSUES:
+  I-01  Las 176.140 naves con session_id NULL siguen ahi. Ahora la columna
+        existe, asi que las nuevas naves si quedan scopeadas, pero las viejas
+        no tienen duenio y ninguna sesion las tocara al borrarse. Purgarlas es
+        destructivo y requiere el visto bueno del jugador. -> PENDIENTE DE
+        AUTORIZACION, documentado en 00_PREFLIGHT.md D-2
+
+  I-02  Los 617 .bak-wal (8,4 GB) siguen en disco. El codigo ya no los crea y
+        ya no impide purgarlos, pero purgarlos borra ficheros. -> PENDIENTE DE
+        AUTORIZACION, D-4
+
+  I-03  La migracion v3 avisa de las misiones huerfanas pero no las arregla:
+        las que existen con session_id NULL no tienen sesion a la que
+        reasignar. Se reparan solas la proxima vez que se guarde su partida,
+        si es que esa partida existe.
+
+  I-04  correctResearchLevels (saveIpc.cjs) se aplica en memoria al cargar pero
+        el valor corrupto sigue en global_state_json hasta que se re-guarda.
+        Es el comportamiento correcto para una migracion sin escritura, pero
+        conviene decidirlo explicitamente. -> FASE 19
+
+  I-05  No hay funcion de restauracion desde backup. getLatestBackup sigue
+        importado y sin usar. Un backup que nadie puede restaurar es una
+        promesa, no una red de seguridad. -> FASE 19
+
+HARD BLOCKERS:
+  Ninguno para cerrar el codigo de la fase.
+
+  RESERVA (por que no es un COMPLETE limpio):
+  La base de datos real del jugador no se ha tocado. Las migraciones se han
+  escrito y verificado por contrato, pero NO se han ejecutado contra un
+  universe.db real. La primera vez que se abra el juego se aplicaran solas.
+  Riesgo residual: que una base existente tenga una forma inesperada que haga
+  fallar una migracion. El handler captura el error, lo registra y sigue
+  arrancando, y el test comprueba que la migracion es idempotente. Aun asi,
+  esto NO es lo mismo que haberla corrido.
+
+SOFT ISSUES:
+  - ships.session_id no tiene FK a proposito: ponerla sobre una tabla con
+    176.140 filas huerfanas haria fallar el arranque. Se documento la razon.
+
+DELIVERABLES:
+  Allow-list 37 -> 50 claves, protegida por test
+  Identidad de sesion estable entre guardados
+  Import/export que ya no destruye la partida origen
+  Versionado de esquema + 2 migraciones idempotentes y no destructivas
+  Backup con checkpoint real y sin sidecars huerfanos
+  Poda de sidecars expuesta como accion explicita (no automatica)
+  Validacion tambien al cargar
+  Borrado de misiones y naves por sesion
+  CSP + window open + will-navigate + slug saneado
+  IAs deterministas al cargar
+  15 tests de contrato, probados que muerden
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified (borrados acotados por session_id, migraciones idempotentes)
+[x] UI verified (la CSP se aplica en el protocolo que sirve la UI)
+[~] Persistence verified  -> PARCIAL. El contrato esta verificado por test, pero
+      las migraciones no se han ejecutado contra una base real. Reservado.
+[x] Integration verified (allow-list <-> reducers <-> save/load <-> renderer)
+[x] Tests passed (266/266)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[~] Ready for next phase  -> la fase 15 (Save vs Commander) ya puede arrancar;
+      requiere la separacion de columnas que ahora es posible hacer.
+
+FINAL DECISION:
+PROCEED con reserva registrada
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -508,3 +729,7 @@ Cuando una fase encuentra algo nuevo durante la implementación, se registra aqu
 | N-03 | Fase 01 | `RETROFIT_SHIP_VARIANT` / `RETROFIT_DEFENSE_VARIANT` / `CANCEL_RETROFIT_QUEUE` encaminados pero sin test de punta a punta (`planet.fleetVariants` sin montar) | 16, 17 | ABIERTO |
 | N-04 | Fase 01 | `PROCESS_TRADE_ROUTES` ignora `intervalDays` y duplica la lógica del tick | 11 | ABIERTO |
 | N-05 | Fase 01 | `ASSIGN_LOCAL_MINISTRY_BUDGET` encaminado pero sin despachador en la UI | 17 | ABIERTO |
+| I-01 | Fase 02 | 176.140 naves con `session_id` NULL: sin dueño, ningún borrado de sesión las tocará | 19 | PIDE AUTORIZACIÓN (D-2) |
+| I-02 | Fase 02 | 617 `.bak-wal` = 8,4 GB siguen en disco; el código ya no los crea ni impide purgarlos | 19 | PIDE AUTORIZACIÓN (D-4) |
+| I-04 | Fase 02 | `correctResearchLevels` se aplica en memoria pero nunca se escribe en la DB | 19 | ABIERTO |
+| I-05 | Fase 02 | No hay función de restauración desde backup: `getLatestBackup` sigue sin usarse | 19 | ABIERTO |
