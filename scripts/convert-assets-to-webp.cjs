@@ -36,10 +36,9 @@ async function convertAll() {
       const outPath = path.join(ASSETS_DIR, `${parsed.name}.webp`);
 
       try {
-        // Reescalado estandar 16:9 (1920x1080) y compresion WebP visual optima (quality: 85, effort: 4)
+        // Conversión WebP sin pérdida (lossless: true) preservando resolución y fidelidad absoluta
         await sharp(fullPath)
-          .resize(1920, 1080, { fit: 'cover' })
-          .webp({ quality: 85, effort: 4 })
+          .webp({ lossless: true, effort: 4 })
           .toFile(outPath);
         successCount++;
       } catch (err) {

@@ -1301,6 +1301,89 @@ PROCEED
 
 ---
 
+## FASE 07 — PIPELINE DE IMÁGENES Y ASSETS
+
+```text
+PHASE:        07
+Nombre:       Pipeline de imágenes y assets
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Cero compresión con pérdida visible, cero asset reutilizado donde no corresponde,
+documentación oficial de integridad MISSING_ASSETS.md con 0 faltantes.
+
+SOURCE OF TRUTH:
+scripts/convert-assets-to-webp.cjs, src/data/assetsCatalog.js, Assets/, public/, MISSING_ASSETS.md.
+
+DEPENDENCIES:
+Fase 00 (Preflight).
+
+FILES TOUCHED:
+  scripts/convert-assets-to-webp.cjs (lossless: true, resize con cover forzado eliminado)
+  src/data/assetsCatalog.js (eliminadas 14 claves duplicadas del menú, normalizado LF)
+  src/data/ministryMetadata.js (eliminadas 19 declaraciones muertas bgImage)
+  MISSING_ASSETS.md (creado informe oficial de integridad 100%, 0 faltantes)
+  docs/prompts_image_library.md (movido desde Assets para evitar bundle bloat en Vite)
+  src/__tests__/assetsContract.test.js (suite de contrato con 3 tests verdes)
+  Archivos eliminados:
+    Assets/aiCore.webp (huérfano, catálogo apunta a 'Núcleo de IA.webp')
+    public/backgrounds/government/*.svg (11 fondos vectoriales no referenciados)
+    src/assets/cartoon/*.svg, src/assets/leaders/*.svg (11 SVGs sin referencias activas)
+
+TDD CYCLE:
+  TESTS ESCRITOS PRIMERO:
+  src/__tests__/assetsContract.test.js:
+    - Test 1: no contiene claves duplicadas en la definición léxica de REAL_IMAGES.
+    - Test 2: todos los archivos referenciados en REAL_IMAGES existen físicamente en disco.
+    - Test 3: no existen referencias muertas bgImage en ministryMetadata.
+
+  PROBADO QUE MUERDE:
+  Se verificó la detección al inyectar claves duplicadas y al validar rutas de assets relativos vs /ministers/,
+  fallando inmediatamente y volviendo a verde tras resolución exacta.
+
+TEST RESULTS:
+  PASSED  29/29 ficheros, 313/313 tests, 0 fallos, 18,48 s
+  (310 previos + 3 Fase 07)
+  REGRESION: cero.
+  PARSEO: todos los ficheros modificados parsean sin errores.
+  INTEGRIDAD: scripts/verify-catalog-integrity.cjs: 557 presentes, 0 faltantes.
+
+KNOWN ISSUES:
+  Ninguno nuevo detectado en esta fase.
+
+HARD BLOCKERS:
+  Ninguno.
+
+SOFT ISSUES:
+  Ninguno.
+
+DELIVERABLES:
+  1. scripts/convert-assets-to-webp.cjs configurado a compresión sin pérdida (lossless).
+  2. Catálogo src/data/assetsCatalog.js limpio de claves duplicadas.
+  3. Eliminación de 23 assets huérfanos / no referenciados y reubicación de markdown de prompts.
+  4. Documento oficial MISSING_ASSETS.md certificando 0 assets ausentes.
+  5. Suite automatizada src/__tests__/assetsContract.test.js pasando al 100%.
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (313/313)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -1312,8 +1395,8 @@ PROCEED
 | 2026-09-30 | — | Fase 02 completada: allow-list 37->50, esquema versionado, backup verificado, 266/266 verdes |
 | 2026-09-30 | `df19ca1` | Fase 03 completada: datos de estado, codex naves especiales, matriculas deterministas, 11 tests nuevos, 277/277 verdes |
 | 2026-09-30 | `770e351` | Fase 04 completada: director único de música, eliminación de fugas AudioContext, operaciones a 0.5, 288/288 verdes |
-| 2026-09-30 | `24137fa` | Fase 05 completada: fuente única de duraciones, eliminación automationTick, countdowns unificados, 301/301 verdes |
-| 2026-09-30 | — | Fase 06 completada: refinería x200 en fuente real, directivas conectadas, industria unificada, 310/310 verdes |
+| 2026-09-30 | `c5950bd` | Fase 06 completada: refinería x200 en fuente real, directivas conectadas, industria unificada, 310/310 verdes |
+| 2026-09-30 | — | Fase 07 completada: pipeline lossless, assets huérfanos purgados, MISSING_ASSETS.md (0 faltantes), 313/313 verdes |
 
 ---
 

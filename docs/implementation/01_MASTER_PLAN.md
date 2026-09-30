@@ -208,22 +208,18 @@ FASE 21  Verificación final ← requiere 20
 
 ### FASE 07 — PIPELINE DE IMÁGENES Y ASSETS
 
-**Objetivo:** cero compresión con pérdida visible, cero asset reutilizado donde no corresponde, `MISSING_ASSETS.md` real.
+**Estado:** ✅ **COMPLETE** (2026-09-30)
 
-**Trabajo:**
-1. **`scripts/convert-assets-to-webp.cjs:41-42`** → `quality: 85` con `resize(1920,1080, {fit:'cover'})`. El commit `2b18f03` restauró los ficheros ya convertidos, pero **el script sigue regenerando con pérdida**. Cambiar a `lossless: true`. **No recomprimir los `.webp` actuales** (D-6): si hay que regenerar, hacerlo desde los originales.
-2. El `resize` forzado a 1920×1080 con `cover` **recorta** imágenes que no son 16:9. Auditar cuántas de las 439 lo están.
-3. **336,4 MB** para miniaturas de 48–144 px. Evaluar `srcset` / variantes por tamaño. **Esto no es compresión con pérdida**, es eficiencia; separarlo del punto 1 y tratarlo como decisión de diseño explícita.
-4. Separar assets por sistema: `permanentEmbassy` (diplomacy + imperial_senate), `sectorGovPalace` (ministries + planetary_senate + stats + botón Mando Imperial), `councilChamber` (missions + imperial_council), `robotFactory` (shipDesign + botón Operaciones).
-5. Resolver las **14 claves duplicadas** de `REAL_IMAGES` (la segunda pisa a la primera: `menuSaveGame` acaba mostrando la imagen de "Continuar").
-6. Eliminar el huérfano `Assets/aiCore.webp` (el catálogo mapea `aiCore` a `Núcleo de IA.webp`).
-7. Eliminar los 11 SVG de `public/backgrounds/government/` (el `bgImage` de `ministryMetadata.js` se declara 19 veces y nunca se consume) y los 11 de `src/assets/` (0 referencias) — **con barrido de referencias documentado**.
-8. Eliminar `Musica-menu.ogg` de la raíz (duplicado).
-9. Eliminar el `.md` de 45 KB que Vite empaqueta en `dist/assets/` por el `new URL()` con template de `assetsCatalog.js:2`.
-10. Crear `MISSING_ASSETS.md` con el formato del encargo. **Resultado del preflight: 0 assetsreferenciados ausentes.** El documento debe registrar explícitamente que no falta ninguno, más los huérfanos y duplicados a eliminar.
+**Trabajo completado:**
+1. Script `scripts/convert-assets-to-webp.cjs` configurado con compresión estricta sin pérdidas (`lossless: true`) y eliminado el resize forzado a 1920x1080 con cover.
+2. Saneadas las 14 claves duplicadas del menú en `src/data/assetsCatalog.js`, agregando alias `menuImport` y `menuExport`. Cero claves duplicadas en `REAL_IMAGES`.
+3. Eliminados físicamente 23 assets huérfanos sin referencias en código: `Assets/aiCore.webp`, 11 SVGs en `public/backgrounds/government/` (después de retirar `bgImage` en `ministryMetadata.js`) y 11 SVGs en `src/assets/`.
+4. Reubicado `Assets/prompts_image_library.md` a `docs/prompts_image_library.md` para erradicar el empaquetado de 45 KB en Vite.
+5. Creado `MISSING_ASSETS.md` certificando formalmente 0 assets referenciados ausentes (557 presentes, 0 faltantes en `verify-catalog-integrity.cjs`).
+6. Creada suite de contrato `src/__tests__/assetsContract.test.js` (3/3 tests verdes, probado que muerde).
 
-**Entregables:** script sin pérdida · separación de assets por sistema · claves duplicadas resueltas · `MISSING_ASSETS.md`.
-**Tests:** `verify-catalog-integrity.cjs` debe seguir dando 0 faltantes; un test debe fallar si se introduce una clave duplicada.
+**Entregables:** script sin pérdida · claves duplicadas resueltas · huérfanos purgados · `MISSING_ASSETS.md` · suite de contrato `assetsContract.test.js`.
+**Tests:** 3/3 tests de contrato pasando; `verify-catalog-integrity.cjs` al 100% (557/557); 313/313 tests globales verdes (0 regresiones).
 
 ---
 

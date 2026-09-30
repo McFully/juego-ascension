@@ -323,7 +323,9 @@ export const REAL_IMAGES = {
   menuNewGame: asset('menuNewGame.webp'),
   menuLoadGame: asset('menuLoadGame.webp'),
   menuSaveGame: asset('historicImperialArchive.webp'),
+  menuImport: asset('menuImportGame.webp'),
   menuImportGame: asset('menuImportGame.webp'),
+  menuExport: asset('menuExportGame.webp'),
   menuExportGame: asset('menuExportGame.webp'),
   menuExitGame: asset('menuExitGame.webp'),
   modeStandard: asset('modeStandard.webp'),
@@ -677,26 +679,6 @@ export const REAL_IMAGES = {
   dir_conscript: asset('dir_conscript.webp'),
   dir_doctrine: asset('dir_doctrine.webp'),
   dir_patrol: asset('dir_patrol.webp'),
-
-  // Menú Principal e Interfaces Iniciales
-  menuContinue: asset('menuContinue.webp'),
-  menuNewGame: asset('menuNewGame.webp'),
-  menuLoadGame: asset('menuLoadGame.webp'),
-  menuImport: asset('menuImportGame.webp'),
-  menuImportGame: asset('menuImportGame.webp'),
-  menuExport: asset('menuExportGame.webp'),
-  menuExportGame: asset('menuExportGame.webp'),
-  menuSaveGame: asset('menuContinue.webp'),
-  menuExitGame: asset('menuExitGame.webp'),
-
-  // Modos de Juego y Doctrinas Tácticas
-  modeStandard: asset('modeStandard.webp'),
-  modeSurvivor: asset('modeSurvivor.webp'),
-  modeDecay: asset('modeDecay.webp'),
-  modeCorporate: asset('modeCorporate.webp'),
-  modeRoguelike: asset('modeRoguelike.webp'),
-  modeMultiplayer: asset('modeCorporate.webp'),
-  modeCancel: asset('modeCancel.webp'),
 
   // Patrullas Defensivas y Policiales
   patrol_orbital: asset('patrol_orbital.webp'),

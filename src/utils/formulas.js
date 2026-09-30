@@ -17,6 +17,7 @@ import {
   PLANET_TRAITS
 } from '../data/gameData.js';
 import { calcBuildingEnergyDemand, REFINERY_REWARD_MULTIPLIER, BASE_REFINERY_PROD } from './formulas/productionFormulas.js';
+import { EXPANDED_BUILDINGS, EXPANDED_RESEARCH } from '../data/expandedContent.js';
 import { getPOIAtCoordinates } from './formulas/coordinatesFormulas.js';
 
 export { calcBuildingEnergyDemand, REFINERY_REWARD_MULTIPLIER, BASE_REFINERY_PROD };
