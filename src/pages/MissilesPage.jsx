@@ -3,7 +3,7 @@ import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { useNavigation } from '../components/navigation/NavigationContext.jsx';
 import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 
-const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S, fmt, canAfford, constructionDiscount, onOpenCodex }) => {
+const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S, fmt, canAfford, constructionDiscount, onOpenCodex, meetsReq, RESEARCH }) => {
   const { navigateTo, navigateBack } = useNavigation();
   const siloLevel = currentPlanet.buildings?.missileSilo || 0;
   const [launchQty, setLaunchQty] = useState(1);
@@ -73,7 +73,8 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
             deuterium: (m.cost.d || 0) * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0)
           };
           const have = currentMissiles[id] || 0;
-          const canBuild = totalUsed < maxMissiles && canAfford(currentPlanet.resources, cost);
+          const meets = meetsReq ? meetsReq(m.req, { ...currentPlanet.buildings, ...state.research }) : true;
+          const canBuild = totalUsed < maxMissiles && canAfford(currentPlanet.resources, cost) && meets;
 
           return (
             <div key={id} className="p-5 rounded-3xl bg-[#0c0d1e]/80 border border-white/10 flex flex-col justify-between hover:border-red-500/40 transition-all">
@@ -104,18 +105,24 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
                     <span className={`font-medium ${(currentPlanet?.resources?.deuterium ?? 0) >= cost.deuterium ? 'text-emerald-400' : 'text-rose-400'}`}>⚗️ {fmt(cost.deuterium)}</span>
                   )}
                 </div>
+                {m.req && !meets && (
+                  <div className="text-[10px] text-red-400 mb-3 p-1.5 rounded-lg bg-red-950/30 border border-red-500/20 leading-tight font-mono flex items-center gap-1.5">
+                    <span>🔒</span>
+                    <span>Req: {Object.entries(m.req).map(([k, v]) => `${RESEARCH?.[k]?.name || k} Nv.${v}`).join(', ')}</span>
+                  </div>
+                )}
               </div>
 
               <button
                 disabled={!canBuild}
-                onClick={() => dispatch({ type: 'BUILD_MISSILE', missileId: id })}
+                onClick={() => dispatch({ type: 'BUILD_MISSILE', missileId: id, quantity: 1 })}
                 className={`w-full py-2.5 rounded-xl text-xs font-mono font-bold uppercase transition-all ${
                   !canBuild
                     ? 'bg-slate-900 border border-white/10 text-slate-600 cursor-not-allowed'
                     : 'bg-red-500/20 border border-red-500/50 text-red-300 hover:bg-red-500/30 hover:border-red-400 cursor-pointer shadow-[0_0_15px_rgba(239,68,68,0.2)]'
                 }`}
               >
-                {totalUsed >= maxMissiles ? 'Silo lleno' : 'Fabricar 1 unidad'}
+                {!meets ? 'Requisitos no cumplidos' : (totalUsed >= maxMissiles ? 'Silo lleno' : 'Fabricar 1 unidad')}
               </button>
             </div>
           );
@@ -130,41 +137,47 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Galaxia</label>
+              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Galaxia (1-9)</label>
               <input
                 type="number"
+                min={1}
+                max={9}
                 value={targetGal}
-                onChange={e => setTargetGal(e.target.value)}
-                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300"
+                onChange={e => setTargetGal(Math.max(1, Math.min(9, parseInt(e.target.value) || 1)))}
+                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Sistema</label>
+              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Sistema (1-499)</label>
               <input
                 type="number"
+                min={1}
+                max={499}
                 value={targetSys}
-                onChange={e => setTargetSys(e.target.value)}
-                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300"
+                onChange={e => setTargetSys(Math.max(1, Math.min(499, parseInt(e.target.value) || 1)))}
+                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Posición</label>
+              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Posición (1-15)</label>
               <input
                 type="number"
+                min={1}
+                max={15}
                 value={targetPos}
-                onChange={e => setTargetPos(e.target.value)}
-                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300"
+                onChange={e => setTargetPos(Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))}
+                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
               />
             </div>
             <div>
               <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Cantidad (Disponibles: {haveIPMs})</label>
               <input
                 type="number"
-                min="1"
+                min={1}
                 max={haveIPMs}
                 value={launchQty}
-                onChange={e => setLaunchQty(e.target.value)}
-                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300"
+                onChange={e => setLaunchQty(Math.max(1, Math.min(haveIPMs, parseInt(e.target.value) || 1)))}
+                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
               />
             </div>
           </div>

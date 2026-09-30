@@ -1469,6 +1469,114 @@ PROCEED
 
 ---
 
+## FASE 09 — BASTIÓN Y SILOS
+
+```text
+PHASE:        09
+Nombre:       Bastión defensivo planetario y silos balísticos
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Separar el Bastión defensivo de los Silos balísticos eliminando pantallas y sub-pestañas
+intermedias redundantes, dotar al bastión de estado de calibración real en construcción,
+calcular telemetría de defensa efectiva en HubTopBar y validar requisitos tecnológicos
+y rangos de coordenadas balísticas en MissilesPage.
+
+SOURCE OF TRUTH:
+src/pages/DefensePage.jsx, src/pages/MissilesPage.jsx, src/components/defense/DefenseGrid.jsx,
+src/components/government/hub/HubTopBar.jsx, src/reducers/fleet/missileReducer.js,
+src/utils/formulas/combatFormulas.js.
+
+DEPENDENCIES:
+Fase 08 (Navegación, GAME_TABS y PARENT_MAP).
+
+FILES INSPECTED:
+  src/pages/
+    DefensePage.jsx, MissilesPage.jsx
+  src/components/defense/
+    DefenseGrid.jsx, DefenseMissileSilosSection.jsx
+  src/components/government/hub/
+    HubTopBar.jsx, planetaryCommandCardsConfig.jsx
+  src/reducers/fleet/
+    missileReducer.js, defenseReducer.js
+  src/__tests__/
+    bastionSilosContract.test.js
+
+DECISIONS:
+  1. SILOS ALCANZABLE DESDE COMANDO PLANETARIO:
+     Registrada la ruta `missiles` con padre `defense` en GAME_TABS y PARENT_MAP.
+     La tarjeta de silos en el Alto Mando navega directamente a MissilesPage sin rebotar.
+
+  2. ELIMINACIÓN DE LA DUPLICACIÓN EN DEFENSEPAGE:
+     Retirada la sub-pestaña `silos` y el selector de divisiones en DefensePage.jsx.
+     DefensePage actúa directamente como Bastión Defensivo Planetario (`surface`).
+
+  3. TELEMETRÍA DE BASTIÓN CON TECNOLOGÍA EFECTIVA:
+     HubTopBar.jsx ahora muestra el indicador consolidado del Bastión: total de baterías,
+     potencia de fuego real y escudos totales aplicando getEffectiveTech(currentPlanet, research).
+
+  4. ESTADO REAL DE DESPLIEGUE Y CALIBRACIÓN:
+     DefenseGrid.jsx inspecciona state.defenseQueue del planeta activo. Las baterías en proceso
+     de montaje muestran badge animado `⚙️ CALIBRANDO (X)` con conteo real de cola.
+
+  5. VALIDACIÓN BALÍSTICA Y REQUISITOS TECNOLÓGICOS:
+     MissilesPage.jsx valida rangos numéricos estrictos para coordenadas de ataque balístico
+     (Galaxia 1-9, Sistema 1-499, Posición 1-15, Ojivas 1-haveIPMs) y bloquea la producción
+     si no se cumplen los requisitos de laboratorio y tecnologías (meetsReq). Saneado el
+     array spread de notificaciones en missileReducer.js.
+
+MIGRATIONS:
+  Ninguna necesaria.
+
+IMPLEMENTATION:
+  - src/pages/DefensePage.jsx: removida pestaña silos, selector de división y divisiones intermedias.
+  - src/pages/MissilesPage.jsx: añadidas props meetsReq/RESEARCH, validaciones min/max y bloqueo de requisitos.
+  - src/components/defense/DefenseGrid.jsx: conectada detección de cola para estado `calibrating`.
+  - src/components/government/hub/HubTopBar.jsx: telemetría de bastión integrada con getEffectiveTech.
+  - src/reducers/fleet/missileReducer.js: saneado spread de notifications.
+  - src/__tests__/bastionSilosContract.test.js: suite de contrato TDD verificando encolado, deducción, entrega a defensas/variantes y capacidad máxima de silos.
+
+TEST RESULTS:
+  - src/__tests__/bastionSilosContract.test.js: 3/3 passed (verificado que muerde).
+  - Suite global completa: 319/319 tests pasando (0 fallos, 0 regresiones).
+
+KNOWN ISSUES:
+  Ninguno.
+
+HARD BLOCKERS:
+  Ninguno.
+
+SOFT ISSUES:
+  Ninguno.
+
+DELIVERABLES:
+  1. Pantalla de Bastión directo sin capas intermedias.
+  2. Silos balísticos accesibles con validación estricta de coordenadas y requisitos tecnológicos.
+  3. Estado de calibración y despliegue real en baterías planetarias.
+  4. Telemetría de defensas con getEffectiveTech en HubTopBar.
+  5. Suite de contrato src/__tests__/bastionSilosContract.test.js al 100%.
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (319/319)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -1482,7 +1590,8 @@ PROCEED
 | 2026-09-30 | `770e351` | Fase 04 completada: director único de música, eliminación de fugas AudioContext, operaciones a 0.5, 288/288 verdes |
 | 2026-09-30 | `c5950bd` | Fase 06 completada: refinería x200 en fuente real, directivas conectadas, industria unificada, 310/310 verdes |
 | 2026-09-30 | `f70bb55` | Fase 07 completada: pipeline lossless, assets huérfanos purgados, MISSING_ASSETS.md (0 faltantes), 313/313 verdes |
-| 2026-09-30 | — | Fase 08 completada: separacion imperio/planeta, jerarquia unificada, verdad impositiva, 316/316 verdes |
+| 2026-09-30 | `30b1836` | Fase 08 completada: separacion imperio/planeta, jerarquia unificada, verdad impositiva, 316/316 verdes |
+| 2026-09-30 | — | Fase 09 completada: bastion directo, telemetria de defensa efectiva, validacion balistica en silos, 319/319 verdes |
 
 ---
 

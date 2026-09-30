@@ -30,7 +30,7 @@ export const handleBuildMissile = (state, action) => {
     ...p, resources: newRes,
     missiles: { ...(p.missiles || {}), [missileId]: ((p.missiles || {})[missileId] || 0) + actualQty },
   }));
-  newState.notifications = [...newState.notifications, { id: uid(), type: 'success', message: `☄️ ${actualQty}x ${m.name} construidos`, timestamp: Date.now() }];
+  newState.notifications = [...(newState.notifications || []), { id: uid(), type: 'success', message: `☄️ ${actualQty}x ${m.name} construidos`, timestamp: Date.now() }];
   return newState;
 };
 

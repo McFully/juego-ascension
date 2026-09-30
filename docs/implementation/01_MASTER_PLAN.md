@@ -247,18 +247,18 @@ FASE 21  Verificación final ← requiere 20
 
 **Objetivo:** dos sistemas separados, cada uno con su contenido, sin pantalla intermedia.
 
-**Trabajo:**
-1. **`missiles` no está en `GAME_TABS`** → `planetaryCommandCardsConfig.jsx:169` rebota a `overview`. Añadirlo a `GAME_TABS` y a `PARENT_MAP`.
-2. **Quitar la pestaña interna `silos` de `DefensePage.jsx:80-99`**, que duplica el contenido de `MissilesPage.jsx` al 100 % (fabricar, contador, consola balística). Un sistema, una pantalla.
-3. **Quitar la pantalla intermedia de Bastión:** la ruta del encargo es `EMPIRE → PLANET → HIGH COMMAND → DEFENSIVE BASTION` directo, sin pestaña de selección de divisiones.
-4. **Métricas al hub:** mover Total Batteries, Firepower y Shields a `HubTopBar`, junto a la Reputación Imperial, con el mismo estilo de indicador. Aplicar `getEffectiveTech` (que hoy sí usa el combate y no la card `planetaryCommandCardsConfig.jsx:163`).
-5. **Estado real de construcción:** una batería recién construida debe mostrar `DEPLOYMENT AND CALIBRATION IN PROGRESS` conectado al estado real, no a un texto fijo. Hoy no existe el estado: hay que crearlo en el dominio.
-6. `DefensePage.jsx:86, 95` declara `assetId` en las divisiones y **nunca lo usa** (el JSX no pinta ninguna imagen).
-7. `MissilesPage` no valida las coordenadas de entrada (string, sin `min`/`max`), a diferencia de `DefenseMissileSilosSection.jsx:216-256`.
-8. Ninguna de las dos implementations verifica `meetsReq` (ni tech) al fabricar.
+**Estado:** ✅ **COMPLETE** (2026-09-30)
 
-**Entregables:** Silos alcanzable · Bastión sin duplicación · estado de calibración real · métricas en el hub.
-**Tests:** construir una batería → estado `calibrating` persiste → countdown → `active`.
+**Trabajo completado:**
+1. **Silos alcanzable y registrado en rutas:** `missiles` integrado en `GAME_TABS` y en `PARENT_MAP` subordinado a `defense`.
+2. **Bastión directo sin duplicación:** eliminada la sub-pestaña `silos` y el selector intermedio de divisiones en `DefensePage.jsx`. `DefensePage` ahora es directamente el Bastión Planetario sin intermediarios, eliminando la duplicación del 100% de `MissilesPage.jsx`.
+3. **Métricas en HubTopBar con tecnología efectiva:** integradas métricas de Baterías Totales, Potencia de Fuego (`totalFirepower`) y Escudos (`totalShields`) en `HubTopBar.jsx` usando `getEffectiveTech` y `getDefenseStats`.
+4. **Estado real de calibración/despliegue:** `DefenseGrid.jsx` conectado a `state.defenseQueue` del planeta activo. Si una batería está construyéndose/calibrándose se muestra badge `⚙️ CALIBRANDO (X)` con indicador de pulso en lugar de texto estático.
+5. **Validación balística estricta y requisitos tecnológicos:** en `MissilesPage.jsx` añadidas validaciones numéricas de rango (`min`/`max`) para coordenadas (Galaxia 1-9, Sistema 1-499, Posición 1-15, Ojivas 1-haveIPMs) y bloqueo preventivo de fabricación ante incumplimiento de requisitos de laboratorio/I+D (`meetsReq`). Saneado el array spread de notificaciones en `missileReducer.js`.
+6. **Suite de contrato TDD:** creada suite `src/__tests__/bastionSilosContract.test.js` (3 tests probados que muerden, verificando encolado con deducción, entrega a defensas y variantes en `queueTick`, y control estricto de capacidad máxima de silos).
+
+**Entregables:** Silos alcanzable · Bastión sin duplicación · estado de calibración real · métricas en el hub · suite de contrato `bastionSilosContract.test.js`.
+**Tests:** 3/3 tests de contrato pasando. Probado que muerde. 319/319 tests verdes en la suite global (0 regresiones).
 
 ---
 

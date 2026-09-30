@@ -57,6 +57,9 @@ export const DefenseGrid = ({
           const dShd = ds.shd - d.shd;
           const dHull = ds.hull - d.hull;
 
+          const queuedItem = (state.defenseQueue || []).find(q => q.defenseId === id && q.planetId === currentPlanet.id);
+          const isCalibrating = Boolean(queuedItem);
+
           return (
             <div key={id} className="w-full h-full">
               <div className={`relative flex flex-col justify-between h-full rounded-2xl border transition-all duration-300 overflow-hidden ${
@@ -76,11 +79,18 @@ export const DefenseGrid = ({
                     
                     {/* Badge de cantidad apostada flotante sobre el banner */}
                     <div className="absolute bottom-2 left-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/80 border border-white/10 backdrop-blur-md">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className={`w-2 h-2 rounded-full ${isCalibrating ? 'bg-amber-400 animate-ping' : 'bg-emerald-400 animate-pulse'}`} />
                       <span className="text-[11px] font-mono font-bold text-white">
                         {fmt(count)} {d.max ? <span className="text-slate-400 font-normal">/ {d.max}</span> : ''}
                       </span>
                     </div>
+
+                    {isCalibrating && (
+                      <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-950/90 border border-amber-500/60 text-[9px] font-mono font-bold text-amber-200 shadow-lg animate-pulse">
+                        <span>⚙️</span>
+                        <span>CALIBRANDO ({queuedItem.quantity - (queuedItem.unitsDelivered || 0)})</span>
+                      </div>
+                    )}
 
                     <div className="absolute top-2 right-2 z-10">
                       <AutomationRestrictionToggle

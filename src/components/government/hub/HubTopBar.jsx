@@ -2,6 +2,7 @@ import React from 'react';
 import { TacticalResourceRow } from '../../ui/TacticalResourceRow.jsx';
 import { SafeImg } from '../../../assets.jsx';
 import { calcPlanetMaxPop } from '../../../core.jsx';
+import { getEffectiveTech, getDefenseStats } from '../../../utils/formulas.js';
 
 /**
  * HubTopBar — Barra superior estandarizada con telemetría de recursos y navegación de los hubs de mando.
@@ -32,6 +33,48 @@ export const HubTopBar = React.memo(({
             state={state}
             fmt={fmt}
           >
+            <div className="w-[1px] h-5 bg-white/15 shrink-0" />
+            {/* Bastión Planetario */}
+            {(() => {
+              const defenses = currentPlanet?.defenses || {};
+              const totalBatteries = Object.values(defenses).reduce((acc, qty) => acc + (qty || 0), 0);
+              if (totalBatteries <= 0) return null;
+              const effTech = getEffectiveTech(currentPlanet, state?.research);
+              const faction = state?.faction || "human";
+              let totalFirepower = 0;
+              let totalShields = 0;
+              for (const [defId, count] of Object.entries(defenses)) {
+                if (count > 0) {
+                  const stats = getDefenseStats(defId, effTech, faction, currentPlanet?.buildings || {}, state?.relics || []);
+                  if (stats) {
+                    totalFirepower += (stats.atk || 0) * count;
+                    totalShields += (stats.shd || 0) * count;
+                  }
+                }
+              }
+              return (
+                <div key="bastion-telemetry" className="flex items-center">
+                  <div className="w-[1px] h-5 bg-white/15 shrink-0" />
+                  <div className="relative flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap shrink-0" title={`Bastión Planetario: ${fmt ? fmt(totalBatteries) : totalBatteries} baterías · Potencia: ${fmt ? fmt(totalFirepower) : totalFirepower} · Escudos: ${fmt ? fmt(totalShields) : totalShields}`}>
+                    <span className="text-xl">🛡️</span>
+                    <div className="flex items-baseline gap-2 leading-none">
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-black text-rose-400 text-base md:text-lg">
+                          {fmt ? fmt(totalBatteries) : totalBatteries}
+                        </span>
+                        <span className="text-[10px] text-rose-300/80 font-bold uppercase tracking-wider">
+                          Baterías
+                        </span>
+                      </div>
+                      <div className="hidden md:flex items-baseline gap-1 text-[11px] text-rose-300 font-mono">
+                        <span className="text-rose-400/80">⚡{fmt ? fmt(totalFirepower) : totalFirepower}</span>
+                        <span className="text-cyan-400/80">🛡️{fmt ? fmt(totalShields) : totalShields}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="w-[1px] h-5 bg-white/15 shrink-0" />
             {/* Influencia */}
             <div className="relative flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap shrink-0">
