@@ -6,6 +6,7 @@ Estado real de ejecución. Se actualiza al cerrar cada fase.
 Documentos asociados:
 - `00_PREFLIGHT.md` — auditoría completa (25 hallazgos clasificados)
 - `01_MASTER_PLAN.md` — las 22 fases y sus dependencias
+- `04_HANDOFF_ANTIGRAVITY.md` — traspaso autocontenido para otro agente
 
 ---
 
