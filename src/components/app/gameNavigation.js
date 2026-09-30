@@ -1,7 +1,7 @@
 export const GAME_TABS = [
   // === I. GOBERNANZA & COLONIAS ===
   { id: "overview", label: "🪐 Imperio", quadrant: "gov" },
-  { id: "government", label: "🏛️ Gabinete y Políticas", quadrant: "gov" },
+  { id: "government", label: "👑 Alto Mando", quadrant: "gov" },
   { id: "ministry_infra", label: "🏗️ Infraestructuras", quadrant: "gov", parent: "government" },
   { id: "ministry_resources", label: "⛏️ Minería y Recursos", quadrant: "gov", parent: "government" },
   { id: "ministry_industry", label: "🏭 Industria", quadrant: "gov", parent: "government" },
@@ -43,6 +43,7 @@ export const GAME_TABS = [
   { id: "shipDesign", label: "🔧 Diseñador de Naves", quadrant: "military", parent: "shipyard" },
   { id: "fleet", label: "🛸 Hangar de la Flota", quadrant: "military" },
   { id: "defense", label: "🛡️ Bastión y Silos Defensivos", quadrant: "military" },
+  { id: "missiles", label: "🚀 Silos de Misiles", quadrant: "military", parent: "defense" },
   { id: "combat", label: "⚔️ Simulador de Batalla", quadrant: "military", parent: "fleet" },
   { id: "moon", label: "🌙 Base Lunar", quadrant: "military" },
 

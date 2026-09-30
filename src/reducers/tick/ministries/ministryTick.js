@@ -70,16 +70,25 @@ export const processMinistriesTick = (state, newPlanets, prodCache) => {
   }
   
   // Economy: Tax collection based on metal production + civil businesses
-  const totalMetalProd = newPlanets.reduce((acc, p) => {
-    const pp = prodCache.get(p.id);
-    return acc + ((pp ? pp.metal : 0) / 3600);
-  }, 0);
+  // Una Sola Verdad: El impuesto real es el del planeta (p.taxRate), con fallback a mins.economy.taxRate
+  const fallbackTaxRate = mins.economy?.taxRate ?? 0.1;
+  let weightedMetalTax = 0;
+  let totalMetalHourly = 0;
+
+  newPlanets.forEach(p => {
+    const pp = prodCache ? prodCache.get(p.id) : (p.production || null);
+    const pMetalHourly = pp ? (pp.metal || 0) : 0;
+    totalMetalHourly += pMetalHourly;
+    const pTax = p.taxRate ?? fallbackTaxRate;
+    weightedMetalTax += (pMetalHourly / 3600) * pTax * 2.0;
+  });
+
   let businessTaxIncome = 0;
   newPlanets.forEach(p => {
     const b = p.civilBusinesses || { lowClass: 0, midClass: 0, highClass: 0 };
     businessTaxIncome += (b.lowClass || 0) * 5 + (b.midClass || 0) * 15 + (b.highClass || 0) * 50;
   });
-  const taxIncome = totalMetalProd * taxRate * 2.0 + businessTaxIncome;
+  const taxIncome = weightedMetalTax + businessTaxIncome;
   newState.ministries = {
     ...newState.ministries,
     economy: {
@@ -87,7 +96,7 @@ export const processMinistriesTick = (state, newPlanets, prodCache) => {
       // Antes: `mins.economy.treasury`, que reventaba si el ministerio faltaba.
       // Una partida vieja podría llegar sin él.
       treasury: (mins.economy?.treasury || 0) + taxIncome,
-      gdp: totalMetalProd * 3600,
+      gdp: totalMetalHourly,
     }
   };
 

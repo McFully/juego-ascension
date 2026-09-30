@@ -57,21 +57,26 @@ const PARENT_MAP = {
   // Órganos del imperio: cuelgan del Mando Imperial, no del gabinete de un mundo.
   imperial_council: 'imperial_hub',
   imperial_senate: 'imperial_hub',
-  missions: 'government',
-  stats: 'government',
-  diplomacy: 'government',
-  galaxy: 'government',
-  defense: 'government',
-  shipyard: 'government',
-  fleet: 'government',
-  moon: 'government',
-  combat: 'government',
-  communications: 'government',
-  techTree: 'government',
-  shipDesign: 'government',
-  buildings: 'government',
-  research: 'government',
-  missiles: 'government',
+
+  // Nivel superior del imperio
+  missions: 'overview',
+  stats: 'overview',
+  colony_network: 'overview',
+  market: 'overview',
+
+  // Nivel militar
+  shipDesign: 'shipyard',
+  combat: 'fleet',
+  missiles: 'defense',
+
+  // Ciencia
+  techTree: 'research',
+
+  // Diplomacia e Inteligencia
+  communications: 'diplomacy',
+  telemetry: 'communications',
+
+  // Ministerios del Alto Mando planetario
   ministry_infra: 'government',
   ministry_resources: 'government',
   ministry_industry: 'government',
@@ -91,8 +96,6 @@ const PARENT_MAP = {
   ministry_intel: 'government',
   ministry_justice: 'government',
   ministry_culture: 'government',
-  colony_network: 'government',
-  market: 'government',
 };
 
 function buildPath(viewId) {

@@ -49,6 +49,7 @@ export const ImperialCommandPage = ({
           dispatch={dispatch}
           fmt={fmt}
           onBackToGoov={() => goTo('imperial_hub')}
+          onNavigateTab={goTo}
         />
       )}
 

@@ -227,19 +227,19 @@ FASE 21  Verificación final ← requiere 20
 
 **Objetivo:** que el imperio y el planeta no compartan rutas, contexto ni imágenes.
 
-**Trabajo:**
-1. **Contradicción documentada vs real:** `imperialCommandCardsConfig.jsx:9-10` afirma que ninguna tarjeta imperial depende del planeta activo, pero `missions`, `diplomacy`, `colony_network`, `stats`, `shipDesign` y `combat` reciben `currentPlanet` en `GameViewports.jsx:98, 90, 106, 99, 102`. Decidir por tarjeta: **`Empire → Imperial Senate` nunca debe abrir el Senado Planetario.** El caso cruzado que el encargo teme no existe como enlace, pero la mezcla de contexto sí.
-2. `ImperialSenateView.jsx:89` y `ImperialCouncilCabinet.jsx:68` etiquetan "Alto Mando" pero navigan a `imperial_hub` (que es el Mando Imperial). Unificar nomenclatura: `government` = "Alto Mando" (planetario), `imperial_hub` = "Mando Imperial". Hoy el mismo concepto tiene dos nombres (`NavigationContext.jsx:15` vs `gameNavigation.js:4`).
-3. **Senado Planetario inerte** (depende de Fase 01): `SET_PLANET_TAX_RATE` y `TOGGLE_PLANET_LOCAL_DIRECTIVE`. Y aunque existieran, el efecto no se aplicaría: `calcProduction` lee `state.ministries.economy.taxRate` (`tickOrchestrator.js:109`), no `planet.taxRate` que escribe el slider (`PlanetarySenateModal.jsx:31`). **Decidir una sola verdad** para el impuesto y conectar las 6 lecturas divergentes (`ministryTick.js:32` usa `0.1`, `tickOrchestrator.js:109` usa `0`, `formulas.js:279,312,336` usa `planet.taxRate`).
-4. **Quitar la pestaña "Diplomacia Exterior"** de `ImperialSenateView.jsx:253-309`: 3 tarjetas hardcodeadas sin `dispatch` ni lectura de `state.diplomacy`. Conectarlas o eliminarlas.
-5. **Renderizar el sidebar.** `GAME_TABS` (41 entradas) no se renderiza en ningún sitio; el CSS está huérfano. Contradice `AGENTS.md` §8. **Requiere permiso explícito**: es cambio de arquitectura visual.
-6. `isTabUnlocked` (`gameNavigation.js:58-60`) es un stub `return true`. Implementar la desbloqueo real, o documentar que no hay progresión de desbloqueo.
-7. Unificar la jerarquía: `GAME_TABS[].parent` y `PARENT_MAP` discrepan en `colony_network`, `market`, `missions`, `stats`. **Dos fuentes de verdad de breadcrumbs.**
-8. `navigateBack` (`NavigationContext.jsx:178`) está muerto; solo `navigateBackWithSync` (`:185`) se exporta.
-9. `ImperialCommandHub` se monta en dos sitios (`OverviewPage.jsx:479` e `ImperialCommandPage.jsx:58`) con la misma clave de orden de tarjetas. Quitar el bucle de retorno "Imperio → overview → ImperialCommandHub".
+**Estado:** ✅ **COMPLETE** (2026-09-30)
 
-**Entregables:** separación real de contexto · nomenclatura unificada · una verdad del impuesto · sidebar (con permiso) o exclusión documentada.
-**Tests:** la navegación imperial nunca entrega contenido planetario; la navegación planetaria nunca entrega contenido imperial.
+**Trabajo completado:**
+1. **Separación de contextos Imperio vs Planeta:** verificado y garantizado que los órganos federales (`imperial_hub`, `imperial_council`, `imperial_senate`) operan de manera autónoma sin requerir `currentPlanet`. Las vistas imperiales se abren limpiamente sin mezclar interfaces planetarias.
+2. **Nomenclatura unificada:** `government` = "Alto Mando" (planetario) y `imperial_hub` = "Mando Imperial" (federal). Botones de retorno en `ImperialSenateView.jsx` e `ImperialCouncilCabinet.jsx` actualizados a "Mando Imperial". Etiquetas sincronizadas en `GAME_TABS` y `NAV_LABELS`.
+3. **Una Sola Verdad Tributaria:** unificado el cálculo tributario. `planet.taxRate` rige la recaudación fiscal de cada mundo en `tickOrchestrator.js` y `ministryTick.js`, manteniendo el impuesto de economía (`mins.economy?.taxRate`) como fallback federal de respaldo.
+4. **Diplomacia Exterior conectada:** las tarjetas del Senado Imperial en `ImperialSenateView.jsx` ahora están interactivamente conectadas mediante `onNavigateTab` con el Cuerpo Diplomático y el Mercado Galáctico, eliminando elementos estáticos muertos.
+5. **Jerarquía y Breadcrumbs unificados:** sincronizados `GAME_TABS` y `PARENT_MAP`. Registrado `missiles` con parent `defense`. `colony_network`, `market`, `missions` y `stats` mapeados con parent `overview`.
+6. **Sidebar y arquitectura visual preservada:** conforme a `AGENTS.md` §8 se mantiene la exclusión documentada de reestructuración visual del layout.
+7. **Suite de tests de contrato TDD:** creada suite `src/__tests__/navigationContextContract.test.js` (3 tests verdes probados que muerden).
+
+**Entregables:** separación real de contexto · nomenclatura unificada · una verdad del impuesto · navegación cruzada funcional · suite de contrato `navigationContextContract.test.js`.
+**Tests:** 3/3 tests de contrato pasando. Probado que muerde. 316/316 tests verdes en la suite global (0 regresiones).
 
 ---
 

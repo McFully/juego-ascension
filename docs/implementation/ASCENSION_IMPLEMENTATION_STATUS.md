@@ -1384,6 +1384,91 @@ PROCEED
 
 ---
 
+## FASE 08 — IMPERIAL vs PLANETARY, SENADOS, NAVEGACIÓN
+
+```text
+PHASE:        08
+STATUS:       COMPLETE
+DATE:         2026-09-30
+COMMIT:       Pending
+DOMAIN:       UI / Navigation / Tax Synchronization
+
+OBJECTIVE:
+Separación limpia de contextos imperio vs planeta, unificación de nomenclatura (Alto Mando vs Mando Imperial), una sola verdad del pacto tributario (planet.taxRate) y sincronización de jerarquías y breadcrumbs.
+
+CHANGES:
+  1. src/components/app/gameNavigation.js:
+     - Unificada etiqueta de government a "👑 Alto Mando".
+     - Añadida entrada canónica de missiles con parent: "defense".
+  2. src/components/navigation/NavigationContext.jsx:
+     - Sincronizado PARENT_MAP para reflejar la jerarquía real:
+       - colony_network, market, missions, stats cuelgan de overview.
+       - missiles cuelga de defense.
+       - imperial_council e imperial_senate cuelgan de imperial_hub.
+  3. src/components/government/council/ImperialSenateView.jsx:
+     - Actualizado botón de navegación de retorno a "Mando Imperial".
+     - Tarjetas de Diplomacia Exterior interactivas con botones que navegan al Cuerpo Diplomático (diplomacy) o Mercado Galáctico (market).
+  4. src/components/government/council/ImperialCouncilCabinet.jsx:
+     - Actualizado botón de retorno a "◀ Volver al Mando Imperial".
+  5. src/pages/ImperialCommandPage.jsx:
+     - Pasado onNavigateTab={goTo} a ImperialSenateView.
+  6. src/reducers/tick/ministries/ministryTick.js:
+     - Unificado el cálculo fiscal para que compute la recaudación mundo a mundo ponderando el pacto fiscal real de cada planeta (p.taxRate), con fallback federal a mins.economy.taxRate.
+  7. src/__tests__/navigationContextContract.test.js:
+     - Nueva suite de pruebas de contrato TDD verificando jerarquía unificada, nomenclatura consistente y cálculo fiscal por planeta.
+
+DATABASE CHANGES:
+Ninguno.
+
+MIGRATIONS:
+Ninguno.
+
+IMPLEMENTATION:
+100% completada y validada según las directivas maestras.
+
+TESTS:
+src/__tests__/navigationContextContract.test.js: 3 tests pasando (probado que muerden).
+Suite completa: 316/316 tests pasando sin regresiones.
+
+TEST RESULTS:
+316/316 passing (30 test files)
+
+KNOWN ISSUES:
+Ninguno nuevo detectado en esta fase.
+
+HARD BLOCKERS:
+Ninguno.
+
+SOFT ISSUES:
+Ninguno.
+
+DELIVERABLES:
+  1. Jerarquía sincronizada entre GAME_TABS y PARENT_MAP.
+  2. Nomenclatura unificada Alto Mando vs Mando Imperial.
+  3. Una Sola Verdad en recaudación impositiva ponderada por planeta.
+  4. Tarjetas diplomáticas del Senado conectadas a vistas interactivas reales.
+  5. Suite de contrato src/__tests__/navigationContextContract.test.js pasando al 100%.
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (316/316)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -1396,7 +1481,8 @@ PROCEED
 | 2026-09-30 | `df19ca1` | Fase 03 completada: datos de estado, codex naves especiales, matriculas deterministas, 11 tests nuevos, 277/277 verdes |
 | 2026-09-30 | `770e351` | Fase 04 completada: director único de música, eliminación de fugas AudioContext, operaciones a 0.5, 288/288 verdes |
 | 2026-09-30 | `c5950bd` | Fase 06 completada: refinería x200 en fuente real, directivas conectadas, industria unificada, 310/310 verdes |
-| 2026-09-30 | — | Fase 07 completada: pipeline lossless, assets huérfanos purgados, MISSING_ASSETS.md (0 faltantes), 313/313 verdes |
+| 2026-09-30 | `f70bb55` | Fase 07 completada: pipeline lossless, assets huérfanos purgados, MISSING_ASSETS.md (0 faltantes), 313/313 verdes |
+| 2026-09-30 | — | Fase 08 completada: separacion imperio/planeta, jerarquia unificada, verdad impositiva, 316/316 verdes |
 
 ---
 

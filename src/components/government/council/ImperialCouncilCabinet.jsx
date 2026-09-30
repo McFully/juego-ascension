@@ -65,7 +65,7 @@ export const ImperialCouncilCabinet = ({
               }}
               className="px-4 py-2 rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 hover:text-white transition-all text-xs font-mono font-bold cursor-pointer"
             >
-              ◀ Volver al Alto Mando
+              ◀ Volver al Mando Imperial
             </button>
           )}
         </div>

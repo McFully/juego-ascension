@@ -16,7 +16,8 @@ export const ImperialSenateView = ({
   state,
   dispatch,
   fmt,
-  onBackToGoov
+  onBackToGoov,
+  onNavigateTab
 }) => {
   const council = state?.imperialCouncil || { activeBills: [], passedBills: [] };
   const activeBills = council.activeBills || [];
@@ -86,7 +87,7 @@ export const ImperialSenateView = ({
               className="px-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center gap-2"
             >
               <span>←</span>
-              <span>Alto Mando</span>
+              <span>Mando Imperial</span>
             </button>
           )}
         </div>
@@ -251,58 +252,99 @@ export const ImperialSenateView = ({
 
       {/* PESTAÑA 2: DIPLOMACIA EXTERIOR */}
       {senateTab === 'diplomacy' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="p-6 rounded-3xl bg-[#0c0d22]/90 border border-cyan-500/30 flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl p-2.5 rounded-2xl bg-cyan-950/70 border border-cyan-500/40">🕊️</span>
-                <div>
-                  <h3 className="text-base font-bold text-white uppercase">Pactos de No Agresión</h3>
-                  <p className="text-xs text-slate-400">Tratados de paz interestelar</p>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="p-6 rounded-3xl bg-[#0c0d22]/90 border border-cyan-500/30 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl p-2.5 rounded-2xl bg-cyan-950/70 border border-cyan-500/40">🕊️</span>
+                  <div>
+                    <h3 className="text-base font-bold text-white uppercase">Pactos de No Agresión</h3>
+                    <p className="text-xs text-slate-400">Tratados de paz interestelar</p>
+                  </div>
                 </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Ratifica pactos fronterizos para garantizar que las rutas de cargueros entre sistemas operen sin interferencias hostiles.
+                </p>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Ratifica pactos fronterizos para garantizar que las rutas de cargueros entre sistemas operen sin interferencias hostiles.
-              </p>
+              <div className="space-y-2">
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-xs text-cyan-300 font-mono">
+                  Facciones Neutrales: 3 Tratados Activos
+                </div>
+                {onNavigateTab && (
+                  <button
+                    onClick={() => {
+                      if (window.playSfx) window.playSfx('click');
+                      onNavigateTab('diplomacy');
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-cyan-950/40 border border-cyan-500/40 hover:bg-cyan-500/20 text-cyan-200 text-xs font-bold transition-all text-center"
+                  >
+                    Gestionar en Cuerpo Diplomático →
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-xs text-cyan-300 font-mono">
-              Facciones Neutrales: 3 Tratados Activos
-            </div>
-          </div>
 
-          <div className="p-6 rounded-3xl bg-[#0c0d22]/90 border border-amber-500/30 flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl p-2.5 rounded-2xl bg-amber-950/70 border border-amber-500/40">💼</span>
-                <div>
-                  <h3 className="text-base font-bold text-white uppercase">Tratados Comerciales</h3>
-                  <p className="text-xs text-slate-400">Apertura de aduanas espaciales</p>
+            <div className="p-6 rounded-3xl bg-[#0c0d22]/90 border border-amber-500/30 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl p-2.5 rounded-2xl bg-amber-950/70 border border-amber-500/40">💼</span>
+                  <div>
+                    <h3 className="text-base font-bold text-white uppercase">Tratados Comerciales</h3>
+                    <p className="text-xs text-slate-400">Apertura de aduanas espaciales</p>
+                  </div>
                 </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Establece convenios de intercambio de deuterio y metales raros con las corporaciones mercantes independientes.
+                </p>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Establece convenios de intercambio de deuterio y metales raros con las corporaciones mercantes independientes.
-              </p>
+              <div className="space-y-2">
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-xs text-amber-300 font-mono">
+                  Bonificación comercial: +8% Ganancia en Mercado
+                </div>
+                {onNavigateTab && (
+                  <button
+                    onClick={() => {
+                      if (window.playSfx) window.playSfx('click');
+                      onNavigateTab('market');
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-amber-950/40 border border-amber-500/40 hover:bg-amber-500/20 text-amber-200 text-xs font-bold transition-all text-center"
+                  >
+                    Abrir Mercado Galáctico →
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-xs text-amber-300 font-mono">
-              Bonificación comercial: +8% Ganancia en Mercado
-            </div>
-          </div>
 
-          <div className="p-6 rounded-3xl bg-[#0c0d22]/90 border border-rose-500/30 flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl p-2.5 rounded-2xl bg-rose-950/70 border border-rose-500/40">⚔️</span>
-                <div>
-                  <h3 className="text-base font-bold text-white uppercase">Resolución de Guerra</h3>
-                  <p className="text-xs text-slate-400">Sanción del Senado a invasiones</p>
+            <div className="p-6 rounded-3xl bg-[#0c0d22]/90 border border-rose-500/30 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl p-2.5 rounded-2xl bg-rose-950/70 border border-rose-500/40">⚔️</span>
+                  <div>
+                    <h3 className="text-base font-bold text-white uppercase">Resolución de Guerra</h3>
+                    <p className="text-xs text-slate-400">Sanción del Senado a invasiones</p>
+                  </div>
                 </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  El Senado puede declarar enemigos del imperio a facciones rivales, habilitando operaciones de bombardeo y asalto total.
+                </p>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                El Senado puede declarar enemigos del imperio a facciones rivales, habilitando operaciones de bombardeo y asalto total.
-              </p>
-            </div>
-            <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-xs text-rose-300 font-mono">
-              Doctrina de Defensa Activa
+              <div className="space-y-2">
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-xs text-rose-300 font-mono">
+                  Doctrina de Defensa Activa
+                </div>
+                {onNavigateTab && (
+                  <button
+                    onClick={() => {
+                      if (window.playSfx) window.playSfx('click');
+                      onNavigateTab('diplomacy');
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-rose-950/40 border border-rose-500/40 hover:bg-rose-500/20 text-rose-200 text-xs font-bold transition-all text-center"
+                  >
+                    Abrir Relaciones Diplomáticas →
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
