@@ -53,7 +53,8 @@ export {
   calcRequiredPopulation,
   fmt, fmtTime, uid, getGalacticAlignment, getPOIAtCoordinates,
   canAfford, deduct, calcResourceValueForAI, clampResources, meetsReq, meetsResearchReq,
-  unmetReqList, reqLabel, resolveReqKey, calcProduction
+  unmetReqList, reqLabel, resolveReqKey, calcProduction,
+  REFINERY_REWARD_MULTIPLIER, BASE_REFINERY_PROD
 } from "./utils/formulas.js";
 
 export { getEffectiveTech, isOutdated } from "./utils/formulas/combatFormulas.js";

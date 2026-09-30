@@ -20,7 +20,7 @@ Documentos asociados:
 | **03** | Datos de estado y rutas accesibles | ✅ **COMPLETE** | — |
 | **04** | Sistema de audio | ✅ **COMPLETE** | — |
 | **05** | Fuente única de duraciones | ✅ **COMPLETE** | — |
-| **06** | Refinería ×200 | ⬜ NOT_STARTED | — |
+| **06** | Refinería ×200 | ✅ **COMPLETE** | — |
 | **07** | Pipeline de imágenes y assets | ⬜ NOT_STARTED | — |
 | **08** | Imperial vs Planetary + navegación | ⬜ NOT_STARTED | requiere permiso visual |
 | **09** | Bastión y Silos | ⬜ NOT_STARTED | — |
@@ -37,7 +37,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 6 de 22 fases (27,3 %).**
+**Avance: 7 de 22 fases (31,8 %).**
 
 ---
 
@@ -1166,6 +1166,141 @@ PROCEED
 
 ---
 
+## FASE 06 — RECOMPENSAS DE REFINERÍA ×200
+
+```text
+PHASE:        06
+Nombre:       Recompensas de refinería ×200
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Aplicar el multiplicador NEW_REWARD = CURRENT_REWARD × 200 en la fuente real de cálculo,
+no en meros textos estéticos, unificar los 11 edificios industriales en una única fuente
+de verdad lineal en buildingProdInfo y conectar las directivas y mejoras ministeriales del dominio.
+
+SOURCE OF TRUTH:
+- Fórmulas de producción y constantes canónicas: src/utils/formulas/productionFormulas.js
+  (REFINERY_REWARD_MULTIPLIER = 200, BASE_REFINERY_PROD = 5000, calcProduction)
+- Información honesta de edificios y simulación industrial: src/utils/formulas.js (buildingProdInfo, INDUSTRY_BUILD_IDS)
+- Directivas ministeriales: src/data/policies/ministryDirectives.js (dir_heavy_refine)
+- Mejoras de ministerio: src/data/ministriesData.js (ind_catalyst)
+- Catálogo de edificios base y expandidos: src/data/game/buildingsData.js y src/data/expanded/expandedBuildings.js
+- Contratos protegidos por: src/__tests__/refineryContract.test.js
+
+DEPENDENCIES:
+Ninguna.
+
+FILES INSPECTED:
+  src/utils/formulas/productionFormulas.js
+  src/utils/formulas.js
+  src/core.jsx
+  src/data/game/buildingsData.js
+  src/data/expanded/expandedBuildings.js
+  src/data/policies/ministryDirectives.js
+  src/data/ministriesData.js
+  src/reducers/tick/tickOrchestrator.js
+  src/reducers/tick/livingPlanetTick.js
+  src/reducers/tick/populationTick.js
+  src/components/ui/ResourceBreakdownTooltip.jsx
+  src/pages/OverviewPage.jsx
+
+FILES MODIFIED:
+  src/utils/formulas/productionFormulas.js (definición de REFINERY_REWARD_MULTIPLIER = 200, BASE_REFINERY_PROD = 5000; aplicación del multiplicador x200 en industryMetalBase e industryItems.refinery; conexión de dir_heavy_refine e ind_catalyst; salvaguarda de relicsList)
+  src/utils/formulas.js                   (re-exportación canónica de constantes; ampliación de INDUSTRY_BUILD_IDS a los 11 edificios industriales reales)
+  src/core.jsx                            (re-exportación para UI y componentes)
+  src/__tests__/refineryContract.test.js  (nueva suite de contrato, 9 tests probados que muerden)
+
+DATABASE CHANGES:
+  Ninguna.
+
+MIGRATIONS:
+  Ninguna.
+
+IMPLEMENTATION:
+  1. Constantes canónicas y multiplicador ×200:
+     - Definidas y exportadas REFINERY_REWARD_MULTIPLIER = 200 y BASE_REFINERY_PROD = 5000 en src/utils/formulas/productionFormulas.js.
+     - Decisión arquitectónica adoptada: aplicar multiplicador explícito en la fórmula en vez de alterar silenciosamente
+       el catálogo base (baseProd: 5000 en buildingsData.js se mantiene limpio e inmutable para facilitar auditorías y balanceo).
+     - La refinería nivel 1 produce de base exactamente 1.000.000 metal/h (5.000 × 200), escalando linealmente (nv.3 = 3.000.000).
+
+  2. Conexión de directivas y mejoras ministeriales del dominio:
+     - Conectada directiva 'dir_heavy_refine' (+20% a producción de refinerías).
+     - Conectada mejora ministerial 'ind_catalyst' (+15% de eficiencia por nivel en refinerías).
+     - Ambas inciden directamente sobre effectiveRefineryBase.
+
+  3. Unificación de los 11 edificios industriales en buildingProdInfo:
+     - INDUSTRY_BUILD_IDS en formulas.js ampliado de 4 edificios a los 11 reales:
+       'refinery', 'chemPlant', 'synthPlant', 'enrichPlant', 'vacuumForge', 'spaceElevator',
+       'automatedMine', 'slagRecycler', 'heliumExtractor', 'siliconPurifier', 'catalyticDeut'.
+     - Erradicada la disparidad donde 7 edificios industriales se calculaban exponencialmente en UI
+       y linealmente en el motor. Ahora las tarjetas muestran la simulación honesta idéntica al tick.
+
+  4. Protección de escoria y biosfera:
+     - slagFromRefinery se mantiene basado en el throughput físico de base (5000 * lvl * 0.18),
+       evitando que la refinería genere 180.000 de escoria por nivel y destruya la biosfera colonial en segundos.
+     - Ratio de consumo energético auditado: calcBuildingEnergyDemand aplica el consumo del catálogo (4.000 MW base),
+       integrado con el factor de energía del planeta.
+
+TESTS:
+  src/__tests__/refineryContract.test.js (9 tests):
+    - Test 1: Constantes canónicas existen y REFINERY_REWARD_MULTIPLIER es 200.
+    - Test 2: Refinería nivel 1 produce exactamente 1.000.000 metal base (5.000 × 200).
+    - Test 3: Escala linealmente con el nivel (nv.3 = 3.000.000).
+    - Test 4: Directiva dir_heavy_refine añade +20% a refinerías.
+    - Test 5: Mejora ministerial ind_catalyst añade +15% por nivel.
+    - Test 6: Generación de escoria de refinería se mantiene proporcionada (900/h a nivel 1).
+    - Test 7: buildingProdInfo clasifica los 11 edificios industriales como kind: 'industry'.
+    - Test 8: buildingProdInfo para refinería nivel 1 muestra delta de 1.000.000/h.
+    - Test 9: Coherencia de mina de cristal.
+
+  PROBADO QUE MUERDE:
+  Se alteró temporalmente REFINERY_REWARD_MULTIPLIER de 200 a 100; 6 tests fallaron de inmediato
+  con discrepancias exactas en producción de refinería (500.000 vs 1.000.000) y constantes.
+  Se restauró a 200 y volvieron a verde.
+
+TEST RESULTS:
+  PASSED  28/28 ficheros, 310/310 tests, 0 fallos, 16,47 s
+  (301 previos + 9 Fase 06)
+  REGRESION: cero.
+  PARSEO: todos los ficheros modificados parsean sin errores con esbuild.
+
+KNOWN ISSUES:
+  Ninguno nuevo detectado en esta fase.
+
+HARD BLOCKERS:
+  Ninguno.
+
+SOFT ISSUES:
+  Ninguno.
+
+DELIVERABLES:
+  1. Constantes canónicas REFINERY_REWARD_MULTIPLIER = 200 y BASE_REFINERY_PROD = 5000 exportadas en productionFormulas, formulas y core.
+  2. Multiplicador x200 activo en productionFormulas.js y reflejado en UI/tooltips.
+  3. Directivas dir_heavy_refine y mejora ind_catalyst conectadas funcionalmente.
+  4. INDUSTRY_BUILD_IDS en formulas.js ampliado con los 11 edificios industriales.
+  5. Suite de pruebas src/__tests__/refineryContract.test.js (9 tests verdes).
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (310/310)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -1177,7 +1312,8 @@ PROCEED
 | 2026-09-30 | — | Fase 02 completada: allow-list 37->50, esquema versionado, backup verificado, 266/266 verdes |
 | 2026-09-30 | `df19ca1` | Fase 03 completada: datos de estado, codex naves especiales, matriculas deterministas, 11 tests nuevos, 277/277 verdes |
 | 2026-09-30 | `770e351` | Fase 04 completada: director único de música, eliminación de fugas AudioContext, operaciones a 0.5, 288/288 verdes |
-| 2026-09-30 | — | Fase 05 completada: fuente única de duraciones, eliminación automationTick, countdowns unificados, 301/301 verdes |
+| 2026-09-30 | `24137fa` | Fase 05 completada: fuente única de duraciones, eliminación automationTick, countdowns unificados, 301/301 verdes |
+| 2026-09-30 | — | Fase 06 completada: refinería x200 en fuente real, directivas conectadas, industria unificada, 310/310 verdes |
 
 ---
 

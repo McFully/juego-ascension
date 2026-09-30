@@ -12,6 +12,9 @@ import { getPOIAtCoordinates } from './coordinatesFormulas.js';
 
 const BUILDINGS = { ...BASE_BUILDINGS, ...EXPANDED_BUILDINGS };
 
+export const REFINERY_REWARD_MULTIPLIER = 200;
+export const BASE_REFINERY_PROD = 5000;
+
 export const calcBuildingEnergyDemand = (id, lvl) => {
   if (!lvl || lvl <= 0) return 0;
   const b = BUILDINGS[id];
@@ -142,16 +145,30 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
   let govCrystalMult = 1.0;
   let govDeutMult = 1.0;
 
+  let refineryProdMultiplier = 1.0;
+
   if (relics && typeof relics === 'object') {
     const mins = relics.ministries || {};
     const ecoMinister = mins.economy?.minister;
     const ecoDirs = mins.economy?.directives || {};
+    const indDirs = mins.industry?.directives || {};
     const ecoUpgrades = relics.ministryUpgrades?.economy || {};
+    const indUpgrades = relics.ministryUpgrades?.industry || {};
 
     if (ecoMinister?.bonus === 'metalProd') govMetalMult += 0.15;
     if (ecoDirs.dir_pyme) govCrystalMult += 0.10;
     if (ecoDirs.dir_heavy) { govMetalMult += 0.15; }
     
+    // Directiva dir_heavy_refine (+20% producción de refinerías)
+    if (indDirs.dir_heavy_refine || ecoDirs.dir_heavy_refine) {
+      refineryProdMultiplier += 0.20;
+    }
+
+    // Mejora ministerial ind_catalyst (+15% por nivel)
+    if (indUpgrades.ind_catalyst) {
+      refineryProdMultiplier += indUpgrades.ind_catalyst * 0.15;
+    }
+
     if (ecoUpgrades.mining_subsidy) govMetalMult += ecoUpgrades.mining_subsidy * 0.10;
     const infraUpgrades = relics.ministryUpgrades?.infra || {};
     if (infraUpgrades.deep_mines) {
@@ -204,7 +221,8 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
   const recycledMetalBonus = Math.round(effectiveRecyclePerHour * 0.70);
   const recycledCrystalBonus = Math.round(effectiveRecyclePerHour * 0.25);
 
-  const industryMetalBase = (5000 * refineryLvl + 800 * vacuumForgeLvl + 1200 * automatedMineLvl + 2000 * spaceElevatorLvl) * speed * productionFactor * hyperloopMult + recycledMetalBonus;
+  const effectiveRefineryBase = (BASE_REFINERY_PROD * REFINERY_REWARD_MULTIPLIER) * refineryLvl * refineryProdMultiplier;
+  const industryMetalBase = (effectiveRefineryBase + 800 * vacuumForgeLvl + 1200 * automatedMineLvl + 2000 * spaceElevatorLvl) * speed * productionFactor * hyperloopMult + recycledMetalBonus;
   metalProd += industryMetalBase;
 
   const chemPlantLvl = buildings.chemPlant || 0;
@@ -309,10 +327,11 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
 
   const fusionCons = fl > 0 ? Math.floor(10 * fl * Math.pow(1.1, fl)) : 0;
 
-  const relicMetalMult = (relics || []).reduce((acc, r) => r.effect?.metalProd ? acc * r.effect.metalProd : acc, 1);
-  const relicCrystalMult = (relics || []).reduce((acc, r) => r.effect?.crystalProd ? acc * r.effect.crystalProd : acc, 1);
-  const relicEnergyMult = (relics || []).reduce((acc, r) => r.effect?.energyProd ? acc * r.effect.energyProd : acc, 1);
-  const relicBuildSpeed = (relics || []).reduce((acc, r) => r.effect?.buildSpeed ? acc * r.effect.buildSpeed : acc, 1);
+  const relicsList = Array.isArray(relics) ? relics : (relics?.relics || []);
+  const relicMetalMult = relicsList.reduce((acc, r) => r.effect?.metalProd ? acc * r.effect.metalProd : acc, 1);
+  const relicCrystalMult = relicsList.reduce((acc, r) => r.effect?.crystalProd ? acc * r.effect.crystalProd : acc, 1);
+  const relicEnergyMult = relicsList.reduce((acc, r) => r.effect?.energyProd ? acc * r.effect.energyProd : acc, 1);
+  const relicBuildSpeed = relicsList.reduce((acc, r) => r.effect?.buildSpeed ? acc * r.effect.buildSpeed : acc, 1);
 
   const applyRounding = (v) => Math.round(v);
 
@@ -364,7 +383,7 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
         slagGenerated: Math.round(slagFromMetalMine * speed * productionFactor * hyperloopMult),
         total: finalMetal,
         industryItems: {
-          refinery: Math.round(5000 * refineryLvl * speed * productionFactor * hyperloopMult),
+          refinery: Math.round(effectiveRefineryBase * speed * productionFactor * hyperloopMult),
           vacuumForge: Math.round(800 * vacuumForgeLvl * speed * productionFactor * hyperloopMult),
           automatedMine: Math.round(1200 * automatedMineLvl * speed * productionFactor * hyperloopMult),
           spaceElevator: Math.round(2000 * spaceElevatorLvl * speed * productionFactor * hyperloopMult)

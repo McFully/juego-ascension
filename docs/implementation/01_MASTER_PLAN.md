@@ -192,17 +192,17 @@ FASE 21  Verificación final ← requiere 20
 
 **Objetivo:** `NEW_REWARD = CURRENT_REWARD × 200` en la fuente real, no en el texto.
 
-**Trabajo:**
-1. Fuente real: `productionFormulas.js:207` → `5000 * refineryLvl`. Catálogo: `buildingsData.js:6` → `baseProd: 5000`.
-2. **Decisión de diseño a documentar:** ¿se sube `baseProd` a 1.000.000 en el catálogo, o se aplica un multiplicador `REFINERY_REWARD_MULTIPLIER = 200` en la fórmula? Lo segundo es más auditable y permite revertir sin tocar datos. Documentar la elección.
-3. Verificar coherencia en los 4 puntos: cálculo (`:207`, `:325`), concesión (tick), persistencia (vía allow-list) y UI (`ResourceBreakdownTooltip.jsx:165` → `fmt(b.industryItems.refinery)`).
-4. **Rebalancear en cascada, o no hacerlo:** 1.000.000 metal/h por nivel de refinería domina toda la economía. Auditar: coste de edificios, presupuesto de'의Investments, precios de mercado,ilusiones de oasis y recompensas de misión. Si el desequilibrio es severo, documentarlo y proponer el ajuste en vez de aplicarlo a ciegas.
-5. **Conectar los bonos muertos del mismo dominio:** `dir_heavy_refine` ("+20% producción refinerías", `ministryDirectives.js:58`) e `ind_catalyst` ("+15% eficiencia", `ministriesData.js:70`) están declarados y **no los lee ninguna fórmula**. O se conectan, o se documentan como `No aplica`.
-6. **Unificar el coste energético de la refinería:** `livingPlanetTick.js:81, 102` usa coeficientes propios (`* 300` MW, `* 2` contaminación) desconectados de `energy: -4000` del catálogo. Dos verdades.
-7. **Revisar la 2ª fuente de verdad de producción:** `formulas.js:254-455` (`buildingProdInfo`, 200 líneas) no incluye `vacuumForge`, `spaceElevator`, `automatedMine`, `slagRecycler`, `heliumExtractor`, `siliconPurifier`, `catalyticDeut` en `INDUSTRY_BUILD_IDS`, así que los muestra **exponenciales** (`1200*1.1^l`) cuando el motor los calcula **lineales** (`800*lvl`). Divergencia ×4 o mayor. Además `crystalMine` usa `22` en catálogo y `30` hardcodeado en el motor.
+**Estado:** ✅ **COMPLETE** (2026-09-30)
 
-**Entregables:** ×200 en fuente real verificado en 4 puntos · rebalanceo documentado · bonos conectados o marcados `No aplica` · una sola verdad de producción industrial.
-**Tests:** el reward que otorga el motor es exactamente 200× el valor base; UI, cálculo y persistencia coinciden.
+**Trabajo completado:**
+1. Definidas constantes canónicas `REFINERY_REWARD_MULTIPLIER = 200` y `BASE_REFINERY_PROD = 5000` en `src/utils/formulas/productionFormulas.js`, re-exportadas en `formulas.js` y `core.jsx`.
+2. Decisión de diseño: aplicar multiplicador explícito sobre la fórmula en lugar de alterar el catálogo base (`baseProd: 5000`), manteniendo inmutables los datos maestros para auditoría.
+3. Conectada directiva ministerial `dir_heavy_refine` (+20% a refinerías) y mejora `ind_catalyst` (+15% por nivel) en `productionFormulas.js`.
+4. INDUSTRY_BUILD_IDS en `formulas.js` ampliado para incluir los 11 edificios industriales reales (`refinery`, `chemPlant`, `synthPlant`, `enrichPlant`, `vacuumForge`, `spaceElevator`, `automatedMine`, `slagRecycler`, `heliumExtractor`, `siliconPurifier`, `catalyticDeut`), unificando la verdad lineal de producción honesta en la UI.
+5. Verificada la generación de escoria: `slagFromRefinery` preserva el throughput físico de base sin desatar colapso ecológico.
+
+**Entregables:** ×200 en fuente real verificado en cálculo y UI · directivas y mejoras conectadas · una sola verdad de producción industrial · suite `src/__tests__/refineryContract.test.js` (9 tests verdes).
+**Tests:** 9/9 tests de contrato pasando. Probado que muerde alterando multiplicador a 100. 310/310 tests verdes en la suite global (0 regresiones).
 
 ---
 

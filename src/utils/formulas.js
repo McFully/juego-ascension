@@ -16,11 +16,10 @@ import {
   GRAVITY_LEVELS,
   PLANET_TRAITS
 } from '../data/gameData.js';
-import { EXPANDED_BUILDINGS, EXPANDED_RESEARCH } from '../data/expandedContent.js';
-import { calcBuildingEnergyDemand } from './formulas/productionFormulas.js';
+import { calcBuildingEnergyDemand, REFINERY_REWARD_MULTIPLIER, BASE_REFINERY_PROD } from './formulas/productionFormulas.js';
 import { getPOIAtCoordinates } from './formulas/coordinatesFormulas.js';
 
-export { calcBuildingEnergyDemand };
+export { calcBuildingEnergyDemand, REFINERY_REWARD_MULTIPLIER, BASE_REFINERY_PROD };
 
 // ============ RE-EXPORTS DESDE SUBMÓDULOS MODULARES ============
 export {
@@ -321,7 +320,11 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
   // fórmula lineal de calcProduction (NO la exponencial de mina). Tarjeta honesta
   // = delta real que el contador aplicará al pasar de lvl-1 a lvl (y de lvl a lvl+1),
   // recalculando calcProduction con el ratio de energía del planeta.
-  const INDUSTRY_BUILD_IDS = ['refinery', 'chemPlant', 'synthPlant', 'enrichPlant'];
+  const INDUSTRY_BUILD_IDS = [
+    'refinery', 'chemPlant', 'synthPlant', 'enrichPlant',
+    'vacuumForge', 'spaceElevator', 'automatedMine', 'slagRecycler',
+    'heliumExtractor', 'siliconPurifier', 'catalyticDeut'
+  ];
   const isIndustry = INDUSTRY_BUILD_IDS.includes(id);
   if (isIndustry) {
     const industrySim = (buildingLvl) => {
