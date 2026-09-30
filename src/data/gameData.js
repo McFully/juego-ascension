@@ -95,6 +95,15 @@ export const PLANET_SPECIALIZATION_COSTS = {
   commercial: { metal: 12000, crystal: 12000, deuterium: 2000 }
 };
 
+export const POPULATION_CONSUMPTION_RATES = {
+  metal: 0.00002,
+  crystal: 0.00001,
+  deuterium: 0.000005
+};
+
+export const STORAGE_OVERFLOW_THRESHOLD = 0.75;
+export const AUTO_BUILD_STORAGE_THRESHOLD = 0.85;
+
 export const EVENT_REWARD_RANGES = {
   resource: { minMetal: 500, maxMetalVar: 3000, minCrystal: 300, maxCrystalVar: 2000 },
   trade: { minDeut: 1000, maxDeutVar: 5000 },

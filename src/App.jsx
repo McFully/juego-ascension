@@ -113,9 +113,10 @@ function App() {
     if (!rawProd || !rawProd.breakdown) return rawProd || { metal: 0, crystal: 0, deuterium: 0, energyBalance: 0, ratio: 1 };
 
     const pop = currentPlanet.population || 1000;
-    const popMetal = Math.round(pop * 0.00002 * 3600);
-    const popCrystal = Math.round(pop * 0.00001 * 3600);
-    const popDeut = Math.round(pop * 0.000005 * 3600);
+    const rates = GameCore.POPULATION_CONSUMPTION_RATES;
+    const popMetal = Math.round(pop * rates.metal * 3600);
+    const popCrystal = Math.round(pop * rates.crystal * 3600);
+    const popDeut = Math.round(pop * rates.deuterium * 3600);
 
     const b = rawProd.breakdown;
     if (b.metal) {

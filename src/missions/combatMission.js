@@ -71,7 +71,7 @@ export const handleCombatMission = (mission, state) => {
   }
   let result;
   try {
-    result = simulateCombat(fleet, mergedDefFleet, defDefenses, attackerTech, defenderTech, 6, state.blueprints, atkFaction, defFaction, mission.autoRetreat || false, mission.formation || 'standard', intelBonus);
+    result = simulateCombat(fleet, mergedDefFleet, defDefenses, attackerTech, defenderTech, 6, state.blueprints, atkFaction, defFaction, mission.autoRetreat || false, mission.formation || 'standard', intelBonus, state.relics || []);
   } catch (e) {
     console.error('[Ascensión] simulateCombat (inside processMission) error:', e);
     result = { winner: 'defender', rounds: 0, atkLosses: {}, defLosses: {}, debris: { metal: 0, crystal: 0 }, atkSurvivors: fleet || {}, defShipSurvivors: {}, defDefenseSurvivors: {} };

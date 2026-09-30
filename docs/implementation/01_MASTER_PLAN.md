@@ -435,7 +435,7 @@ FASE 21  Verificación final ← requiere 20
 
 ---
 
-### FASE 18 — AUDITORÍA UNIVERSAL DE FÓRMULAS
+### FASE 18 — AUDITORÍA UNIVERSAL DE FÓRMULAS ✅ **COMPLETE**
 
 **Objetivo:** `DISPLAYED = REAL = USED = PERSISTED` en todo el juego.
 

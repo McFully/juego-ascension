@@ -131,16 +131,22 @@ export const processTick = (state) => {
   // 5. Ministry tick logic
   newState = processMinistriesTick(newState, newPlanets, prodCache);
 
-  // 6. Stats update
-  const cp = newPlanets.find(p => p.id === state.currentPlanetId) || newPlanets[0];
-  const prod = prodCache.get(cp.id) || { metal: 0, crystal: 0, deuterium: 0 };
+  // 6. Stats update: acumula producción global de todo el imperio (Fase 18)
   const currentStats = newState.stats || {};
+  const globalGathered = newPlanets.reduce((acc, p) => {
+    const pProd = prodCache.get(p.id) || { metal: 0, crystal: 0, deuterium: 0 };
+    acc.metal += (pProd.metal || 0) / 3600;
+    acc.crystal += (pProd.crystal || 0) / 3600;
+    acc.deuterium += (pProd.deuterium || 0) / 3600;
+    return acc;
+  }, { metal: 0, crystal: 0, deuterium: 0 });
+
   newState.stats = {
     ...currentStats,
     playTime: (currentStats.playTime || 0) + 1,
-    metalGathered: (currentStats.metalGathered || 0) + prod.metal / 3600,
-    crystalGathered: (currentStats.crystalGathered || 0) + prod.crystal / 3600,
-    deuteriumGathered: (currentStats.deuteriumGathered || 0) + prod.deuterium / 3600,
+    metalGathered: (currentStats.metalGathered || 0) + globalGathered.metal,
+    crystalGathered: (currentStats.crystalGathered || 0) + globalGathered.crystal,
+    deuteriumGathered: (currentStats.deuteriumGathered || 0) + globalGathered.deuterium,
   };
 
   // 7. Queues processing (build, research, retrofit, ships, defenses, custom)

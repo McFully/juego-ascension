@@ -32,12 +32,12 @@ Documentos asociados:
 | **15** | Save vs Commander | ✅ **COMPLETE** | — |
 | **16** | Ver detalles + sistema unificado | ✅ **COMPLETE** | — |
 | **17** | Auditoría de cards estériles | ✅ **COMPLETE** | — |
-| **18** | Auditoría universal de fórmulas | ⬜ NOT_STARTED | dep. 05 |
+| **18** | Auditoría universal de fórmulas | ✅ **COMPLETE** | — |
 | **19** | Integración y deuda técnica | ⬜ NOT_STARTED | dep. 11–18 |
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 18 de 22 fases (81,8 %).**
+**Avance: 19 de 22 fases (86,4 %).**
 
 ---
 
@@ -2161,6 +2161,7 @@ PROCEED
 | 2026-09-30 | `b738ca2` | Fase 14 completada: auditoría research, conexión armas/comercio/colonización, fallback modernización y victoria singularidad, 340/340 verdes |
 | 2026-09-30 | `8b91e72` | Fase 16 completada: botón único ver detalles, guardas defensivas y estandarización No disponible / No aplica, 346/346 verdes |
 | 2026-09-30 | — | Fase 17 completada: auditoría de cards estériles, unificación costes especialización, veto en I+D, feedback auditivo y constantes de eventos, 351/351 verdes |
+| 2026-09-30 | — | Fase 18 completada: auditoría universal de fórmulas, DISPLAYED = REAL, POPULATION_CONSUMPTION_RATES centralizado, reliquias conectadas a minas/industria/combate, 357/357 verdes |
 
 ---
 
@@ -2170,7 +2171,7 @@ Cuando una fase encuentra algo nuevo durante la implementación, se registra aqu
 
 | # | Fecha | Hallazgo | Asignado a | Estado |
 |---|---|---|---|---|
-| N-01 | Fase 01 | `calcProduction` lee `plasma` de undefined; el `try/catch` del tick lo convierte en producción 0 silenciosa | 18 | ABIERTO |
+| N-01 | Fase 01 | `calcProduction` lee `plasma` de undefined; el `try/catch` del tick lo convierte en producción 0 silenciosa | 18 | RESUELTO (Fase 18) |
 | N-02 | Fase 01 | `state.activeUltimatum` no tiene productor: el overlay nunca aparece | 17 | ABIERTO |
 | N-03 | Fase 01 | `RETROFIT_SHIP_VARIANT` / `RETROFIT_DEFENSE_VARIANT` / `CANCEL_RETROFIT_QUEUE` encaminados pero sin test de punta a punta (`planet.fleetVariants` sin montar) | 16, 17 | ABIERTO |
 | N-04 | Fase 01 | `PROCESS_TRADE_ROUTES` ignora `intervalDays` y duplica la lógica del tick | 11 | RESUELTO (Fase 11) |

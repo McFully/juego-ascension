@@ -1,6 +1,6 @@
 import {
   BUILDINGS, buildingCost, clampResources, deduct, canAfford, meetsResearchReq,
-  calcEffectiveBuildTime, uid, GAME_SPEED, calcRequiredPopulation
+  calcEffectiveBuildTime, uid, GAME_SPEED, calcRequiredPopulation, AUTO_BUILD_STORAGE_THRESHOLD
 } from '../../../core.jsx';
 import { stampTimeMult } from '../queues/queueTiming.js';
 
@@ -114,9 +114,9 @@ export const processAutoBuildTick = (state, prodCache, storageCache) => {
 
     // 3. Almacenes (Solo si Ministerio de Logística está autorizado)
     if (allowLogistics) {
-      if (planet.resources.metal > storage.metal * 0.85 && !isAlreadyBuildingType('metalStorage')) candidates.push('metalStorage');
-      if (planet.resources.crystal > storage.crystal * 0.85 && !isAlreadyBuildingType('crystalStorage')) candidates.push('crystalStorage');
-      if (planet.resources.deuterium > storage.deuterium * 0.85 && !isAlreadyBuildingType('deutStorage')) candidates.push('deutStorage');
+      if (planet.resources.metal > storage.metal * AUTO_BUILD_STORAGE_THRESHOLD && !isAlreadyBuildingType('metalStorage')) candidates.push('metalStorage');
+      if (planet.resources.crystal > storage.crystal * AUTO_BUILD_STORAGE_THRESHOLD && !isAlreadyBuildingType('crystalStorage')) candidates.push('crystalStorage');
+      if (planet.resources.deuterium > storage.deuterium * AUTO_BUILD_STORAGE_THRESHOLD && !isAlreadyBuildingType('deutStorage')) candidates.push('deutStorage');
     }
     
     // 4. Instalaciones e I+D (Solo si Infraestructura o Ciencia están autorizados)

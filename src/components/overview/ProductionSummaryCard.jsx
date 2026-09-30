@@ -1,13 +1,15 @@
 import React from 'react';
+import { POPULATION_CONSUMPTION_RATES } from '../../data/gameData.js';
 
 export const ProductionSummaryCard = ({ currentPlanet, production, fmt, S }) => {
-  const pop = currentPlanet.population || 1000;
-  const popMetal = Math.round(pop * 0.00002 * 3600);
-  const popCrystal = Math.round(pop * 0.00001 * 3600);
-  const popDeut = Math.round(pop * 0.000005 * 3600);
-  const netMetal = Math.max(0, production.metal - popMetal);
-  const netCrystal = Math.max(0, production.crystal - popCrystal);
-  const netDeut = Math.max(0, production.deuterium - popDeut);
+  const pop = currentPlanet?.population || 1000;
+  const b = production?.breakdown;
+  const popMetal = b?.metal?.popConsumption ?? Math.round(pop * POPULATION_CONSUMPTION_RATES.metal * 3600);
+  const popCrystal = b?.crystal?.popConsumption ?? Math.round(pop * POPULATION_CONSUMPTION_RATES.crystal * 3600);
+  const popDeut = b?.deuterium?.popConsumption ?? Math.round(pop * POPULATION_CONSUMPTION_RATES.deuterium * 3600);
+  const netMetal = Math.max(0, (production?.metal || 0) - popMetal);
+  const netCrystal = Math.max(0, (production?.crystal || 0) - popCrystal);
+  const netDeut = Math.max(0, (production?.deuterium || 0) - popDeut);
 
   return (
     <div className={S.cardDeep + ' h-56 flex flex-col justify-between'}>

@@ -1,4 +1,4 @@
-import { clampResources, BIOMES, calcPlanetMaxPop } from '../../core.jsx';
+import { clampResources, BIOMES, calcPlanetMaxPop, POPULATION_CONSUMPTION_RATES } from '../../core.jsx';
 
 export const processPlanetTick = (planet, prod, storage, state) => {
   let p = planet;
@@ -19,9 +19,9 @@ export const processPlanetTick = (planet, prod, storage, state) => {
 
   // Civil Population consumption and growth (reducido un 90%)
   const pop = p.population || 1000;
-  const metalCons = pop * 0.00002;
-  const crystalCons = pop * 0.00001;
-  const deutCons = pop * 0.000005;
+  const metalCons = pop * POPULATION_CONSUMPTION_RATES.metal;
+  const crystalCons = pop * POPULATION_CONSUMPTION_RATES.crystal;
+  const deutCons = pop * POPULATION_CONSUMPTION_RATES.deuterium;
 
   let hasFamine = false;
   if (newRes.metal >= metalCons && newRes.crystal >= crystalCons && newRes.deuterium >= deutCons) {

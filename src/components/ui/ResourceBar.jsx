@@ -1,5 +1,5 @@
 import React from 'react';
-import { fmt, calcPlanetMaxPop } from '../../core.jsx';
+import { fmt, calcPlanetMaxPop, POPULATION_CONSUMPTION_RATES } from '../../core.jsx';
 
 /**
  * ResourceBadge — Celda táctica de recurso estilo HUD espacial militar.
@@ -71,9 +71,9 @@ export const ResourceBar = React.memo(({ planet, research, reputation, taxRate =
   const repPrefix = displayRep > 0 ? '+' : '';
 
   const pop = planet.population || 1000;
-  const popMetal = Math.round(pop * 0.00002 * 3600);
-  const popCrystal = Math.round(pop * 0.00001 * 3600);
-  const popDeut = Math.round(pop * 0.000005 * 3600);
+  const popMetal = Math.round(pop * POPULATION_CONSUMPTION_RATES.metal * 3600);
+  const popCrystal = Math.round(pop * POPULATION_CONSUMPTION_RATES.crystal * 3600);
+  const popDeut = Math.round(pop * POPULATION_CONSUMPTION_RATES.deuterium * 3600);
 
   const netMetal = Math.max(0, prod.metal - popMetal);
   const netCrystal = Math.max(0, prod.crystal - popCrystal);

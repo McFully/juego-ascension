@@ -1,5 +1,5 @@
 import {
-  calcStorage, calcDistance, calcFlightTime, fleetSpeed, uid, fmt
+  calcStorage, calcDistance, calcFlightTime, fleetSpeed, uid, fmt, STORAGE_OVERFLOW_THRESHOLD
 } from '../../../core.jsx';
 import { dispatchTradeRouteMission } from '../../fleet/tradeRouteReducer.js';
 
@@ -14,10 +14,11 @@ export const processAutoTradeRoutesTick = (state) => {
     if (colony.isHome || !colony.autoTrade) return colony;
 
     const storage = calcStorage(colony.buildings);
+    const threshold = STORAGE_OVERFLOW_THRESHOLD;
     const excess = {
-      metal: Math.max(0, colony.resources.metal - storage.metal * 0.75),
-      crystal: Math.max(0, colony.resources.crystal - storage.crystal * 0.75),
-      deuterium: Math.max(0, colony.resources.deuterium - storage.deuterium * 0.75),
+      metal: Math.max(0, colony.resources.metal - storage.metal * threshold),
+      crystal: Math.max(0, colony.resources.crystal - storage.crystal * threshold),
+      deuterium: Math.max(0, colony.resources.deuterium - storage.deuterium * threshold),
     };
     const totalExcess = excess.metal + excess.crystal + excess.deuterium;
     if (totalExcess <= 5000) return colony;

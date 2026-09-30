@@ -1,7 +1,7 @@
 import { getShipStats, getDefenseStats, calcCustomShipCost } from '../utils/formulas.js';
 import { DEFENSES, SHIPS } from '../data/gameData.js';
 
-export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, atkTech, defTech, maxRounds = 6, blueprints = [], atkFaction = 'human', defFaction = 'human', autoRetreat = false, formation = 'standard', intelBonus = 0) => {
+export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, atkTech, defTech, maxRounds = 6, blueprints = [], atkFaction = 'human', defFaction = 'human', autoRetreat = false, formation = 'standard', intelBonus = 0, relics = []) => {
   try {
   const initialAtkCount = Object.values(attackerFleet).reduce((a, b) => a + b, 0);
   const totalUnits = initialAtkCount + Object.values(defenderFleet).reduce((a, b) => a + b, 0) + Object.values(defenderDefenses).reduce((a, b) => a + b, 0);
@@ -12,7 +12,7 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
     const units = [];
     for (const [id, qty] of Object.entries(attackerFleet)) {
       if (qty > 0) {
-        const s = getShipStats(id, atkTech, blueprints, atkFaction);
+        const s = getShipStats(id, atkTech, blueprints, atkFaction, {}, relics);
         if (s) {
           let hull = s.hull;
           let shd = s.shd;
@@ -55,7 +55,7 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
     }
     for (const [id, qty] of Object.entries(defenderFleet)) {
       if (qty > 0) {
-        const s = getShipStats(id, defTech, blueprints, defFaction);
+        const s = getShipStats(id, defTech, blueprints, defFaction, {}, relics);
         if (s) for (let i = 0; i < qty; i++) units.push({ side: 'defender', id, hull: s.hull, maxHull: s.hull, shield: s.shd, maxShield: s.shd, atk: s.atk, rapid: s.rapid, alive: true });
       }
     }
@@ -65,7 +65,7 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
 
     for (const [id, qty] of Object.entries(defenderDefenses)) {
       if (qty > 0 && DEFENSES[id]) {
-        const ds = getDefenseStats(id, defTech, defFaction);
+        const ds = getDefenseStats(id, defTech, defFaction, {}, relics);
         const dDef = DEFENSES[id];
         for (let i = 0; i < qty; i++) {
           units.push({
@@ -212,7 +212,7 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
     const groups = {};
     for (const [id, qty] of Object.entries(fleet)) {
       if (qty > 0) {
-        const s = getShipStats(id, tech, blueprints, factionKey);
+        const s = getShipStats(id, tech, blueprints, factionKey, {}, relics);
         if (s) {
           let hull = s.hull;
           let shd = s.shd;
@@ -239,7 +239,7 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
     }
     for (const [id, qty] of Object.entries(defenses)) {
       if (qty > 0 && DEFENSES[id]) {
-        const ds = getDefenseStats(id, tech, factionKey);
+        const ds = getDefenseStats(id, tech, factionKey, {}, relics);
         groups['def_' + id] = { id, qty, hull: ds.hull, maxHull: ds.hull, shield: ds.shd, maxShield: ds.shd, atk: ds.atk, rapid: DEFENSES[id].rapid || {}, totalHull: qty * ds.hull };
       }
     }

@@ -17,7 +17,7 @@ import { OverviewPlanetGrid } from "../components/overview/OverviewPlanetGrid.js
 import { ActiveOperationsSection } from "../components/overview/ActiveOperationsSection.jsx";
 import { ActiveFleetsSection } from "../components/overview/ActiveFleetsSection.jsx";
 import { calcProduction, calcPlanetMaxPop } from "../utils/formulas/productionFormulas.js";
-import { GAME_SPEED } from "../data/gameData.js";
+import { GAME_SPEED, POPULATION_CONSUMPTION_RATES } from "../data/gameData.js";
 import { useActiveImperialQueues } from "../hooks/useActiveImperialQueues.js";
 import { EmperorDelegationModal } from "../components/government/GovernorDelegationModal.jsx";
 import { ImperialCommandHub } from "../components/government/ImperialCommandHub.jsx";
@@ -145,9 +145,9 @@ const OverviewPage = ({
         );
         if (prod) {
           const pop = p.population || 1000;
-          const popMetal = Math.round(pop * 0.00002 * 3600);
-          const popCrystal = Math.round(pop * 0.00001 * 3600);
-          const popDeut = Math.round(pop * 0.000005 * 3600);
+          const popMetal = Math.round(pop * POPULATION_CONSUMPTION_RATES.metal * 3600);
+          const popCrystal = Math.round(pop * POPULATION_CONSUMPTION_RATES.crystal * 3600);
+          const popDeut = Math.round(pop * POPULATION_CONSUMPTION_RATES.deuterium * 3600);
 
           energyBalance += (prod.energyBalance || 0);
           prodMetal += Math.max(0, (prod.metal || 0) - popMetal);
