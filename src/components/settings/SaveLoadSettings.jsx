@@ -76,7 +76,7 @@ export const SaveLoadSettings = ({
                         type="text"
                         value={renameValue}
                         onChange={(e) => setRenameValue(e.target.value)}
-                        maxLength={20}
+                        maxLength={35}
                         className={S.input + ' flex-1 text-sm py-1'}
                         autoFocus
                         onKeyDown={(e) => { if (e.key === 'Enter') handleRenameConfirm(); if (e.key === 'Escape') setRenamingSlug(null); }}

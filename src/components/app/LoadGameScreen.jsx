@@ -135,7 +135,7 @@ export const LoadGameScreen = ({ onBack, onLoad }) => {
                         type="text"
                         value={renameValue}
                         onChange={(e) => setRenameValue(e.target.value)}
-                        maxLength={20}
+                        maxLength={35}
                         className="w-full bg-black/60 border border-cyan-400 rounded-xl px-3 py-1.5 text-sm font-bold text-white outline-none font-mono"
                         autoFocus
                         onKeyDown={(e) => { if (e.key === 'Enter') handleRenameConfirm(); if (e.key === 'Escape') setRenamingSlug(null); }}

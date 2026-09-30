@@ -378,8 +378,8 @@ FASE 21  Verificación final ← requiere 20
 8. `NewGameScreen.jsx:17` filtra por `s.gameMode` pero `listGameSessions` (`gameRepository.cjs:262-269`) **no devuelve `gameMode`** → todos los saves cuentan como "standard".
 9. `Save As` no debe modificar `commanderId`. `Load` restaura ambos independientemente.
 
-**Entregables:** `saveId`/`saveName` y `commanderId`/`commanderName` completamente separados · migración compatible · cero alias.
-**Tests:** los 11 escenarios del encargo (crear, nombrar, idar, guardar, modificar nombre, modificar id, cerrar, abrir, cargar, múltiples saves, comprobar independencia).
+**Entregables:** `saveId`/`saveName` y `commanderId`/`commanderName` completamente separados · migración compatible v4 · cero alias · longitudes estandarizadas a 35 chars.
+**Tests:** contrato de persistencia e independencia verificado en `saveVsCommanderContract.test.js` (3/3) y `persistenceContract.test.js`. 343/343 tests verdes en la suite global (0 regresiones). Estado: ✅ **COMPLETE**.
 
 ---
 

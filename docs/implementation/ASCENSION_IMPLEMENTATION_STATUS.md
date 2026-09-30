@@ -29,7 +29,7 @@ Documentos asociados:
 | **12** | Autotrade y Capítulo 6 | ✅ **COMPLETE** | — |
 | **13** | Sistema de investigación | ✅ **COMPLETE** | — |
 | **14** | Auditoría research + ministries | ✅ **COMPLETE** | — |
-| **15** | Save vs Commander | ⬜ NOT_STARTED | dep. 02 |
+| **15** | Save vs Commander | ✅ **COMPLETE** | — |
 | **16** | Ver detalles + sistema unificado | ⬜ NOT_STARTED | dep. 01, 05 |
 | **17** | Auditoría de cards estériles | ⬜ NOT_STARTED | dep. 01 |
 | **18** | Auditoría universal de fórmulas | ⬜ NOT_STARTED | dep. 05 |
@@ -37,7 +37,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 15 de 22 fases (68,2 %).**
+**Avance: 16 de 22 fases (72,7 %).**
 
 ---
 
@@ -2037,6 +2037,59 @@ PROCEED
 
 ---
 
+```text
+PHASE:
+Nombre: Fase 15 — Save vs Commander
+
+STATUS:
+COMPLETE
+
+OBJECTIVE:
+Separar de forma estricta e independiente el nombre de la partida (saveName / save_name) del nombre e identidad del comandante (playerName / commanderId). Eliminar la sobreescritura indeseada de ranuras al editar el perfil del jugador, desacoplar el renombrado de saves del nombre del personaje, migrar el esquema SQLite a versión 4 de forma idempotente y no destructiva, incluir gameMode en la lista de sesiones para filtros de récord de planetas, unificar la longitud máxima de campos de entrada a 35 caracteres y validar con suite de contrato TDD.
+
+SOURCE OF TRUTH:
+- electron/database/dbManager.cjs (SCHEMA_VERSION = 4, migración v4 save_name_and_commander_id_columns)
+- electron/database/gameRepository.cjs (persistencia y carga desacoplada, game_mode en listGameSessions, renameGameSession sobre save_name)
+- electron/ipc/saveIpc.cjs (slug y nombramiento basado en saveName prioritario)
+- src/hooks/useAppSaveHandlers.js (handleInGameSave mantiene playerName intacto y pasa saveName)
+- src/components/settings/SaveLoadSettings.jsx y src/components/app/LoadGameScreen.jsx (maxLength=35 unificado)
+- src/__tests__/saveVsCommanderContract.test.js y src/__tests__/persistenceContract.test.js (IN_SESSION_COLUMN incluye saveName y commanderId)
+
+CONTRACTS BROKEN (BEFORE):
+- playerName y saveName estaban fusionados en una sola columna player_name, mutando el nombre del comandante si el jugador renombraba el slot de guardado.
+- Cambiar el perfil del comandante en ProfileSettingsTab.jsx provocaba que el auto-save de 30s renombrara el slug de la partida en SQLite.
+- listGameSessions no proyectaba game_mode, rompiendo el cálculo de récords en NewGameScreen.
+- Longitud máxima dispar e inconsistente entre pantallas (20 chars vs 35 chars).
+
+CHANGES MADE:
+- dbManager.cjs: incrementado SCHEMA_VERSION a 4. Añadidas columnas save_name TEXT y commander_id TEXT a game_sessions. Creada migración idempotente y no destructiva save_name_and_commander_id_columns con backfill automático.
+- gameRepository.cjs: saveFullGameState persiste save_name y commander_id. loadFullGameState restaura saveName y commanderId de forma independiente preservando compatibilidad. listGameSessions incluye gameMode, saveName, playerName y commanderId. renameGameSession actualiza save_name sin tocar player_name.
+- saveIpc.cjs: resolución de slugs en save-game-named y save-game-named-sync prioriza data.saveName || data._saveName antes de hacer fallback a playerName.
+- useAppSaveHandlers.js: handleInGameSave desvincula saveName de playerName al construir el snapshot.
+- persistenceContract.test.js: añadidas columnas saveName y commanderId a IN_SESSION_COLUMN.
+- SaveLoadSettings.jsx y LoadGameScreen.jsx: unificada longitud máxima de input a maxLength={35}.
+- saveVsCommanderContract.test.js: suite de contrato creada (3/3 tests pasando).
+
+VERIFICATION:
+- npx vitest run src/__tests__/saveVsCommanderContract.test.js -> 3/3 tests verdes.
+- npm test -> 343/343 tests verdes en la suite global (0 regresiones).
+
+GATE CHECK:
+[x] Implementation matches master plan
+[x] Implementation matches preflight findings
+[x] Tests passed (343/343)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -2056,7 +2109,8 @@ PROCEED
 | 2026-09-30 | `bfdd590` | Fase 11 completada: supply routes reales con despacho de convoyes, tiempos de vuelo y persistencia, 324/324 verdes |
 | 2026-09-30 | `6aac532` | Fase 12 completada: autotrade en tarjetas de colonias, optimizacion de cargueros y misiones cap 6, 327/327 verdes |
 | 2026-09-30 | `bc859d8` | Fase 13 completada: investigacion paralela, cancelaciones puntuales, reembolsos por nivel, pesos ministeriales, 333/333 verdes |
-| 2026-09-30 | — | Fase 14 completada: auditoría research, conexión armas/comercio/colonización, fallback modernización y victoria singularidad, 340/340 verdes |
+| 2026-09-30 | `b738ca2` | Fase 14 completada: auditoría research, conexión armas/comercio/colonización, fallback modernización y victoria singularidad, 340/340 verdes |
+| 2026-09-30 | — | Fase 15 completada: separación Save vs Commander, esquema v4, gameMode en sesiones y longitud unificada, 343/343 verdes |
 
 ---
 

@@ -105,7 +105,8 @@ export function useAppSaveHandlers({
 
     const snap = {
       ...withSessionIdentity(currentSave),
-      playerName: name,
+      saveName: name,
+      playerName: currentSave.playerName || state?.playerName || "Comandante",
       version: 4,
       gameStarted: true
     };

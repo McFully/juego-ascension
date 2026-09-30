@@ -77,12 +77,17 @@ function saveFullGameState(slug, state) {
 
   const runSave = db.transaction(() => {
     // 1. Upsert sesión
+    const saveName = state.saveName || state._saveName || state.playerName || "Partida";
+    const commanderId = state.commanderId || state.playerName || "Comandante";
+
     db.prepare(`
-      INSERT INTO game_sessions (id, slug, player_name, version, game_started, game_tick, game_mode, created_at, updated_at, global_state_json)
-      VALUES (@id, @slug, @playerName, @version, @gameStarted, @gameTick, @gameMode, @createdAt, @updatedAt, @globalStateJson)
+      INSERT INTO game_sessions (id, slug, player_name, save_name, commander_id, version, game_started, game_tick, game_mode, created_at, updated_at, global_state_json)
+      VALUES (@id, @slug, @playerName, @saveName, @commanderId, @version, @gameStarted, @gameTick, @gameMode, @createdAt, @updatedAt, @globalStateJson)
       ON CONFLICT(id) DO UPDATE SET
         slug = @slug,
         player_name = @playerName,
+        save_name = @saveName,
+        commander_id = @commanderId,
         version = @version,
         game_started = @gameStarted,
         game_tick = @gameTick,
@@ -93,6 +98,8 @@ function saveFullGameState(slug, state) {
       id: sessionId,
       slug,
       playerName: state.playerName || "Comandante",
+      saveName,
+      commanderId,
       version: 4,
       gameStarted: state.gameStarted ? 1 : 0,
       gameTick: state.gameTick || 0,
@@ -243,11 +250,16 @@ function loadFullGameState(slug) {
   ).all(session.id);
 
   // Reconstruir el state completo
+  const saveName = session.save_name || session.player_name || "Partida";
+  const commanderId = session.commander_id || session.id;
+
   const state = {
     ...globalState,
     _sessionId: session.id,
     _saveSlug: session.slug,
-    _saveName: session.player_name,
+    _saveName: saveName,
+    saveName,
+    commanderId,
     _createdAt: session.created_at,
     version: session.version,
     playerName: session.player_name,
@@ -280,7 +292,7 @@ function loadFullGameState(slug) {
 function listGameSessions() {
   const db = getDb();
   const sessions = db.prepare(`
-    SELECT slug, player_name, version, game_tick, updated_at,
+    SELECT slug, player_name, save_name, commander_id, game_mode, version, game_tick, updated_at,
       (SELECT COUNT(*) FROM planets WHERE session_id = game_sessions.id AND is_ai = 0) as planet_count
     FROM game_sessions
     ORDER BY updated_at DESC
@@ -288,7 +300,11 @@ function listGameSessions() {
 
   return sessions.map(s => ({
     slug: s.slug,
-    name: s.player_name,
+    name: s.save_name || s.player_name,
+    saveName: s.save_name || s.player_name,
+    playerName: s.player_name,
+    commanderId: s.commander_id,
+    gameMode: s.game_mode || 'standard',
     mtime: new Date(s.updated_at).getTime(),
     planetCount: s.planet_count,
     version: s.version,
@@ -330,14 +346,10 @@ function renameGameSession(oldSlug, newName, newSlug) {
     if (existing) return { success: false, error: "Ya existe una partida con ese nombre" };
   }
 
-  // Actualizar global_state_json con el nuevo playerName
-  const currentJson = db.prepare("SELECT global_state_json FROM game_sessions WHERE id = ?").get(session.id);
-  const globalState = JSON.parse(currentJson.global_state_json || "{}");
-  // No necesitamos tocar el globalState, playerName vive en la columna
-
+  // Actualizar save_name en la columna, preservando player_name intacto
   db.prepare(`
     UPDATE game_sessions
-    SET slug = ?, player_name = ?, updated_at = ?
+    SET slug = ?, save_name = ?, updated_at = ?
     WHERE id = ?
   `).run(newSlug, newName.trim(), now(), session.id);
 

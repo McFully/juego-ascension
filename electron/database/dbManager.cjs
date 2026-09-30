@@ -62,6 +62,8 @@ function createSchema(db) {
       id TEXT PRIMARY KEY,
       slug TEXT UNIQUE NOT NULL,
       player_name TEXT NOT NULL,
+      save_name TEXT,
+      commander_id TEXT,
       version INTEGER NOT NULL DEFAULT 4,
       game_started INTEGER NOT NULL DEFAULT 1,
       game_tick INTEGER NOT NULL DEFAULT 0,
@@ -193,7 +195,7 @@ function createSchema(db) {
 // ═══════════════════════════════════════════════════════════════
 
 // Versión de esquema actual. Súbele SOLO cuando añadas una migración abajo.
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 function tableExists(db, table) {
   return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?").get(table);
@@ -255,6 +257,23 @@ const MIGRATIONS = [
         console.warn(
           `[Ascensión DB] ${huerfanas.n} misiones sin sesión: se conservan y se reparan al volver a guardar.`
         );
+      }
+    },
+  },
+  {
+    // v3 -> v4: desacoplar Save Name de Commander Name (Player Name).
+    // Añade save_name y commander_id a game_sessions y migra las sesiones existentes.
+    version: 4,
+    name: "save_name_and_commander_id_columns",
+    up(db) {
+      if (!tableExists(db, "game_sessions")) return;
+      if (!columnExists(db, "game_sessions", "save_name")) {
+        db.exec("ALTER TABLE game_sessions ADD COLUMN save_name TEXT");
+        db.exec("UPDATE game_sessions SET save_name = player_name WHERE save_name IS NULL");
+      }
+      if (!columnExists(db, "game_sessions", "commander_id")) {
+        db.exec("ALTER TABLE game_sessions ADD COLUMN commander_id TEXT");
+        db.exec("UPDATE game_sessions SET commander_id = id WHERE commander_id IS NULL");
       }
     },
   },

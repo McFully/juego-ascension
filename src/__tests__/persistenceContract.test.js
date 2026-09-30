@@ -51,7 +51,7 @@ const IN_OWN_TABLE = new Set(['planets', 'aiPlanets', 'fleetMissions']);
 
 /** Columnas de game_sessions. */
 const IN_SESSION_COLUMN = new Set([
-  'version', 'playerName', 'gameStarted', 'gameTick', 'gameMode',
+  'version', 'playerName', 'saveName', 'commanderId', 'gameStarted', 'gameTick', 'gameMode',
 ]);
 
 /**

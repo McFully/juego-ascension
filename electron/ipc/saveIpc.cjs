@@ -228,7 +228,7 @@ function registerSaveIpc(getMainWindow) {
         return { success: false, error: validation.error };
       }
 
-      const name = (data && data.playerName) ? String(data.playerName).trim() : "Partida";
+      const name = (data && (data.saveName || data._saveName || data.playerName)) ? String(data.saveName || data._saveName || data.playerName).trim() : "Partida";
       const slug = slugify(name);
       let finalSlug = slug;
 
@@ -282,7 +282,7 @@ function registerSaveIpc(getMainWindow) {
         return;
       }
 
-      const name = (data && data.playerName) ? String(data.playerName).trim() : "Partida";
+      const name = (data && (data.saveName || data._saveName || data.playerName)) ? String(data.saveName || data._saveName || data.playerName).trim() : "Partida";
       const slug = slugify(name);
       let finalSlug = slug;
 
