@@ -140,7 +140,7 @@ const OverviewPage = ({
           p.trait,
           p.specialization,
           { galaxy: p.galaxy, system: p.system, position: p.position },
-          state.ministries?.economy?.taxRate || p.taxRate || 0,
+          p.taxRate ?? state.ministries?.economy?.taxRate ?? 0,
           p.relics || []
         );
         if (prod) {

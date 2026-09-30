@@ -73,7 +73,7 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
             deuterium: (m.cost.d || 0) * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0)
           };
           const have = currentMissiles[id] || 0;
-          const canBuild = totalUsed < maxMissiles && canAfford(cost, currentPlanet.resources);
+          const canBuild = totalUsed < maxMissiles && canAfford(currentPlanet.resources, cost);
 
           return (
             <div key={id} className="p-5 rounded-3xl bg-[#0c0d1e]/80 border border-white/10 flex flex-col justify-between hover:border-red-500/40 transition-all">

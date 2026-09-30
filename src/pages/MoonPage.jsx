@@ -114,7 +114,7 @@ const MoonPage = ({ state, dispatch, currentPlanet, production, MOON_BUILDINGS, 
           };
           const meets = meetsReq(b.req, moon.buildings);
           const maxReached = b.max && lvl >= b.max;
-          const affordable = canAfford(cost, currentPlanet.resources);
+          const affordable = canAfford(currentPlanet.resources, cost);
 
           return (
             <div key={id} className="p-4 rounded-2xl bg-[#090d1f]/80 border border-white/10 flex flex-col justify-between hover:border-cyan-500/40 transition-all">
@@ -149,7 +149,7 @@ const MoonPage = ({ state, dispatch, currentPlanet, production, MOON_BUILDINGS, 
 
               <button
                 disabled={!meets || maxReached || !affordable}
-                onClick={() => dispatch({ type: 'START_MOON_BUILDING', buildingId: id })}
+                onClick={() => dispatch({ type: 'BUILD_MOON_BUILDING', buildingId: id })}
                 className={`w-full py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all ${
                   maxReached ? 'bg-slate-800 text-slate-500 cursor-not-allowed' :
                   !meets ? 'bg-red-950/30 border border-red-500/30 text-red-400 cursor-not-allowed' :

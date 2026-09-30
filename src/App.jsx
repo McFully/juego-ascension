@@ -106,7 +106,9 @@ function App() {
       currentPlanet.buildings, state.research || {}, currentPlanet.temperature, GAME_SPEED,
       currentPlanet.faction || "human", currentPlanet.biome, currentPlanet.gravity, currentPlanet.trait,
       currentPlanet.specialization, { galaxy: currentPlanet.galaxy, system: currentPlanet.system, position: currentPlanet.position },
-      state.ministries?.economy?.taxRate || 0
+      // Misma precedencia que el motor: pacto tributario del planeta primero,
+      // impuesto del Ministerio de Economía como respaldo.
+      currentPlanet.taxRate ?? state.ministries?.economy?.taxRate ?? 0
     );
     if (!rawProd || !rawProd.breakdown) return rawProd || { metal: 0, crystal: 0, deuterium: 0, energyBalance: 0, ratio: 1 };
 

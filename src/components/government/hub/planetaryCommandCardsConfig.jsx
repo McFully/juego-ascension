@@ -20,7 +20,9 @@ export const PLANETARY_COMMAND_CARDS = [
   'defense',
   'missiles',
   'shipyard',
+  'shipDesign',
   'fleet',
+  'combat',
   'moon',
   'debris',
   'back_to_empire'

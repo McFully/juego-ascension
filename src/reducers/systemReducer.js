@@ -29,6 +29,32 @@ export const systemReducer = (state, action) => {
       }));
     }
 
+    // Senado Planetario: pacto tributario local.
+    // Limite de la UI: 0% - 50%. El limite se repite aqui para que el dominio
+    // no dependa de que la UI lo respete.
+    case 'SET_PLANET_TAX_RATE': {
+      const { planetId, taxRate } = action;
+      if (!planetId || typeof taxRate !== 'number' || Number.isNaN(taxRate)) return state;
+      const clamped = Math.max(0, Math.min(0.5, taxRate));
+      return updatePlanet(state, planetId, p => ({ ...p, taxRate: clamped }));
+    }
+
+    // Senado Planetario: edictos locales (subsidios, festival, ley marcial).
+    case 'TOGGLE_PLANET_LOCAL_DIRECTIVE': {
+      const { planetId, directive } = action;
+      if (!planetId || !directive) return state;
+      return updatePlanet(state, planetId, p => {
+        const directives = p.localDirectives || {};
+        return {
+          ...p,
+          localDirectives: {
+            ...directives,
+            [directive]: !directives[directive],
+          },
+        };
+      });
+    }
+
     case 'ASSIGN_LOCAL_MINISTRY_BUDGET': {
       const { planetId, ministryKey, budgetShare } = action.payload;
       return updatePlanet(state, planetId, p => {

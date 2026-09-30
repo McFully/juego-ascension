@@ -331,6 +331,15 @@ export const eventReducer = (state, action) => {
       return workingState;
     }
 
+    // Cierra el ultimatum diplomatico sin pagar tributo.
+    case 'DISMISS_ULTIMATUM': {
+      if (!state.activeUltimatum) return state;
+      return {
+        ...state,
+        activeUltimatum: null,
+      };
+    }
+
     default:
       return state;
   }

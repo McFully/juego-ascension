@@ -106,7 +106,11 @@ export const processTick = (state) => {
   for (const planet of state.planets) {
     let prod;
     try {
-      prod = calcProduction(planet.buildings, state.research, planet.temperature, GAME_SPEED, planet.faction || 'human', planet.biome, planet.gravity, planet.trait, planet.specialization, { galaxy: planet.galaxy, system: planet.system, position: planet.position }, state.ministries?.economy?.taxRate || 0);
+      // Fuente de verdad del impuesto: el pacto tributario del propio planeta
+      // (Senado Planetario). El impuesto del Ministerio de Economía es solo el
+      // respaldo para mundos que aún no han fijado pacto local.
+      const planetTax = planet.taxRate ?? state.ministries?.economy?.taxRate ?? 0;
+      prod = calcProduction(planet.buildings, state.research, planet.temperature, GAME_SPEED, planet.faction || 'human', planet.biome, planet.gravity, planet.trait, planet.specialization, { galaxy: planet.galaxy, system: planet.system, position: planet.position }, planetTax);
     } catch (e) {
       console.error('[Ascensión] calcProduction in TICK error:', e, planet.id);
       prod = { metal: 0, crystal: 0, deuterium: 0, energyBalance: 0, ratio: 1 };

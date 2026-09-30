@@ -97,6 +97,13 @@ export const fleetReducer = (state, action) => {
       return handleBuildMoonBuilding(state, action);
     }
 
+    // Alias historico. MoonPage despachaba START_MOON_BUILDING, nombre que no
+    // existia en ningun reducer: la base lunar no construia. Se acepta el
+    // nombre viejo para que un enlace o un save en vuelo no se rompa.
+    case 'START_MOON_BUILDING': {
+      return handleBuildMoonBuilding(state, action);
+    }
+
     case 'JUMP_GATE_TRANSFER': {
       return handleJumpGateTransfer(state, action);
     }

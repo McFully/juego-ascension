@@ -15,6 +15,7 @@ export const HubCard = React.memo(({
   footerLabel,
   footerValue,
   footerValueClasses,
+  footerAction = null,
   titleHoverColor = 'group-hover:text-cyan-300',
   isLocked = false,
   lockReason = '',
@@ -157,6 +158,10 @@ export const HubCard = React.memo(({
               {isLocked ? 'Bloqueado' : footerValue}
             </span>
           </div>
+        )}
+
+        {footerAction && !isLocked && (
+          <div className="mt-3">{footerAction}</div>
         )}
       </div>
     </div>

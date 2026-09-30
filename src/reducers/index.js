@@ -40,6 +40,12 @@ const gameReducerInner = (state, action) => {
     case 'SET_TUTORIAL_COMPLETE':
     case 'DISMISS_VICTORY_OVERLAY':
     case 'SET_PLAYER_PROFILE':
+    // --- GOBIERNO PLANETARIO (Senado Planetario / Planeta Vivo) ---
+    case 'SET_PLANET_TAX_RATE':
+    case 'TOGGLE_PLANET_LOCAL_DIRECTIVE':
+    case 'SET_PLANET_GOVERNOR':
+    case 'ASSIGN_LOCAL_MINISTRY_BUDGET':
+    case 'TOGGLE_LOCAL_MINISTERIAL_SUBTASK':
       return systemReducer(workingState, action);
 
     // --- ECONOMY ---
@@ -48,6 +54,19 @@ const gameReducerInner = (state, action) => {
     case 'PLANET_SPECIALIZE':
     case 'PLANET_TOGGLE_AUTOTRADE':
     case 'START_BUILDING':
+    // --- MERCADO GALACTICO / DAO / BAZAR / MERCADO NEGRO ---
+    case 'MARKET_TRADE':
+    case 'MARKET_BUY_USED_SHIPS':
+    case 'MARKET_SCRAP_SHIPS':
+    case 'MARKET_BUY_BLACK_MARKET':
+    case 'CLAIM_DAO_DIVIDENDS':
+    case 'CREATE_LIMIT_ORDER':
+    case 'CANCEL_LIMIT_ORDER':
+    case 'CONTRIBUTE_EXCHANGE_PROJECT':
+    // --- RED DE COLONIAS ---
+    case 'EQUALIZE_COLONY_RESOURCES':
+    case 'RELOCATE_COLONY_FLEET':
+    case 'START_PLANET_TERRAFORMING':
       return economyReducer(workingState, action);
 
     // --- RESEARCH ---
@@ -64,7 +83,13 @@ const gameReducerInner = (state, action) => {
     case 'SCRAP_DEFENSES':
     case 'RETROFIT_FLEET':
     case 'RETROFIT_DEFENSES':
+    case 'RETROFIT_SHIP_VARIANT':
+    case 'RETROFIT_DEFENSE_VARIANT':
+    case 'CANCEL_RETROFIT_QUEUE':
     case 'BUILD_MOON_BUILDING':
+    // Alias historico: MoonPage despachaba START_MOON_BUILDING.
+    // Se enruta al mismo handler para no romper partidas existentes.
+    case 'START_MOON_BUILDING':
     case 'JUMP_GATE_TRANSFER':
     case 'BUILD_MISSILE':
     case 'LAUNCH_MISSILE':
@@ -86,6 +111,11 @@ const gameReducerInner = (state, action) => {
     case 'RECALL_PATROL':
     case 'REINFORCE_PATROL':
     case 'INTERCEPT_INVASION':
+    // --- RUTAS DE SUMINISTRO ---
+    case 'ADD_TRADE_ROUTE':
+    case 'REMOVE_TRADE_ROUTE':
+    case 'TOGGLE_TRADE_ROUTE':
+    case 'PROCESS_TRADE_ROUTES':
       return fleetReducer(workingState, action);
 
     // --- DIPLOMACY ---
@@ -126,6 +156,8 @@ const gameReducerInner = (state, action) => {
     case 'RESOLVE_DECISION_EVENT':
     case 'RESOLVE_NARRATIVE_EVENT':
     case 'MINISTRY_PROJECT':
+    case 'APPEND_TACTICAL_EVENT_LOG':
+    case 'DISMISS_ULTIMATUM':
       return eventReducer(workingState, action);
 
     // --- GOVERNMENT / CHAT ---
@@ -134,6 +166,8 @@ const gameReducerInner = (state, action) => {
     case 'APPOINT_MINISTER':
     case 'TOGGLE_MINISTRY_DIRECTIVE':
     case 'TOGGLE_MINISTRY_AUTOMATION':
+    case 'SET_MINISTRY_AUTOMATION':
+    case 'SET_MINISTRY_DOCTRINE':
     case 'SET_MINISTRY_STATE':
     case 'BUY_CIVIL_BUSINESS':
     case 'SET_PLANET_GOVERNOR_DIRECTIVE_MODE':
@@ -142,6 +176,8 @@ const gameReducerInner = (state, action) => {
     case 'SET_EMPEROR_AUTO_GOVERNANCE':
     case 'SET_BUILDING_MODE':
     case 'TOGGLE_AUTOMATION_RESTRICTION':
+    // --- INTERIORES DE EDIFICIO (consola operativa) ---
+    case 'EXECUTE_BUILDING_ACTION':
       return governmentReducer(workingState, action);
 
     // --- IMPERIAL COUNCIL & SENATE (10+ PLANETS) ---

@@ -1,0 +1,510 @@
+# ASCENSION — ESTADO DE IMPLEMENTACIÓN
+
+Estado real de ejecución. Se actualiza al cerrar cada fase.
+Última actualización: 2026-09-30 · Commit base: `1c69f25`
+
+Documentos asociados:
+- `00_PREFLIGHT.md` — auditoría completa (25 hallazgos clasificados)
+- `01_MASTER_PLAN.md` — las 22 fases y sus dependencias
+
+---
+
+## RESUMEN GLOBAL
+
+| Fase | Nombre | Estado | Bloqueos |
+|---|---|---|---|
+| **00** | Preflight | ✅ **COMPLETE** | — |
+| **01** | Router de acciones | ✅ **COMPLETE** | — |
+| **02** | Persistencia y esquema | ⬜ NOT_STARTED | dep. 01 |
+| **03** | Datos de estado y rutas accesibles | ⬜ NOT_STARTED | — |
+| **04** | Sistema de audio | ⬜ NOT_STARTED | — |
+| **05** | Fuente única de duraciones | ⬜ NOT_STARTED | — |
+| **06** | Refinería ×200 | ⬜ NOT_STARTED | — |
+| **07** | Pipeline de imágenes y assets | ⬜ NOT_STARTED | — |
+| **08** | Imperial vs Planetary + navegación | ⬜ NOT_STARTED | requiere permiso visual |
+| **09** | Bastión y Silos | ⬜ NOT_STARTED | — |
+| **10** | Fleet Hangar 50/50 | ⬜ NOT_STARTED | requiere permiso visual |
+| **11** | Supply Routes reales | ⬜ NOT_STARTED | dep. 01 |
+| **12** | Autotrade y Capítulo 6 | ⬜ NOT_STARTED | dep. 01 |
+| **13** | Sistema de investigación | ⬜ NOT_STARTED | — |
+| **14** | Auditoría research + ministries | ⬜ NOT_STARTED | — |
+| **15** | Save vs Commander | ⬜ NOT_STARTED | dep. 02 |
+| **16** | Ver detalles + sistema unificado | ⬜ NOT_STARTED | dep. 01, 05 |
+| **17** | Auditoría de cards estériles | ⬜ NOT_STARTED | dep. 01 |
+| **18** | Auditoría universal de fórmulas | ⬜ NOT_STARTED | dep. 05 |
+| **19** | Integración y deuda técnica | ⬜ NOT_STARTED | dep. 11–18 |
+| **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
+| **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
+
+**Avance: 2 de 22 fases (9 %).**
+
+---
+
+## PLANTILLA DE FASE
+
+Cada fase rellena este bloque al cerrarse.
+
+```text
+PHASE:
+Nombre:
+
+STATUS:
+NOT_STARTED / IN_PROGRESS / BLOCKED / COMPLETE
+
+OBJECTIVE:
+...
+
+SOURCE OF TRUTH:
+...
+
+DEPENDENCIES:
+...
+
+FILES INSPECTED:
+...
+
+FILES MODIFIED:
+...
+
+DATABASE CHANGES:
+...
+
+MIGRATIONS:
+...
+
+IMPLEMENTATION:
+...
+
+TESTS:
+...
+
+TEST RESULTS:
+...
+
+KNOWN ISSUES:
+...
+
+HARD BLOCKERS:
+...
+
+SOFT ISSUES:
+...
+
+DELIVERABLES:
+...
+
+DEFINITION OF DONE:
+[ ] Analysis complete
+[ ] Implementation complete
+[ ] Domain verified
+[ ] UI verified
+[ ] Persistence verified
+[ ] Integration verified
+[ ] Tests passed
+[ ] Documentation updated
+[ ] Master Plan updated
+[ ] Status updated
+[ ] No critical blockers
+[ ] Ready for next phase
+
+FINAL DECISION:
+PROCEED / BLOCKED
+```
+
+---
+
+## FASE 00 — PREFLIGHT
+
+```text
+PHASE:        00
+Nombre:       Preflight completo y protección del proyecto
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Auditar el proyecto sin modificar nada funcional, identificar fuentes de verdad,
+clasificar riesgos y decidir el orden de fases por causa raíz.
+
+SOURCE OF TRUTH:
+Este documento, más el código leído directamente. Ninguna cifra de este informe
+procede del encargo: todas se midieron o verificaron contra el código.
+
+DEPENDENCIES:
+Ninguna.
+
+FILES INSPECTED:
+  electron/            main.cjs, preload.cjs, database/dbManager.cjs,
+                       database/gameRepository.cjs, database/shipRepository.cjs,
+                       database/migrator.cjs, ipc/saveIpc.cjs, ipc/backupManager.cjs
+  src/reducers/        index.js, systemReducer.js, economyReducer.js, researchReducer.js,
+                       fleetReducer.js, diplomacyReducer.js, eventReducer.js,
+                       governmentReducer.js, councilReducer.js, sectorReducer.js,
+                       colonyGovernor.js, loadMigrator.js
+  src/reducers/tick/   tickOrchestrator.js, queues/queueTick.js, queues/queueTiming.js,
+                       ministries/ministryTick.js, automation/*, ai/*, events/*
+  src/utils/formulas/  costFormulas.js, productionFormulas.js, researchTiming.js,
+                       combatFormulas.js, flightFormulas.js, retrofitFormulas.js
+  src/utils/formulas.js
+  src/pages/           22 archivos
+  src/components/      ui/, government/, fleet/, defense/, planet/, overview/,
+                       shipyard/, diplomacy/, settings/, navigation/, app/, market/
+  src/data/            assetsCatalog.js, codex.js, codex_modules/, game/, policies/
+  src/audio/           audioCore.js, audioSynth.js, audioMusic.js, audioVoices.js
+  src/App.jsx, src/core.jsx, src/ui.jsx, src/assets.jsx
+  scripts/             convert-assets-to-webp.cjs, convert-ministers-to-webp.cjs,
+                       verify-catalog-integrity.cjs
+  e2e/smoke.spec.mjs, package.json, .gitignore
+  %APPDATA%/Ascension/saves/  (estado real medido, solo lectura)
+
+FILES MODIFIED:
+  .gitignore                                  (saves locales y desktop.ini)
+  docs/implementation/00_PREFLIGHT.md         (nuevo)
+  docs/implementation/01_MASTER_PLAN.md       (nuevo)
+  docs/implementation/ASCENSION_IMPLEMENTATION_STATUS.md  (nuevo)
+
+DATABASE CHANGES:
+  Ninguna. Solo lectura del esquema y de las métricas del fichero real.
+
+MIGRATIONS:
+  Ninguna. No se ha escrito código funcional.
+
+IMPLEMENTATION:
+  1. Punto de retorno: commit 1c69f25 con los 142 ficheros de trabajo en curso
+     (+16.067 / -6.974 líneas). Los saves exportados (4 x 6 MB) y desktop.ini
+     se ignoraron en lugar de commitearse.
+  2. Auditoría en 4 frentes paralelos: persistencia, dominio y fórmulas,
+     navegación y assets, audio y cards.
+  3. Verificación manual de los hallazgos críticos por lectura directa:
+     - 27 acciones ausentes del router (con control positivo sobre 5KNOWN routed)
+     - allow-list de persistencia vs initialState (7+ claves ausentes confirmadas)
+     - canAfford: firma real y las 19 llamadas
+     - scripts de conversión de imagen
+     - HubCard y footerAction
+     - playSystemMusic y su early return
+     - GLOBAL_STATE_KEYS y cola de Research
+  4. Medición del estado real en disco: 881 ficheros / 10.018,5 MB en saves,
+     336,4 MB de Assets, 58.511 líneas en src/.
+  5. Ejecución de la suite de tests: 21 ficheros, 223 tests, todos verdes.
+
+TESTS:
+  npm test  (vitest run)
+  21 suites · 223 tests · 29,76 s
+
+TEST RESULTS:
+  PASSED — 21/21 ficheros, 223/223 tests, 0 fallos.
+
+  NOTA CRÍTICA: los 223 tests pasan Y 27 acciones están rotas. Motivo: ningún
+  test invoca gameReducer (el router raíz); todos llaman sub-reducers
+  directamente. Es el agujero de cobertura queallows que C-01 pasara inadvertido.
+
+KNOWN ISSUES:
+  25 hallazgos clasificados en 00_PREFLIGHT.md §4, cada uno con verificación
+  de código y archivo:línea. Resumen:
+
+  CRÍTICOS (7):  C-01 27 acciones sin enrutar · C-02 8+ claves no persistidas ·
+                  C-03 importar machaca la partida · C-04 auto-save duplica
+                  sesiones · C-05 ships sin scope de partida · C-13 cinco call
+                  sites de duración con argumentos distintos
+  ALTOS (11):     C-06 8,4 GB de backups huérfanos · C-07 sin versionado de
+                  esquema · C-08 canAfford invertido · C-09 quality:85 ·
+                  C-11 footerAction no renderizado · C-12 pista de audio zombi ·
+                  C-14 refinería x200 sin implementar · C-15 save=commander ·
+                  C-16 sin sidebar · C-17 silos inalcanzable · C-20 métricas
+                  inventadas · C-21 cola de 8 timers paralelos · C-23
+                  Math.random en migracion
+  MEDIOS (4):     C-10 ver detalles duplicado · C-19 assets compartidos ·
+                  C-22 16 estudios sin efecto · C-24 stats por planeta visible
+  BAJOS:          C-25 codigo muerto (~20 ficheros, 2 tablas)
+
+  SOFT ISSUES (no bloquean): 62 .mp3 de voz sin referenciar · 11 SVG de fondo
+  muertos · 11 SVG de src/assets muertos · Assets/aiCore.webp huerfano ·
+  Musica-menu.ogg duplicado (8 MB en dist) · documentacion 05_02/05_04 que
+  afirma un nombre de backup y una verificacion de integridad inexistentes.
+
+HARD BLOCKERS:
+  Ninguno para la propia Fase 00.
+
+  BLOQUEO DECLARADO PARA LAS FASES FUNCIONALES:
+  C-01. Ninguna fase que afirme que "una acción modifica el dominio" puede
+  cerrarse mientras 27 acciones no lleguen al reducer. Afecta a Mercado,
+  DAO, mercado negro, bazar, Supply Routes, retrofit, interiores de edificio,
+  terraforming, igualacion de colonias, automating de ministros, Senado
+  Planetario y Base Lunar.
+
+SOFT ISSUES:
+  Registrados arriba. Ninguno rompe la funcionalidad.
+
+DELIVERABLES:
+  00_PREFLIGHT.md
+    §1  Resolucion del conflicto Supabase/PostgreSQL vs SQLite local
+    §2  Estructura del proyecto
+    §3  Fuentes de verdad encontradas
+    §4  25 hallazgos verificados con archivo:linea
+    §5  Estado Supabase/PostgreSQL/SQL
+    §6  Flujo de persistencia verificado
+    §7  Estado de Git
+    §8  Dependencias reales entre sistemas
+    §9  10 operaciones potencialmente destructivas
+    §10 Assets relevantes
+    §11 Tests existentes y sus huecos
+    §12 Estrategia de validacion (V1-V6)
+    §13 Traduccion de las 32 fases del encargo a la realidad del proyecto
+    §14 Estrategia de implementacion
+    §15 25 problemas pendientes con fase destino
+    §16 Bloqueos
+    §17 Definition of Done
+
+  01_MASTER_PLAN.md
+    Principio de orden, grafo de dependencias, 22 fases con trabajo,
+    entregables, tests y bloqueos, 10 reglas transversales,
+    mapa hallazgo -> fase.
+
+  ASCENSION_IMPLEMENTATION_STATUS.md
+    Este documento.
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete (fase de auditoria: no habia codigo funcional que escribir)
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (223/223)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[ ] Ready for next phase  -> requiere decision del usuario
+
+FINAL DECISION:
+PROCEED  (a la espera de autorizacion del usuario para abrir la Fase 01)
+```
+
+---
+
+## FASE 01 — ROUTER DE ACCIONES
+
+```text
+PHASE:        01
+Nombre:       Router de acciones
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Que toda accion despachada por la UI llegue a su dominio y mute el estado.
+Encerrar C-01, C-08 y C-11, que eran la causa raiz de ocho sistemas muertos.
+
+SOURCE OF TRUTH:
+El router raiz src/reducers/index.js es la unica puerta de entrada del dominio.
+Cada sub-reducer es la fuente de verdad de SU grupo de acciones. El contrato
+UI -> dominio esta protegido por src/__tests__/routerContract.test.js.
+
+DEPENDENCIES:
+Ninguna. Es la raiz del grafo.
+
+FILES INSPECTED:
+  src/reducers/index.js, systemReducer.js, eventReducer.js, economyReducer.js,
+  fleetReducer.js, fleet/moonReducer.js, fleet/tradeRouteReducer.js,
+  fleet/retrofitActions.js, fleet/colonyReducer.js, tick/tickOrchestrator.js
+  src/components/planet/PlanetarySenateModal.jsx
+  src/components/colonyNetwork/SupplyRoutesView.jsx
+  src/components/fleet/TradeRoutesSection.jsx
+  src/pages/ColonyNetworkPage.jsx, MoonPage.jsx, MissilesPage.jsx, App.jsx
+  src/components/government/hub/HubCard.jsx
+  src/components/government/hub/planetaryCommandCardsConfig.jsx
+  src/components/government/hub/sharedCommandCards.jsx
+  src/data/game/customShips.js
+
+FILES MODIFIED:
+  src/reducers/index.js                          (25 rutas + 3 acciones nuevas)
+  src/reducers/fleetReducer.js                   (alias START_MOON_BUILDING)
+  src/reducers/systemReducer.js                  (2 casos nuevos)
+  src/reducers/eventReducer.js                   (1 caso nuevo)
+  src/reducers/tick/tickOrchestrator.js          (precedencia del impuesto)
+  src/App.jsx                                    (precedencia del impuesto)
+  src/pages/OverviewPage.jsx                     (precedencia del impuesto)
+  src/pages/MoonPage.jsx                         (canAfford + nombre de accion)
+  src/pages/MissilesPage.jsx                     (canAfford)
+  src/components/government/hub/HubCard.jsx      (footerAction)
+  src/components/government/hub/planetaryCommandCardsConfig.jsx  (ids del tablero)
+  src/__tests__/routerContract.test.js           (nuevo, 15 tests)
+  src/__tests__/unblockedSystems.test.js         (nuevo, 13 tests)
+
+DATABASE CHANGES:
+  Ninguna.
+
+MIGRATIONS:
+  Ninguna.
+
+IMPLEMENTATION:
+  1. Rutas anadidas al switch raiz, 25 casos que ya existian en sub-reducers:
+     - systemReducer: SET_PLANET_GOVERNOR, ASSIGN_LOCAL_MINISTRY_BUDGET,
+       TOGGLE_LOCAL_MINISTERIAL_SUBTASK
+     - economyReducer: MARKET_TRADE, MARKET_BUY_USED_SHIPS, MARKET_SCRAP_SHIPS,
+       MARKET_BUY_BLACK_MARKET, CLAIM_DAO_DIVIDENDS, CREATE_LIMIT_ORDER,
+       CANCEL_LIMIT_ORDER, CONTRIBUTE_EXCHANGE_PROJECT,
+       EQUALIZE_COLONY_RESOURCES, RELOCATE_COLONY_FLEET,
+       START_PLANET_TERRAFORMING
+     - fleetReducer: RETROFIT_SHIP_VARIANT, RETROFIT_DEFENSE_VARIANT,
+       CANCEL_RETROFIT_QUEUE, ADD_TRADE_ROUTE, REMOVE_TRADE_ROUTE,
+       TOGGLE_TRADE_ROUTE, PROCESS_TRADE_ROUTES
+     - governmentReducer: EXECUTE_BUILDING_ACTION, SET_MINISTRY_AUTOMATION,
+       SET_MINISTRY_DOCTRINE
+     - eventReducer: APPEND_TACTICAL_EVENT_LOG
+     Nota: el recuento del preflight (23) era 24. La accion que faltaba en la
+     tabla era ASSIGN_LOCAL_MINISTRY_BUDGET.
+
+  2. Tres acciones nuevas, que la UI despachaba y no existian en ningun reducer:
+     - SET_PLANET_TAX_RATE   (systemReducer) escribe planet.taxRate, acotado
+       0-0.5 en el dominio, no solo en la UI
+     - TOGGLE_PLANET_LOCAL_DIRECTIVE (systemReducer) alterna planet.localDirectives
+     - DISMISS_ULTIMATUM (eventReducer) limpia activeUltimatum
+
+  3. START_MOON_BUILDING: MoonPage despachaba un nombre que no existia. Se
+     corrigio la UI a BUILD_MOON_BUILDING y se mantuvo el alias en el router Y
+     en fleetReducer. El alias debia estar en los dos sitios: con ruta pero sin
+     caso en el sub-reducer, la accion seguia cayendo en su default. Detectado
+     por test, no por lectura.
+
+  4. canAfford invertido en MoonPage:117 y MissilesPage:76. Firma real
+     (res, cost). El boton se encendia cuando NO se podia pagar, y la card se
+     contradecía a si misma porque sus pills de coste ya usaban el orden bueno.
+
+  5. footerAction: planetaryCommandCardsConfig.jsx pasaba un boton real
+     (SET_PLANET_AUTO_GOVERNANCE) que HubCard no aceptaba ni pintaba. El
+     auto-gobernador era inalcanzable desde el tablero.
+
+  6. Tablero planetario: sharedCommandCards aportaba shipDesign y combat, pero
+     sus ids no estaban en PLANETARY_COMMAND_CARDS, asi que useCardOrder los
+     filtraba y nunca se iteraban. Anadidos en su sitio logico (shipDesign tras
+     shipyard, combat tras fleet).
+
+  7. Impuesto: verificacion con hallazgo contrario al preflight. sectorReducer
+     :17 es taxRate de SECTOR, no de planeta. Los planetas NO tienen taxRate:
+       - formulas.js:279,312,336 leen planet.taxRate -> undefined -> factor 1.0
+       - el motor y el HUD leian ministries.economy.taxRate -> 0.1 -> 0.9
+     Es decir, las cards de edificio mostraban produccion sin impuesto y el
+     motor aplicaba el 10%. El Senado Planetario escribia planet.taxRate, que
+     nadie leia. Ahora la precedencia es planet.taxRate, con el ministerio como
+     respaldo (tickOrchestrator, App.jsx, OverviewPage). Es no-op para toda
+     partida existente: el valor por defecto del motor sigue siendo 0.1 porque
+     no hay ninguna UI que escriba ministries.economy.taxRate.
+
+TESTS:
+  src/__tests__/routerContract.test.js
+    - extrae cada type: '...' despachado desde src/ fuera de reducers/
+    - exige que el switch raiz lo declare
+    - mas 14 tests de comportamiento: Senado, gobernador local,
+      automatizacion ministerial, DISMISS_ULTIMATUM, firma de canAfford,
+      tarjetas del tablero
+    ESTA PROBADO QUE MUERDE: se elimino a proposito la ruta de MARKET_TRADE y
+    el test fallo nombrando la accion y los dos ficheros que la despachan.
+    Sin esa prueba seria otro test decorativo.
+
+  src/__tests__/unblockedSystems.test.js
+    - 13 tests sobre los sistemas desbloqueados
+    - payloads tomados de la UI real, no inventados
+    - exige que la accion MUTE el estado, no solo que no lance
+
+TEST RESULTS:
+  PASSED  23/23 ficheros, 251/251 tests, 0 fallos, 33,01 s
+  (223 previos + 28 nuevos)
+
+  REGRESION: cero. Los 223 tests previos siguen verdes.
+
+  PARSEO: los 11 ficheros tocados parsean (esbuild, sin emitir build).
+
+KNOWN ISSUES:
+  Descubiertos al implementar, no en el preflight:
+
+  N-01  calcProduction revienta y se traga el error dentro del tick.
+        productionFormulas.js:90 lee 'plasma' de undefined. El try/catch de
+        tickOrchestrator:110 lo convierte en produccion 0 con ratio 1: el
+        planeta deja de producir sin aviso y sin notificacion. Ya pasaba antes
+        de esta fase (visible como stderr en tacticalEventLog.test.js).
+        -> FASE 18
+
+  N-02  El ultimatum no tiene productor. state.activeUltimatum solo se LEE en
+        AppOverlays.jsx:90; nada en todo src/ lo escribe. El overlay nunca
+        aparece y DISMISS_ULTIMATUM, ahora real, sigue sin ser alcanzable.
+        -> FASE 17 (cards esteriles)
+
+  N-03  RETROFIT_SHIP_VARIANT, RETROFIT_DEFENSE_VARIANT y CANCEL_RETROFIT_QUEUE
+        quedan encaminados pero NO verificados de punta a punta: dependen de
+        planet.fleetVariants, que ningun test monta. Suena bien por codigo,
+        pero eso no es una prueba. -> FASE 16/17
+
+  N-04  PROCESS_TRADE_ROUTES ejecuta todas las rutas en cada clic, sin respetar
+        intervalDays ni lastProcessed, y duplica la logica del tick.
+        -> FASE 11 (previsto)
+
+  N-05  ASSIGN_LOCAL_MINISTRY_BUDGET no tiene ningun despachador en la UI.
+        Ahora esta encaminado, pero nadie lo usa. -> FASE 17
+
+HARD BLOCKERS:
+  Ninguno para cerrar la Fase 01.
+
+  BLOQUEOS DENTRO DE OTRAS FASES (noinny esta fase):
+  - FASE 08.3 / FASE 18.1  el impuesto sigue having 2 lecturas mas sin
+    unificar: ministryTick.js:32 (recaudacion, usa el ministerio) y
+    formulas.js:279,312,336 (cards de edificio, usan el planeta con fallback
+    silencioso a 0). La card y el HUD pueden seguir mostrando cifras distintas.
+  - FASE 18  N-01.
+  - FASE 16/17 N-02, N-03, N-05.
+
+SOFT ISSUES:
+  - Los tests escriben mucho en stdout por la telemetria de gameConstants.
+    Ruidoso pero no rompe nada.
+
+DELIVERABLES:
+  25 rutas + 3 acciones nuevas + 1 alias corregido en dos capas
+  2 bugs de canAfford
+  footerAction funcional
+  2 tarjetas del tablero planetario visibles
+  Precedencia del impuesto unificada en motor, HUD y vista de imperio
+  2 suites nuevas (28 tests) que habrian detectado C-01
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified (13 tests que exigen mutacion real, no "no lanza")
+[x] UI verified (canAfford, footerAction, tablero, nombre de accion lunar)
+[ ] Persistence verified  -> NO APLICA: esta fase no toca persistencia.
+      La allow-list de GLOBAL_STATE_KEYS sigue perdiendo currentPlanetId,
+      patrols, tacticalEventLog y lastTick. Es la FASE 02.
+[x] Integration verified (router <-> sub-reducer <-> UI verificado con payloads reales)
+[x] Tests passed (251/251)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
+## BITÁCORA
+
+| Fecha | Commit | Evento |
+|---|---|---|
+| 2026-09-30 | `2b18f03` | Estado previo: restauración de WebP a lossless (ficheros, no script) |
+| 2026-09-30 | `1c69f25` | Punto de retorno previo a la remediación (142 ficheros) |
+| 2026-09-30 | — | Fase 00 completada: 25 hallazgos, 22 fases planificadas |
+| 2026-09-30 | — | Fase 01 completada: 25 rutas + 3 acciones nuevas, 28 tests nuevos, 251/251 verdes. 5 hallazgos nuevos (N-01..N-05) |
+
+---
+
+## COLA DE HALLAZGOS
+
+Cuando una fase encuentra algo nuevo durante la implementación, se registra aquí y se asigna a fase.
+
+| # | Fecha | Hallazgo | Asignado a | Estado |
+|---|---|---|---|---|
+| N-01 | Fase 01 | `calcProduction` lee `plasma` de undefined; el `try/catch` del tick lo convierte en producción 0 silenciosa | 18 | ABIERTO |
+| N-02 | Fase 01 | `state.activeUltimatum` no tiene productor: el overlay nunca aparece | 17 | ABIERTO |
+| N-03 | Fase 01 | `RETROFIT_SHIP_VARIANT` / `RETROFIT_DEFENSE_VARIANT` / `CANCEL_RETROFIT_QUEUE` encaminados pero sin test de punta a punta (`planet.fleetVariants` sin montar) | 16, 17 | ABIERTO |
+| N-04 | Fase 01 | `PROCESS_TRADE_ROUTES` ignora `intervalDays` y duplica la lógica del tick | 11 | ABIERTO |
+| N-05 | Fase 01 | `ASSIGN_LOCAL_MINISTRY_BUDGET` encaminado pero sin despachador en la UI | 17 | ABIERTO |
