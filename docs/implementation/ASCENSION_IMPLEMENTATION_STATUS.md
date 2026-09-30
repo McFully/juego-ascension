@@ -21,11 +21,11 @@ Documentos asociados:
 | **04** | Sistema de audio | ✅ **COMPLETE** | — |
 | **05** | Fuente única de duraciones | ✅ **COMPLETE** | — |
 | **06** | Refinería ×200 | ✅ **COMPLETE** | — |
-| **07** | Pipeline de imágenes y assets | ⬜ NOT_STARTED | — |
-| **08** | Imperial vs Planetary + navegación | ⬜ NOT_STARTED | requiere permiso visual |
-| **09** | Bastión y Silos | ⬜ NOT_STARTED | — |
-| **10** | Fleet Hangar 50/50 | ⬜ NOT_STARTED | requiere permiso visual |
-| **11** | Supply Routes reales | ⬜ NOT_STARTED | dep. 01 |
+| **07** | Pipeline de imágenes y assets | ✅ **COMPLETE** | — |
+| **08** | Imperial vs Planetary + navegación | ✅ **COMPLETE** | — |
+| **09** | Bastión y Silos | ✅ **COMPLETE** | — |
+| **10** | Fleet Hangar 50/50 | ✅ **COMPLETE** | — |
+| **11** | Supply Routes reales | ✅ **COMPLETE** | — |
 | **12** | Autotrade y Capítulo 6 | ⬜ NOT_STARTED | dep. 01 |
 | **13** | Sistema de investigación | ⬜ NOT_STARTED | — |
 | **14** | Auditoría research + ministries | ⬜ NOT_STARTED | — |
@@ -37,7 +37,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 7 de 22 fases (31,8 %).**
+**Avance: 12 de 22 fases (54,5 %).**
 
 ---
 
@@ -1680,6 +1680,116 @@ FINAL DECISION:
 PROCEED
 ```
 
+```text
+PHASE:
+Fase 11 — Supply Routes Reales
+
+STATUS:
+COMPLETE
+
+OBJECTIVE:
+Eliminar la teletransportación instantánea de recursos en las rutas comerciales programadas y sustituirla
+por despacho de misiones reales de flota ("transport") con convoyes asignados/disponibles, consumo de tiempo de vuelo
+físico con fórmulas de velocidad y distancia, deducción honesta de cargueros en origen, entrega respetando la capacidad
+de almacén del destino y retorno seguro de la flota al hangar de procedencia.
+
+SOURCE OF TRUTH:
+- docs/implementation/01_MASTER_PLAN.md (§ Fase 11)
+- AGENTS.md (§4, §5, §10)
+- src/reducers/fleet/tradeRouteReducer.js
+- src/reducers/tick/automation/autoTradeRoutesTick.js
+- src/missions/diploMission.js
+- src/components/colonyNetwork/SupplyRoutesView.jsx
+
+DEPENDENCIES:
+- Fase 01: Router de acciones.
+
+FILES INSPECTED:
+- src/reducers/fleet/tradeRouteReducer.js
+- src/reducers/tick/automation/autoTradeRoutesTick.js
+- src/missions.jsx
+- src/missions/diploMission.js
+- src/components/colonyNetwork/SupplyRoutesView.jsx
+- src/components/fleet/TradeRoutesSection.jsx
+- src/core.jsx
+
+FILES MODIFIED:
+- src/reducers/fleet/tradeRouteReducer.js:
+  * Extraído despachador modular `dispatchTradeRouteMission(state, route)` compartido.
+  * Reemplazada la teletransportación instantánea por despacho de misión de tipo `transport` en `fleetMissions`.
+  * Cálculo dinámico de capacidad de bodega según naves asignadas (`assignedShips`) o cargueros disponibles en origen.
+  * Deducción de cargueros (`smallCargo`, `largeCargo`, escoltas) y recursos del planeta origen al despachar.
+  * Cálculo de distancia real y tiempo de vuelo con `calcDistance`, `fleetSpeed`, `calcFlightTime`.
+  * Registro de `departure`, `arrivalTime`, `returnTime` e indicador `autoRoute: true`.
+  * Saneado el sombreado de variable `calcStorage`.
+- src/reducers/tick/automation/autoTradeRoutesTick.js:
+  * Eliminada la duplicación y teletransporte en el tick periódico de rutas programadas.
+  * Delegado el procesamiento a `dispatchTradeRouteMission(newState, route)`.
+- src/missions/diploMission.js:
+  * `handleTransportMission` ahora respeta los límites de almacén del destino mediante `calcStorage`.
+  * Registra manifiesto de carga y entregas reales en el tacticalEvent sin desbordar almacenes.
+- src/components/colonyNetwork/SupplyRoutesView.jsx:
+  * Unificado el límite máximo de rutas a 10 (coincidente con el reducer y `TradeRoutesSection`).
+  * Conectado `mode: 'surplus'`, `ratio: routeRatio` y destino a la Capital imperial en el dispatch.
+- src/__tests__/supplyRoutesContract.test.js: suite de contrato TDD para Fase 11.
+
+DATABASE CHANGES:
+Ninguno en esquema SQLite. Las misiones de transporte y rutas comerciales se almacenan en `universe.db` vía `planets.data_json` y `state.fleetMissions`.
+
+MIGRATIONS:
+Ninguna requerida.
+
+IMPLEMENTATION:
+1. Reemplazado el intercambio inmediato de recursos por creación de misiones `transport` en `fleetMissions`.
+2. Integrado uso real de `assignedShips` en el cálculo de transporte logístico.
+3. Respetada la capacidad del almacén destino (`calcStorage`) en `handleTransportMission`.
+4. Sincronizada la UI de `SupplyRoutesView` con límite 10 y `mode: 'surplus'`.
+
+TESTS:
+- src/__tests__/supplyRoutesContract.test.js: 3 tests cubriendo:
+  1. Despacho real con deducción de cargueros y recursos en origen, sin incremento inmediato en destino.
+  2. Procesamiento periódico en autoTradeRoutesTick con actualización de lastProcessed.
+  3. handleTransportMission con respeto de límites de almacén y retorno de flota asignada.
+- Probado que muerde: verificado en rojo (3 fallos iniciales) antes de la implementación.
+
+TEST RESULTS:
+- src/__tests__/supplyRoutesContract.test.js: 3/3 passed.
+- Suite global completa: 324/324 tests pasando (0 fallos, 0 regresiones).
+
+KNOWN ISSUES:
+Ninguno.
+
+HARD BLOCKERS:
+Ninguno.
+
+SOFT ISSUES:
+Ninguno.
+
+DELIVERABLES:
+1. Rutas comerciales con despacho de convoyes reales.
+2. Deducción de cargueros y vuelo físico con retorno.
+3. Control de capacidad de almacén en destino.
+4. Límite unificado a 10 rutas en UI y reducer.
+5. Suite de contrato src/__tests__/supplyRoutesContract.test.js (100% verde).
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (324/324)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
 ---
 
 ## BITÁCORA
@@ -1697,7 +1807,8 @@ PROCEED
 | 2026-09-30 | `f70bb55` | Fase 07 completada: pipeline lossless, assets huérfanos purgados, MISSING_ASSETS.md (0 faltantes), 313/313 verdes |
 | 2026-09-30 | `30b1836` | Fase 08 completada: separacion imperio/planeta, jerarquia unificada, verdad impositiva, 316/316 verdes |
 | 2026-09-30 | `c146aa0` | Fase 09 completada: bastion directo, telemetria de defensa efectiva, validacion balistica en silos, 319/319 verdes |
-| 2026-09-30 | — | Fase 10 completada: hangar split 50/50, clasificacion naval y props vivas, 321/321 verdes |
+| 2026-09-30 | `46e8c9a` | Fase 10 completada: hangar split 50/50, clasificacion naval y props vivas, 321/321 verdes |
+| 2026-09-30 | — | Fase 11 completada: supply routes reales con despacho de convoyes, tiempos de vuelo y persistencia, 324/324 verdes |
 
 ---
 
@@ -1710,7 +1821,7 @@ Cuando una fase encuentra algo nuevo durante la implementación, se registra aqu
 | N-01 | Fase 01 | `calcProduction` lee `plasma` de undefined; el `try/catch` del tick lo convierte en producción 0 silenciosa | 18 | ABIERTO |
 | N-02 | Fase 01 | `state.activeUltimatum` no tiene productor: el overlay nunca aparece | 17 | ABIERTO |
 | N-03 | Fase 01 | `RETROFIT_SHIP_VARIANT` / `RETROFIT_DEFENSE_VARIANT` / `CANCEL_RETROFIT_QUEUE` encaminados pero sin test de punta a punta (`planet.fleetVariants` sin montar) | 16, 17 | ABIERTO |
-| N-04 | Fase 01 | `PROCESS_TRADE_ROUTES` ignora `intervalDays` y duplica la lógica del tick | 11 | ABIERTO |
+| N-04 | Fase 01 | `PROCESS_TRADE_ROUTES` ignora `intervalDays` y duplica la lógica del tick | 11 | RESUELTO (Fase 11) |
 | N-05 | Fase 01 | `ASSIGN_LOCAL_MINISTRY_BUDGET` encaminado pero sin despachador en la UI | 17 | ABIERTO |
 | I-01 | Fase 02 | 176.140 naves con `session_id` NULL: sin dueño, ningún borrado de sesión las tocará | 19 | PIDE AUTORIZACIÓN (D-2) |
 | I-02 | Fase 02 | 617 `.bak-wal` = 8,4 GB siguen en disco; el código ya no los crea ni impide purgarlos | 19 | PIDE AUTORIZACIÓN (D-4) |

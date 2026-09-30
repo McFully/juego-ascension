@@ -66,17 +66,22 @@ export const SupplyRoutesView = ({
           <button
             onClick={() => {
               if (!routeFrom) return;
+              const capital = planets.find(p => p.isHome) || planets.find(p => p.id !== routeFrom);
               dispatch({
                 type: 'ADD_TRADE_ROUTE',
                 fromId: routeFrom,
+                toId: capital?.id || null,
                 resource: routeRes,
-                ratio: routeRatio
+                mode: 'surplus',
+                ratio: routeRatio,
+                intervalDays: 1,
+                loop: true
               });
               if (window.playSfx) window.playSfx('tradeSuccess');
             }}
-            disabled={(tradeRoutes || []).length >= 5}
+            disabled={(tradeRoutes || []).length >= 10}
             className={`py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-              (tradeRoutes || []).length < 5
+              (tradeRoutes || []).length < 10
                 ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white hover:brightness-110 active:scale-[0.98] shadow-[0_0_15px_rgba(99,102,241,0.3)]'
                 : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
             }`}
@@ -89,7 +94,7 @@ export const SupplyRoutesView = ({
       {/* Listado de Rutas Activas */}
       <div className="space-y-3">
         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-          Rutas Activas ({(tradeRoutes || []).length}/5)
+          Rutas Activas ({(tradeRoutes || []).length}/10)
         </h4>
 
         {(tradeRoutes || []).length === 0 ? (

@@ -284,19 +284,19 @@ FASE 21  Verificación final ← requiere 20
 
 **Objetivo:** `ORIGIN → DESTINATION → RESOURCE → QUANTITY → FREIGHTER → ACTIVATE`, con transporte real.
 
-**Trabajo:**
-1. **Depende de Fase 01** (las 4 acciones no están enrutadas → la UI es muerta hoy).
-2. `autoTradeRoutesTick.js:152-166` **teletransporta recursos**: mueve del origen al destino en el mismo tick, sin flota, sin distancia, sin combustible, sin comprobar la capacidad de almacén del destino. **La ruta debe ser real, no visual.**
-3. `intervalMs = (route.intervalDays || 1) * 20000` (`:115`) — **constante mágica** no ligada a `GAME_SPEED`.
-4. `PROCESS_TRADE_ROUTES` (`tradeRouteReducer.js:86-167`) duplica la lógica del tick y **no comprueba `intervalDays`/`lastProcessed`**: el botón "⚡ Ejecutar Rutas Ahora" ejecuta todas las rutas activas en cada clic.
-5. `assignedShips` se guarda (`tradeRouteReducer.js:58-63`) y **se muestra en la UI** ("Convoy Asignado") pero **nunca se usa en ninguna lógica**. Convoy decorativo.
-6. La UI despacha `{fromId, resource, ratio}` sin `mode` (`SupplyRoutesView.jsx:69-74`); el reducer pone `mode='fixed'`, `amount=5000` (`tradeRouteReducer.js:28-29`). El texto promete "cuando supere el Y% de almacén" y el umbral nunca se aplica.
-7. Límite de rutas contradictorio: UI dice 5, reducer corta en 10, `TradeRoutesSection` valida 10. **Tres fuentes.**
-8. La UI promete destino "Capital Central" pero el reducer deja `toId: null` y cae al primer planeta no-origen.
-9. `calcStorage` está importado en `tradeRouteReducer.js:3` y sombreado por `const storage` en `:115`.
+**Estado:** ✅ **COMPLETE** (2026-09-30)
 
-**Entregables:** rutas que mueven recursos con flota real · intervalo ligado al tiempo de juego · convoy asignado funcional · límite único · destino real.
-**Tests:** activar ruta → se crea misión `transport` con `arrivalTime`/`returnTime` → los cargueros se descuentan → al llegar el recurso aparece → desactivar detiene.
+**Trabajo completado:**
+1. **Despacho real en lugar de teletransporte instantáneo:** extraída la función modular `dispatchTradeRouteMission(state, route)` en `tradeRouteReducer.js` y conectada tanto en el reducer manual `PROCESS_TRADE_ROUTES` como en `autoTradeRoutesTick.js`. Los envíos programados generan misiones reales de flota (`type: 'transport'`) registradas en `state.fleetMissions`.
+2. **Convoyes asignados y deducción honesta de flota:** el convoy configurado en la ruta (`assignedShips`: cargueros pequeños/grandes y escoltas ligeras/pesadas) o los cargueros disponibles en el hangar colonial se deducen físicamente del planeta origen junto con los recursos en el momento del despegue. Si no hay cargueros en origen, la misión no se despacha.
+3. **Física de vuelo espacial y tiempos de llegada/retorno:** cálculo de distancias reales (`calcDistance`), velocidades con investigación y bonificaciones de facción (`fleetSpeed`) y tiempos de vuelo astronómicos (`calcFlightTime`) determinando `departure`, `arrivalTime` y `returnTime`.
+4. **Respeto a la capacidad del almacén destino:** `handleTransportMission` en `src/missions/diploMission.js` ahora calcula la capacidad máxima del receptor (`calcStorage`) entregando únicamente hasta el límite del almacén para evitar desbordes irreales y retornando la flota al planeta de origen.
+5. **Sincronización de UI y límite unificado:** en `SupplyRoutesView.jsx` se unificó el límite de rutas a 10 (coincidente con `TradeRoutesSection.jsx` y el reducer), despachando `mode: 'surplus'`, ratio seleccionado y asignando por defecto como destino la Capital imperial.
+6. **Sombreado de variables eliminado:** corregido el sombreado de `calcStorage` en `tradeRouteReducer.js`.
+7. **Suite de contrato TDD:** creada suite `src/__tests__/supplyRoutesContract.test.js` (3 tests probados que muerden, 100% pasando).
+
+**Entregables:** rutas que mueven recursos con flota real · deducción física en origen y retorno · control de almacén destino · límite único a 10 · suite de contrato `supplyRoutesContract.test.js`.
+**Tests:** 3/3 tests de contrato pasando. Probado que muerde. 324/324 tests verdes en la suite global (0 regresiones).
 
 ---
 

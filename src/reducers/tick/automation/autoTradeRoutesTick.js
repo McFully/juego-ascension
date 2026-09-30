@@ -1,6 +1,7 @@
 import {
   calcStorage, calcDistance, calcFlightTime, fleetSpeed, uid, fmt
 } from '../../../core.jsx';
+import { dispatchTradeRouteMission } from '../../fleet/tradeRouteReducer.js';
 
 export const processAutoTradeRoutesTick = (state) => {
   let newState = { ...state };
@@ -115,92 +116,7 @@ export const processAutoTradeRoutesTick = (state) => {
       const intervalMs = (route.intervalDays || 1) * 20000; // Cada día de juego o ciclo
       if (now - (route.lastProcessed || 0) < intervalMs) continue;
 
-      const from = newState.planets.find(p => p.id === route.fromId);
-      if (!from) continue;
-
-      let to = null;
-      if (route.toId) {
-        to = newState.planets.find(p => p.id === route.toId);
-      }
-      if (!to && route.toGalaxy && route.toSystem && route.toPosition) {
-        to = newState.planets.find(p => p.galaxy === route.toGalaxy && p.system === route.toSystem && p.position === route.toPosition);
-      }
-      if (!to) {
-        to = newState.planets.find(p => p.id !== route.fromId && p.isHome) ||
-             newState.planets.find(p => p.id !== route.fromId);
-      }
-      if (!to || to.id === from.id) continue;
-
-      let toSend = 0;
-      if (route.mode === 'fixed') {
-        const available = from.resources[route.resource] || 0;
-        toSend = Math.min(available, route.amount || 1000);
-      } else {
-        const storage = calcStorage(from.buildings);
-        const maxCap = storage[route.resource] || 0;
-        const threshold = maxCap * (route.ratio || 0.5);
-        const available = from.resources[route.resource] || 0;
-        if (available > threshold) {
-          const surplus = available - threshold;
-          toSend = Math.min(surplus, Math.floor(surplus * 0.5));
-        }
-      }
-
-      if (toSend < 50) continue;
-
-      // Transferir recursos de ida
-      newState.planets = newState.planets.map(pl => {
-        if (pl.id === route.fromId) {
-          return {
-            ...pl,
-            resources: { ...pl.resources, [route.resource]: Math.max(0, (pl.resources[route.resource] || 0) - toSend) }
-          };
-        }
-        if (pl.id === to.id) {
-          return {
-            ...pl,
-            resources: { ...pl.resources, [route.resource]: (pl.resources[route.resource] || 0) + toSend }
-          };
-        }
-        return pl;
-      });
-
-      // Transferencia de vuelta si está configurada
-      let returnSent = 0;
-      if (route.returnResource && route.returnResource !== 'none' && route.returnAmount > 0) {
-        const targetPl = newState.planets.find(p => p.id === to.id);
-        const destAvailable = targetPl?.resources[route.returnResource] || 0;
-        returnSent = Math.min(destAvailable, route.returnAmount);
-        if (returnSent > 0) {
-          newState.planets = newState.planets.map(pl => {
-            if (pl.id === to.id) {
-              return {
-                ...pl,
-                resources: { ...pl.resources, [route.returnResource]: Math.max(0, (pl.resources[route.returnResource] || 0) - returnSent) }
-              };
-            }
-            if (pl.id === route.fromId) {
-              return {
-                ...pl,
-                resources: { ...pl.resources, [route.returnResource]: (pl.resources[route.returnResource] || 0) + returnSent }
-              };
-            }
-            return pl;
-          });
-        }
-      }
-
-      // Marcar ruta procesada
-      newState.tradeRoutes = (newState.tradeRoutes || []).map(r => {
-        if (r.id !== route.id) return r;
-        const deliveries = (r.deliveriesCount || 0) + 1;
-        return {
-          ...r,
-          lastProcessed: now,
-          deliveriesCount: deliveries,
-          active: r.loop !== false
-        };
-      });
+      newState = dispatchTradeRouteMission(newState, route);
     }
   }
 

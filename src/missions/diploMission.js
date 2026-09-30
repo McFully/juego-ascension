@@ -1,6 +1,6 @@
 import { updatePlanet, getVirginPlanet } from '../core.jsx';
 import { SHIPS } from '../data/gameData.js';
-import { fmt, uid, getMaxPlanets } from '../utils/formulas.js';
+import { fmt, uid, getMaxPlanets, calcStorage } from '../utils/formulas.js';
 
 export const handleColonizeMission = (mission, state) => {
   const { galaxy, system, position } = mission.to;
@@ -302,15 +302,32 @@ export const handleEspionageMission = (mission, state) => {
 };
 
 export const handleTransportMission = (mission, state) => {
-  const target = state.planets.find(p => p.galaxy === mission.to.galaxy && p.system === mission.to.system && p.position === mission.to.position);
+  const target = state.planets.find(p => (
+    (mission.to.id && p.id === mission.to.id) ||
+    (p.galaxy === mission.to.galaxy && p.system === mission.to.system && p.position === mission.to.position)
+  ));
   let newState = { ...state };
   if (target) {
+    const storage = calcStorage(target.buildings, state.research || {});
+    const maxMetal = storage.metal || 100000;
+    const maxCrystal = storage.crystal || 100000;
+    const maxDeut = storage.deuterium || 100000;
+
+    const currentM = target.resources?.metal || 0;
+    const currentC = target.resources?.crystal || 0;
+    const currentD = target.resources?.deuterium || 0;
+
+    const deliveredMetal = Math.min(mission.resources?.metal || 0, Math.max(0, maxMetal - currentM));
+    const deliveredCrystal = Math.min(mission.resources?.crystal || 0, Math.max(0, maxCrystal - currentC));
+    const deliveredDeut = Math.min(mission.resources?.deuterium || 0, Math.max(0, maxDeut - currentD));
+
     newState = updatePlanet(newState, target.id, p => ({
       ...p,
       resources: {
-        metal: p.resources.metal + (mission.resources?.metal || 0),
-        crystal: p.resources.crystal + (mission.resources?.crystal || 0),
-        deuterium: p.resources.deuterium + (mission.resources?.deuterium || 0),
+        ...p.resources,
+        metal: (p.resources?.metal || 0) + deliveredMetal,
+        crystal: (p.resources?.crystal || 0) + deliveredCrystal,
+        deuterium: (p.resources?.deuterium || 0) + deliveredDeut,
       },
     }));
     return { 
@@ -323,11 +340,14 @@ export const handleTransportMission = (mission, state) => {
         type: 'transport',
         title: 'Cargamento Entregado con Éxito',
         subtitle: `Destino: ${target.name} [${target.galaxy}:${target.system}:${target.position}]`,
-        description: `El convoy logístico procedente de ${mission.from?.name || 'la base'} ha entrado en la órbita de ${target.name} y ha transferido íntegramente los suministros a los almacenes del planeta.`,
+        description: `El convoy logístico procedente de ${mission.from?.name || 'la base'} ha entrado en la órbita de ${target.name} y ha transferido los suministros a los almacenes del planeta.`,
         resources: {
-          metal: mission.resources?.metal || 0,
-          crystal: mission.resources?.crystal || 0,
-          deuterium: mission.resources?.deuterium || 0,
+          metal: mission.resources?.metal || deliveredMetal,
+          crystal: mission.resources?.crystal || deliveredCrystal,
+          deuterium: mission.resources?.deuterium || deliveredDeut,
+          deliveredMetal,
+          deliveredCrystal,
+          deliveredDeut
         },
         targetPlanetId: target.id,
         image: 'largeCargo',
