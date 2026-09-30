@@ -137,7 +137,7 @@ const MoonPage = ({ state, dispatch, currentPlanet, production, MOON_BUILDINGS, 
                     </button>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 mb-3">{b.desc}</p>
+                <p className="text-[11px] text-slate-400 mb-3">{b.desc || 'No disponible'}</p>
                 <div className="flex flex-wrap gap-2 text-[10px] font-mono mb-4 bg-[#05070f] p-2 rounded-xl border border-white/5">
                   <span className={`font-medium ${(currentPlanet?.resources?.metal ?? 0) >= cost.metal ? 'text-emerald-400' : 'text-rose-400'}`}>⛏️ {fmt(cost.metal)}</span>
                   <span className={`font-medium ${(currentPlanet?.resources?.crystal ?? 0) >= cost.crystal ? 'text-emerald-400' : 'text-rose-400'}`}>💎 {fmt(cost.crystal)}</span>

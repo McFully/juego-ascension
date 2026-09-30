@@ -7,6 +7,7 @@ import {
   extractShipTechSnapshot, extractDefenseTechSnapshot, calculateTechGeneration,
   getVariantKey, calculateRetrofitUnitCost, calculateRetrofitUnitTime
 } from '../../../utils/formulas/retrofitFormulas.js';
+import { generateRegistryCode } from '../../../utils/shipRegistryBridge.js';
 
 export const processAllQueuesTick = (state) => {
   let newState = { ...state };
@@ -240,9 +241,9 @@ export const processAllQueuesTick = (state) => {
         const faction = pTarget?.faction || "HUM";
 
         for (let i = 0; i < newlyCompleted; i++) {
-          const randSeq = Math.floor(100000 + Math.random() * 900000);
-          const shipId = `shp_${item.planetId}_${item.shipId}_${Date.now()}_${i}`;
-          const regCode = `${faction.substring(0, 3).toUpperCase()}-${String(item.planetId).substring(0, 4).toUpperCase()}-${item.shipId.substring(0, 3).toUpperCase()}-${randSeq}`;
+          const shipSeq = (state.gameTick || 0) * 1000 + (item.completed || 0) + i + 1;
+          const shipId = `shp_${item.planetId}_${item.shipId}_${state.gameTick || 0}_${item.startTime || 0}_${i}`;
+          const regCode = generateRegistryCode(faction, item.planetId, item.shipId, shipSeq);
           shipsToInsert.push({
             id: shipId,
             registry_code: regCode,

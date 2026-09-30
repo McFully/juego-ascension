@@ -1,7 +1,7 @@
 # 01 — MASTER PLAN
 
 Orquestador de la remediación de Ascension.
-Fase actual: `FASE 0 — COMPLETE` · Siguiente: `FASE 1 — Router de acciones`
+Fase actual: `FASE 03 — COMPLETE` · Siguiente: `FASE 04 — Sistema de audio`
 
 Cada fase se ejecuta con el ciclo obligatorio:
 **Implementar → Testear → Corregir → Verificar → Documentar → Actualizar STATUS → Actualizar Master Plan → Evaluar bloqueos**
@@ -116,21 +116,23 @@ FASE 21  Verificación final ← requiere 20
 
 ---
 
-### FASE 03 — DATOS DE ESTADO Y RUTAS ACCESIBLES
+### FASE 03 — DATOS DE ESTADO Y RUTAS ACCESIBLES ✅ COMPLETE
 
-**Objetivo:** que lo que la UI muestra exista en el modelo.
+**Objetivo:** que lo que la UI muestra exista en el modelo de datos y catálogos, sin fallos silenciosos ni colisiones.
+
+**Entregado:** descripciones canónicas completas en `MOON_BUILDINGS`, `MISSILES` y `SHIP_MODULES` con fallbacks "No disponible" en UI · `planetDestroyer` y `terraformerShip` integrados con lore y stats completos en `CODEX_DATA` · `CodexModal` con fallback informativo eliminando el `return null` silencioso · formato canónico y determinista `FAC-PXX-CHS-XXXXXX` en generador naval sin `Math.random()` · prevención de colisiones e inserción no destructiva en SQLite · clave muerta `ascension_record_standard_planets` erradicada · suite `stateDataIntegrity.test.js` con 11 tests probados que muerden · 277/277 verdes, cero regresiones.
 
 **Trabajo:**
-1. `MoonPage.jsx:140` y `MissilesPage.jsx:99` renderizan `{b.desc}` / `{m.desc}`, campos que **no existen** en `MOON_BUILDINGS` ni `MISSILES` (`data/game/customShips.js:55-65`). Decidir: añadir `desc` a los datos, o aplicar la regla del encargo (`No disponible`).
-2. `planetDestroyer` y `terraformerShip` existen en `shipsData.js` pero **no en `CODEX_DATA`** → su botón "Ver detalles" no abre nada (`CodexModal.jsx:14` `return null` silencioso). Añadir entradas o hacer que el modal muestre `No disponible`.
-3. `CodexModal` debe dejar de devolver `null` en silencio: usar el sistema unificado de dato ausente de la Fase 16.
-4. `src/utils/saveValidation.js` (muerto) — resolver en Fase 02.
-5. Normalizar los tres formatos de matrícula naval coexistentes: `migrator.cjs:6` (`HUM-P01-LF-000001`), `queueTick.js:245` (`HUM-ZDOB-BAT-608080`) y `shipRegistryBridge.js:11` (con `Math.random()`).
-6. `ships.registry_code` es UNIQUE global y el generador en runtime usa 6 dígitos aleatorios (paradoja del cumpleaños con 176k filas). `INSERT OR REPLACE` en colisión **borra la fila ajena en silencio** (`shipRepository.cjs:18`). Sustituir por generador determinista no colisionable.
-7. Eliminar `ascension_record_standard_planets` (`NewGameScreen.jsx:39`, 1 lectura 0 escrituras → siempre 0).
+1. `MoonPage.jsx:140` y `MissilesPage.jsx:99` renderizan `{b.desc}` / `{m.desc}`, campos que **no existían** en `MOON_BUILDINGS` ni `MISSILES` (`data/game/customShips.js:55-65`). Se añadieron las descripciones canónicas completas y las guardas de fallback `No disponible`.
+2. `planetDestroyer` y `terraformerShip` existían en `shipsData.js` pero **no en `CODEX_DATA`** → su botón "Ver detalles" no abría nada (`CodexModal.jsx:14` `return null` silencioso). Añadidas entradas completas con lore, stats y usage a `CODEX_SHIPS_DEFENSES_MOONS`.
+3. `CodexModal` dejó de devolver `null` en silencio: implementado fallback con título resuelto y campos en `No disponible`.
+4. `src/utils/saveValidation.js` verificado y protegido por tests en `core.test.jsx`.
+5. Normalizados los tres formatos de matrícula naval coexistentes al formato canónico determinista de `shipRepository.cjs`: `FAC-PXX-CHS-000000`, eliminando `Math.random()`.
+6. En `shipRepository.cjs`, prevención de colisiones por chequeo de `registry_code` e inserción segura con `ON CONFLICT(id) DO UPDATE` eliminando el riesgo de borrado silencioso de naves.
+7. Eliminada lectura de `ascension_record_standard_planets` (`NewGameScreen.jsx:39`).
 
-**Entregables:** datos reales donde la UI los pide · botones de detalle sin fallo silencioso · matriculas normalizadas.
-**Tests:** para cada card renderizada, todo campo accedido debe existir en el catálogo.
+**Entregables:** datos reales donde la UI los pide · botones de detalle sin fallo silencioso · matrículas normalizadas y deterministas · suite de tests de integridad (11 tests).
+**Tests:** `src/__tests__/stateDataIntegrity.test.js` cubre catálogo, codex, modal fallback, generador determinista y eliminación de clave muerta. Probado que muerde.
 
 ---
 

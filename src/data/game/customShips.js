@@ -37,30 +37,30 @@ export const SHIP_SHIELDS = {
 };
 
 export const SHIP_MODULES = {
-  extraCargo: { name: 'Bodega Extra', icon: '📦', bonus: { cargo: 2000 }, slots: 1, cost: { m: 5000, c: 3000, d: 1000 }, req: { modularEng: 1 } },
-  armorPlating: { name: 'Placas Blindaje', icon: '🛡️', bonus: { hull: 1000 }, slots: 1, cost: { m: 8000, c: 4000, d: 2000 }, req: { armour: 4 } },
-  speedBoost: { name: 'Acelerador', icon: '⚡', bonus: { speed: 2000 }, slots: 1, cost: { m: 6000, c: 5000, d: 3000 }, req: { impulse: 3 } },
-  nanoRepair: { name: 'Nanoreparador', icon: '🔧', bonus: { repair: 0.1 }, slots: 1, cost: { m: 15000, c: 10000, d: 5000 }, req: { nanoTech: 2 } },
-  stealthSys: { name: 'Sistema Sigilo', icon: '👻', bonus: { stealth: 1 }, slots: 2, cost: { m: 20000, c: 25000, d: 10000 }, req: { espionage: 6, nanoTech: 2 } },
-  aiAssist: { name: 'Asistente IA', icon: '🤖', bonus: { atk: 100, shd: 50 }, slots: 2, cost: { m: 25000, c: 20000, d: 15000 }, req: { aiMilitary: 2 } },
-  energyCore: { name: 'Núcleo Energético', icon: '⚛️', bonus: { energy: 20 }, slots: 2, cost: { m: 30000, c: 25000, d: 15000 }, req: { advReactors: 3 } },
-  quantumCore: { name: 'Núcleo Cuántico', icon: '💎', bonus: { atk: 200, shd: 100, speed: 3000 }, slots: 3, cost: { m: 80000, c: 60000, d: 40000 }, req: { quantumNetworks: 3, expDesign: 3 } },
-  ionDeflector: { name: 'Escudo Ionizante', icon: '🌀', bonus: {}, slots: 1, cost: { m: 15000, c: 20000, d: 10000 }, req: { shields: 6 } },
-  stealthModule: { name: 'Sigilo Avanzado', icon: '🕵️', bonus: { stealth: 2, speed: -400 }, slots: 2, cost: { m: 22000, c: 28000, d: 10000 }, req: { espionage: 5, nanoTech: 3 } },
-  tradeModule: { name: 'Módulo Comercial', icon: '💰', bonus: { cargo: 2500, speed: -200 }, slots: 1, cost: { m: 8000, c: 12000, d: 4000 }, req: { modularEng: 3 } },
-  plasmaInjector: { name: 'Inyector Plasma', icon: '⚡', bonus: {}, slots: 1, cost: { m: 25000, c: 15000, d: 15000 }, req: { impulse: 5 } },
-  gaussBattery: { name: 'Batería Gauss', icon: '💥', bonus: {}, slots: 2, cost: { m: 30000, c: 10000, d: 5000 }, req: { weapons: 7 } },
+  extraCargo: { name: 'Bodega Extra', icon: '📦', desc: 'Espacio de carga presurizado adicional para transportar más recursos en expediciones y comercio.', bonus: { cargo: 2000 }, slots: 1, cost: { m: 5000, c: 3000, d: 1000 }, req: { modularEng: 1 } },
+  armorPlating: { name: 'Placas Blindaje', icon: '🛡️', desc: 'Capas de blindaje de aleación densa que incrementan la integridad del casco.', bonus: { hull: 1000 }, slots: 1, cost: { m: 8000, c: 4000, d: 2000 }, req: { armour: 4 } },
+  speedBoost: { name: 'Acelerador', icon: '⚡', desc: 'Inyectores de empuje hiperreactivos para elevar la velocidad crucero de la nave.', bonus: { speed: 2000 }, slots: 1, cost: { m: 6000, c: 5000, d: 3000 }, req: { impulse: 3 } },
+  nanoRepair: { name: 'Nanoreparador', icon: '🔧', desc: 'Micronanobots autónomos programados para sellar brechas y reparar el casco en combate.', bonus: { repair: 0.1 }, slots: 1, cost: { m: 15000, c: 10000, d: 5000 }, req: { nanoTech: 2 } },
+  stealthSys: { name: 'Sistema Sigilo', icon: '👻', desc: 'Dispersor de firmas térmicas y electromagnéticas para evadir escaneos enemigos.', bonus: { stealth: 1 }, slots: 2, cost: { m: 20000, c: 25000, d: 10000 }, req: { espionage: 6, nanoTech: 2 } },
+  aiAssist: { name: 'Asistente IA', icon: '🤖', desc: 'Copiloto táctico de computación neuronal para optimizar puntería y modulación de escudos.', bonus: { atk: 100, shd: 50 }, slots: 2, cost: { m: 25000, c: 20000, d: 15000 }, req: { aiMilitary: 2 } },
+  energyCore: { name: 'Núcleo Energético', icon: '⚛️', desc: 'Generador de fisión compacta para alimentar subsistemas con alto consumo de energía.', bonus: { energy: 20 }, slots: 2, cost: { m: 30000, c: 25000, d: 15000 }, req: { advReactors: 3 } },
+  quantumCore: { name: 'Núcleo Cuántico', icon: '💎', desc: 'Núcleo avanzado de resonancia cuántica que amplifica armamento, escudos y motores.', bonus: { atk: 200, shd: 100, speed: 3000 }, slots: 3, cost: { m: 80000, c: 60000, d: 40000 }, req: { quantumNetworks: 3, expDesign: 3 } },
+  ionDeflector: { name: 'Escudo Ionizante', icon: '🌀', desc: 'Deflector de polaridad inversa capaz de disipar impactos energéticos continuos.', bonus: {}, slots: 1, cost: { m: 15000, c: 20000, d: 10000 }, req: { shields: 6 } },
+  stealthModule: { name: 'Sigilo Avanzado', icon: '🕵️', desc: 'Generador de camuflaje activo que reduce drásticamente la visibilidad a cambio de peso.', bonus: { stealth: 2, speed: -400 }, slots: 2, cost: { m: 22000, c: 28000, d: 10000 }, req: { espionage: 5, nanoTech: 3 } },
+  tradeModule: { name: 'Módulo Comercial', icon: '💰', desc: 'Compartimento aduanero y estiba automatizada para convoyes comerciales del imperio.', bonus: { cargo: 2500, speed: -200 }, slots: 1, cost: { m: 8000, c: 12000, d: 4000 }, req: { modularEng: 3 } },
+  plasmaInjector: { name: 'Inyector Plasma', icon: '⚡', desc: 'Sobrealimentador magnético de plasma para empuje y sobreaceleración reactiva.', bonus: {}, slots: 1, cost: { m: 25000, c: 15000, d: 15000 }, req: { impulse: 5 } },
+  gaussBattery: { name: 'Batería Gauss', icon: '💥', desc: 'Condensadores cinéticos suplementarios para disparos balísticos de alta cadencia.', bonus: {}, slots: 2, cost: { m: 30000, c: 10000, d: 5000 }, req: { weapons: 7 } },
 };
 
 export const MISSILES = {
-  interplanetaryMissile: { name: 'Misil Interplanetario', icon: '☄️', cost: { m: 12000, c: 2500, d: 0 }, atk: 12000, tech: 'weapons' },
-  antiBallisticMissile: { name: 'Misil Antibalístico', icon: '🛡️', cost: { m: 8000, c: 0, d: 0 }, atk: 1, tech: 'shields' },
+  interplanetaryMissile: { name: 'Misil Interplanetario', icon: '☄️', desc: 'Misil balístico termonuclear de largo alcance diseñado para arrasar defensas planetarias enemigas.', cost: { m: 12000, c: 2500, d: 0 }, atk: 12000, tech: 'weapons' },
+  antiBallisticMissile: { name: 'Misil Antibalístico', icon: '🛡️', desc: 'Sistema de intercepción orbital automático que neutraliza misiles interplanetarios hostiles.', cost: { m: 8000, c: 0, d: 0 }, atk: 1, tech: 'shields' },
 };
 
 export const MOON_BUILDINGS = {
-  lunarBase: { name: 'Base Lunar', icon: '🌙', cost: { m: 20000, c: 10000, d: 5000 }, factor: 2, cat: 'facility', max: 1 },
-  sensorPhalanx: { name: 'Phalanx Sensor', icon: '📡', cost: { m: 500000, c: 200000, d: 100000 }, factor: 2, cat: 'facility', max: 1, req: { lunarBase: 1 } },
-  jumpGate: { name: 'Puerta de Salto', icon: '🌀', cost: { m: 2000000, c: 1000000, d: 500000 }, factor: 2, cat: 'facility', max: 1, req: { lunarBase: 5 } },
-  moonStorage: { name: 'Depósito Lunar', icon: '🏪', cost: { m: 5000, c: 2500, d: 1000 }, factor: 2, cat: 'storage' },
+  lunarBase: { name: 'Base Lunar', icon: '🌙', desc: 'Proporciona soporte vital, energía y espacio de construcción en la superficie del satélite lunar.', cost: { m: 20000, c: 10000, d: 5000 }, factor: 2, cat: 'facility', max: 1 },
+  sensorPhalanx: { name: 'Phalanx Sensor', icon: '📡', desc: 'Red masiva de sensores hiperespaciales capaz de rastrear y escanear flotas enemigas en vuelo.', cost: { m: 500000, c: 200000, d: 100000 }, factor: 2, cat: 'facility', max: 1, req: { lunarBase: 1 } },
+  jumpGate: { name: 'Puerta de Salto', icon: '🌀', desc: 'Portal de curvatura que permite el tránsito instantáneo de flotas entre lunas aliadas con puertas activas.', cost: { m: 2000000, c: 1000000, d: 500000 }, factor: 2, cat: 'facility', max: 1, req: { lunarBase: 5 } },
+  moonStorage: { name: 'Depósito Lunar', icon: '🏪', desc: 'Instalaciones de almacenamiento de recursos diseñadas para el entorno de baja gravedad de la luna.', cost: { m: 5000, c: 2500, d: 1000 }, factor: 2, cat: 'storage' },
 };
 

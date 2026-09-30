@@ -10,8 +10,13 @@ export const CodexModal = React.memo(({ id, onClose, BUILDINGS, RESEARCH, SHIPS,
     return () => setMuffle(false);
   }, []);
 
-  const data = CODEX_DATA[id];
-  if (!data) return null;
+  const resolvedName = CODEX_DATA[id]?.name || SHIPS?.[id]?.name || DEFENSES?.[id]?.name || BUILDINGS?.[id]?.name || RESEARCH?.[id]?.name || id;
+  const data = CODEX_DATA[id] || {
+    name: resolvedName,
+    lore: "No disponible en los archivos de inteligencia actuales.",
+    stats: "No disponible",
+    usage: "No disponible",
+  };
 
   const getTechStats = () => {
     if (SHIPS && SHIPS[id]) {

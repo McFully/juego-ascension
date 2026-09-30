@@ -148,7 +148,7 @@ export const ShipModuleSlots = ({
                   <span className="text-2xl">{m.icon}</span>
                   <span className="font-bold text-xs uppercase">{m.name}</span>
                 </div>
-                <p className="text-[10px] text-slate-300 font-mono mb-2">{m.desc}</p>
+                <p className="text-[10px] text-slate-300 font-mono mb-2">{m.desc || 'No disponible'}</p>
                 <div className="text-[10px] text-cyan-400 font-mono">
                   🔲 {m.slots} ranuras requeridas
                 </div>

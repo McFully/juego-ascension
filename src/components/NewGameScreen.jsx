@@ -35,10 +35,6 @@ export const NewGameScreen = ({ onConfirm, onBack, availableSaves = [] }) => {
         } catch (_) {}
       }
 
-      try {
-        const localRecord = parseInt(localStorage.getItem('ascension_record_standard_planets') || '0', 10);
-        if (localRecord > maxCount) maxCount = localRecord;
-      } catch (_) {}
 
       if (isMounted) {
         setMaxStandardPlanets(maxCount);

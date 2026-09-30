@@ -96,7 +96,7 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 mb-4">{m.desc}</p>
+                <p className="text-xs text-slate-400 mb-4">{m.desc || 'No disponible'}</p>
                 <div className="flex flex-wrap gap-2 text-[10px] font-mono mb-4 bg-[#05070f] p-2.5 rounded-xl border border-white/5">
                   <span className={`font-medium ${(currentPlanet?.resources?.metal ?? 0) >= cost.metal ? 'text-emerald-400' : 'text-rose-400'}`}>⛏️ {fmt(cost.metal)}</span>
                   <span className={`font-medium ${(currentPlanet?.resources?.crystal ?? 0) >= cost.crystal ? 'text-emerald-400' : 'text-rose-400'}`}>💎 {fmt(cost.crystal)}</span>

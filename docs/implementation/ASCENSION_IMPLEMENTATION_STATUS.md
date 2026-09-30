@@ -17,7 +17,7 @@ Documentos asociados:
 | **00** | Preflight | ✅ **COMPLETE** | — |
 | **01** | Router de acciones | ✅ **COMPLETE** | — |
 | **02** | Persistencia y esquema | ✅ **COMPLETE** | — |
-| **03** | Datos de estado y rutas accesibles | ⬜ NOT_STARTED | — |
+| **03** | Datos de estado y rutas accesibles | ✅ **COMPLETE** | — |
 | **04** | Sistema de audio | ⬜ NOT_STARTED | — |
 | **05** | Fuente única de duraciones | ⬜ NOT_STARTED | — |
 | **06** | Refinería ×200 | ⬜ NOT_STARTED | — |
@@ -37,7 +37,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 3 de 22 fases (13,6 %).**
+**Avance: 4 de 22 fases (18,2 %).**
 
 ---
 
@@ -708,6 +708,150 @@ PROCEED con reserva registrada
 
 ---
 
+## FASE 03 — DATOS DE ESTADO Y RUTAS ACCESIBLES
+
+```text
+PHASE:        03
+Nombre:       Datos de estado y rutas accesibles
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Que todo lo que la UI muestra exista en el modelo de datos y catalogos, eliminar
+fallos silenciosos de "Ver detalles", normalizar las matriculas navales con generador
+determinista no colisionable y eliminar claves muertas de localStorage.
+
+SOURCE OF TRUTH:
+- Catalogos de datos: src/data/game/customShips.js (MOON_BUILDINGS, MISSILES, SHIP_MODULES)
+- Inteligencia y lore: src/data/codex.js y codex_modules/codexShipsDefensesMoons.js
+- Matricula naval canonica: format FAC-PXX-CHS-XXXXXX generado por electron/database/shipRepository.cjs
+  y src/utils/shipRegistryBridge.js
+- Contratos de integridad protegidos por: src/__tests__/stateDataIntegrity.test.js
+
+DEPENDENCIES:
+Ninguna. Fase independiente.
+
+FILES INSPECTED:
+  src/data/game/customShips.js
+  src/data/game/shipsData.js
+  src/data/codex.js, codex_modules/codexShipsDefensesMoons.js
+  src/pages/MoonPage.jsx
+  src/pages/MissilesPage.jsx
+  src/components/shipDesign/ShipModuleSlots.jsx
+  src/components/ui/CodexModal.jsx
+  src/components/NewGameScreen.jsx
+  src/utils/shipRegistryBridge.js
+  src/reducers/tick/queues/queueTick.js
+  electron/database/shipRepository.cjs
+  electron/database/migrator.cjs
+
+FILES MODIFIED:
+  src/data/game/customShips.js                        (descripciones canónicas)
+  src/data/codex_modules/codexShipsDefensesMoons.js   (planetDestroyer y terraformerShip)
+  src/pages/MoonPage.jsx                              (fallback No disponible para desc)
+  src/pages/MissilesPage.jsx                          (fallback No disponible para desc)
+  src/components/shipDesign/ShipModuleSlots.jsx       (fallback No disponible para desc)
+  src/components/ui/CodexModal.jsx                    (eliminado return null silencioso, fallback No disponible)
+  src/components/NewGameScreen.jsx                    (eliminada lectura de ascension_record_standard_planets)
+  src/utils/shipRegistryBridge.js                     (generador canónico unificado, sin Math.random)
+  src/reducers/tick/queues/queueTick.js               (matrícula determinista, sin Math.random)
+  electron/database/shipRepository.cjs                (generador PXX robusto, prevención de colisiones en insert)
+  src/__tests__/stateDataIntegrity.test.js            (nueva suite, 11 tests probados que muerden)
+
+DATABASE CHANGES:
+  Ninguna en esquema ni datos.
+  En la inserción de naves (shipRepository.cjs):
+  - ON CONFLICT(id) DO UPDATE en lugar de INSERT OR REPLACE general.
+  - Verificación previa de colisión de registry_code con auto-incremento al siguiente
+    hueco secuencial libre. Nunca se borra una fila ajena preexistente por colisión.
+
+MIGRATIONS:
+  Ninguna requerida.
+
+IMPLEMENTATION:
+  1. Descripciones en catálogos:
+     - MOON_BUILDINGS (lunarBase, sensorPhalanx, jumpGate, moonStorage) dotados de desc canónico.
+     - MISSILES (interplanetaryMissile, antiBallisticMissile) dotados de desc canónico.
+     - SHIP_MODULES (13 módulos de nave) dotados de desc canónico.
+     - Guardas UI con fallback "No disponible" añadidas en MoonPage, MissilesPage y ShipModuleSlots.
+
+  2. Cobertura completa del Codex:
+     - planetDestroyer y terraformerShip añadidos a CODEX_SHIPS_DEFENSES_MOONS con lore histórico,
+       especificaciones técnicas detalladas y protocolo operativo de uso.
+     - Todas las naves de SHIPS quedan 100% cubiertas en CODEX_DATA.
+
+  3. Desbloqueo y robustez de CodexModal:
+     - Eliminado el "return null" silencioso ante ids no catalogados o parciales.
+     - Implementado fallback visual con título resuelto y campos en "No disponible".
+
+  4. Normalización de matrícula naval determinista:
+     - Formato canónico unificado en FAC-PXX-CHS-000000.
+     - Eliminado Math.random() de shipRegistryBridge.js y queueTick.js.
+     - queueTick.js utiliza ahora generateRegistryCode con secuencia determinista vinculada al gameTick.
+     - shipRepository.cjs previene colisiones mediante chequeo de registry_code y secuencia monótona,
+       sustituyendo INSERT OR REPLACE por inserción segura que respeta naves existentes.
+
+  5. Limpieza de clave muerta:
+     - Eliminada lectura de ascension_record_standard_planets de localStorage en NewGameScreen.jsx.
+
+TESTS:
+  src/__tests__/stateDataIntegrity.test.js (11 tests):
+    - Cobertura de desc en MOON_BUILDINGS, MISSILES y SHIP_MODULES.
+    - Presencia de planetDestroyer, terraformerShip y todas las naves en CODEX_DATA.
+    - Manejo de fallback sin retorno silencioso en CodexModal.jsx.
+    - Generación y consistencia del formato canónico FAC-PXX-CHS-XXXXXX.
+    - Cero Math.random() en queueTick.js y shipRegistryBridge.js.
+    - NewGameScreen libre de ascension_record_standard_planets.
+
+  PROBADO QUE MUERDE:
+  Se eliminó temporalmente desc en interplanetaryMissile; el test falló de inmediato con:
+  "AssertionError: MISSILES[interplanetaryMissile] debe tener desc: expected undefined to be defined".
+  Se restauró y volvió a verde.
+
+TEST RESULTS:
+  PASSED  25/25 ficheros, 277/277 tests, 0 fallos, 19,93 s
+  (266 previos + 11 Fase 03)
+  REGRESION: cero.
+  PARSEO: los 9 ficheros tocados parsean sin errores con esbuild.
+
+KNOWN ISSUES:
+  Ninguno nuevo detectado en esta fase.
+
+HARD BLOCKERS:
+  Ninguno.
+
+SOFT ISSUES:
+  Ninguno.
+
+DELIVERABLES:
+  1. Catálogo customShips.js con descripciones canónicas completas.
+  2. CODEX_DATA con cobertura 100% de naves (incluyendo planetDestroyer y terraformerShip).
+  3. CodexModal accesible y con fallback estandarizado.
+  4. Generador unificado y determinista de matrículas navales sin riesgo de colisión.
+  5. Inserción SQLite no destructiva en shipRepository.cjs.
+  6. NewGameScreen limpio de referencias muertas a localStorage.
+  7. Suite de pruebas src/__tests__/stateDataIntegrity.test.js (11 tests verdes).
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (277/277)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -716,6 +860,8 @@ PROCEED con reserva registrada
 | 2026-09-30 | `1c69f25` | Punto de retorno previo a la remediación (142 ficheros) |
 | 2026-09-30 | — | Fase 00 completada: 25 hallazgos, 22 fases planificadas |
 | 2026-09-30 | — | Fase 01 completada: 25 rutas + 3 acciones nuevas, 28 tests nuevos, 251/251 verdes. 5 hallazgos nuevos (N-01..N-05) |
+| 2026-09-30 | — | Fase 02 completada: allow-list 37->50, esquema versionado, backup verificado, 266/266 verdes |
+| 2026-09-30 | — | Fase 03 completada: datos de estado, codex naves especiales, matriculas deterministas, 11 tests nuevos, 277/277 verdes |
 
 ---
 

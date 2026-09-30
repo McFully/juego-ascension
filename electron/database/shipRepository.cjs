@@ -2,9 +2,10 @@ const { getDb } = require("./dbManager.cjs");
 
 // Generador determinista de matrícula galáctica militar/civil
 function generateRegistryCode(faction = "HUM", planetIndex = 1, chassisId = "LF", seq = 1) {
-  const fac = String(faction).substring(0, 3).toUpperCase();
-  const pln = `P${String(planetIndex).padStart(2, "0")}`;
-  const chs = String(chassisId).substring(0, 3).toUpperCase();
+  const fac = String(faction || "HUM").substring(0, 3).toUpperCase();
+  const digits = String(planetIndex).replace(/\D/g, "");
+  const pln = `P${(digits ? digits : "1").padStart(2, "0")}`;
+  const chs = String(chassisId || "LF").substring(0, 3).toUpperCase();
   const num = String(seq).padStart(6, "0");
   return `${fac}-${pln}-${chs}-${num}`;
 }
@@ -19,8 +20,11 @@ function insertShipsBatch(ships = [], sessionId = null) {
   // tocaba. El id de sesión lo aporta quien inserta.
   const sid = sessionId || ships.find(s => s && s.sessionId)?.sessionId || null;
 
+  const checkCodeStmt = db.prepare("SELECT id FROM ships WHERE registry_code = ? LIMIT 1");
+  const countStmt = db.prepare("SELECT COUNT(*) as count FROM ships");
+
   const insertStmt = db.prepare(`
-    INSERT OR REPLACE INTO ships (
+    INSERT INTO ships (
       id, session_id, registry_code, custom_name, chassis_id, class_category,
       origin_planet_id, origin_tick, owner_id, controller_id,
       status, current_planet_id, current_fleet_id,
@@ -33,14 +37,43 @@ function insertShipsBatch(ships = [], sessionId = null) {
       @hull_percent, @veterancy_level, @kills_count, @battles_survived,
       @tech_generation, @metadata_json
     )
+    ON CONFLICT(id) DO UPDATE SET
+      session_id = COALESCE(excluded.session_id, ships.session_id),
+      registry_code = excluded.registry_code,
+      custom_name = excluded.custom_name,
+      chassis_id = excluded.chassis_id,
+      class_category = excluded.class_category,
+      current_planet_id = excluded.current_planet_id,
+      current_fleet_id = excluded.current_fleet_id,
+      status = excluded.status,
+      hull_percent = excluded.hull_percent,
+      veterancy_level = excluded.veterancy_level,
+      kills_count = excluded.kills_count,
+      battles_survived = excluded.battles_survived,
+      tech_generation = excluded.tech_generation,
+      metadata_json = excluded.metadata_json
   `);
 
   const insertMany = db.transaction((rows) => {
+    let nextSeq = null;
     for (const ship of rows) {
+      let regCode = ship.registryCode || ship.registry_code;
+      const existing = regCode ? checkCodeStmt.get(regCode) : null;
+      if (!regCode || (existing && existing.id !== ship.id)) {
+        if (nextSeq === null) {
+          nextSeq = (countStmt.get()?.count || 0) + 1;
+        }
+        while (checkCodeStmt.get(generateRegistryCode(ship.faction || "HUM", ship.originPlanetId || ship.origin_planet_id || 1, ship.chassisId || ship.chassis_id || "LF", nextSeq))) {
+          nextSeq++;
+        }
+        regCode = generateRegistryCode(ship.faction || "HUM", ship.originPlanetId || ship.origin_planet_id || 1, ship.chassisId || ship.chassis_id || "LF", nextSeq);
+        nextSeq++;
+      }
+
       insertStmt.run({
         id: ship.id,
         session_id: ship.sessionId || ship.session_id || sid,
-        registry_code: ship.registryCode || ship.registry_code,
+        registry_code: regCode,
         custom_name: ship.customName || ship.custom_name || null,
         chassis_id: ship.chassisId || ship.chassis_id,
         class_category: ship.classCategory || ship.class_category || "swarm",

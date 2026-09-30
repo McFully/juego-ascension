@@ -6,13 +6,16 @@
 // Fallback en memoria si corre fuera de Electron (ej: tests o dev browser)
 const memoryRegistry = new Map();
 
-export const generateClientRegistryCode = (faction = "HUM", planetId = "1", chassisId = "LF") => {
-  const fac = String(faction).substring(0, 3).toUpperCase();
-  const pln = `P${String(planetId).replace(/\D/g, "").padStart(2, "0") || "01"}`;
-  const chs = String(chassisId).substring(0, 3).toUpperCase();
-  const randNum = String(Math.floor(100000 + Math.random() * 900000));
-  return `${fac}-${pln}-${chs}-${randNum}`;
-};
+export function generateRegistryCode(faction = "HUM", planetId = 1, chassisId = "LF", seq = 1) {
+  const fac = String(faction || "HUM").substring(0, 3).toUpperCase();
+  const digits = String(planetId).replace(/\D/g, "");
+  const pln = `P${(digits ? digits : "1").padStart(2, "0")}`;
+  const chs = String(chassisId || "LF").substring(0, 3).toUpperCase();
+  const num = String(seq).padStart(6, "0");
+  return `${fac}-${pln}-${chs}-${num}`;
+}
+
+export const generateClientRegistryCode = generateRegistryCode;
 
 export const registerShipsInDatabase = async (ships = []) => {
   if (!Array.isArray(ships) || ships.length === 0) return { inserted: 0 };

@@ -53,6 +53,12 @@ export const CODEX_SHIPS_DEFENSES_MOONS = {
     stats: "Ataque: 200,000 | Escudo: 50,000 | Integridad: 9,000,000 | Velocidad: 100",
     usage: "El arma definitiva. Lenta pero virtualmente indestructible para flotas pequeñas.",
   },
+  planetDestroyer: {
+    name: "Planeta Destructor",
+    lore: "Una colosal superestructura móvil armada con emisores de plasma concentrado diseñados para fracturar la corteza planetaria y desintegrar objetivos de tamaño continental.",
+    stats: "Ataque: 500,000 | Escudo: 100,000 | Integridad: 2,500,000 | Velocidad: 50 | Fuego rápido devastador",
+    usage: "Desplegada exclusivamente para pulverizar planetas hostiles y quebrar la resistencia de fortalezas enemigas.",
+  },
   espionageProbe: {
     name: "Sonda de Espionaje",
     lore: "Sondas diminutas no tripuladas dotadas de propulsores hiperrápidos y sensores de amplio espectro.",
@@ -70,6 +76,12 @@ export const CODEX_SHIPS_DEFENSES_MOONS = {
     lore: "El ápice de la ingeniería naval comercial. Un leviatán orbital con hiper-aleaciones cuyo coste supera en 1.000 veces a un colonizador común.",
     stats: "Coste: 10M Metal, 20M Cristal, 10M Deuterio | Hull: 2.500.000 | Carga: 500.000 | Propulsión Hiperespacio",
     usage: "Se despliega para fundar el único Planeta Lonja / Exchange por galaxia, creando un hub comercial con terminales AMM, parking logístico y gobernanza DAO.",
+  },
+  terraformerShip: {
+    name: "Nave Terraformatriz",
+    lore: "Laboratorio orbital autónomo equipado con reactores bio-climáticos e inductores de atmósfera para transformar la biosfera planetaria.",
+    stats: "Casco: 50,000 | Escudo: 500 | Carga: 15,000 | Velocidad: 2,000",
+    usage: "Necesaria en órbita para iniciar y mantener proyectos de terraformación ecológica y geológica.",
   },
   recycler: {
     name: "Reciclador",
