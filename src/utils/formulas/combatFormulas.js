@@ -20,7 +20,20 @@ export const getDefenseStats = (id, tech, factionKey = 'human', buildings = {}, 
 
   const hullBonus = 1 + (tech?.armour || 0) * 0.08 + (tech?.nanoRepair || 0) * 0.03 + (tech?.fortressTech || 0) * 0.15;
   const shdBonus = 1 + (tech?.shields || 0) * 0.1 + (tech?.galacticCrypto || 0) * 0.02 + (tech?.aiStrategy || 0) * 0.03 + (tech?.defenseFields || 0) * 0.12 + (tech?.fortressTech || 0) * 0.10;
-  const atkBonus = 1 + (tech?.weapons || 0) * 0.1 + (tech?.aiTactics || 0) * 0.02 + (tech?.aiMilitary || 0) * 0.03 + (tech?.gaussRailgunAccel || 0) * 0.10;
+  let atkBonus = 1 + (tech?.weapons || 0) * 0.1 + (tech?.aiTactics || 0) * 0.02 + (tech?.aiMilitary || 0) * 0.03 + (tech?.gaussRailgunAccel || 0) * 0.10;
+
+  // Bonificaciones especializadas por tecnología armamentística en defensas
+  if (id === 'lightLaser' || id === 'heavyLaser') {
+    atkBonus += (tech?.laser || 0) * 0.10;
+  } else if (id === 'ionCannon') {
+    atkBonus += (tech?.ion || 0) * 0.12;
+  } else if (id === 'gaussCannon') {
+    atkBonus += (tech?.ballisticWeapons || 0) * 0.15;
+  } else if (id === 'rocketLauncher') {
+    atkBonus += (tech?.advMissiles || 0) * 0.20;
+  } else if (id === 'plasmaTurret') {
+    atkBonus += (tech?.orbitalArtillery || 0) * 0.25;
+  }
 
   return {
     hull: d.hull * hullBonus * resMult,
@@ -33,7 +46,7 @@ export const getEffectiveTech = (planet, globalResearch) => {
   if (planet && planet.retrofitTech && Object.keys(planet.retrofitTech).length > 0) {
     return planet.retrofitTech;
   }
-  return {};
+  return globalResearch || {};
 };
 
 export const isOutdated = (planet, globalResearch) => {
@@ -61,6 +74,23 @@ export const getShipStats = (id, tech, blueprints, factionKey = 'human', buildin
   let hullBonus = 1 + (tech?.armour || 0) * 0.08 + (tech?.nanoRepair || 0) * 0.03 + (tech?.latticeMaterials || 0) * 0.05 + (tech?.nanobotRepairSwarms || 0) * 0.02;
   const shdBonus = 1 + (tech?.shields || 0) * 0.1 + (tech?.galacticCrypto || 0) * 0.02 + (tech?.aiStrategy || 0) * 0.03;
   let atkBonus = 1 + (tech?.weapons || 0) * 0.1 + (tech?.aiTactics || 0) * 0.02 + (tech?.aiMilitary || 0) * 0.03;
+
+  // Conexión de armamento especializado a naves de guerra
+  if (['cruiser', 'lightFighter', 'heavyFighter'].includes(id)) {
+    atkBonus += (tech?.laser || 0) * 0.05;
+  }
+  if (['destroyer', 'battleship'].includes(id)) {
+    atkBonus += (tech?.ion || 0) * 0.06;
+  }
+  if (['heavyFighter', 'cruiser'].includes(id)) {
+    atkBonus += (tech?.ballisticWeapons || 0) * 0.05;
+  }
+  if (['bomber', 'interplanetaryMissile'].includes(id)) {
+    atkBonus += (tech?.advMissiles || 0) * 0.10;
+  }
+  if (['deathstar', 'planetDestroyer', 'battleship'].includes(id)) {
+    atkBonus += (tech?.orbitalArtillery || 0) * 0.10;
+  }
 
   if (['smallCargo', 'lightFighter', 'espionageProbe'].includes(id)) {
     hullBonus += (tech?.grapheneTitanium || 0) * 0.08;

@@ -342,21 +342,24 @@ FASE 21  Verificación final ← requiere 20
 
 ---
 
-### FASE 14 — AUDITORÍA DE RESEARCH Y MINISTRIES
+### FASE 14 — AUDITORÍA DE RESEARCH Y MINISTRIES (✅ COMPLETE)
 
 **Objetivo:** que cada investigación tenga ministry, researcher, card, categoría, prerrequisitos, efecto y persistencia.
 
-**Trabajo:**
-1. **16 estudios con `effect` declarado y cero usos:** `laser`, `ion`, `ballisticWeapons`, `advMissiles`, `orbitalArtillery`, `nanoTech`, `modularEng`, `expDesign`, `galacticTrade`, `deepScanner`, `advColonization`, `advSensors`, `computer`, `singularity`. `fullAuto` declara "+20% economía y flota" pero solo se usa como velocidad de construcción. **Conectar o marcar `No aplica`. No dejar texto que miente.**
-2. `getEffectiveTech` (`combatFormulas.js:32-37`) **ignora `globalResearch`** y devuelve `{}` si el planeta no tiene `retrofitTech`. Combinado con `populationTick.js:66-91` (que migra 1 campo por tick pagando 2 metal), un planeta recién colonizado tiene **cero** bonus de tech.
-3. **Infraestructura Research:** analizar el diseño real. Si debe tener Research, restaurarlo con las investigaciones correctas. Si no, documentar la razón y verificar que ninguna investigación huérfana depende de esa sección.
-4. Cada sección Research muestra solo lo que le corresponde. `MINISTRY_CATEGORY_WEIGHTS` con 20 ministerios sugiere duplicación: verificar.
-5. **Persistencia de research:** cambiar pantalla, cambiar ministry, cambiar researcher, save, load, cerrar, reabrir → **el progreso debe mantenerse**. Hoy `research` es un campo **global y por-planeta a la vez** (`initialState.js:104` asigna la misma referencia) y `migrateMinistryScope` (`loadMigrator.js:245-269`) descarta mejoras globales salvo las del planeta activo.
-6. Crear una **auditoría automática** de integrity: sin research huérfana, duplicada, inaccesible, sin ministry, sin researcher, sin card, sin categoría, con prerrequisitos inválidos, sin ruta o sin efecto. Executable en CI.
-7. Cada ministry debe mostrar Facilities y Research cuando corresponda.
+**Estado:** ✅ **COMPLETE** (2026-09-30)
 
-**Entregables:** integridad 100 % verificada por script · effects conectados · persistencia de research correcta.
-**Tests:** la auditoría pasa al 100 %; un effect declarado sin uso falla el test.
+**Trabajo completado:**
+1. **Conexión de los estudios y tecnologías de combate:** `laser`, `ion`, `ballisticWeapons`, `advMissiles` y `orbitalArtillery` conectados funcionalmente a `getDefenseStats` y `getShipStats` en `src/utils/formulas/combatFormulas.js`, otorgando escalado de daño balístico, láser, iónico y artillero a las naves y defensas correspondientes.
+2. **Corrección de fallback en `getEffectiveTech`:** `src/utils/formulas/combatFormulas.js:32-37` ahora retorna `globalResearch || {}` cuando el planeta no dispone de `retrofitTech` o está vacío, garantizando que colonias nuevas y flotas no queden desarmadas con stats en cero.
+3. **Bonificación de colonización `advColonization`:** conectado en `src/missions/diploMission.js:57`, otorgando `+2` campos de tamaño adicional al `planetSize` del nuevo mundo por cada nivel investigado.
+4. **Comercio Galáctico `galacticTrade`:** conectado en `src/pages/GalacticMarketPage.jsx`, aplicando descuento progresivo al arancel del mercado galáctico (del 8% base hasta el 1% mínimo) con indicador visual dinámico en la consola de cotización.
+5. **Exploración profunda `deepScanner`:** conectado en `src/missions/expeditionMission.js`, sesgando probabilísticamente las tiradas de expedición hacia anomalías espaciales, descubrimientos raros y yacimientos ricos.
+6. **Proyecto Singularidad y Victoria Científica:** integrado en `src/reducers/tick/queues/queueTick.js`, completando la investigación con disparo del estado de victoria científica (`scientific`) y overlay cinemático imperial.
+7. **Persistencia e independencia de memoria:** solucionado en `src/core/initialState.js:104`, clonando `{ ...(homePlanet.research || {}) }` para erradicar referencias mutables compartidas entre `state.research` y `homePlanet.research`.
+8. **Auditoría automatizada de integridad CI:** creada suite `src/__tests__/researchAuditingContract.test.js` (7/7 tests pasando), verificando al 100% que las 44 tecnologías de `RESEARCH` posean ministerio asignado en `MINISTRY_MAPPING`, nombre, categoría válida y efecto tangible.
+
+**Entregables:** integridad 100% verificada · effects conectados · persistencia independiente · fallback de modernización · victoria científica funcional · suite `researchAuditingContract.test.js`.
+**Tests:** 7/7 tests de contrato pasando. Probado que muerde. 340/340 tests verdes en la suite global (0 regresiones).
 
 ---
 

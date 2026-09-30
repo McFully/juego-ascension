@@ -54,7 +54,7 @@ export const handleColonizeMission = (mission, state) => {
     isExchangePlanet: !!isCommercialColonizer,
     planetType: isCommercialColonizer ? 'exchange' : 'standard',
     biome: isCommercialColonizer ? 'city' : virgin.biome,
-    planetSize: virgin.planetSize,
+    planetSize: virgin.planetSize + (state.research?.advColonization || 0) * 2,
     gravity: virgin.gravity,
     trait: isCommercialColonizer ? 'Eje Mercantil Cuántico' : virgin.trait,
   };

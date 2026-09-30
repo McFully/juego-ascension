@@ -12,6 +12,11 @@ export const handleExpeditionMission = (mission, state) => {
   const isPrecursorRuins = destPoi && destPoi.type === 'precursor_ruins';
 
   let roll = Math.random();
+  const deepScannerLvl = state.research?.deepScanner || 0;
+  // Cada nivel de Escáner Profundo (+15%/nv) desplaza la tirada hacia eventos y anomalías raras/positivas
+  if (deepScannerLvl > 0 && roll > 0.08) {
+    roll = Math.max(0.08, roll * Math.max(0.4, 1 - deepScannerLvl * 0.05));
+  }
   if (isPrecursorRuins && roll > 0.33) {
     roll = roll * 0.5;
   }

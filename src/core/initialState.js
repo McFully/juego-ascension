@@ -101,7 +101,7 @@ export const createInitial = (playerName, homeFaction = 'human', mode = 'standar
     currentPlanetId: homeId,
     planets: initialPlanets,
     aiPlanets,
-    research: homePlanet.research,
+    research: { ...(homePlanet.research || {}) },
     galacticCouncil: {
       lastSessionTick: 0,
       currentSession: null,

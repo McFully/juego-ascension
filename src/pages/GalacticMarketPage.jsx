@@ -29,14 +29,14 @@ export const GalacticMarketPage = ({
   const tradeCalculation = useMemo(() => {
     if (sellRes === buyRes) return { buyAmount: 0, fee: 0, rate: 1 };
     const sellUnitVal = MARKET_BASE_VALUES[sellRes] || 1;
-    const buyUnitVal = MARKET_BASE_VALUES[buyRes] || 1;
-    const feeRate = 0.08; // 8% de arancel galáctico regulado
+    const tradeLvl = state.research?.galacticTrade || 0;
+    const feeRate = Math.max(0.01, 0.08 - tradeLvl * 0.01); // 8% base, reducible hasta 1%
     const grossBuy = (sellAmount * sellUnitVal) / buyUnitVal;
     const netBuy = Math.floor(grossBuy * (1 - feeRate));
     const fee = Math.floor(grossBuy * feeRate);
     const rate = ((sellUnitVal / buyUnitVal) * (1 - feeRate)).toFixed(3);
-    return { buyAmount: Math.max(0, netBuy), fee, rate };
-  }, [sellRes, buyRes, sellAmount]);
+    return { buyAmount: Math.max(0, netBuy), fee, rate, feePct: Math.round(feeRate * 100) };
+  }, [sellRes, buyRes, sellAmount, state.research?.galacticTrade]);
 
   const availableSell = sellRes === 'credits' ? (state.credits || 0) : (planetRes[sellRes] || 0);
 
@@ -298,7 +298,7 @@ export const GalacticMarketPage = ({
                   <span className="font-mono text-emerald-300 font-bold">1 : {tradeCalculation.rate}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Arancel del sindicato (8%):</span>
+                  <span>Arancel del sindicato ({tradeCalculation.feePct || 8}%):</span>
                   <span className="font-mono text-rose-400 font-bold">-{fmt(tradeCalculation.fee)} {buyRes}</span>
                 </div>
                 <div className="pt-2 border-t border-white/10 flex justify-between text-white font-bold">

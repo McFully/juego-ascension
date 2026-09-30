@@ -207,6 +207,17 @@ export const processAllQueuesTick = (state, currentTime = Date.now()) => {
       newState.research = { ...newState.research, [item.researchId]: oldLevel + 1 };
       const newLvl = oldLevel + 1;
       newState.stats = { ...newState.stats, totalResearch: (newState.stats?.totalResearch || 0) + 1, maxTechLevel: Math.max(newState.stats?.maxTechLevel || 0, newLvl) };
+      
+      // Condición de Victoria Científica: Proyecto Singularidad
+      if (item.researchId === 'singularity' && newLvl >= 1 && !newState.victory) {
+        newState.victory = {
+          type: 'scientific',
+          title: 'Ascensión por Singularidad',
+          desc: 'Tu imperio ha completado el Proyecto Singularidad. Las redes cuánticas y la exploración dimensional han desbloqueado el conocimiento cósmico absoluto, elevando a tu civilización más allá del plano material.',
+          timestamp: now
+        };
+      }
+
       if (!item.auto) {
         newState.notifications = [...(newState.notifications || []), { id: uid(), type: 'success', message: `🔬 ${rDef?.name || item.researchId} nivel ${newLvl}`, timestamp: now }];
       }

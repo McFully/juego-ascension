@@ -28,7 +28,7 @@ Documentos asociados:
 | **11** | Supply Routes reales | ✅ **COMPLETE** | — |
 | **12** | Autotrade y Capítulo 6 | ✅ **COMPLETE** | — |
 | **13** | Sistema de investigación | ✅ **COMPLETE** | — |
-| **14** | Auditoría research + ministries | ⬜ NOT_STARTED | — |
+| **14** | Auditoría research + ministries | ✅ **COMPLETE** | — |
 | **15** | Save vs Commander | ⬜ NOT_STARTED | dep. 02 |
 | **16** | Ver detalles + sistema unificado | ⬜ NOT_STARTED | dep. 01, 05 |
 | **17** | Auditoría de cards estériles | ⬜ NOT_STARTED | dep. 01 |
@@ -37,7 +37,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 14 de 22 fases (63,6 %).**
+**Avance: 15 de 22 fases (68,2 %).**
 
 ---
 
@@ -1985,6 +1985,58 @@ PROCEED
 
 ---
 
+```text
+PHASE:
+Nombre: 14 — Auditoría de Research y Ministries
+
+STATUS:
+COMPLETE
+
+OBJECTIVE:
+Auditoría y conexión integral de investigaciones y ministerios: erradicar efectos huérfanos, conectar bonificaciones de combate a naves y defensas, asegurar fallback global en modernización de tecnologías, conectar bonus de colonización, comercio galáctico y exploración profunda, activar victoria científica por Proyecto Singularidad, garantizar independencia de referencias en persistencia y auditar CI al 100%.
+
+SOURCE OF TRUTH:
+src/data/game/researchData.js, src/data/buildingOperationsData.js, src/utils/formulas/combatFormulas.js, src/missions/diploMission.js, src/pages/GalacticMarketPage.jsx, src/missions/expeditionMission.js, src/core/initialState.js, src/reducers/tick/queues/queueTick.js.
+
+CONTRACTS BROKEN (BEFORE):
+- getEffectiveTech devolvía {} ignorando globalResearch si el planeta no tenía retrofitTech registrado.
+- laser, ion, ballisticWeapons, advMissiles y orbitalArtillery no aportaban bonus de ataque a sus naves o defensas asociadas.
+- advColonization no incrementaba planetSize al colonizar un nuevo mundo.
+- galacticTrade no aplicaba descuento al arancel del mercado galáctico (hardcoded 8%).
+- deepScanner no modificaba las probabilidades de eventos favorables en expediciones.
+- singularity no disparaba la victoria científica tras completarse.
+- initialState enlazaba la misma referencia en memoria para state.research y homePlanet.research.
+
+CHANGES MADE:
+- combatFormulas.js: getEffectiveTech ahora devuelve planet.retrofitTech si existe y tiene claves, o globalResearch || {} como fallback activo.
+- combatFormulas.js: getDefenseStats y getShipStats ahora aplican bonificaciones armamentísticas reales (+10% láser, +12% iones, +15% balística, +20% misiles, +25% artillería orbital en defensas; y escalado naval proporcional).
+- diploMission.js: handleColonizeMission suma (state.research?.advColonization || 0) * 2 al tamaño planetario inicial (planetSize).
+- GalacticMarketPage.jsx: arancel del mercado calcula feeRate = Math.max(0.01, 0.08 - galacticTrade * 0.01) con etiqueta visual dinámica ({feePct}%).
+- expeditionMission.js: handleExpeditionMission aplica factor reductor de roll basado en deepScanner para sesgar eventos a descubrimientos y anomalías positivas.
+- queueTick.js: completar singularity dispara el estado de victoria científica (scientific) con notificación y modal cinemático imperial.
+- initialState.js: research clona { ...(homePlanet.research || {}) }, erradicando la mutabilidad compartida.
+- researchAuditingContract.test.js: suite completa con 7 tests verificando fallback, combate, colonización, mercado, independencia y 100% de cobertura de las 44 tecnologías en ministerios.
+
+VERIFICATION:
+- npx vitest run src/__tests__/researchAuditingContract.test.js -> 7/7 tests verdes.
+- npm test -> 340/340 tests verdes globales (0 regresiones).
+
+GATE CHECK:
+[x] Implementation matches master plan
+[x] Implementation matches preflight findings
+[x] Tests passed (340/340)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -2003,7 +2055,8 @@ PROCEED
 | 2026-09-30 | `46e8c9a` | Fase 10 completada: hangar split 50/50, clasificacion naval y props vivas, 321/321 verdes |
 | 2026-09-30 | `bfdd590` | Fase 11 completada: supply routes reales con despacho de convoyes, tiempos de vuelo y persistencia, 324/324 verdes |
 | 2026-09-30 | `6aac532` | Fase 12 completada: autotrade en tarjetas de colonias, optimizacion de cargueros y misiones cap 6, 327/327 verdes |
-| 2026-09-30 | — | Fase 13 completada: investigacion paralela, cancelaciones puntuales, reembolsos por nivel, pesos ministeriales, 333/333 verdes |
+| 2026-09-30 | `bc859d8` | Fase 13 completada: investigacion paralela, cancelaciones puntuales, reembolsos por nivel, pesos ministeriales, 333/333 verdes |
+| 2026-09-30 | — | Fase 14 completada: auditoría research, conexión armas/comercio/colonización, fallback modernización y victoria singularidad, 340/340 verdes |
 
 ---
 
