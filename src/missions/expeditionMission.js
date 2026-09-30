@@ -172,8 +172,15 @@ export const handleExpeditionMission = (mission, state) => {
     }
     if (newState.researchQueue && newState.researchQueue.length > 0) {
       newState.researchQueue = newState.researchQueue.map(item => {
-        temporalAnomalyHappened = true;
-        return { ...item, endTime: item.endTime - 120000 };
+        if (item.planetId === mission.from.id) {
+          temporalAnomalyHappened = true;
+          return {
+            ...item,
+            startTime: (item.startTime || Date.now()) - 120000,
+            endTime: item.endTime - 120000
+          };
+        }
+        return item;
       });
     }
     if (temporalAnomalyHappened) {

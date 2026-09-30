@@ -181,23 +181,16 @@ export const fleetReducer = (state, action) => {
       const targetItem = state.researchQueue.find(q => q.id === queueId);
       if (!targetItem) return state;
 
-      const sameResearchItems = state.researchQueue.filter(
-        q => q.researchId === targetItem.researchId
-      );
-      const itemsToCancel = sameResearchItems.filter(q => q.level >= targetItem.level);
-      const idsToCancel = new Set(itemsToCancel.map(q => q.id));
-
       const r = RESEARCH[targetItem.researchId];
       const targetPlanetId = targetItem.planetId || state.currentPlanetId;
       const rPl = state.planets.find(p => p.id === targetPlanetId);
 
-      let totalRefund = { metal: 0, crystal: 0, deuterium: 0 };
-      for (const it of itemsToCancel) {
-        const cost = researchCost(it.researchId, it.level - 1, state.research?.aiStrategy || 0, rPl?.buildings?.constructionCenter || 0);
-        totalRefund.metal += Math.floor(cost.metal * 0.5);
-        totalRefund.crystal += Math.floor(cost.crystal * 0.5);
-        totalRefund.deuterium += Math.floor((cost.deuterium || 0) * 0.5);
-      }
+      const cost = researchCost(targetItem.researchId, targetItem.level - 1, state.research?.aiStrategy || 0, rPl?.buildings?.constructionCenter || 0);
+      const totalRefund = {
+        metal: Math.floor(cost.metal * 0.5),
+        crystal: Math.floor(cost.crystal * 0.5),
+        deuterium: Math.floor((cost.deuterium || 0) * 0.5)
+      };
 
       let newState = updatePlanet(state, targetPlanetId, p => ({
         ...p,
@@ -208,10 +201,8 @@ export const fleetReducer = (state, action) => {
         }
       }));
 
-      newState.researchQueue = state.researchQueue.filter(q => !idsToCancel.has(q.id));
-      const msg = itemsToCancel.length > 1
-        ? `🚫 Canceladas ${itemsToCancel.length} investigaciones de ${r?.name || 'tecnología'}. Reembolso 50%`
-        : `🚫 Investigación de ${r?.name || 'tecnología'} (Nv. ${targetItem.level}) cancelada. Reembolso 50%`;
+      newState.researchQueue = state.researchQueue.filter(q => q.id !== queueId);
+      const msg = `🚫 Investigación de ${r?.name || 'tecnología'} (Nv. ${targetItem.level}) cancelada. Reembolso 50%`;
 
       newState.notifications = [
         ...(newState.notifications || []),

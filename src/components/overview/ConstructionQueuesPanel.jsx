@@ -2,7 +2,12 @@ import React from "react";
 import { calcRemainingSeconds, calcTotalSeconds } from "../../core.jsx";
 
 export const ConstructionQueuesPanel = ({ state, currentPlanet, BUILDINGS, RESEARCH, fmtTime, ProgressBar, dispatch, S, onNavigate }) => {
-  const planetBuildQueue = (state.buildQueue || []).filter(item => item.planetId === currentPlanet.id);
+  const planetBuildQueue = [...(state.buildQueue || [])]
+    .filter(item => item.planetId === currentPlanet.id)
+    .sort((a, b) => (a.endTime || 0) - (b.endTime || 0));
+
+  const sortedResearchQueue = [...(state.researchQueue || [])]
+    .sort((a, b) => (a.endTime || 0) - (b.endTime || 0));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
@@ -87,12 +92,12 @@ export const ConstructionQueuesPanel = ({ state, currentPlanet, BUILDINGS, RESEA
           )}
         </div>
 
-        {state.researchQueue && state.researchQueue.length > 0 ? (
+        {sortedResearchQueue.length > 0 ? (
           <div className="flex flex-col h-full justify-between">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-1">
               {/* Left Column (1-4) */}
               <div className="space-y-2">
-                {state.researchQueue.slice(0, 4).map((item, idx) => {
+                {sortedResearchQueue.slice(0, 4).map((item, idx) => {
                   const info = RESEARCH[item.researchId];
                   const remaining = calcRemainingSeconds(item.endTime);
                   const total = calcTotalSeconds(item.startTime, item.endTime);
@@ -142,7 +147,7 @@ export const ConstructionQueuesPanel = ({ state, currentPlanet, BUILDINGS, RESEA
 
               {/* Right Column (5-8) */}
               <div className="space-y-2">
-                {state.researchQueue.slice(4, 8).map((item, idx) => {
+                {sortedResearchQueue.slice(4, 8).map((item, idx) => {
                   const info = RESEARCH[item.researchId];
                   const remaining = calcRemainingSeconds(item.endTime);
                   const total = calcTotalSeconds(item.startTime, item.endTime);

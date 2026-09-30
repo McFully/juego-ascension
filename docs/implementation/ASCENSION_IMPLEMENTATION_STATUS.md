@@ -27,7 +27,7 @@ Documentos asociados:
 | **10** | Fleet Hangar 50/50 | ✅ **COMPLETE** | — |
 | **11** | Supply Routes reales | ✅ **COMPLETE** | — |
 | **12** | Autotrade y Capítulo 6 | ✅ **COMPLETE** | — |
-| **13** | Sistema de investigación | ⬜ NOT_STARTED | — |
+| **13** | Sistema de investigación | ✅ **COMPLETE** | — |
 | **14** | Auditoría research + ministries | ⬜ NOT_STARTED | — |
 | **15** | Save vs Commander | ⬜ NOT_STARTED | dep. 02 |
 | **16** | Ver detalles + sistema unificado | ⬜ NOT_STARTED | dep. 01, 05 |
@@ -37,7 +37,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 13 de 22 fases (59,1 %).**
+**Avance: 14 de 22 fases (63,6 %).**
 
 ---
 
@@ -1902,6 +1902,89 @@ PROCEED
 
 ---
 
+```text
+PHASE:
+13 — SISTEMA DE INVESTIGACIÓN
+
+STATUS:
+COMPLETE
+
+OBJECTIVE:
+Que investigar no se bloquee por duración secuencial artificial, garantizar cancelaciones puntuales sin cascada destructiva, reembolsos correctos calculados al nivel del ítem en cola, ordenación de paneles por tiempo restante, expediciones deterministas con ajuste de startTime y activación real de pesos ministeriales y urgencia de prerrequisitos.
+
+SOURCE OF TRUTH:
+docs/implementation/01_MASTER_PLAN.md (Fase 13).
+src/reducers/fleetReducer.js (CANCEL_RESEARCH_QUEUE puntual).
+src/reducers/tick/queues/queueTick.js (reembolsos nivel de ítem y validación de laboratorio).
+src/components/overview/ConstructionQueuesPanel.jsx (orden por tiempo restante).
+src/missions/expeditionMission.js (anomalía temporal determinista y acotada al planeta expedicionario).
+src/reducers/tick/automation/autoResearchTick.js (pesos ministeriales 'science' y urgencia).
+
+DEPENDENCIES:
+Fase 01 (Router de acciones).
+Fase 05 (Fuente única de duraciones).
+
+FILES INSPECTED:
+  src/reducers/researchReducer.js
+  src/reducers/fleetReducer.js
+  src/reducers/tick/queues/queueTick.js
+  src/components/overview/ConstructionQueuesPanel.jsx
+  src/missions/expeditionMission.js
+  src/reducers/tick/automation/autoResearchTick.js
+  src/reducers/tick/ai/researchScoring.js
+  src/utils/formulas/costFormulas.js
+
+FILES MODIFIED:
+  src/reducers/fleetReducer.js
+  src/reducers/tick/queues/queueTick.js
+  src/components/overview/ConstructionQueuesPanel.jsx
+  src/missions/expeditionMission.js
+  src/reducers/tick/automation/autoResearchTick.js
+  src/__tests__/researchSystemContract.test.js (nuevo)
+  docs/implementation/01_MASTER_PLAN.md
+  docs/implementation/ASCENSION_IMPLEMENTATION_STATUS.md
+
+DATABASE CHANGES:
+Ninguna.
+
+MIGRATIONS:
+Ninguna.
+
+IMPLEMENTATION:
+1. CANCEL_RESEARCH_QUEUE puntual en fleetReducer: elimina exclusivamente el ítem correspondiente a queueId sin matar niveles superiores o paralelos, calculando reembolso al 50%.
+2. queueTick con reembolso por nivel: cuando una orden se cancela por pérdida de requisitos o laboratorio, el reembolso se calcula usando el coste del nivel exacto del ítem (Math.max(0, item.level - 1)) y no del nivel actual del árbol de investigación.
+3. Ordenamiento visual de colas en ConstructionQueuesPanel: sortedResearchQueue y planetBuildQueue ordenadas por endTime ascendente (menor tiempo restante).
+4. Determinismo en expediciones: la anomalía temporal sólo acelera la investigación del planeta expedicionario y actualiza tanto startTime como endTime en 120.000 ms.
+5. autoResearchTick ministerial: pasa ministryId: 'science' y prereqUrgency: buildPrereqUrgency(...) a scoreResearch, activando MINISTRY_CATEGORY_WEIGHTS y evitando tablas muertas.
+6. Suite de contrato TDD creada y pasando al 100% (6/6 tests de contrato, 333/333 tests globales).
+
+DELIVERABLES:
+  - Cancelación puntual y sin cascada en fleetReducer.
+  - Reembolsos por nivel en queueTick.
+  - Ordenación por urgencia/tiempo en panel de colas.
+  - Expediciones deterministas por planeta.
+  - autoResearchTick conectado con pesos ministeriales y urgencia.
+  - Suite de contrato TDD pasando 100%.
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (333/333)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -1919,7 +2002,8 @@ PROCEED
 | 2026-09-30 | `c146aa0` | Fase 09 completada: bastion directo, telemetria de defensa efectiva, validacion balistica en silos, 319/319 verdes |
 | 2026-09-30 | `46e8c9a` | Fase 10 completada: hangar split 50/50, clasificacion naval y props vivas, 321/321 verdes |
 | 2026-09-30 | `bfdd590` | Fase 11 completada: supply routes reales con despacho de convoyes, tiempos de vuelo y persistencia, 324/324 verdes |
-| 2026-09-30 | — | Fase 12 completada: autotrade en tarjetas de colonias, optimizacion de cargueros y misiones cap 6, 327/327 verdes |
+| 2026-09-30 | `6aac532` | Fase 12 completada: autotrade en tarjetas de colonias, optimizacion de cargueros y misiones cap 6, 327/327 verdes |
+| 2026-09-30 | — | Fase 13 completada: investigacion paralela, cancelaciones puntuales, reembolsos por nivel, pesos ministeriales, 333/333 verdes |
 
 ---
 

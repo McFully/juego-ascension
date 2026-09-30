@@ -3,7 +3,7 @@ import {
 } from '../../../core.jsx';
 import { calcPlanetResearchTime } from '../../../utils/formulas/researchTiming.js';
 import { stampTimeMult } from '../queues/queueTiming.js';
-import { rankResearch, buildResearchScoreConfig } from '../ai/researchScoring.js';
+import { rankResearch, buildResearchScoreConfig, buildPrereqUrgency } from '../ai/researchScoring.js';
 
 export const processAutoResearchTick = (state) => {
   let newState = { ...state };
@@ -34,9 +34,12 @@ export const processAutoResearchTick = (state) => {
       return true;
     });
 
-    // Usar scoring real (incluye misiones, costes, prerrequisitos, unlocks, etc.)
+    // Usar scoring real (incluye misiones, costes, prerrequisitos, unlocks, pesos ministeriales, etc.)
+    const prereqUrgency = buildPrereqUrgency(newState.researchQueue || []);
     const scoreConfig = buildResearchScoreConfig(newState, cp, {
+      ministryId: 'science',
       prioritizedTechs,
+      prereqUrgency,
       exclude: cp.automatedExclusions,
     });
     const ranked = rankResearch(scoreConfig, allCandidates);

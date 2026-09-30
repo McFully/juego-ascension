@@ -9,9 +9,9 @@ import {
 } from '../../../utils/formulas/retrofitFormulas.js';
 import { generateRegistryCode } from '../../../utils/shipRegistryBridge.js';
 
-export const processAllQueuesTick = (state) => {
+export const processAllQueuesTick = (state, currentTime = Date.now()) => {
   let newState = { ...state };
-  const now = Date.now();
+  const now = currentTime;
 
   // 1. Retrofit queue (unit-by-unit progressive delivery)
   const newRetrofitQueue = [];
@@ -183,12 +183,14 @@ export const processAllQueuesTick = (state) => {
       const rDef = RESEARCH[item.researchId];
       const ownerPlanet = newState.planets?.find(pl => pl.id === item.planetId)
         || newState.planets?.find(pl => pl.id === newState.currentPlanetId);
+      const hasLab = (ownerPlanet?.buildings?.researchLab || 0) >= 1;
       const reqCtx = { ...(ownerPlanet?.buildings || {}), ...(newState.research || {}) };
-      const reqMet = !rDef || !rDef.req || meetsResearchReq(rDef.req, reqCtx);
+      const reqMet = hasLab && (!rDef || !rDef.req || meetsResearchReq(rDef.req, reqCtx));
       if (!reqMet) {
         const p = newState.planets?.find(pl => pl.id === item.planetId);
         if (p) {
-          const refundCost = researchCost(item.researchId, (newState.research?.[item.researchId] || 0), newState.research?.aiStrategy || 0, p.buildings?.constructionCenter || 0);
+          const itemLvlCost = Math.max(0, (item.level || 1) - 1);
+          const refundCost = researchCost(item.researchId, itemLvlCost, newState.research?.aiStrategy || 0, p.buildings?.constructionCenter || 0);
           newState = updatePlanet(newState, item.planetId, pl => ({
             ...pl,
             resources: clampResources({
