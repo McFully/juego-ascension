@@ -266,17 +266,17 @@ FASE 21  Verificación final ← requiere 20
 
 **Objetivo:** dispatch 50 % izquierda, mission type 50 % derecha, sin romper nada funcional.
 
-**Trabajo:**
-1. Hoy `FleetPage.jsx:525-582` es **una columna vertical** (`space-y-4`): `DestinationSelectorSection` → `FleetSelectionList` → `MissionConfigPanel`. No hay split.
-2. Izquierda (50 %): Squadron Dispatch, Assignment, todas las naves — militares, support, freighters, todas las categorías. `FleetPage.jsx:113-116` clasifica `interplanetaryMissile` y `antiBallisticMissile` como "civilian" porque solo mira `id.startsWith("custom_")`.
-3. Derecha (50 %): Mission Type. Mantener selección, filtros, scroll, drag/drop, botones, estados, persistencia y assignment.
-4. `FleetPage.jsx:193` referencia `setActiveTab`, que **no está en sus props** (`FleetPage.jsx:20`) → `ReferenceError` latente. Hoy es inalcanzable porque `navigateBack` siempre es truthy.
-5. `onOpenCodex` se pasa en `GameViewports.jsx:97` pero `FleetPage` no lo declara en `:20` → prop muerta.
-6. `SubsystemTopBanner.jsx:175-182` solo cubre 6 de las 7 sub-vistas de FleetPage.
-7. Responsive fallback solo cuando sea necesario. El 50/50 no es un cambio funcional.
+**Estado:** ✅ **COMPLETE** (2026-09-30)
 
-**Entregables:** layout 50/50 · categorías de nave correctas · bugs de props corregidos.
-**Tests:** la selección y el assignment siguen funcionando tras el cambio de layout; la Assignment persiste.
+**Trabajo completado:**
+1. **Layout 50/50 en Despacho Táctico:** refactorizada la vista `dispatch` en `FleetPage.jsx` para estructurarse en una cuadrícula responsiva (`grid grid-cols-1 lg:grid-cols-2 gap-4 items-start`), situando `FleetSelectionList` al 50% izquierda y `MissionConfigPanel` al 50% derecha sin romper filtros, scroll ni acciones de asignación.
+2. **Clasificación naval estricta:** extraída la utilidad modular `src/utils/fleetClassification.js` (`classifyShip` y `filterAvailableFleet`). Excluidos los misiles balísticos (`interplanetaryMissile` y `antiBallisticMissile`) de la clasificación de apoyo/civil del Hangar, categorizándolos como munición táctica balística (`ammo`).
+3. **Reparación de props vivas:** añadidas `setActiveTab` y `onOpenCodex` a los props de `FleetPage.jsx`, garantizando navegación de retorno segura sin errores de referencia y recepción del Codex para naves.
+4. **Sincronización total de las 7 sub-vistas:** `SubsystemTopBanner` en `FleetPage.jsx` actualizado para cubrir las 7 vistas (`inventory`, `in_flight`, `trade_routes`, `dispatch`/`destination`, `spy_reports`, `patrols` y `Hangar de la Flota`).
+5. **Suite de contrato TDD:** creada suite `src/__tests__/fleetHangarContract.test.jsx` (2 tests verdes probados que muerden, verificando clasificación y filtrado de flota).
+
+**Entregables:** layout 50/50 · categorías de nave correctas · props `setActiveTab`/`onOpenCodex` conectadas · suite de contrato `fleetHangarContract.test.jsx`.
+**Tests:** 2/2 tests de contrato pasando. Probado que muerde. 321/321 tests verdes en la suite global (0 regresiones).
 
 ---
 

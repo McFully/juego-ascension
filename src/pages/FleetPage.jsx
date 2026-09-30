@@ -16,8 +16,9 @@ import { SafeImg } from "../assets.jsx";
 import { useCombatPredictions } from "../hooks/useCombatPredictions.js";
 import { ImperialRegistryModal } from "../components/fleet/ImperialRegistryModal.jsx";
 import { InFlightMissionsSection } from "../components/fleet/InFlightMissionsSection.jsx";
+import { filterAvailableFleet } from "../utils/fleetClassification.js";
 
-const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget, setSelectedTarget, SHIPS, DEFENSES, BUILDINGS, SHIP_CHASSIS, S, ProgressBar, fmt, fmtTime, getEffectiveTech, simulateCombat, getShipStats, calcCustomShipStats }) => {
+const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget, setSelectedTarget, SHIPS, DEFENSES, BUILDINGS, SHIP_CHASSIS, S, ProgressBar, fmt, fmtTime, getEffectiveTech, simulateCombat, getShipStats, calcCustomShipStats, setActiveTab, onOpenCodex }) => {
   const { navigateTo, navigateBack } = useNavigation();
   // Estado de vista del Hangar:
   // 'menu' (pantalla principal con tarjetas de botón) | 'inventory' | 'in_flight' | 'trade_routes' | 'dispatch' | 'spy_reports'
@@ -107,14 +108,7 @@ const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget,
     setSimResult(result);
   };
 
-  const availableShips = Object.entries(currentPlanet.fleet || {}).filter(([id, q]) => {
-    if (q <= 0) return false;
-    if (filter === "all") return true;
-    const isCombat = ["lightFighter", "heavyFighter", "cruiser", "battleship", "bomber", "destroyer", "deathstar"].includes(id) || id.startsWith("custom_");
-    if (filter === "combat") return isCombat;
-    if (filter === "civilian") return !isCombat;
-    return true;
-  });
+  const availableShips = filterAvailableFleet(currentPlanet.fleet || {}, filter, SHIPS);
 
   const shipDisplayName = (id) => {
     if (id.startsWith("custom_")) {
@@ -176,8 +170,9 @@ const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget,
           activeCardView === 'inventory' ? 'Inventario de la Flota' :
           activeCardView === 'in_flight' ? 'Flotas en Vuelo' :
           activeCardView === 'trade_routes' ? 'Rutas Comerciales' :
-          activeCardView === 'destination' ? 'Despacho de Misión' :
+          activeCardView === 'dispatch' || activeCardView === 'destination' ? 'Despacho de Misión' :
           activeCardView === 'spy_reports' ? 'Informes de Espionaje' :
+          activeCardView === 'patrols' ? 'Patrullas y Seguridad Orbital' :
           'Hangar de la Flota'
         }
         breadcrumbIcon="🛸"
@@ -536,47 +531,53 @@ const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget,
           />
 
           {target && (
-            <>
-              <FleetSelectionList
-                state={state}
-                dispatch={dispatch}
-                currentPlanet={currentPlanet}
-                selectedShips={selectedShips}
-                setSelectedShips={setSelectedShips}
-                filter={filter}
-                setFilter={setFilter}
-                availableShips={availableShips}
-                shipDisplayIcon={shipDisplayIcon}
-                shipDisplayName={shipDisplayName}
-                shipStats={shipStats}
-                toggleShip={toggleShip}
-                fmt={fmt}
-                S={S}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              {/* Columna Izquierda (50%): Despacho y Asignación de Escuadrones */}
+              <div className="w-full">
+                <FleetSelectionList
+                  state={state}
+                  dispatch={dispatch}
+                  currentPlanet={currentPlanet}
+                  selectedShips={selectedShips}
+                  setSelectedShips={setSelectedShips}
+                  filter={filter}
+                  setFilter={setFilter}
+                  availableShips={availableShips}
+                  shipDisplayIcon={shipDisplayIcon}
+                  shipDisplayName={shipDisplayName}
+                  shipStats={shipStats}
+                  toggleShip={toggleShip}
+                  fmt={fmt}
+                  S={S}
+                />
+              </div>
 
-              <MissionConfigPanel
-                target={target}
-                currentPlanet={currentPlanet}
-                selectedShips={selectedShips}
-                setSelectedShips={setSelectedShips}
-                missionType={missionType}
-                setMissionType={setMissionType}
-                missionSpeed={missionSpeed}
-                setMissionSpeed={setMissionSpeed}
-                transportRes={transportRes}
-                setTransportRes={setTransportRes}
-                autoRetreat={autoRetreat}
-                setAutoRetreat={setAutoRetreat}
-                formation={formation}
-                setFormation={setFormation}
-                handleSimulate={handleSimulate}
-                sendFleet={sendFleet}
-                shipStats={shipStats}
-                state={state}
-                fmt={fmt}
-                S={S}
-              />
-            </>
+              {/* Columna Derecha (50%): Tipo de Misión y Parámetros Tácticos */}
+              <div className="w-full">
+                <MissionConfigPanel
+                  target={target}
+                  currentPlanet={currentPlanet}
+                  selectedShips={selectedShips}
+                  setSelectedShips={setSelectedShips}
+                  missionType={missionType}
+                  setMissionType={setMissionType}
+                  missionSpeed={missionSpeed}
+                  setMissionSpeed={setMissionSpeed}
+                  transportRes={transportRes}
+                  setTransportRes={setTransportRes}
+                  autoRetreat={autoRetreat}
+                  setAutoRetreat={setAutoRetreat}
+                  formation={formation}
+                  setFormation={setFormation}
+                  handleSimulate={handleSimulate}
+                  sendFleet={sendFleet}
+                  shipStats={shipStats}
+                  state={state}
+                  fmt={fmt}
+                  S={S}
+                />
+              </div>
+            </div>
           )}
         </div>
       )}

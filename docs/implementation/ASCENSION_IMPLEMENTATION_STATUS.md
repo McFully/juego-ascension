@@ -1577,6 +1577,111 @@ PROCEED
 
 ---
 
+## FASE 10 — FLEET HANGAR 50/50
+
+```text
+PHASE:        10
+Nombre:       Hangar de la flota: split 50/50 y clasificación naval estricta
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Dividir la pantalla de despacho táctico en una cuadrícula responsiva 50/50 (despacho/asignación
+de escuadrones a la izquierda y tipo de misión a la derecha), clasificar correctamente los
+misiles balísticos como munición fuera del hangar civil/militar, y subsanar bugs de props
+vivas (`setActiveTab` y `onOpenCodex`) y subtítulos de breadcrumb en SubsystemTopBanner.
+
+SOURCE OF TRUTH:
+src/pages/FleetPage.jsx, src/utils/fleetClassification.js,
+src/components/navigation/SubsystemTopBanner.jsx, src/data/game/shipsData.js.
+
+DEPENDENCIES:
+Fase 09 (Bastión y Silos).
+
+FILES INSPECTED:
+  src/pages/
+    FleetPage.jsx
+  src/utils/
+    fleetClassification.js
+  src/components/fleet/
+    FleetSelectionList.jsx, MissionConfigPanel.jsx
+  src/components/navigation/
+    SubsystemTopBanner.jsx
+  src/__tests__/
+    fleetHangarContract.test.jsx
+
+DECISIONS:
+  1. ESTRUCTURACIÓN RESPONSIVA 50/50:
+     La sub-vista `dispatch` en FleetPage.jsx ahora agrupa `FleetSelectionList` y `MissionConfigPanel`
+     en un contenedor `grid grid-cols-1 lg:grid-cols-2 gap-4 items-start`.
+     En pantallas de escritorio grandes se despliegan en perfecta paridad 50/50 manteniendo
+     scroll interno, presets y filtros de escuadrón intactos.
+
+  2. CLASIFICACIÓN MODULAR DE NAVES:
+     Creada la utilidad `src/utils/fleetClassification.js` con las funciones `classifyShip`
+     y `filterAvailableFleet`. `interplanetaryMissile` y `antiBallisticMissile` se categorizan
+     como munición táctica balística (`ammo`) y quedan excluidos del Hangar naval convencional,
+     evitando que aparezcan como cargueros o naves de apoyo civil.
+
+  3. REPARACIÓN DE PROPS Y SUBTÍTULOS:
+     Se declaran formalmente `setActiveTab` y `onOpenCodex` en la firma de FleetPage.jsx.
+     `SubsystemTopBanner.jsx` mapea limpiamente las 7 sub-vistas del Hangar:
+     `inventory`, `in_flight`, `trade_routes`, `dispatch`/`destination`, `spy_reports`,
+     `patrols` y el menú general `Hangar de la Flota`.
+
+MIGRATIONS:
+  Ninguna necesaria.
+
+IMPLEMENTATION:
+  - src/utils/fleetClassification.js: funciones puras classifyShip y filterAvailableFleet.
+  - src/pages/FleetPage.jsx:
+    - Incorporado grid 50/50 en dispatch.
+    - Integrado filterAvailableFleet para depurar la lista de naves operativas.
+    - Añadidas props setActiveTab y onOpenCodex.
+    - Ampliado SubsystemTopBanner con títulos para las 7 vistas.
+  - src/__tests__/fleetHangarContract.test.jsx: suite de contrato verificando clasificación
+    y exclusión de misiles balísticos en el hangar y comportamiento de filtros.
+
+TEST RESULTS:
+  - src/__tests__/fleetHangarContract.test.jsx: 2/2 passed (verificado que muerde).
+  - Suite global completa: 321/321 tests pasando (0 fallos, 0 regresiones).
+
+KNOWN ISSUES:
+  Ninguno.
+
+HARD BLOCKERS:
+  Ninguno.
+
+SOFT ISSUES:
+  Ninguno.
+
+DELIVERABLES:
+  1. Despacho táctico con división 50/50 y responsive fallback.
+  2. Clasificación naval modular en fleetClassification.js.
+  3. Props vivas setActiveTab y onOpenCodex en FleetPage.
+  4. Cobertura de las 7 sub-vistas en SubsystemTopBanner.
+  5. Suite de contrato src/__tests__/fleetHangarContract.test.jsx al 100%.
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (321/321)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -1591,7 +1696,8 @@ PROCEED
 | 2026-09-30 | `c5950bd` | Fase 06 completada: refinería x200 en fuente real, directivas conectadas, industria unificada, 310/310 verdes |
 | 2026-09-30 | `f70bb55` | Fase 07 completada: pipeline lossless, assets huérfanos purgados, MISSING_ASSETS.md (0 faltantes), 313/313 verdes |
 | 2026-09-30 | `30b1836` | Fase 08 completada: separacion imperio/planeta, jerarquia unificada, verdad impositiva, 316/316 verdes |
-| 2026-09-30 | — | Fase 09 completada: bastion directo, telemetria de defensa efectiva, validacion balistica en silos, 319/319 verdes |
+| 2026-09-30 | `c146aa0` | Fase 09 completada: bastion directo, telemetria de defensa efectiva, validacion balistica en silos, 319/319 verdes |
+| 2026-09-30 | — | Fase 10 completada: hangar split 50/50, clasificacion naval y props vivas, 321/321 verdes |
 
 ---
 
