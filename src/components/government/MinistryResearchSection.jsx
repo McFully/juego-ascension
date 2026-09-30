@@ -7,6 +7,7 @@ import {
   TECH_FOCUS_KEYS,
   TECH_FOCUS_LABELS,
 } from '../../reducers/tick/ai/researchScoring.js';
+import { calcPlanetResearchTime } from '../../core.jsx';
 
 /**
  * MinistryResearchSection — Panel de Tecnologías asignadas a un Ministerio de Nicho.
@@ -174,10 +175,10 @@ export const MinistryResearchSection = ({
             state.research?.aiStrategy || 0,
             currentPlanet.buildings?.constructionCenter || 0
           ) : {};
-          const time = calcResearchTime ? calcResearchTime(
-            cost,
-            currentPlanet.buildings?.researchLab || 0,
-            GAME_SPEED
+          const time = calcPlanetResearchTime ? calcPlanetResearchTime(
+            state,
+            currentPlanet,
+            cost
           ) : 0;
           const affordable = canAfford ? canAfford(currentPlanet.resources, cost) : false;
           const prodInfo = researchEffectInfo ? researchEffectInfo(id, targetLvl) : '';

@@ -1,4 +1,5 @@
-﻿import React from 'react';
+import React from 'react';
+import { calcRemainingSeconds, calcTotalSeconds } from '../../core.jsx';
 
 /**
  * ShipyardQueueSection — Panel de visualización y gestión de la cola activa de ensamblaje naval.
@@ -20,8 +21,8 @@ export const ShipyardQueueSection = ({ shipQueues, SHIPS, fmt, fmtTime, Progress
           const totalQty = item.quantity;
           const delivered = item.unitsDelivered || 0;
           const remainingQty = Math.max(1, totalQty - delivered);
-          const remainingTime = Math.max(0, (item.endTime - Date.now()) / 1000);
-          const totalTime = (item.endTime - item.startTime) / 1000;
+          const remainingTime = calcRemainingSeconds(item.endTime);
+          const totalTime = calcTotalSeconds(item.startTime, item.endTime);
           return (
             <div key={item.id} className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-xs font-mono shrink-0">

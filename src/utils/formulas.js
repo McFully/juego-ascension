@@ -42,6 +42,10 @@ export {
   calcDefenseTime
 } from './formulas/costFormulas.js';
 
+export { calcEffectiveBuildTime } from './formulas/buildTiming.js';
+export { calcPlanetResearchTime, researchTimeMultFor } from './formulas/researchTiming.js';
+export { calcRemainingSeconds, calcTotalSeconds } from './formulas/timingHelpers.js';
+
 export {
   calcDistance,
   calcFlightTime,

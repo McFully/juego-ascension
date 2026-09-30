@@ -1,4 +1,5 @@
 import React from 'react';
+import { calcRemainingSeconds, calcTotalSeconds } from '../../core.jsx';
 
 /**
  * FleetRetrofitQueueSection — Muestra las órdenes activas de modernización en curso en el hangar.
@@ -25,8 +26,8 @@ export const FleetRetrofitQueueSection = ({ retrofitQueues, SHIPS, fmt, fmtTime,
           const totalQty = item.quantity;
           const delivered = item.unitsDelivered || 0;
           const remainingQty = Math.max(1, totalQty - delivered);
-          const remainingTime = Math.max(0, (item.endTime - Date.now()) / 1000);
-          const totalTime = Math.max(1, (item.endTime - item.startTime) / 1000);
+          const remainingTime = calcRemainingSeconds(item.endTime);
+          const totalTime = calcTotalSeconds(item.startTime, item.endTime);
 
           return (
             <div

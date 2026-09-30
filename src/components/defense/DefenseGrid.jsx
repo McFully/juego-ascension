@@ -45,7 +45,8 @@ export const DefenseGrid = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full items-stretch pt-2 pb-4">
         {Object.entries(DEFENSES).map(([id, d]) => {
           const cost = defenseCost(id, 1, currentPlanet.buildings?.constructionCenter || 0);
-          const time = calcDefenseTime(id, 1, currentPlanet.buildings.shipyard, currentPlanet.buildings.naniteFactory || 0, GAME_SPEED, bonus);
+          const mins = currentPlanet.ministries || state.ministries || {};
+          const time = calcDefenseTime(id, 1, currentPlanet.buildings.shipyard, currentPlanet.buildings.naniteFactory || 0, GAME_SPEED, bonus, mins);
           const meets = meetsReq(d.req, { ...currentPlanet.buildings, ...state.research });
           const count = currentPlanet.defenses[id] || 0;
           const maxReached = (d.max && count >= d.max) || false;

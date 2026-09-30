@@ -25,7 +25,8 @@ export const ShipProductionCard = ({
   BUILDINGS
 }) => {
   const cost = shipCost(id, 1, currentPlanet.buildings?.constructionCenter || 0);
-  const time = calcShipTime(id, 1, currentPlanet.buildings?.shipyard || 0, currentPlanet.buildings?.naniteFactory || 0, GAME_SPEED, bonus);
+  const mins = currentPlanet.ministries || state.ministries || {};
+  const time = calcShipTime(id, 1, currentPlanet.buildings?.shipyard || 0, currentPlanet.buildings?.naniteFactory || 0, GAME_SPEED, bonus, mins);
   const meets = meetsReq(s.req, { ...currentPlanet.buildings, ...state.research });
   const count = currentPlanet?.fleet?.[id] || 0;
   const affordable1 = canAfford(currentPlanet.resources, cost);

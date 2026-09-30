@@ -4,6 +4,7 @@ import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { useNavigation } from '../components/navigation/NavigationContext.jsx';
 import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 import { SafeImg } from '../assets.jsx';
+import { calcPlanetResearchTime } from '../core.jsx';
 
 const ResearchPage = ({ state, dispatch, currentPlanet, production, fmt, RESEARCH, BUILDINGS, S, ItemCard, researchCost, calcResearchTime, meetsReq, researchEffectInfo, canAfford, GAME_SPEED, onOpenCodex }) => {
   const { navigateTo, navigateBack } = useNavigation();
@@ -243,7 +244,7 @@ const ResearchPage = ({ state, dispatch, currentPlanet, production, fmt, RESEARC
                 const nextLvl = targetLvl + 1;
 
                 const cost = researchCost(id, targetLvl, state.research?.aiStrategy || 0, currentPlanet.buildings?.constructionCenter || 0);
-                const time = calcResearchTime(cost, currentPlanet.buildings.researchLab, GAME_SPEED);
+                const time = calcPlanetResearchTime(state, currentPlanet, cost);
                 const prodInfo = researchEffectInfo(id, targetLvl);
                 const extraLines = [];
                 if (r.req && !meets) {

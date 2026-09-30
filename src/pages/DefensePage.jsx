@@ -40,6 +40,7 @@ const DefensePage = ({
   const currentMissiles = currentPlanet.missiles || {};
   const totalUsed = Object.values(currentMissiles).reduce((a, b) => a + b, 0);
   const haveIPMs = currentMissiles.interplanetaryMissile || 0;
+  const bonus = (shipTimeBonus ? shipTimeBonus(currentPlanet?.buildings) : 1) * (currentPlanet?.specialization === 'military' ? 1.20 : 1.0);
 
   if (!currentPlanet.buildings.shipyard && siloLevel < 1) {
     return (

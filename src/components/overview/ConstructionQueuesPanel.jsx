@@ -1,4 +1,5 @@
 import React from "react";
+import { calcRemainingSeconds, calcTotalSeconds } from "../../core.jsx";
 
 export const ConstructionQueuesPanel = ({ state, currentPlanet, BUILDINGS, RESEARCH, fmtTime, ProgressBar, dispatch, S, onNavigate }) => {
   const planetBuildQueue = (state.buildQueue || []).filter(item => item.planetId === currentPlanet.id);
@@ -25,8 +26,8 @@ export const ConstructionQueuesPanel = ({ state, currentPlanet, BUILDINGS, RESEA
               <div className="space-y-2">
                 {planetBuildQueue.slice(0, 4).map((item, idx) => {
                   const info = BUILDINGS[item.buildingId];
-                  const remaining = Math.max(0, (item.endTime - Date.now()) / 1000);
-                  const total = (item.endTime - item.startTime) / 1000;
+                  const remaining = calcRemainingSeconds(item.endTime);
+                  const total = calcTotalSeconds(item.startTime, item.endTime);
                   return (
                     <div key={item.id || idx} className="bg-slate-950/40 border border-slate-800/40 rounded-xl p-3">
                       <div className="flex justify-between items-center mb-1 text-sm">
@@ -45,8 +46,8 @@ export const ConstructionQueuesPanel = ({ state, currentPlanet, BUILDINGS, RESEA
               <div className="space-y-2">
                 {planetBuildQueue.slice(4, 8).map((item, idx) => {
                   const info = BUILDINGS[item.buildingId];
-                  const remaining = Math.max(0, (item.endTime - Date.now()) / 1000);
-                  const total = (item.endTime - item.startTime) / 1000;
+                  const remaining = calcRemainingSeconds(item.endTime);
+                  const total = calcTotalSeconds(item.startTime, item.endTime);
                   return (
                     <div key={item.id || idx + 4} className="bg-slate-950/40 border border-slate-800/40 rounded-xl p-3">
                       <div className="flex justify-between items-center mb-1 text-sm">
@@ -93,8 +94,8 @@ export const ConstructionQueuesPanel = ({ state, currentPlanet, BUILDINGS, RESEA
               <div className="space-y-2">
                 {state.researchQueue.slice(0, 4).map((item, idx) => {
                   const info = RESEARCH[item.researchId];
-                  const remaining = Math.max(0, (item.endTime - Date.now()) / 1000);
-                  const total = (item.endTime - item.startTime) / 1000;
+                  const remaining = calcRemainingSeconds(item.endTime);
+                  const total = calcTotalSeconds(item.startTime, item.endTime);
 
                   return (
                     <div
@@ -143,8 +144,8 @@ export const ConstructionQueuesPanel = ({ state, currentPlanet, BUILDINGS, RESEA
               <div className="space-y-2">
                 {state.researchQueue.slice(4, 8).map((item, idx) => {
                   const info = RESEARCH[item.researchId];
-                  const remaining = Math.max(0, (item.endTime - Date.now()) / 1000);
-                  const total = (item.endTime - item.startTime) / 1000;
+                  const remaining = calcRemainingSeconds(item.endTime);
+                  const total = calcTotalSeconds(item.startTime, item.endTime);
 
                   return (
                     <div

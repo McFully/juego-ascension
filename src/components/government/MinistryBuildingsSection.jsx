@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BuildingInteriorModal } from '../buildings/BuildingInteriorModal.jsx';
 import { MINISTRY_MAPPING } from '../../data/buildingOperationsData.js';
 import { ActionCardTile } from '../ui/ActionCardTile.jsx';
-import { calcRequiredPopulation } from '../../core.jsx';
+import { calcRequiredPopulation, calcEffectiveBuildTime } from '../../core.jsx';
 
 export const MinistryBuildingsSection = ({
   ministryId,
@@ -72,13 +72,7 @@ export const MinistryBuildingsSection = ({
           const nextLvl = targetLvl + 1;
 
           const cost = buildingCost ? buildingCost(id, targetLvl, currentPlanet.buildings?.constructionCenter || 0) : {};
-          const time = calcBuildTime ? calcBuildTime(
-            cost,
-            currentPlanet.buildings?.robotFactory || 0,
-            currentPlanet.buildings?.naniteFactory || 0,
-            GAME_SPEED,
-            currentPlanet.buildings?.constructionCenter || 0
-          ) : 0;
+          const time = calcEffectiveBuildTime({ cost, planet: currentPlanet, state, speed: GAME_SPEED });
 
           const meets = meetsReq ? meetsReq(b.req, { ...currentPlanet.buildings, ...state.research }) : true;
           const requiredPopulation = calcRequiredPopulation(id, nextLvl);

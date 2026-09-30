@@ -1,30 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { fmtTime } from '../../../core.jsx';
+import { fmtTime, calcRemainingSeconds, calcTotalSeconds } from '../../../core.jsx';
 
 /**
  * SingleQueueRow: Muestra una línea de construcción con su progreso y botón de cancelar.
  */
 const SingleQueueRow = ({ item, index, isFirst, totalCount, onCancelItem }) => {
-  const [remainingTime, setRemainingTime] = useState(() => {
-    if (!item?.endTime) return 0;
-    return Math.max(0, Math.round((item.endTime - Date.now()) / 1000));
-  });
+  const [remainingTime, setRemainingTime] = useState(() => calcRemainingSeconds(item?.endTime));
 
   useEffect(() => {
     if (!item?.endTime) {
       setRemainingTime(0);
       return;
     }
-    const updateTime = () => {
-      const rem = Math.max(0, Math.round((item.endTime - Date.now()) / 1000));
-      setRemainingTime(rem);
-    };
+    const updateTime = () => setRemainingTime(calcRemainingSeconds(item.endTime));
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, [item?.endTime]);
 
-  const totalDuration = Math.max(1, Math.round(((item.endTime || 0) - (item.startTime || 0)) / 1000));
+  const totalDuration = calcTotalSeconds(item?.startTime, item?.endTime);
   const progressPct = Math.min(100, Math.max(0, Math.round(((totalDuration - remainingTime) / totalDuration) * 100)));
 
   return (

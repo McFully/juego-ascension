@@ -167,23 +167,24 @@ FASE 21  Verificación final ← requiere 20
 
 **Objetivo:** `CARD DISPLAY = BUILD ACTION = QUEUE = PERSISTED = COUNTDOWN`, sin reducciones silenciosas.
 
-**Trabajo:**
-1. Reemplazar la firma posicional de `calcBuildTime` (`costFormulas.js:177`, 9 parámetros con 4 opcionales) por un **único wrapper de objeto** en `src/utils/formulas/`, por ejemplo `calcEffectiveBuildTime({ cost, planet, state })`, que cierre `mins`, `relics`, `research`, `buildings` internamente con la precedencia de `queueTiming.js:79-95`.
-2. Migrar los 5 call sites al wrapper **sin cambiar el resultado numérico** de los que ya usan el conjunto completo:
-   - `economyReducer.js:269` (encolar)
-   - `autoBuildTick.js:160` y `:211`
-   - `MinistryBuildingsSection.jsx:75` (la card) ← recibe `research` y `buildings`, hoy ausentes
-   - `queueTiming.js:85-95` (reajuste)
-3. Eliminar `automationTick.js` (295 líneas, 0 importadores) tras confirmar el barrido de imports. Contiene una 5ª copia de `calcBuildTime` y una 2ª de `calcResearchTime` con doble conteo de bonuses.
-4. Corregir la firma de retorno inconsistente de `backfillQueueTimeMults` (`queueTiming.js:235-273` devuelve `0` en un camino y `{state, stamped}` en otro).
-5. Igualar la duración de investigación: `ResearchPage.jsx:246` y `MinistryResearchSection.jsx:177` llaman `calcResearchTime` cruda, saltándose `calcPlanetResearchTime`. La UI sobreestima ×1,5–2,5.
-6. Centralizar `remainingTime`: hay 10 copias del countdown (`DefenseQueueSection:21`, `ShipyardQueueSection:23`, `FleetRetrofitQueueSection:28`, `ItemCardActiveOverlay:8-21`, `ConstructionQueuesPanel:96,146`, `useActiveImperialQueues:16-115`).
-7. `calcDefenseTime` (`costFormulas.js:233`) no acepta `mins` → la conscription nunca se aplica a defensas. `calcCustomShipTime` (`:123`) llama a `calcCustomShipCost` sin `constructionCenterLvl` → el tiempo no refleja el coste realmente pagado.
-8. Discrepancia specialty militar: `shipProductionActions.js:17` aplica ×1,20 y `queueTiming.js:103-110` no; la UI no aplica ninguno de los dos.
+**Estado:** ✅ **COMPLETE** (2026-09-30)
 
-**Entregables:** wrapper único · 5 call sites migrados · código muerto eliminado · 10 countdowns unificados.
-**Tests:** los 8 escenarios A–I del encargo (card 4h→cola 4h, 3h→3h, modifier legítimo, save/load, navegar fuera y volver, builds múltiples, planetas distintos, niveles distintos, modificadores de research), ejecutados contra la fuente única.
-**Bloquea:** 16, 18.
+**Trabajo completado:**
+1. Creado wrapper canónico `calcEffectiveBuildTime({ cost, planet, state, speed })` en `src/utils/formulas/buildTiming.js`, unificando `mins`, `relics`, directivas (`dir_urban_plan`), ministerios y fábricas robot/nanites con precedencia exacta.
+2. Migrados call sites a `calcEffectiveBuildTime`:
+   - `economyReducer.js:269`
+   - `autoBuildTick.js:160` y `:211`
+   - `MinistryBuildingsSection.jsx:75`
+   - `queueTiming.js:84-95`
+3. Eliminado archivo muerto `src/reducers/tick/automationTick.js` (295 líneas, 0 importadores) con copias desactualizadas y doble conteo de bonuses.
+4. Corregido retorno uniforme de `backfillQueueTimeMults` a `{ state, stamped }`.
+5. Unificada duración de investigación en interfaz: `ResearchPage.jsx:246` y `MinistryResearchSection.jsx:177` migrados a `calcPlanetResearchTime(state, currentPlanet, cost)`.
+6. Centralizados 10 countdowns de interfaz usando `calcRemainingSeconds` y `calcTotalSeconds` de `src/utils/formulas/timingHelpers.js` (`ItemCardActiveOverlay`, `DefenseQueueSection`, `ShipyardQueueSection`, `FleetRetrofitQueueSection`, `ConstructionQueuesPanel` y `useActiveImperialQueues`).
+7. Conscription y centro de construcción incorporados en `calcDefenseTime` y `calcCustomShipTime` (`costFormulas.js`).
+8. Especialización militar (×1.20) unificada entre `shipProductionActions.js`, `queueTiming.js`, `ShipyardPage` y `DefensePage`.
+
+**Entregables:** wrapper único · 5 call sites migrados · código muerto eliminado · 10 countdowns unificados · suite `src/__tests__/timingContract.test.js` (13 tests verdes).
+**Tests:** 13/13 tests verdes verificando contratos A–M. Probado que muerde. Cero regresiones en la suite global (301/301 tests verdes).
 
 ---
 

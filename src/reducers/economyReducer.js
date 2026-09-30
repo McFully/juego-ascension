@@ -5,7 +5,7 @@ import {
   fmt, uid, buildingCost, researchCost, shipCost, defenseCost, canAfford, deduct,
   calcRequiredPopulation,
   calcResourceValueForAI, meetsResearchReq, calcProduction, calcStorage, shipTimeBonus,
-  researchTimeBonus, calcCustomShipCost, calcCustomShipTime, calcBuildTime,
+  researchTimeBonus, calcCustomShipCost, calcCustomShipTime, calcBuildTime, calcEffectiveBuildTime,
   calcResearchTime, calcShipTime, calcDefenseTime, calcDistance, calcFlightTime,
   calcFuel, fleetSpeed, getPOIAtCoordinates, getVirginPlanet,
   updatePlanet, shouldKeepNotification
@@ -266,7 +266,7 @@ export const economyReducer = (state, action) => {
       if (planetBuildQueue.length >= 8) return state;
 
       const newRes = clampResources(deduct(planet.resources, cost));
-      const time = calcBuildTime(cost, planet.buildings.robotFactory || 0, planet.buildings.naniteFactory || 0, GAME_SPEED, planet.buildings.constructionCenter || 0, {}, state.research, planet.buildings);
+      const time = calcEffectiveBuildTime({ cost, planet, state, speed: GAME_SPEED });
       
       const startTime = Date.now();
       const endTime = startTime + time * 1000;

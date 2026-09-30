@@ -13,6 +13,7 @@ export const handleStartShip = (state, action) => {
   if (!canAfford(planet.resources, cost)) return state;
   if (state.shipQueue.length >= 5) return state;
 
+  const mins = planet.ministries || state.ministries || {};
   let bonus = shipTimeBonus(planet.buildings);
   if (planet.specialization === 'military') bonus *= 1.20;
 
@@ -20,7 +21,7 @@ export const handleStartShip = (state, action) => {
   if (existingIdx >= 0) {
     const existing = state.shipQueue[existingIdx];
     const newQty = existing.quantity + quantity;
-    const time = calcShipTime(shipId, newQty, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus);
+    const time = calcShipTime(shipId, newQty, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus, mins);
     const newEndTime = existing.startTime + time * 1000;
     let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: deduct(p.resources, cost) }));
     const newQueue = [...state.shipQueue];
@@ -30,7 +31,7 @@ export const handleStartShip = (state, action) => {
   }
 
   const newRes = deduct(planet.resources, cost);
-  const time = calcShipTime(shipId, quantity, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus);
+  const time = calcShipTime(shipId, quantity, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus, mins);
   const endTime = Date.now() + time * 1000;
 
   const techSnapshot = extractShipTechSnapshot(state.research || {});
@@ -55,6 +56,7 @@ export const handleStartDefense = (state, action) => {
   if (!canAfford(planet.resources, cost)) return state;
   if (state.defenseQueue.length >= 5) return state;
 
+  const mins = planet.ministries || state.ministries || {};
   let bonus = shipTimeBonus(planet.buildings);
   if (planet.specialization === 'military') bonus *= 1.20;
 
@@ -62,7 +64,7 @@ export const handleStartDefense = (state, action) => {
   if (existingIdx >= 0) {
     const existing = state.defenseQueue[existingIdx];
     const newQty = existing.quantity + quantity;
-    const time = calcDefenseTime(defenseId, newQty, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus);
+    const time = calcDefenseTime(defenseId, newQty, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus, mins);
     const newEndTime = existing.startTime + time * 1000;
     let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: deduct(p.resources, cost) }));
     const newQueue = [...state.defenseQueue];
@@ -72,7 +74,7 @@ export const handleStartDefense = (state, action) => {
   }
 
   const newRes = deduct(planet.resources, cost);
-  const time = calcDefenseTime(defenseId, quantity, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus);
+  const time = calcDefenseTime(defenseId, quantity, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus, mins);
   const endTime = Date.now() + time * 1000;
 
   const techSnapshot = extractDefenseTechSnapshot(state.research || {});

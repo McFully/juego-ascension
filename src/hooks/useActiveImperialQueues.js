@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { calcRemainingSeconds, calcTotalSeconds } from '../utils/formulas/timingHelpers.js';
 
 export const useActiveImperialQueues = (state, BUILDINGS, RESEARCH, SHIPS, DEFENSES) => {
   const buildQueue = state?.buildQueue || [];
@@ -13,8 +14,8 @@ export const useActiveImperialQueues = (state, BUILDINGS, RESEARCH, SHIPS, DEFEN
     const now = Date.now();
 
     buildQueue.forEach(q => {
-      const remainingSec = Math.max(0, Math.round(((q.endTime || now) - now) / 1000));
-      const totalSec = Math.max(1, Math.round(((q.endTime || now) - (q.startTime || now)) / 1000));
+      const remainingSec = calcRemainingSeconds(q, now);
+      const totalSec = calcTotalSeconds(q, now);
       const planetObj = state.planets?.find(p => p.id === q.planetId);
       items.push({
         queueId: q.id,
@@ -33,8 +34,8 @@ export const useActiveImperialQueues = (state, BUILDINGS, RESEARCH, SHIPS, DEFEN
     });
 
     researchQueue.forEach(q => {
-      const remainingSec = Math.max(0, Math.round(((q.endTime || now) - now) / 1000));
-      const totalSec = Math.max(1, Math.round(((q.endTime || now) - (q.startTime || now)) / 1000));
+      const remainingSec = calcRemainingSeconds(q, now);
+      const totalSec = calcTotalSeconds(q, now);
       const planetObj = state.planets?.find(p => p.id === q.planetId);
       items.push({
         queueId: q.id,
@@ -53,8 +54,8 @@ export const useActiveImperialQueues = (state, BUILDINGS, RESEARCH, SHIPS, DEFEN
     });
 
     shipQueue.forEach(q => {
-      const remainingSec = Math.max(0, Math.round(((q.endTime || now) - now) / 1000));
-      const totalSec = Math.max(1, Math.round(((q.endTime || now) - (q.startTime || now)) / 1000));
+      const remainingSec = calcRemainingSeconds(q, now);
+      const totalSec = calcTotalSeconds(q, now);
       const totalQty = q.quantity || 1;
       const delivered = q.unitsDelivered || 0;
       const pending = Math.max(0, totalQty - delivered);
@@ -83,8 +84,8 @@ export const useActiveImperialQueues = (state, BUILDINGS, RESEARCH, SHIPS, DEFEN
     });
 
     customShipQueue.forEach(q => {
-      const remainingSec = Math.max(0, Math.round(((q.endTime || now) - now) / 1000));
-      const totalSec = Math.max(1, Math.round(((q.endTime || now) - (q.startTime || now)) / 1000));
+      const remainingSec = calcRemainingSeconds(q, now);
+      const totalSec = calcTotalSeconds(q, now);
       const totalQty = q.quantity || 1;
       const delivered = q.unitsDelivered || 0;
       const pending = Math.max(0, totalQty - delivered);
@@ -111,8 +112,8 @@ export const useActiveImperialQueues = (state, BUILDINGS, RESEARCH, SHIPS, DEFEN
     });
 
     defenseQueue.forEach(q => {
-      const remainingSec = Math.max(0, Math.round(((q.endTime || now) - now) / 1000));
-      const totalSec = Math.max(1, Math.round(((q.endTime || now) - (q.startTime || now)) / 1000));
+      const remainingSec = calcRemainingSeconds(q, now);
+      const totalSec = calcTotalSeconds(q, now);
       const totalQty = q.quantity || 1;
       const delivered = q.unitsDelivered || 0;
       const pending = Math.max(0, totalQty - delivered);

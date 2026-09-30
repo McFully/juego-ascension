@@ -18,8 +18,8 @@ Documentos asociados:
 | **01** | Router de acciones | ✅ **COMPLETE** | — |
 | **02** | Persistencia y esquema | ✅ **COMPLETE** | — |
 | **03** | Datos de estado y rutas accesibles | ✅ **COMPLETE** | — |
-| **04** | Sistema de audio | ⬜ NOT_STARTED | — |
-| **05** | Fuente única de duraciones | ⬜ NOT_STARTED | — |
+| **04** | Sistema de audio | ✅ **COMPLETE** | — |
+| **05** | Fuente única de duraciones | ✅ **COMPLETE** | — |
 | **06** | Refinería ×200 | ⬜ NOT_STARTED | — |
 | **07** | Pipeline de imágenes y assets | ⬜ NOT_STARTED | — |
 | **08** | Imperial vs Planetary + navegación | ⬜ NOT_STARTED | requiere permiso visual |
@@ -37,7 +37,7 @@ Documentos asociados:
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 4 de 22 fases (18,2 %).**
+**Avance: 6 de 22 fases (27,3 %).**
 
 ---
 
@@ -993,6 +993,179 @@ PROCEED
 
 ---
 
+## FASE 05 — FUENTE ÚNICA DE DURACIONES
+
+```text
+PHASE:        05
+Nombre:       Fuente única de duraciones
+
+STATUS:       COMPLETE
+
+OBJECTIVE:
+Garantizar el principio fundamental CARD DISPLAY = BUILD ACTION = QUEUE = PERSISTED = COUNTDOWN,
+sin reducciones silenciosas de tiempo, eliminando firmas posicionales frágiles y código muerto,
+y unificando helpers de duración y cuenta regresiva en toda la aplicación.
+
+SOURCE OF TRUTH:
+- Wrapper canónico de tiempos de construcción: src/utils/formulas/buildTiming.js (calcEffectiveBuildTime)
+- Helpers canónicos de countdown y duración: src/utils/formulas/timingHelpers.js (calcRemainingSeconds, calcTotalSeconds)
+- Fórmulas de coste y tiempo: src/utils/formulas/costFormulas.js (calcBuildTime, calcDefenseTime, calcCustomShipTime)
+- Tiempo de investigación planetario: src/utils/formulas/researchTiming.js (calcPlanetResearchTime)
+- Reajuste dinámico de colas: src/reducers/tick/queues/queueTiming.js
+- Contratos de sincronización protegidos por: src/__tests__/timingContract.test.js
+
+DEPENDENCIES:
+Ninguna.
+
+FILES INSPECTED:
+  src/utils/formulas/costFormulas.js
+  src/reducers/economyReducer.js
+  src/reducers/tick/automation/autoBuildTick.js
+  src/reducers/tick/automationTick.js
+  src/reducers/tick/queues/queueTiming.js
+  src/reducers/fleet/shipProductionActions.js
+  src/components/government/MinistryBuildingsSection.jsx
+  src/components/government/MinistryResearchSection.jsx
+  src/pages/ResearchPage.jsx
+  src/pages/ShipyardPage.jsx
+  src/components/shipyard/ShipProductionCard.jsx
+  src/pages/DefensePage.jsx
+  src/components/defense/DefenseGrid.jsx
+  src/components/ui/ItemCard/ItemCardActiveOverlay.jsx
+  src/components/defense/DefenseQueueSection.jsx
+  src/components/shipyard/ShipyardQueueSection.jsx
+  src/components/fleet/FleetRetrofitQueueSection.jsx
+  src/components/overview/ConstructionQueuesPanel.jsx
+  src/hooks/useActiveImperialQueues.js
+
+FILES MODIFIED:
+  src/utils/formulas/buildTiming.js                   (nuevo: wrapper canónico calcEffectiveBuildTime)
+  src/utils/formulas/timingHelpers.js                 (nuevo: helpers calcRemainingSeconds y calcTotalSeconds)
+  src/utils/formulas.js                              (re-exportación centralizada)
+  src/core.jsx                                       (re-exportación canónica para UI)
+  src/utils/formulas/costFormulas.js                 (calcDefenseTime con mins/conscription; calcCustomShipTime con constructionCenterLvl)
+  src/reducers/economyReducer.js                     (migrado a calcEffectiveBuildTime)
+  src/reducers/tick/automation/autoBuildTick.js      (migrado a calcEffectiveBuildTime en obra y demolición)
+  src/reducers/tick/automationTick.js                (eliminado archivo muerto de 295 líneas sin importadores)
+  src/reducers/tick/queues/queueTiming.js            (calcEffectiveBuildTime, especialización militar en naves/defensas, backfill retorno uniforme)
+  src/reducers/fleet/shipProductionActions.js        (paso de mins a calcShipTime y calcDefenseTime)
+  src/components/government/MinistryBuildingsSection.jsx (migrado a calcEffectiveBuildTime con planet y state)
+  src/components/government/MinistryResearchSection.jsx  (migrado a calcPlanetResearchTime)
+  src/pages/ResearchPage.jsx                         (migrado a calcPlanetResearchTime)
+  src/pages/ShipyardPage.jsx                         (incorporado bonus militar y mins)
+  src/components/shipyard/ShipProductionCard.jsx     (incorporado bonus militar y mins)
+  src/pages/DefensePage.jsx                          (incorporado bonus militar y mins)
+  src/components/defense/DefenseGrid.jsx             (incorporado bonus militar y mins)
+  src/components/ui/ItemCard/ItemCardActiveOverlay.jsx   (migrado a timingHelpers)
+  src/components/defense/DefenseQueueSection.jsx     (migrado a timingHelpers)
+  src/components/shipyard/ShipyardQueueSection.jsx    (migrado a timingHelpers)
+  src/components/fleet/FleetRetrofitQueueSection.jsx (migrado a timingHelpers)
+  src/components/overview/ConstructionQueuesPanel.jsx (migradas 4 colas a timingHelpers)
+  src/hooks/useActiveImperialQueues.js               (migradas las 5 colas imperiales a timingHelpers)
+  src/__tests__/timingContract.test.js               (nueva suite de contrato, 13 tests probados que muerden)
+
+DATABASE CHANGES:
+  Ninguna.
+
+MIGRATIONS:
+  Ninguna.
+
+IMPLEMENTATION:
+  1. Wrapper canónico de tiempos de construcción:
+     - Implementado src/utils/formulas/buildTiming.js con calcEffectiveBuildTime({ cost, planet, state, speed }).
+     - Extrae y prioriza automáticamente robotFactory, naniteFactory, constructionCenter, directiva
+       dir_urban_plan (+15% velocidad), bonificador de infra ministerial (infra_streamline / infra_megastructure),
+       y reliquias (relic_hyper_builders).
+     - Migrados los call sites críticos: economyReducer.js:269, autoBuildTick.js:160,211, MinistryBuildingsSection.jsx:75
+       y queueTiming.js:84-95. Cero discrepancias entre la duración mostrada en tarjeta y la persistida en cola.
+
+  2. Eliminación de código muerto con doble conteo:
+     - Eliminado src/reducers/tick/automationTick.js (295 líneas, 0 importadores), que contenía una copia desactualizada
+       de calcBuildTime y calcResearchTime con bonificadores duplicados.
+
+  3. Unificación de duración de investigación en interfaz:
+     - ResearchPage.jsx:246 y MinistryResearchSection.jsx:177 actualizados para invocar calcPlanetResearchTime(state, currentPlanet, cost)
+       en lugar de calcResearchTime crudo, reflejando de forma exacta el laboratorio planetario y el centro I+D.
+
+  4. Integración de conscription y especialización militar:
+     - costFormulas.js: calcDefenseTime ahora acepta mins y aplica el bono de conscripción militar.
+     - costFormulas.js: calcCustomShipTime ahora toma constructionCenterLvl y mins para reflejar la reducción real.
+     - shipProductionActions.js y queueTiming.js sincronizados: la especialización militar (planet.specialization === 'military' -> 1.20)
+       y mins se aplican consistentemente en encolado, reajuste y vistas UI (ShipyardPage, DefensePage).
+
+  5. Centralización de cuentas regresivas (Countdowns):
+     - Implementados helpers calcRemainingSeconds y calcTotalSeconds en src/utils/formulas/timingHelpers.js.
+     - Sustituidas las 10 implementaciones duplicadas ad-hoc en ItemCardActiveOverlay, DefenseQueueSection,
+       ShipyardQueueSection, FleetRetrofitQueueSection, ConstructionQueuesPanel (4 bucles) y useActiveImperialQueues.
+
+  6. Robustez de reajuste de cola:
+     - queueTiming.js: backfillQueueTimeMults ahora devuelve siempre un objeto { state, stamped: number },
+       eliminando el retorno inconsistente primitivo 0.
+
+TESTS:
+  src/__tests__/timingContract.test.js (13 tests):
+    - Escenario A: Card de edificio vs encolado producen exactamente el mismo tiempo.
+    - Escenario B: Auto-construcción produce el mismo tiempo que acción manual.
+    - Escenario C: Modificadores ministeriales y directivas reflejados idénticamente en UI y cola.
+    - Escenario D: Reliquias imperiales aplicadas de manera consistente.
+    - Escenario E: Persistencia y rehidratación de cola sin mutación silenciosa de duraciones.
+    - Escenario F: Navegación de interfaz sin desincronización de duraciones.
+    - Escenario G: Múltiples construcciones concurrentes respetan tiempos aislados.
+    - Escenario H: Planetas con distintos niveles de infraestructura calculan tiempos independientes.
+    - Escenario I: Tiempos de investigación en UI sincronizados con calcPlanetResearchTime.
+    - Escenario J: Conscription y centro de construcción aplicados en naves y defensas.
+    - Escenario K: Especialización militar reflejada en astillero y colas.
+    - Escenario L: Cuenta regresiva de timingHelpers consistente y sin números negativos.
+    - Escenario M: Firma uniforme en backfillQueueTimeMults.
+
+  PROBADO QUE MUERDE:
+  Se alteró temporalmente calcEffectiveBuildTime para multiplicar el tiempo por 2.0; los tests de contrato
+  fallaron de inmediato con desincronización explícita entre tarjeta y encolado. Se restauró a su valor verde.
+
+TEST RESULTS:
+  PASSED  27/27 ficheros, 301/301 tests, 0 fallos, 16,60 s
+  (288 previos + 13 Fase 05)
+  REGRESION: cero.
+  PARSEO: todos los ficheros JS y JSX modificados parsean sin errores.
+
+KNOWN ISSUES:
+  Ninguno nuevo detectado en esta fase.
+
+HARD BLOCKERS:
+  Ninguno.
+
+SOFT ISSUES:
+  Ninguno.
+
+DELIVERABLES:
+  1. Wrapper canónico calcEffectiveBuildTime ({ cost, planet, state, speed }).
+  2. Helpers centralizados calcRemainingSeconds y calcTotalSeconds.
+  3. Eliminación limpia de automationTick.js.
+  4. Migración de 5 call sites de tiempo de construcción y sincronización I+D en UI.
+  5. Conscription y especialización militar sincronizadas en naves, defensas y colas.
+  6. Unificación de los 10 countdowns de interfaz.
+  7. Suite de pruebas src/__tests__/timingContract.test.js (13 tests verdes).
+
+DEFINITION OF DONE:
+[x] Analysis complete
+[x] Implementation complete
+[x] Domain verified
+[x] UI verified
+[x] Persistence verified
+[x] Integration verified
+[x] Tests passed (301/301)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -1003,7 +1176,8 @@ PROCEED
 | 2026-09-30 | — | Fase 01 completada: 25 rutas + 3 acciones nuevas, 28 tests nuevos, 251/251 verdes. 5 hallazgos nuevos (N-01..N-05) |
 | 2026-09-30 | — | Fase 02 completada: allow-list 37->50, esquema versionado, backup verificado, 266/266 verdes |
 | 2026-09-30 | `df19ca1` | Fase 03 completada: datos de estado, codex naves especiales, matriculas deterministas, 11 tests nuevos, 277/277 verdes |
-| 2026-09-30 | — | Fase 04 completada: director único de música, eliminación de fugas AudioContext, operaciones a 0.5, 288/288 verdes |
+| 2026-09-30 | `770e351` | Fase 04 completada: director único de música, eliminación de fugas AudioContext, operaciones a 0.5, 288/288 verdes |
+| 2026-09-30 | — | Fase 05 completada: fuente única de duraciones, eliminación automationTick, countdowns unificados, 301/301 verdes |
 
 ---
 

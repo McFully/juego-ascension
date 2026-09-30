@@ -267,9 +267,12 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full items-stretch pt-2 pb-4">
-          {Object.entries(SHIPS).filter(([, s]) => s.cat === shipCat).map(([id, s]) => (
-            <ShipProductionCard
+        {(() => {
+          const bonus = (shipTimeBonus ? shipTimeBonus(currentPlanet?.buildings) : 1) * (currentPlanet?.specialization === 'military' ? 1.20 : 1.0);
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full items-stretch pt-2 pb-4">
+              {Object.entries(SHIPS).filter(([, s]) => s.cat === shipCat).map(([id, s]) => (
+                <ShipProductionCard
               key={id}
               id={id}
               s={s}
@@ -304,6 +307,8 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
             }}
           />
         </div>
+      );
+    })()}
       </div>
     </div>
   );

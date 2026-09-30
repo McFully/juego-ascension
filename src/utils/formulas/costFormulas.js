@@ -120,11 +120,16 @@ export const calcCustomShipCost = (blueprint, constructionCenterLvl = 0) => {
   return { metal: metal * d, crystal: crystal * d, deuterium: deut * d };
 };
 
-export const calcCustomShipTime = (blueprint, shipyard, nanite, speed = 1, bonus = 1) => {
-  const cost = calcCustomShipCost(blueprint);
+export const calcCustomShipTime = (blueprint, shipyard, nanite, speed = 1, bonus = 1, constructionCenterLvl = 0, mins = {}) => {
+  const cost = calcCustomShipCost(blueprint, constructionCenterLvl);
   const totalCost = cost.metal + cost.crystal;
+  
+  const conscription = mins?.defense?.conscriptionLevel || 'volunteer';
+  let conscriptionBonus = 1.0;
+  if (conscription === 'mandated') conscriptionBonus = 1.15;
+
   const shipyardReduction = 1 + shipyard * 0.5;
-  const t = (totalCost / (2500 * shipyardReduction * (1 + nanite * 0.5) * speed * bonus)) * 3600;
+  const t = (totalCost / (2500 * shipyardReduction * (1 + nanite * 0.5) * speed * bonus * conscriptionBonus)) * 3600;
   return Math.max(1, Math.floor(t));
 };
 
@@ -230,10 +235,15 @@ export const calcShipTime = (id, qty, shipyard, nanite, speed = 1, bonus = 1, mi
   return Math.max(1, Math.floor(t));
 };
 
-export const calcDefenseTime = (id, qty, shipyard, nanite, speed = 1, bonus = 1) => {
+export const calcDefenseTime = (id, qty, shipyard, nanite, speed = 1, bonus = 1, mins = {}) => {
   const d = DEFENSES[id];
-  const cost = d.cost.m + d.cost.c;
+  const cost = (d?.cost?.m || 0) + (d?.cost?.c || 0);
+
+  const conscription = mins?.defense?.conscriptionLevel || 'volunteer';
+  let conscriptionBonus = 1.0;
+  if (conscription === 'mandated') conscriptionBonus = 1.15;
+
   const shipyardReduction = 1 + shipyard * 0.5;
-  const t = (cost / (2500 * shipyardReduction * (1 + nanite * 0.5) * speed * bonus)) * 3600 * qty;
+  const t = (cost / (2500 * shipyardReduction * (1 + nanite * 0.5) * speed * bonus * conscriptionBonus)) * 3600 * qty;
   return Math.max(1, Math.floor(t));
 };

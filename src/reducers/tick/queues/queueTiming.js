@@ -45,6 +45,7 @@
 import {
   shipTimeBonus,
   calcBuildTime,
+  calcEffectiveBuildTime,
   calcShipTime,
   calcDefenseTime,
   calcCustomShipTime,
@@ -82,51 +83,57 @@ export const timeMultFor = (state, kind, item) => {
 
   switch (kind) {
     case 'build':
-      return safe(calcBuildTime(
-        PROBE_COST,
-        buildings.robotFactory || 0,
-        buildings.naniteFactory || 0,
-        GAME_SPEED,
-        buildings.constructionCenter || 0,
-        mins,
-        research,
-        buildings,
-        state.relics || []
-      ));
+      return safe(calcEffectiveBuildTime({
+        cost: PROBE_COST,
+        planet,
+        state,
+        speed: GAME_SPEED
+      }));
 
     case 'research':
       // Mismo helper que usan START_RESEARCH y la auto-investigación, así que el
       // multiplicador grabado y el recalculado son siempre comparables.
       return researchTimeMultFor(state, planet);
 
-    case 'ship':
+    case 'ship': {
+      let bonus = shipTimeBonus(buildings);
+      if (planet.specialization === 'military') bonus *= 1.20;
       return safe(calcShipTime(
         'lightFighter', PROBE_QTY,
         buildings.shipyard || 0,
         buildings.naniteFactory || 0,
         GAME_SPEED,
-        shipTimeBonus(buildings),
+        bonus,
         mins
       ));
+    }
 
-    case 'defense':
+    case 'defense': {
+      let bonus = shipTimeBonus(buildings);
+      if (planet.specialization === 'military') bonus *= 1.20;
       return safe(calcDefenseTime(
         'rocketLauncher', PROBE_QTY,
         buildings.shipyard || 0,
         buildings.naniteFactory || 0,
         GAME_SPEED,
-        shipTimeBonus(buildings)
+        bonus,
+        mins
       ));
+    }
 
     case 'customShip': {
       const bp = state.blueprints?.find(b => b.id === item.blueprintId);
       if (!bp) return null;
+      let bonus = shipTimeBonus(buildings);
+      if (planet.specialization === 'military') bonus *= 1.20;
       return safe(calcCustomShipTime(
         bp,
         buildings.shipyard || 0,
         buildings.naniteFactory || 0,
         GAME_SPEED,
-        shipTimeBonus(buildings)
+        bonus,
+        buildings.constructionCenter || 0,
+        mins
       ));
     }
 
@@ -233,7 +240,7 @@ const hasStampedItems = (state) => {
  * @returns {number} cuántos ítems se han estampado
  */
 export const backfillQueueTimeMults = (state) => {
-  if (!state || !state.planets) return 0;
+  if (!state || !state.planets) return { state, stamped: 0 };
 
   const newState = { ...state };
   let stamped = 0;
