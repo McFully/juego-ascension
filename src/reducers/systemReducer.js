@@ -6,7 +6,12 @@ import { processTick } from './tick/tickOrchestrator.js';
 export const systemReducer = (state, action) => {
   switch (action.type) {
     case 'RESET_GAME': {
-      return { gameStarted: false };
+      return {
+        gameStarted: false,
+        playerName: state.playerName,
+        avatarUrl: state.avatarUrl,
+        credits: state.credits,
+      };
     }
     case 'LOAD': {
       return migrateLoadState(action.payload);

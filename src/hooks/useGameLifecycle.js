@@ -184,6 +184,15 @@ export function useGameLifecycle({
   const offlineProcessedRef = useRef(false);
   const offlineResourcesBeforeRef = useRef(null);
   const offlineEventsBeforeRef = useRef(null);
+  const lastSessionIdRef = useRef(state._sessionId || state.playerName);
+
+  useEffect(() => {
+    const currentSession = state._sessionId || state.playerName;
+    if (currentSession !== lastSessionIdRef.current) {
+      offlineProcessedRef.current = false;
+      lastSessionIdRef.current = currentSession;
+    }
+  }, [state._sessionId, state.playerName]);
 
   useEffect(() => {
     if (!state.gameStarted || !state.lastTick || !ready || offlineProcessedRef.current) return;

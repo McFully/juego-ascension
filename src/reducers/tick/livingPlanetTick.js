@@ -11,52 +11,53 @@ export const processLivingPlanetTick = (planet, state) => {
   const biomeKey = p.biome || 'temperate';
   const thermalProfile = BIOME_THERMAL_PROFILES[biomeKey] || BIOME_THERMAL_PROFILES.temperate;
 
-  // 1. Inicialización defensiva de estructuras si no existen
-  if (!p.biosphere) {
-    p.biosphere = {
-      pressureAtm: biomeKey === 'barren' ? 0.05 : 1.0,
-      o2Level: biomeKey === 'barren' || biomeKey === 'toxic' ? 0.02 : 0.21,
-      waterReserveDays: 120,
-      caloricSupplyRatio: 1.0,
-      radiationShieldActive: true,
-      pollutionLevel: 5.0,
-    };
-  }
+  // 1. Clonación e inicialización profunda de estructuras para inmutabilidad estricta
+  p.biosphere = p.biosphere ? { ...p.biosphere } : {
+    pressureAtm: biomeKey === 'barren' ? 0.05 : 1.0,
+    o2Level: biomeKey === 'barren' || biomeKey === 'toxic' ? 0.02 : 0.21,
+    waterReserveDays: 120,
+    caloricSupplyRatio: 1.0,
+    radiationShieldActive: true,
+    pollutionLevel: 5.0,
+  };
 
-  if (!p.thermalGrid) {
-    p.thermalGrid = {
-      heatGeneratedMW: 1200,
-      heatDissipatedMW: thermalProfile.dissipationMW,
-      atmosphericTempC: thermalProfile.baseTempC,
-      blackoutRisk: 0.0,
-      coolingEfficiency: 1.0,
-    };
-  }
+  p.thermalGrid = p.thermalGrid ? { ...p.thermalGrid } : {
+    heatGeneratedMW: 1200,
+    heatDissipatedMW: thermalProfile.dissipationMW,
+    atmosphericTempC: thermalProfile.baseTempC,
+    blackoutRisk: 0.0,
+    coolingEfficiency: 1.0,
+  };
 
-  if (!p.demographics) {
-    const totalPop = p.population || 50000;
-    p.demographics = {
-      primaryLabor: Math.floor(totalPop * 0.50),
-      technicians: Math.floor(totalPop * 0.35),
-      intellectuals: Math.floor(totalPop * 0.15),
-      morale: 85,
-      healthIndex: 92,
-      unrest: 3,
-    };
-  }
+  const totalPop = p.population || 50000;
+  p.demographics = p.demographics ? { ...p.demographics } : {
+    primaryLabor: Math.floor(totalPop * 0.50),
+    technicians: Math.floor(totalPop * 0.35),
+    intellectuals: Math.floor(totalPop * 0.15),
+    morale: 85,
+    healthIndex: 92,
+    unrest: 3,
+  };
 
-  if (!p.governance) {
-    p.governance = {
-      governor: null,
-      localMinistries: {
-        infra: { budgetShare: 0.20, activeTasks: [] },
-        energy: { budgetShare: 0.20, activeTasks: [] },
-        economy: { budgetShare: 0.20, activeTasks: [] },
-        welfare: { budgetShare: 0.20, activeTasks: [] },
-        defense: { budgetShare: 0.20, activeTasks: [] },
-      }
-    };
-  }
+  p.governance = p.governance ? {
+    ...p.governance,
+    localMinistries: p.governance.localMinistries ? { ...p.governance.localMinistries } : {
+      infra: { budgetShare: 0.20, activeTasks: [] },
+      energy: { budgetShare: 0.20, activeTasks: [] },
+      economy: { budgetShare: 0.20, activeTasks: [] },
+      welfare: { budgetShare: 0.20, activeTasks: [] },
+      defense: { budgetShare: 0.20, activeTasks: [] },
+    }
+  } : {
+    governor: null,
+    localMinistries: {
+      infra: { budgetShare: 0.20, activeTasks: [] },
+      energy: { budgetShare: 0.20, activeTasks: [] },
+      economy: { budgetShare: 0.20, activeTasks: [] },
+      welfare: { budgetShare: 0.20, activeTasks: [] },
+      defense: { budgetShare: 0.20, activeTasks: [] },
+    }
+  };
 
   // 2. Aplicar Subtareas Ministeriales Activas
   const activeTasks = [];
@@ -138,7 +139,6 @@ export const processLivingPlanetTick = (planet, state) => {
   p.demographics.unrest = Math.max(0, Math.min(100, Math.round((p.demographics.unrest || 0) * 0.90 + targetUnrest * 0.10)));
 
   // Sincronizar población total con estratos
-  const totalPop = p.population || 50000;
   p.demographics.primaryLabor = Math.floor(totalPop * 0.50);
   p.demographics.technicians = Math.floor(totalPop * 0.35);
   p.demographics.intellectuals = Math.floor(totalPop * 0.15);

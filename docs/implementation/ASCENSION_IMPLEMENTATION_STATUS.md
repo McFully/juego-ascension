@@ -33,11 +33,11 @@ Documentos asociados:
 | **16** | Ver detalles + sistema unificado | ✅ **COMPLETE** | — |
 | **17** | Auditoría de cards estériles | ✅ **COMPLETE** | — |
 | **18** | Auditoría universal de fórmulas | ✅ **COMPLETE** | — |
-| **19** | Integración y deuda técnica | ⬜ NOT_STARTED | dep. 11–18 |
+| **19** | Integración y deuda técnica | ✅ **COMPLETE** | — |
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 19 de 22 fases (86,4 %).**
+**Avance: 20 de 22 fases (90,9 %).**
 
 ---
 
@@ -2162,6 +2162,7 @@ PROCEED
 | 2026-09-30 | `8b91e72` | Fase 16 completada: botón único ver detalles, guardas defensivas y estandarización No disponible / No aplica, 346/346 verdes |
 | 2026-09-30 | — | Fase 17 completada: auditoría de cards estériles, unificación costes especialización, veto en I+D, feedback auditivo y constantes de eventos, 351/351 verdes |
 | 2026-09-30 | — | Fase 18 completada: auditoría universal de fórmulas, DISPLAYED = REAL, POPULATION_CONSUMPTION_RATES centralizado, reliquias conectadas a minas/industria/combate, 357/357 verdes |
+| 2026-10-01 | — | Fase 19 completada: integración y deuda técnica, purga de módulos muertos tick/events, inmutabilidad profunda en livingPlanetTick, replay tab conectada, memoización POI y docs de persistencia saneados, 363/363 verdes |
 
 ---
 

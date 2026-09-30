@@ -138,6 +138,7 @@ export const GameViewports = ({
         />
       )}
       {activeTab === "diplomacy" && <DiplomacyPage state={state} dispatch={dispatch} SHIPS={SHIPS} FACTIONS={FACTIONS} AI_STRATEGIES={AI_STRATEGIES} S={S} fmt={fmt} getGalacticAlignment={getGalacticAlignment} onOpenCodex={onOpenCodex} />}
+      {activeTab === "replay" && <ReplayPage state={state} dispatch={dispatch} S={S} />}
     </Suspense>
   );
 };

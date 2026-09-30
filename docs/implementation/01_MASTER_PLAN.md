@@ -456,7 +456,7 @@ FASE 21  Verificación final ← requiere 20
 
 ---
 
-### FASE 19 — INTEGRACIÓN Y DEUDA TÉCNICA
+### FASE 19 — INTEGRACIÓN Y DEUDA TÉCNICA ✅ **COMPLETE**
 
 **Trabajo:**
 1. Eliminar el código muerto identificado (≈20 ficheros): `automationTick.js`, los 3 módulos `tick/events/*`, `ReplayPage.jsx`, `exportSessionToJson` (o conectarlo), `getLatestBackup` (o implementar restore), `dbGetPlanetFleetSummary`, `dbMigrateJson`, `CardImage`/`SafeImg`/`CardBanner`, alias de `assetsCatalog`, `sharedCommandCards` en el hub planetario, `game_meta` y `game_logs` (o usarlas), `ascension_record_standard_planets`. **Cada eliminación precedida de barrido de imports documentado.**
