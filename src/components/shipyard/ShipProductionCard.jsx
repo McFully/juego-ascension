@@ -59,13 +59,15 @@ export const ShipProductionCard = ({
                 <span className="px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[9px] font-mono font-black">
                   Mk.{calculateTechGeneration(extractShipTechSnapshot(state.research || {}))}
                 </span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onOpenCodex(id); }}
-                  className="w-4 h-4 rounded bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition cursor-pointer"
-                  title="Ver detalles"
-                >
-                  <span className="material-symbols-outlined text-[10px]">menu_book</span>
-                </button>
+                {onOpenCodex && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
+                    className="w-4 h-4 rounded bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition cursor-pointer"
+                    title="Ver detalles"
+                  >
+                    <span className="material-symbols-outlined text-[10px]">menu_book</span>
+                  </button>
+                )}
               </div>
               <div className="text-[10px] font-mono text-cyan-400">En hangar: {fmt(count)}</div>
             </div>

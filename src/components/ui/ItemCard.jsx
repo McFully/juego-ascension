@@ -127,12 +127,6 @@ export const ItemCard = React.memo(({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-bold text-white text-base drop-shadow-[0_0_2px_rgba(255,255,255,0.3)] truncate">{name}</span>
-              <button onClick={(e) => { e.stopPropagation(); onOpenCodex(id); }}
-                className="w-5 h-5 rounded bg-white/5 border border-white/10 flex items-center justify-center text-slate-500 hover:text-[var(--ue-accent)] hover:border-[var(--ue-accent)]/40 hover:bg-[var(--ue-accent)]/10 transition-all shrink-0 group/info"
-                title="Ver detalles"
-              >
-                <span className="material-symbols-outlined text-[12px] group-hover/info:scale-110 transition-transform">menu_book</span>
-              </button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -184,12 +178,14 @@ export const ItemCard = React.memo(({
             : isQueueFull ? '⏳ Cola llena (8/8)'
             : actionLabel}
         </button>
-        <button onClick={(e) => { e.stopPropagation(); onOpenCodex(id); }}
-          className={`px-3 ${S.btn} ${S.btnGhost} flex items-center justify-center focus-ring-game`}
-          title="Ver detalles"
-        >
-          ℹ️
-        </button>
+        {onOpenCodex && (
+          <button onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
+            className={`px-3 ${S.btn} ${S.btnGhost} flex items-center justify-center focus-ring-game`}
+            title="Ver detalles"
+          >
+            ℹ️
+          </button>
+        )}
         {onOpenInterior && level > 0 && (
           <button onClick={(e) => { e.stopPropagation(); onOpenInterior(id); }}
             className={`px-2.5 ${S.btn} bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 flex items-center justify-center transition focus-ring-game`}

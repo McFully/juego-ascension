@@ -28,7 +28,7 @@ export const CodexModal = React.memo(({ id, onClose, BUILDINGS, RESEARCH, SHIPS,
           <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">CASCO</span><span className="text-emerald-400 font-bold">{fmt(s.hull)}</span></div>
           <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">CARGA</span><span className="text-amber-400 font-bold">{fmt(s.cargo)}</span></div>
           <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">VELOCIDAD</span><span className="text-blue-400 font-bold">{fmt(s.speed)}</span></div>
-          <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">MOTOR</span><span className="text-slate-300 uppercase">{s.drive || 'N/A'}</span></div>
+          <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">MOTOR</span><span className="text-slate-300 uppercase">{s.drive || 'No aplica'}</span></div>
         </div>
       );
     }

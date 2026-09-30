@@ -30,14 +30,14 @@ Documentos asociados:
 | **13** | Sistema de investigación | ✅ **COMPLETE** | — |
 | **14** | Auditoría research + ministries | ✅ **COMPLETE** | — |
 | **15** | Save vs Commander | ✅ **COMPLETE** | — |
-| **16** | Ver detalles + sistema unificado | ⬜ NOT_STARTED | dep. 01, 05 |
+| **16** | Ver detalles + sistema unificado | ✅ **COMPLETE** | — |
 | **17** | Auditoría de cards estériles | ⬜ NOT_STARTED | dep. 01 |
 | **18** | Auditoría universal de fórmulas | ⬜ NOT_STARTED | dep. 05 |
 | **19** | Integración y deuda técnica | ⬜ NOT_STARTED | dep. 11–18 |
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 16 de 22 fases (72,7 %).**
+**Avance: 17 de 22 fases (77,3 %).**
 
 ---
 
@@ -2090,6 +2090,55 @@ PROCEED
 
 ---
 
+```text
+PHASE:
+Nombre: Fase 16 — Ver detalles y sistema unificado
+
+STATUS:
+COMPLETE
+
+OBJECTIVE:
+Eliminar la duplicidad de botones de detalles en tarjetas de construcción/investigación (remover el icono menu_book de la cabecera en ItemCard.jsx preservando el botón del pie junto a la acción), garantizar guardas de existencia para onOpenCodex en todos los componentes de cartas tácticas (DefenseGrid, DefenseMissileSilosSection, ShipProductionCard, ItemCard), y unificar la presentación de valores ausentes hacia las etiquetas estandarizadas "No disponible" y "No aplica" erradicando cadenas ambiguas "N/A" o retornos silenciosos.
+
+SOURCE OF TRUTH:
+- src/components/ui/ItemCard.jsx (botón único en pie con guarda onOpenCodex)
+- src/components/ui/CodexModal.jsx (estandarización a "No disponible" y "No aplica")
+- src/components/defense/DefenseGrid.jsx (guarda onOpenCodex && onOpenCodex(id))
+- src/components/defense/DefenseMissileSilosSection.jsx (guarda onOpenCodex && onOpenCodex(id))
+- src/components/shipyard/ShipProductionCard.jsx (guarda onOpenCodex && onOpenCodex(id))
+- src/__tests__/detailsSystemContract.test.js (suite de contrato TDD)
+
+CONTRACTS BROKEN (BEFORE):
+- ItemCard.jsx tenía dos botones de ver detalles simultáneos (uno en la cabecera y otro en el pie).
+- Botones de ver detalles en DefenseGrid, DefenseMissileSilosSection y ShipProductionCard no validaban si onOpenCodex estaba definido, arriesgando TypeError si se invocaban aisladamente.
+- CodexModal presentaba etiquetas crudas "N/A" en lugar de las directivas estandarizadas de visualización imperial.
+
+CHANGES MADE:
+- ItemCard.jsx: eliminado el botón duplicado de la cabecera (menu_book). Mantenido el botón unificado en el pie con guarda defensiva onOpenCodex && onOpenCodex(id).
+- DefenseGrid.jsx, DefenseMissileSilosSection.jsx y ShipProductionCard.jsx: asegurada guarda condicional en el render y handler del botón de detalles para prevenir invocaciones huérfanas.
+- CodexModal.jsx: estandarizado el valor de motor a "No aplica" y descripción/estadísticas ausentes a "No disponible".
+- detailsSystemContract.test.js: creada suite de verificación de contrato (3/3 tests pasando).
+
+VERIFICATION:
+- npx vitest run src/__tests__/detailsSystemContract.test.js -> 3/3 tests verdes.
+- npm test -> 346/346 tests verdes en la suite global (0 regresiones).
+
+GATE CHECK:
+[x] Implementation matches master plan
+[x] Implementation matches preflight findings
+[x] Tests passed (346/346)
+[x] Documentation updated
+[x] Master Plan updated
+[x] Status updated
+[x] No critical blockers
+[x] Ready for next phase
+
+FINAL DECISION:
+PROCEED
+```
+
+---
+
 ## BITÁCORA
 
 | Fecha | Commit | Evento |
@@ -2110,7 +2159,8 @@ PROCEED
 | 2026-09-30 | `6aac532` | Fase 12 completada: autotrade en tarjetas de colonias, optimizacion de cargueros y misiones cap 6, 327/327 verdes |
 | 2026-09-30 | `bc859d8` | Fase 13 completada: investigacion paralela, cancelaciones puntuales, reembolsos por nivel, pesos ministeriales, 333/333 verdes |
 | 2026-09-30 | `b738ca2` | Fase 14 completada: auditoría research, conexión armas/comercio/colonización, fallback modernización y victoria singularidad, 340/340 verdes |
-| 2026-09-30 | — | Fase 15 completada: separación Save vs Commander, esquema v4, gameMode en sesiones y longitud unificada, 343/343 verdes |
+| 2026-09-30 | `67c9031` | Fase 15 completada: separación Save vs Commander, esquema v4, gameMode en sesiones y longitud unificada, 343/343 verdes |
+| 2026-09-30 | — | Fase 16 completada: botón único ver detalles, guardas defensivas y estandarización No disponible / No aplica, 346/346 verdes |
 
 ---
 

@@ -401,8 +401,8 @@ FASE 21  Verificación final ← requiere 20
 6. `BuildingInteriorModal` depende de `EXECUTE_BUILDING_ACTION` → **Fase 01**.
 7. `Research details` debe mostrar valores antes/después del efecto — imposible hoy para los 16 estudios sin efecto (Fase 14).
 
-**Entregables:** un botón por card · sistema de detalle unificado · `No disponible`/`No aplica` estandarizado.
-**Tests:** cada botón abre la entidad correcta; ningún `return null` silencioso.
+**Entregables:** un botón por card · sistema de detalle unificado · `No disponible`/`No aplica` estandarizado · guardas de invocación en cartas tácticas.
+**Tests:** verificado en `detailsSystemContract.test.js` (3/3 tests) y suite completa. 346/346 tests verdes en la suite global (0 regresiones). Estado: ✅ **COMPLETE**.
 
 ---
 

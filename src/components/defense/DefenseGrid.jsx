@@ -117,13 +117,15 @@ export const DefenseGrid = ({
                           </span>
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onOpenCodex(id); }}
-                        className="w-5 h-5 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-cyan-300 hover:border-cyan-400/40 hover:bg-cyan-500/10 transition cursor-pointer shrink-0"
-                        title="Ver detalles en Codex"
-                      >
-                        <span className="material-symbols-outlined text-[12px]">menu_book</span>
-                      </button>
+                      {onOpenCodex && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
+                          className="w-5 h-5 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-cyan-300 hover:border-cyan-400/40 hover:bg-cyan-500/10 transition cursor-pointer shrink-0"
+                          title="Ver detalles en Codex"
+                        >
+                          <span className="material-symbols-outlined text-[12px]">menu_book</span>
+                        </button>
+                      )}
                     </div>
 
                     {/* HUD Balístico Táctico Visual - Valores Estándar Consolidados */}

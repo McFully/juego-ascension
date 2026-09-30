@@ -108,13 +108,15 @@ export const DefenseMissileSilosSection = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-white text-base tracking-wide">{m.name}</h4>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); onOpenCodex(id); }}
-                          className="w-5 h-5 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-cyan-300 transition cursor-pointer"
-                          title="Ver en Codex"
-                        >
-                          <span className="material-symbols-outlined text-[12px]">menu_book</span>
-                        </button>
+                        {onOpenCodex && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
+                            className="w-5 h-5 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-cyan-300 transition cursor-pointer"
+                            title="Ver en Codex"
+                          >
+                            <span className="material-symbols-outlined text-[12px]">menu_book</span>
+                          </button>
+                        )}
                       </div>
                       <div className="text-xs font-mono text-emerald-400 flex items-center gap-1.5 mt-0.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
