@@ -34,10 +34,10 @@ Documentos asociados:
 | **17** | Auditoría de cards estériles | ✅ **COMPLETE** | — |
 | **18** | Auditoría universal de fórmulas | ✅ **COMPLETE** | — |
 | **19** | Integración y deuda técnica | ✅ **COMPLETE** | — |
-| **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
+| **20** | Regresión | ✅ **COMPLETE** | — |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 20 de 22 fases (90,9 %).**
+**Avance: 21 de 22 fases (95,5 %).**
 
 ---
 
@@ -2163,6 +2163,7 @@ PROCEED
 | 2026-09-30 | — | Fase 17 completada: auditoría de cards estériles, unificación costes especialización, veto en I+D, feedback auditivo y constantes de eventos, 351/351 verdes |
 | 2026-09-30 | — | Fase 18 completada: auditoría universal de fórmulas, DISPLAYED = REAL, POPULATION_CONSUMPTION_RATES centralizado, reliquias conectadas a minas/industria/combate, 357/357 verdes |
 | 2026-10-01 | — | Fase 19 completada: integración y deuda técnica, purga de módulos muertos tick/events, inmutabilidad profunda en livingPlanetTick, replay tab conectada, memoización POI y docs de persistencia saneados, 363/363 verdes |
+| 2026-10-01 | — | Fase 20 completada: batería integral de regresión, 41 suites de test, 363 tests verdes de extremo a extremo, cero bloqueantes |
 
 ---
 

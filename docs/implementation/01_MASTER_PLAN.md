@@ -473,7 +473,7 @@ FASE 21  Verificación final ← requiere 20
 
 ---
 
-### FASE 20 — REGRESIÓN
+### FASE 20 — REGRESIÓN ✅ **COMPLETE**
 
 **Trabajo:** ejecutar todo y corregir antes de continuar.
 Build · tests · runtime · navegación · save/load · construcción · investigación · recursos · audio · assets · rutas · transiciones de estado. Los 21 escenarios de construcción del encargo (A–I) más los 11 de save/commander más los del router.
