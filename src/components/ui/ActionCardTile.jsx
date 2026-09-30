@@ -40,6 +40,8 @@ export const ActionCardTile = React.memo(({
       } else if (nav?.navigateTo) {
         nav.navigateTo(targetScreen || 'overview');
       }
+    } else if (targetScreen && nav?.navigateTo) {
+      nav.navigateTo(targetScreen);
     }
   };
 

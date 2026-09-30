@@ -1,4 +1,5 @@
 import React from "react";
+import { PLANET_SPECIALIZATION_COSTS } from "../../data/gameData.js";
 
 export const PlanetarySpecializationCard = ({ currentPlanet, dispatch, S }) => {
   return (
@@ -41,13 +42,13 @@ export const PlanetarySpecializationCard = ({ currentPlanet, dispatch, S }) => {
 
         {/* Industrial */}
         <button 
-          disabled={currentPlanet.specialization === "industrial" || currentPlanet.resources.metal < 10000 || currentPlanet.resources.crystal < 10000}
+          disabled={currentPlanet.specialization === "industrial" || currentPlanet.resources.metal < PLANET_SPECIALIZATION_COSTS.industrial.metal || currentPlanet.resources.crystal < PLANET_SPECIALIZATION_COSTS.industrial.crystal}
           onClick={() => { if (window.confirm("¿Especializar en rama Industrial? Coste: 10K Metal, 10K Cristal.")) dispatch({ type: "PLANET_SPECIALIZE", planetId: currentPlanet.id, specialization: "industrial" }); }}
           title="Coste: 10K Metal, 10K Cristal"
           className={"glass rounded-xl p-3 text-left transition-all border " + (
             currentPlanet.specialization === "industrial" 
               ? "border-amber-500/40 text-amber-200 cursor-default" 
-              : (currentPlanet.resources.metal < 10000 || currentPlanet.resources.crystal < 10000)
+              : (currentPlanet.resources.metal < PLANET_SPECIALIZATION_COSTS.industrial.metal || currentPlanet.resources.crystal < PLANET_SPECIALIZATION_COSTS.industrial.crystal)
                 ? "border-white/5 text-slate-500 opacity-40 cursor-not-allowed"
                 : "border-white/10 hover:border-white/20 text-slate-400"
           )}>
@@ -62,13 +63,13 @@ export const PlanetarySpecializationCard = ({ currentPlanet, dispatch, S }) => {
 
         {/* Scientific */}
         <button 
-          disabled={currentPlanet.specialization === "scientific" || currentPlanet.resources.metal < 15000 || currentPlanet.resources.crystal < 10000 || currentPlanet.resources.deuterium < 5000}
+          disabled={currentPlanet.specialization === "scientific" || currentPlanet.resources.metal < PLANET_SPECIALIZATION_COSTS.scientific.metal || currentPlanet.resources.crystal < PLANET_SPECIALIZATION_COSTS.scientific.crystal || currentPlanet.resources.deuterium < PLANET_SPECIALIZATION_COSTS.scientific.deuterium}
           onClick={() => { if (window.confirm("¿Especializar en rama Científica? Coste: 15K Metal, 10K Cristal, 5K Deuterio.")) dispatch({ type: "PLANET_SPECIALIZE", planetId: currentPlanet.id, specialization: "scientific" }); }}
           title="Coste: 15K Metal, 10K Cristal, 5K Deuterio"
           className={"border rounded-lg p-3 text-left transition-all " + (
             currentPlanet.specialization === "scientific" 
               ? "bg-purple-500/10 border-purple-500/40 text-purple-200 cursor-default" 
-              : (currentPlanet.resources.metal < 15000 || currentPlanet.resources.crystal < 10000 || currentPlanet.resources.deuterium < 5000)
+              : (currentPlanet.resources.metal < PLANET_SPECIALIZATION_COSTS.scientific.metal || currentPlanet.resources.crystal < PLANET_SPECIALIZATION_COSTS.scientific.crystal || currentPlanet.resources.deuterium < PLANET_SPECIALIZATION_COSTS.scientific.deuterium)
                 ? "glass-deep border-white/5 text-slate-500 opacity-40 cursor-not-allowed fresnel"
                 : "glass-deep border-white/10 hover:border-[var(--ue-accent)]/20 text-slate-400 fresnel specular"
           )}>
@@ -83,13 +84,13 @@ export const PlanetarySpecializationCard = ({ currentPlanet, dispatch, S }) => {
 
         {/* Military */}
         <button 
-          disabled={currentPlanet.specialization === "military" || currentPlanet.resources.metal < 10000 || currentPlanet.resources.crystal < 15000 || currentPlanet.resources.deuterium < 5000}
+          disabled={currentPlanet.specialization === "military" || currentPlanet.resources.metal < PLANET_SPECIALIZATION_COSTS.military.metal || currentPlanet.resources.crystal < PLANET_SPECIALIZATION_COSTS.military.crystal || currentPlanet.resources.deuterium < PLANET_SPECIALIZATION_COSTS.military.deuterium}
           onClick={() => { if (window.confirm("¿Especializar en rama Militar? Coste: 10K Metal, 15K Cristal, 5K Deuterio.")) dispatch({ type: "PLANET_SPECIALIZE", planetId: currentPlanet.id, specialization: "military" }); }}
           title="Coste: 10K Metal, 15K Cristal, 5K Deuterio"
           className={"border rounded-lg p-3 text-left transition-all " + (
             currentPlanet.specialization === "military" 
               ? "bg-red-500/10 border-red-500/40 text-red-200 cursor-default" 
-              : (currentPlanet.resources.metal < 10000 || currentPlanet.resources.crystal < 15000 || currentPlanet.resources.deuterium < 5000)
+              : (currentPlanet.resources.metal < PLANET_SPECIALIZATION_COSTS.military.metal || currentPlanet.resources.crystal < PLANET_SPECIALIZATION_COSTS.military.crystal || currentPlanet.resources.deuterium < PLANET_SPECIALIZATION_COSTS.military.deuterium)
                 ? "glass-deep border-white/5 text-slate-500 opacity-40 cursor-not-allowed fresnel"
                 : "glass-deep border-white/10 hover:border-[var(--ue-accent)]/20 text-slate-400 fresnel specular"
           )}>
@@ -104,13 +105,13 @@ export const PlanetarySpecializationCard = ({ currentPlanet, dispatch, S }) => {
 
         {/* Commercial */}
         <button 
-          disabled={currentPlanet.specialization === "commercial" || currentPlanet.resources.metal < 12000 || currentPlanet.resources.crystal < 12000 || currentPlanet.resources.deuterium < 2000}
+          disabled={currentPlanet.specialization === "commercial" || currentPlanet.resources.metal < PLANET_SPECIALIZATION_COSTS.commercial.metal || currentPlanet.resources.crystal < PLANET_SPECIALIZATION_COSTS.commercial.crystal || currentPlanet.resources.deuterium < PLANET_SPECIALIZATION_COSTS.commercial.deuterium}
           onClick={() => { if (window.confirm("¿Especializar en rama Comercial? Coste: 12K Metal, 12K Cristal, 2K Deuterio.")) dispatch({ type: "PLANET_SPECIALIZE", planetId: currentPlanet.id, specialization: "commercial" }); }}
           title="Coste: 12K Metal, 12K Cristal, 2K Deuterio"
           className={"border rounded-lg p-3 text-left transition-all " + (
             currentPlanet.specialization === "commercial" 
               ? "glass-deep border-[var(--ue-accent)]/40 text-[var(--ue-accent)] cursor-default emissive-cyan fresnel specular" 
-              : (currentPlanet.resources.metal < 12000 || currentPlanet.resources.crystal < 12000 || currentPlanet.resources.deuterium < 2000)
+              : (currentPlanet.resources.metal < PLANET_SPECIALIZATION_COSTS.commercial.metal || currentPlanet.resources.crystal < PLANET_SPECIALIZATION_COSTS.commercial.crystal || currentPlanet.resources.deuterium < PLANET_SPECIALIZATION_COSTS.commercial.deuterium)
                 ? "glass-deep border-white/5 text-slate-500 opacity-40 cursor-not-allowed fresnel"
                 : "glass-deep border-white/10 hover:border-[var(--ue-accent)]/20 text-slate-400 fresnel specular"
           )}>

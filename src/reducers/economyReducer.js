@@ -12,6 +12,7 @@ import {
 } from '../core.jsx';
 import { processMission, returnFleetToOrigin, processEvent } from '../missions.jsx';
 import { stampTimeMult } from './tick/queues/queueTiming.js';
+import { PLANET_SPECIALIZATION_COSTS } from '../data/gameData.js';
 
 
 export const economyReducer = (state, action) => {
@@ -194,16 +195,7 @@ export const economyReducer = (state, action) => {
       const planet = state.planets.find(p => p.id === planetId);
       if (!planet) return state;
 
-      let cost = { metal: 0, crystal: 0, deuterium: 0 };
-      if (specialization === 'industrial') {
-        cost = { metal: 10000, crystal: 10000, deuterium: 0 };
-      } else if (specialization === 'scientific') {
-        cost = { metal: 15000, crystal: 10000, deuterium: 5000 };
-      } else if (specialization === 'military') {
-        cost = { metal: 10000, crystal: 15000, deuterium: 5000 };
-      } else if (specialization === 'commercial') {
-        cost = { metal: 12000, crystal: 12000, deuterium: 2000 };
-      }
+      const cost = PLANET_SPECIALIZATION_COSTS[specialization] || { metal: 0, crystal: 0, deuterium: 0 };
 
       if (!canAfford(planet.resources, cost)) return state;
 

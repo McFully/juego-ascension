@@ -88,6 +88,20 @@ export const EVENTS = [
   { id: 'wormhole_flux', name: 'Fluctuación de Gusano', icon: '🌀', type: 'discovery', image: 'event_wormhole_flux.jpg', desc: '+300 Deuterio cosechado del horizonte' },
 ];
 
+export const PLANET_SPECIALIZATION_COSTS = {
+  industrial: { metal: 10000, crystal: 10000, deuterium: 0 },
+  scientific: { metal: 15000, crystal: 10000, deuterium: 5000 },
+  military: { metal: 10000, crystal: 15000, deuterium: 5000 },
+  commercial: { metal: 12000, crystal: 12000, deuterium: 2000 }
+};
+
+export const EVENT_REWARD_RANGES = {
+  resource: { minMetal: 500, maxMetalVar: 3000, minCrystal: 300, maxCrystalVar: 2000 },
+  trade: { minDeut: 1000, maxDeutVar: 5000 },
+  hazard: { minLoss: 0.05, maxLossVar: 0.10 },
+  defaultReward: { minMetal: 300, maxMetalVar: 2000, minCrystal: 200, maxCrystalVar: 1500 }
+};
+
 export { MISSIONS } from './missionsData.js';
 export * from './game/factions.js';
 export * from './game/entities.js';

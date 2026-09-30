@@ -31,13 +31,13 @@ Documentos asociados:
 | **14** | Auditoría research + ministries | ✅ **COMPLETE** | — |
 | **15** | Save vs Commander | ✅ **COMPLETE** | — |
 | **16** | Ver detalles + sistema unificado | ✅ **COMPLETE** | — |
-| **17** | Auditoría de cards estériles | ⬜ NOT_STARTED | dep. 01 |
+| **17** | Auditoría de cards estériles | ✅ **COMPLETE** | — |
 | **18** | Auditoría universal de fórmulas | ⬜ NOT_STARTED | dep. 05 |
 | **19** | Integración y deuda técnica | ⬜ NOT_STARTED | dep. 11–18 |
 | **20** | Regresión | ⬜ NOT_STARTED | dep. 19 |
 | **21** | Verificación final | ⬜ NOT_STARTED | dep. 20 |
 
-**Avance: 17 de 22 fases (77,3 %).**
+**Avance: 18 de 22 fases (81,8 %).**
 
 ---
 
@@ -2159,8 +2159,8 @@ PROCEED
 | 2026-09-30 | `6aac532` | Fase 12 completada: autotrade en tarjetas de colonias, optimizacion de cargueros y misiones cap 6, 327/327 verdes |
 | 2026-09-30 | `bc859d8` | Fase 13 completada: investigacion paralela, cancelaciones puntuales, reembolsos por nivel, pesos ministeriales, 333/333 verdes |
 | 2026-09-30 | `b738ca2` | Fase 14 completada: auditoría research, conexión armas/comercio/colonización, fallback modernización y victoria singularidad, 340/340 verdes |
-| 2026-09-30 | `67c9031` | Fase 15 completada: separación Save vs Commander, esquema v4, gameMode en sesiones y longitud unificada, 343/343 verdes |
-| 2026-09-30 | — | Fase 16 completada: botón único ver detalles, guardas defensivas y estandarización No disponible / No aplica, 346/346 verdes |
+| 2026-09-30 | `8b91e72` | Fase 16 completada: botón único ver detalles, guardas defensivas y estandarización No disponible / No aplica, 346/346 verdes |
+| 2026-09-30 | — | Fase 17 completada: auditoría de cards estériles, unificación costes especialización, veto en I+D, feedback auditivo y constantes de eventos, 351/351 verdes |
 
 ---
 

@@ -277,6 +277,12 @@ const ResearchPage = ({ state, dispatch, currentPlanet, production, fmt, RESEARC
                       activeQueueItem={activeResearchItem}
                       queueItems={allResearchItems}
                       onCancelQueue={(queueId) => dispatch({ type: 'CANCEL_RESEARCH_QUEUE', queueId })}
+                      isAutoRestricted={Boolean(currentPlanet?.automatedExclusions?.[id])}
+                      onToggleAutoRestriction={() => dispatch({
+                        type: 'TOGGLE_AUTOMATION_RESTRICTION',
+                        planetId: currentPlanet?.id,
+                        targetId: id
+                      })}
                     />
                   </div>
                 );

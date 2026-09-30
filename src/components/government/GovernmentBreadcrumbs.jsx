@@ -130,10 +130,16 @@ export const GovernmentBreadcrumbs = ({
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={() => minister?.voiceId && playVoice(minister.voiceId)}
-              title={minister ? "Haz clic para escuchar la voz del ministro" : undefined}
+              onClick={() => {
+                if (minister?.voiceId) {
+                  playVoice(minister.voiceId);
+                } else if (window.playSfx) {
+                  window.playSfx('click');
+                }
+              }}
+              title={minister ? (minister.voiceId ? "Haz clic para escuchar la voz del ministro" : "Ministro activo") : undefined}
               className={`w-9 h-9 rounded-xl overflow-hidden border border-white/15 bg-cyan-950/40 flex items-center justify-center shrink-0 shadow-sm transition-all ${
-                minister?.voiceId ? 'hover:border-cyan-400 hover:scale-105 cursor-pointer' : ''
+                minister ? 'hover:border-cyan-400 hover:scale-105 cursor-pointer' : ''
               }`}
             >
               {minister?.avatarId ? (
@@ -148,10 +154,16 @@ export const GovernmentBreadcrumbs = ({
             </button>
             <div className="leading-tight">
               <span 
-                onClick={() => minister?.voiceId && playVoice(minister.voiceId)}
-                title={minister ? "Haz clic para escuchar su voz" : undefined}
+                onClick={() => {
+                  if (minister?.voiceId) {
+                    playVoice(minister.voiceId);
+                  } else if (window.playSfx) {
+                    window.playSfx('click');
+                  }
+                }}
+                title={minister ? (minister.voiceId ? "Haz clic para escuchar su voz" : "Ministro activo") : undefined}
                 className={`text-sm font-bold text-white block tracking-wide ${
-                  minister?.voiceId ? 'hover:text-cyan-400 cursor-pointer transition-colors' : ''
+                  minister ? 'hover:text-cyan-400 cursor-pointer transition-colors' : ''
                 }`}
               >
                 {minister ? minister.name : 'Vacante'}

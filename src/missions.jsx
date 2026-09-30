@@ -1,5 +1,5 @@
 import { updatePlanet } from './core.jsx';
-import { RESEARCH } from './data/gameData.js';
+import { RESEARCH, EVENT_REWARD_RANGES } from './data/gameData.js';
 import { fmt } from './utils/formulas.js';
 import { handleCombatMission } from './missions/combatMission.js';
 import { handleExpeditionMission } from './missions/expeditionMission.js';
@@ -111,7 +111,8 @@ const processEvent = (event, state) => {
 
   switch (event.type) {
     case 'resource': {
-      const bonus = { metal: 500 + Math.random() * 3000, crystal: 300 + Math.random() * 2000 };
+      const { minMetal, maxMetalVar, minCrystal, maxCrystalVar } = EVENT_REWARD_RANGES.resource;
+      const bonus = { metal: minMetal + Math.random() * maxMetalVar, crystal: minCrystal + Math.random() * maxCrystalVar };
       newState = updatePlanet(newState, planet.id, p => ({
         ...p, resources: { ...p.resources, metal: p.resources.metal + bonus.metal, crystal: p.resources.crystal + bonus.crystal },
       }));
@@ -120,7 +121,8 @@ const processEvent = (event, state) => {
       break;
     }
     case 'trade': {
-      const bonus = 1000 + Math.random() * 5000;
+      const { minDeut, maxDeutVar } = EVENT_REWARD_RANGES.trade;
+      const bonus = minDeut + Math.random() * maxDeutVar;
       newState = updatePlanet(newState, planet.id, p => ({
         ...p, resources: { ...p.resources, deuterium: p.resources.deuterium + bonus },
       }));
@@ -129,7 +131,8 @@ const processEvent = (event, state) => {
       break;
     }
     case 'hazard': {
-      const loss = 0.05 + Math.random() * 0.1;
+      const { minLoss, maxLossVar } = EVENT_REWARD_RANGES.hazard;
+      const loss = minLoss + Math.random() * maxLossVar;
       newState = updatePlanet(newState, planet.id, p => ({
         ...p, resources: {
           metal: p.resources.metal * (1 - loss),
@@ -151,7 +154,8 @@ const processEvent = (event, state) => {
       break;
     }
     default: {
-      const bonus = { metal: 300 + Math.random() * 2000, crystal: 200 + Math.random() * 1500 };
+      const { minMetal, maxMetalVar, minCrystal, maxCrystalVar } = EVENT_REWARD_RANGES.defaultReward;
+      const bonus = { metal: minMetal + Math.random() * maxMetalVar, crystal: minCrystal + Math.random() * maxCrystalVar };
       newState = updatePlanet(newState, planet.id, p => ({
         ...p, resources: { ...p.resources, metal: p.resources.metal + bonus.metal, crystal: p.resources.crystal + bonus.crystal },
       }));

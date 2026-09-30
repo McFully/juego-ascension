@@ -406,9 +406,17 @@ FASE 21  Verificación final ← requiere 20
 
 ---
 
-### FASE 17 — AUDITORÍA DE CARDS ESTÉRILES
+### FASE 17 — AUDITORÍA DE CARDS ESTÉRILES ✅ COMPLETE
 
 **Objetivo:** ninguna card que aparente funcionar sin hacerlo.
+
+**Entregado:**
+- Centralización de costes de especialización en `PLANET_SPECIALIZATION_COSTS` en `src/data/gameData.js`, consumidos de forma unificada en `economyReducer.js` y `PlanetarySpecializationCard.jsx`.
+- Conexión del veto de automatización en `ResearchPage.jsx` pasando `isAutoRestricted` y `onToggleAutoRestriction` a `ItemCard`.
+- Fallback seguro para navegación y sonido táctil `click` en `ActionCardTile.jsx` si no hay `onClick` personalizado.
+- Feedback táctico auditivo en `GovernmentBreadcrumbs.jsx` para ministros sin `voiceId`.
+- Centralización de rangos de eventos en `EVENT_REWARD_RANGES` consumidos en `missions.jsx` eliminando números mágicos dispersos.
+- Suite de contrato TDD `src/__tests__/sterileCardsAuditingContract.test.js` (5 tests verdes). 351/351 tests globales pasando.
 
 **Trabajo:**
 1. **`footerAction` no renderizado** (Fase 01 lo arregla) — el botón "Activar Gobernador IA" no existe en pantalla.
