@@ -93,7 +93,7 @@ Prohibido:
 - Consentimiento implicito no es valido.
 - Cada exe debe incrementar version automaticamente: `npm version patch --no-git-tag-version`.
 - La version debe mostrarse en la UI del juego.
-- Siempre que se genere un instalador o ejecutable, debe copiarse/moverse obligatoriamente a: `E:\Proyectos Antigravity\Juegos\Ascensión\Instalador`.
+- Siempre que se genere un instalador o ejecutable, debe copiarse/moverse obligatoriamente a: `E:\Proyectos Antigravity\Juegos\Juegos para Windows\Juego Ascensión\Instalador`.
 
 ## 8. UX
 - Settings estan permitidos.
@@ -162,3 +162,23 @@ Centrarse en:
 - Frases cortas, claras y directas.
 - El asistente debe indicar cuando algo pertenece al juego y cuando pertenece al landing.
 - No tocar builds, instaladores, zips ni landing sin orden explicita.
+
+## 12. Regla de Ejecución Inmediata (Cero Re-análisis)
+- Una vez identificada la causa y la solución, actuar directamente sobre los archivos afectados.
+- Prohibido releer archivos completos si ya se conoce la línea o bloque exacto.
+- Prohibido entrar en ciclos de análisis repetitivos. Identificar -> modificar -> listo.
+
+## 13. Regla Sagrada de Null-Safety y Acceso a Recursos (Zero Undefined Crashes)
+- Prohibido acceder directamente a propiedades anidadas de recursos (`planet.resources.metal`, `planetResources.metal`) sin encadenamiento opcional `?.` o fallback defensivo `{ metal: 0, crystal: 0, deuterium: 0 }`.
+- Todo componente secundario o pestaña montada en hubs y cuadrículas (`ExchangeAmmTerminalTab`, `MinistryDeskView`, etc.) debe tener defaults seguros en sus props y tolerar estado descontrolado sin crashear.
+- Prohibido romper el render con `Cannot read properties of undefined (reading 'metal')`.
+
+## 14. Centinela de Rescate y Anticipación de Errores (Anti-Stuck Sentinel)
+- Skill permanente: `ascension-stuck-resolver`.
+- Prohibido redeclarar variables en el mismo ámbito o subámbitos de funciones extensas (`has already been declared`).
+- Todo recurso 3D/WebGL en Three.js (`PlanetViewer3D`) debe liberar geometrías y materiales (`dispose()`) en el desmontaje.
+- Toda persistencia en SQLite (`universe.db`) debe ser transaccional y tolerante a fallos sin corromper el save.
+- Ante reporte de error ("stuck"): acceso quirúrgico inmediato -> fix mínimo defensivo -> build test -> listo.
+
+
+

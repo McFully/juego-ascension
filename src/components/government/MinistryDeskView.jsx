@@ -27,9 +27,9 @@ const MinistryProgramCard = ({
     cost[resId] = Math.floor(val * Math.pow(1.8, selectedLvl - 1));
   });
 
-  const canAffordMetal = !cost.metal || (planetResources.metal >= cost.metal);
-  const canAffordCrystal = !cost.crystal || (planetResources.crystal >= cost.crystal);
-  const canAffordDeut = !cost.deuterium || (planetResources.deuterium >= cost.deuterium);
+  const canAffordMetal = !cost.metal || ((planetResources?.metal ?? 0) >= cost.metal);
+  const canAffordCrystal = !cost.crystal || ((planetResources?.crystal ?? 0) >= cost.crystal);
+  const canAffordDeut = !cost.deuterium || ((planetResources?.deuterium ?? 0) >= cost.deuterium);
   const canAffordInf = !cost.influence || (playerInfluence >= cost.influence);
   const canBuy = isNextToBuy && canAffordMetal && canAffordCrystal && canAffordDeut && canAffordInf;
 

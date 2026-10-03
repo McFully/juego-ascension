@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { useNavigation } from '../components/navigation/NavigationContext.jsx';
 import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
+import { getMinistryResearchRoute } from '../utils/researchMinistryResolver.js';
+import { getPlanetEffectiveLab } from '../core.jsx';
 
 const TechTreePage = ({ state, currentPlanet, production, fmt, RESEARCH, S, meetsReq, onOpenCodex, setActiveTab, safeSetActiveTab }) => {
   const { navigateTo, navigateBack } = useNavigation();
@@ -42,7 +44,12 @@ const TechTreePage = ({ state, currentPlanet, production, fmt, RESEARCH, S, meet
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs font-mono">
               <span className="text-slate-400">Laboratorio:</span>
-              <span className="font-bold text-purple-300">Nvl {currentPlanet?.buildings?.lab || 0}</span>
+              <span className="font-bold text-purple-300">
+                Nvl {currentPlanet?.buildings?.researchLab || 0}
+                {state?.researchNetwork?.linkedPlanetIds?.includes(currentPlanet?.id) && (
+                  <span className="text-cyan-400 ml-1" title="Enlazado a la Red Neural de Laboratorios">🔗</span>
+                )}
+              </span>
             </div>
           </div>
         }
@@ -62,7 +69,9 @@ const TechTreePage = ({ state, currentPlanet, production, fmt, RESEARCH, S, meet
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {items.map(([id, r]) => {
                   const lvl = state.research[id] || 0;
-                  const reqMet = meetsReq(r.req, { ...(currentPlanet?.buildings || {}), ...state.research });
+                  const effectiveLab = getPlanetEffectiveLab(state, currentPlanet);
+                  const reqBuildings = { ...(currentPlanet?.buildings || {}), researchLab: effectiveLab };
+                  const reqMet = meetsReq(r.req, { ...reqBuildings, ...state.research });
                   const isSelected = selTech === id;
 
                   return (
@@ -138,18 +147,34 @@ const TechTreePage = ({ state, currentPlanet, production, fmt, RESEARCH, S, meet
                   })}
                 </div>
               )}
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-wrap gap-2 pt-2">
                 <button
+                  type="button"
                   onClick={() => {
                     const fn = safeSetActiveTab || setActiveTab;
-                    if (fn) fn('research');
+                    if (fn) fn(getMinistryResearchRoute(selTech));
                     setSelTech(null);
                   }}
-                  className="flex-1 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-mono text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+                  className="flex-1 py-2 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-mono text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_20px_rgba(6,182,212,0.3)]"
                 >
-                  🔬 Investigar en Laboratorio ➔
+                  🔬 Investigar en Ministerio ➔
                 </button>
+                {onOpenCodex && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenCodex(selTech);
+                      setSelTech(null);
+                    }}
+                    className="py-2 px-3 rounded-xl bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-200 font-mono text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                    title="Ver ficha técnica completa en Codex"
+                  >
+                    <span>📋</span>
+                    <span>Ver Detalles</span>
+                  </button>
+                )}
                 <button
+                  type="button"
                   onClick={() => setSelTech(null)}
                   className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-mono text-xs font-bold uppercase transition-all cursor-pointer"
                 >
@@ -172,9 +197,9 @@ const TechTreePage = ({ state, currentPlanet, production, fmt, RESEARCH, S, meet
           badgeText="VOLVER"
           onClick={() => {
             if (navigateBack) navigateBack();
-            else if (safeSetActiveTab) safeSetActiveTab('research');
-            else if (setActiveTab) setActiveTab('research');
-            else if (navigateTo) navigateTo('research');
+            else if (safeSetActiveTab) safeSetActiveTab('overview');
+            else if (setActiveTab) setActiveTab('overview');
+            else if (navigateTo) navigateTo('overview');
           }}
         />
       </div>

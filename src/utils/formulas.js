@@ -43,7 +43,7 @@ export {
 } from './formulas/costFormulas.js';
 
 export { calcEffectiveBuildTime } from './formulas/buildTiming.js';
-export { calcPlanetResearchTime, researchTimeMultFor } from './formulas/researchTiming.js';
+export { calcPlanetResearchTime, researchTimeMultFor, getPlanetEffectiveLab, getMaxResearchQueueSlots } from './formulas/researchTiming.js';
 export { calcRemainingSeconds, calcTotalSeconds } from './formulas/timingHelpers.js';
 
 export {
@@ -88,23 +88,29 @@ export {
 import { storageCapacity, calcProduction } from './formulas/productionFormulas.js';
 import { aiResearchDiscount } from './formulas/costFormulas.js';
 
-// ============ DATOS FUSIONADOS ============
-const BUILDINGS = { ...BASE_BUILDINGS, ...EXPANDED_BUILDINGS };
-const RESEARCH = { ...BASE_RESEARCH, ...EXPANDED_RESEARCH };
+import { BUILDINGS, RESEARCH } from '../data/catalog/index.js';
+import { calcBuildingDeutCons, calcBuildingEnergyGen } from './formulas/energyFormulas.js';
 
 // ============ UTILIDADES ============
 export const fmt = (n, opts = {}) => {
   if (n == null || isNaN(n)) return '0';
   const num = Math.floor(n);
   
-  if (opts.full || num < 10000) {
+  if (opts.full) {
     return num.toLocaleString();
   }
   
-  if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
-  if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-  if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-  if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+  const absNum = Math.abs(num);
+  const sign = num < 0 ? '-' : '';
+
+  if (absNum < 10000) {
+    return num.toLocaleString();
+  }
+  
+  if (absNum >= 1e12) return sign + (absNum / 1e12).toFixed(2) + 'T';
+  if (absNum >= 1e9) return sign + (absNum / 1e9).toFixed(2) + 'B';
+  if (absNum >= 1e6) return sign + (absNum / 1e6).toFixed(2) + 'M';
+  if (absNum >= 1e3) return sign + (absNum / 1e3).toFixed(1) + 'K';
   return num.toLocaleString();
 };
 
@@ -176,6 +182,7 @@ export const clampResources = (res) => ({
   metal: Math.max(0, res.metal || 0),
   crystal: Math.max(0, res.crystal || 0),
   deuterium: Math.max(0, res.deuterium || 0),
+  slag: Math.max(0, res.slag || 0),
 });
 
 export const meetsReq = (req, research) => {
@@ -359,35 +366,35 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
   const compute = (l) => {
     if (b.prod === 'metal') {
       const base = (b.baseProd ? b.baseProd * 1.5 : 45);
-      const energy = Math.abs(b.energy || 10);
+      const cons = l > 0 ? calcBuildingEnergyDemand(id, l) : 0;
       const metalProd = base * speed * l * Math.pow(1.1, l) * productionFactor * globalTechMult * prodBonus * (1 + biomeBonusMetal - traitMalus) * gravProdMult * specMetal * ratio;
       return {
         type: 'mine',
         resource: 'metal',
         resourceIcon: '⛏️',
         prod: l > 0 ? Math.round(metalProd) : 0,
-        cons: l > 0 ? Math.floor(energy * l * Math.pow(1.1, l)) : 0,
+        cons,
         consType: 'energy',
         consIcon: '⚡',
       };
     }
     if (b.prod === 'crystal') {
       const base = (b.baseProd ? b.baseProd * 1.5 : 30);
-      const energy = Math.abs(b.energy || 10);
+      const cons = l > 0 ? calcBuildingEnergyDemand(id, l) : 0;
       const crystalProd = base * speed * l * Math.pow(1.1, l) * productionFactor * globalTechMult * prodBonus * (1 + biomeBonusCrystal - traitMalus) * gravProdMult * specCrystal * ratio;
       return {
         type: 'mine',
         resource: 'crystal',
         resourceIcon: '💎',
         prod: l > 0 ? Math.round(crystalProd) : 0,
-        cons: l > 0 ? Math.floor(energy * l * Math.pow(1.1, l)) : 0,
+        cons,
         consType: 'energy',
         consIcon: '⚡',
       };
     }
     if (b.prod === 'deuterium') {
       const base = (b.baseProd ? b.baseProd * 1.5 : 22.5);
-      const energy = Math.abs(b.energy || 20);
+      const cons = l > 0 ? calcBuildingEnergyDemand(id, l) : 0;
       const tempFactor = 0.7 + temp * 0.006;
       let deutProd = base * speed * l * Math.pow(1.1, l) * Math.max(0.5, Math.min(1.3, tempFactor)) * productionFactor * globalTechMult * prodBonus * (1 + biomeBonusDeuterium - traitMalus) * gravProdMult * specDeut * ratio;
       if (planet.galaxy && planet.system && planet.position) {
@@ -399,7 +406,7 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
         resource: 'deuterium',
         resourceIcon: '⚗️',
         prod: l > 0 ? Math.round(deutProd) : 0,
-        cons: l > 0 ? Math.floor(energy * l * Math.pow(1.1, l)) : 0,
+        cons,
         consType: 'energy',
         consIcon: '⚡',
       };
@@ -409,8 +416,8 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
         type: 'power',
         resource: 'energy',
         resourceIcon: '⚡',
-        prod: l > 0 ? Math.floor(b.energyGen * l * Math.pow(1.1, l)) : 0,
-        cons: l > 0 && b.deutCons ? Math.floor(b.deutCons * l * Math.pow(1.1, l)) : 0,
+        prod: l > 0 ? calcBuildingEnergyGen(id, l) : 0,
+        cons: l > 0 ? calcBuildingDeutCons(id, l) : 0,
         consType: b.deutCons ? 'deuterium' : null,
         consIcon: b.deutCons ? '⚗️' : null,
       };
@@ -427,16 +434,57 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
         consIcon: b.energy ? '⚡' : null,
       };
     }
-    if (b.cat === 'civil' || b.cat === 'government') {
+    if (b.cat === 'civil' || b.cat === 'government' || b.cat === 'special' || b.cat === 'facility') {
       const cons = l > 0 && b.energy ? calcBuildingEnergyDemand(id, l) : 0;
+      
+      // Cálculo dinámico de beneficio cuantificable por nivel
+      let statLabel = null;
+      let statValue = null;
+      let statUnit = '';
+      let statIcon = '📈';
+
+      if (id === 'prefabHousingUnit') { statLabel = 'Censo Máximo'; statValue = l * 12000; statUnit = ' hab.'; statIcon = '👥'; }
+      else if (id === 'arcologyAlpha') { statLabel = 'Censo Arcología'; statValue = l * 200000; statUnit = ' hab.'; statIcon = '🏢'; }
+      else if (id === 'healthCenter') { statLabel = 'Capacidad Médica'; statValue = l * 25000; statUnit = ' hab.'; statIcon = '🏥'; }
+      else if (id === 'bioRegenClinic') { statLabel = 'Capacidad Bio-Regen'; statValue = l * 40000; statUnit = ' hab.'; statIcon = '🧬'; }
+      else if (id === 'biomeDomeSimulation') { statLabel = 'Hábitat Biosférico'; statValue = l * 80000; statUnit = ' hab.'; statIcon = '🌳'; }
+      else if (id === 'communityCenter') { statLabel = 'Cohesión Social'; statValue = l * 8000; statUnit = ' hab.'; statIcon = '👥'; }
+      else if (id === 'urbanHydroponic') { statLabel = 'Alimentos Hidropónicos'; statValue = l * 10000; statUnit = ' hab.'; statIcon = '🥬'; }
+      else if (id === 'waterTreatmentPlant') { statLabel = 'Soporte Vital Hídrico'; statValue = l * 10000; statUnit = ' hab.'; statIcon = '🚰'; }
+      else if (id === 'pollutionScrubbers') { statLabel = 'Purificación Aire'; statValue = Number((l * 2.5).toFixed(1)); statUnit = '%'; statIcon = '💨'; }
+      else if (id === 'civilPowerGrid') { statLabel = 'Red Eléctrica Civil'; statValue = Number((l * 4.0).toFixed(1)); statUnit = '%'; statIcon = '⚡'; }
+      else if (id === 'townHall') { statLabel = 'Crecimiento y Productividad'; statValue = Number((l * 1.5).toFixed(1)); statUnit = '%'; statIcon = '🏛️'; }
+      else if (id === 'leisureCenter') { statLabel = 'Moral y Producción'; statValue = Number((l * 1.0).toFixed(1)); statUnit = '%'; statIcon = '🎡'; }
+      else if (id === 'holographicLeisure') { statLabel = 'Moral Holográfica'; statValue = Number((l * 1.0).toFixed(1)); statUnit = '%'; statIcon = '🎮'; }
+      else if (id === 'geosphericEcoPark') { statLabel = 'Bienestar Ecológico'; statValue = Number((l * 1.0).toFixed(1)); statUnit = '%'; statIcon = '🌲'; }
+      else if (id === 'sectorGovPalace') { statLabel = 'Administración Sectorial'; statValue = Number((l * 2.0).toFixed(1)); statUnit = '%'; statIcon = '👑'; }
+      else if (id === 'councilChamber') { statLabel = 'Eficiencia del Consejo'; statValue = Number((l * 1.5).toFixed(1)); statUnit = '%'; statIcon = '🏛️'; }
+      else if (id === 'robotFactory') { statLabel = 'Velocidad Construcción'; statValue = Number((l * 10).toFixed(0)); statUnit = '%'; statIcon = '🤖'; }
+      else if (id === 'naniteFactory') { statLabel = 'Aceleración Nanotec'; statValue = Number((l * 50).toFixed(0)); statUnit = '%'; statIcon = '🧬'; }
+      else if (id === 'shipyard') { statLabel = 'Capacidad Ensamblaje Flota'; statValue = Number((l * 10).toFixed(0)); statUnit = '%'; statIcon = '🚀'; }
+      else if (id === 'researchLab') { statLabel = 'Potencia de Cómputo Inv.'; statValue = Number((l * 10).toFixed(0)); statUnit = '%'; statIcon = '🔬'; }
+      else if (id === 'hyperloopNetwork') { statLabel = 'Flujo Logístico Maglev'; statValue = Number((l * 12).toFixed(0)); statUnit = '%'; statIcon = '🚄'; }
+      else if (id === 'massDriver') { statLabel = 'Ahorro Combustible Vuelo'; statValue = Number((Math.min(75, l * 8)).toFixed(0)); statUnit = '%'; statIcon = '⚡'; }
+      else if (id === 'slagDenseArmorForge') { statLabel = 'Metal y Blindaje Pesado'; statValue = l * 8500; statUnit = '/h'; statIcon = '🛡️'; }
+      else if (id === 'slagPavingPlant') { statLabel = 'Suelo y Hábitat Colonial'; statValue = l * 15000; statUnit = ' hab.'; statIcon = '🛣️'; }
+      else if (id === 'slagSyntheticSynthesizer') { statLabel = 'Cristal y Deuterio Extra'; statValue = l * 6200; statUnit = '/h'; statIcon = '⚗️'; }
+      else if (id === 'financeMinistry') { statLabel = 'Recaudación de Créditos'; statValue = l * 2500; statUnit = ' cr/h'; statIcon = '💵'; }
+      else if (id === 'futuresExchange') { statLabel = 'Rendimiento Bursátil'; statValue = Number((l * 3.5).toFixed(1)); statUnit = '%'; statIcon = '📈'; }
+      else if (id === 'exchangeBank') { statLabel = 'Banca y Emisión de Crédito'; statValue = l * 15000; statUnit = ' cr/h'; statIcon = '💎'; }
+      else if (id === 'exchangeVaults') { statLabel = 'Bóveda de Custodia Blindada'; statValue = l * 500000; statUnit = ' res.'; statIcon = '🏦'; }
+
       return {
         type: b.cat,
         resource: 'colonia',
-        resourceIcon: '🏛️',
-        desc: b.desc || 'Mejora calidad de vida y administración.',
+        resourceIcon: statIcon,
+        desc: b.desc || 'Mejora de infraestructura colonial.',
         cons,
         consType: b.energy ? 'energy' : null,
         consIcon: b.energy ? '⚡' : null,
+        statLabel,
+        statValue,
+        statUnit,
+        statIcon
       };
     }
     const facilityCons = l > 0 && b.energy ? calcBuildingEnergyDemand(id, l) : 0;
@@ -458,6 +506,12 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
   }
   if (current.capacity !== undefined) {
     result.deltaCapacity = next.capacity - current.capacity;
+  }
+  if (current.statValue !== undefined && next.statValue !== undefined) {
+    result.deltaStat = Number((next.statValue - current.statValue).toFixed(1));
+    result.statLabel = next.statLabel;
+    result.statUnit = next.statUnit;
+    result.statIcon = next.statIcon;
   }
   return result;
 };

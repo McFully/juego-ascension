@@ -41,7 +41,8 @@ export const MINISTRY_MAPPING = {
     icon: '🏭',
     color: '#ea580c',
     buildings: [
-      'refinery', 'chemPlant', 'synthPlant', 'enrichPlant'
+      'refinery', 'chemPlant', 'synthPlant', 'enrichPlant', 'slagRecycler',
+      'slagDenseArmorForge', 'slagPavingPlant', 'slagSyntheticSynthesizer'
     ],
     research: ['industrialOpt', 'modularEng']
   },
@@ -153,12 +154,12 @@ export const MINISTRY_MAPPING = {
     icon: '📦',
     color: '#0ea5e9',
     buildings: [
-      'metalStorage', 'crystalStorage', 'deutStorage', 'vault', 'orbitalStorage', 'spacePort', 'logiCenter'
+      'metalStorage', 'crystalStorage', 'deutStorage', 'slagStorage', 'logiCenter', 'vault', 'orbitalStorage', 'spacePort'
     ],
     ships: [
-      'smallCargo', 'largeCargo', 'recycler'
+      'smallCargo', 'largeCargo', 'heavyFreighter', 'cargoTitan', 'recycler'
     ],
-    research: ['advLogistics']
+    research: ['advLogistics', 'molecularCargoCompress']
   },
   biosphere: {
     id: 'biosphere',
@@ -236,6 +237,16 @@ export const MINISTRY_MAPPING = {
       'leisureCenter', 'holographicLeisure', 'stellarProjectionTheater', 'zeroGravityGym', 'schoolEduCenter', 'stellarPhilosophyTemple', 'historicImperialArchive'
     ],
     research: ['astrophysics', 'advSensors', 'galacticCrypto', 'galacticCartography']
+  },
+  finance: {
+    id: 'finance',
+    name: 'Ministerio de Finanzas y Banca',
+    icon: '🏦',
+    color: '#eab308',
+    buildings: [
+      'financeMinistry', 'futuresExchange', 'exchangeBank', 'exchangeVaults', 'galacticMarket'
+    ],
+    research: ['galacticTrade', 'galacticCrypto', 'quantumCrypto']
   }
 };
 
@@ -329,13 +340,32 @@ const BASE_BUILDING_OPERATIONS = {
   },
   refinery: {
     title: 'Altos Hornos de Aleaciones',
-    ministry: 'economy',
+    ministry: 'industry',
     modes: [
       { id: 'metal_focus', name: 'Laminado Pesado de Titanio', desc: 'Convierte parte del cristal en metal ultra denso (+15% metal).', prodBonusMetal: 1.15 },
       { id: 'pure_slag', name: 'Reciclaje de Escoria Integral', desc: 'Recupera un 5% extra de todos los recursos procesados.' }
     ],
     actions: [
       { id: 'smeltReserves', name: 'Colada Continua de Emergencia', desc: 'Funde escoria en bruto convirtiéndola en 2.000 unidades de metal inmediato.', cost: { deuterium: 100 }, cooldownSec: 150 }
+    ]
+  },
+  slagRecycler: {
+    title: 'Planta de Revalorización y Reciclaje de Escoria',
+    ministry: 'industry',
+    modes: [
+      { id: 'circular_standard', name: 'Ciclo Cerrado Sostenible', desc: 'Recuperación equilibrada de aleaciones metálicas (70%) y matrices cristalinas (25%).' },
+      { id: 'overdrive_refine', name: 'Purificación Térmica Forzada', desc: '+25% tasa de conversión de escoria, requiere +20% energía.', energyMod: 1.2 }
+    ],
+    actions: [
+      { id: 'purgeVats', name: 'Purga Rápida de Crisoles', desc: 'Evacua 1.000 unidades de escoria residual acumulada de forma instantánea.', cost: { deuterium: 50 }, cooldownSec: 90 }
+    ]
+  },
+  slagStorage: {
+    title: 'Silos Blindados de Escoria',
+    ministry: 'logistics',
+    modes: [
+      { id: 'pressurized', name: 'Contención Presurizada', desc: 'Sella los residuos pesados evitando cualquier contaminación ambiental.', protectRate: 1.0 },
+      { id: 'overflow_filter', name: 'Filtro de Desbordamiento', desc: 'Prioriza el vaciado continuo hacia los recicladores locales.' }
     ]
   },
 

@@ -64,9 +64,13 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
           </div>
         }
       />
-      {/* Fabricación de Misiles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.entries(MISSILES).map(([id, m]) => {
+      {/* Grid de 3 Tarjetas en la Misma Línea: Misil Interplanetario | Misil Antibalístico | Consola de Lanzamiento */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+        {/* Tarjeta 1: Misil Interplanetario */}
+        {(() => {
+          const id = 'interplanetaryMissile';
+          const m = MISSILES.interplanetaryMissile;
+          if (!m) return null;
           const cost = {
             metal: m.cost.m * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0),
             crystal: m.cost.c * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0),
@@ -77,7 +81,7 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
           const canBuild = totalUsed < maxMissiles && canAfford(currentPlanet.resources, cost) && meets;
 
           return (
-            <div key={id} className="p-5 rounded-3xl bg-[#0c0d1e]/80 border border-white/10 flex flex-col justify-between hover:border-red-500/40 transition-all">
+            <div key={id} className="p-5 rounded-3xl bg-[#0c0d1e]/80 border border-white/10 flex flex-col justify-between hover:border-red-500/40 transition-all h-full">
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -89,11 +93,13 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
                   </div>
                   {onOpenCodex && (
                     <button
-                      onClick={() => onOpenCodex(id)}
-                      className="p-1 rounded bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-300 transition-all text-xs"
-                      title="Ver detalles"
+                      type="button"
+                      onClick={() => onOpenCodex && onOpenCodex(id)}
+                      className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 border border-red-500/40 text-red-200 hover:text-white flex items-center justify-center text-xs font-mono font-bold transition-all shadow-sm cursor-pointer"
+                      title="Ver detalles completos del misil"
+                      aria-label="Ver detalles completos del misil"
                     >
-                      📖
+                      <span>📋</span>
                     </button>
                   )}
                 </div>
@@ -126,81 +132,153 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
               </button>
             </div>
           );
-        })}
-      </div>
+        })()}
 
-      {/* Consola de Lanzamiento */}
-      {haveIPMs > 0 && (
-        <div className="p-6 rounded-3xl bg-[#140a0e]/80 border border-red-500/30 space-y-4">
-          <h3 className="text-base font-bold text-white uppercase flex items-center gap-2">
-            <span>🔥</span> Consola de Lanzamiento Balístico Suborbital
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Galaxia (1-9)</label>
-              <input
-                type="number"
-                min={1}
-                max={9}
-                value={targetGal}
-                onChange={e => setTargetGal(Math.max(1, Math.min(9, parseInt(e.target.value) || 1)))}
-                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
-              />
+        {/* Tarjeta 2: Misil Antibalístico */}
+        {(() => {
+          const id = 'antiBallisticMissile';
+          const m = MISSILES.antiBallisticMissile;
+          if (!m) return null;
+          const cost = {
+            metal: m.cost.m * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0),
+            crystal: m.cost.c * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0),
+            deuterium: (m.cost.d || 0) * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0)
+          };
+          const have = currentMissiles[id] || 0;
+          const meets = meetsReq ? meetsReq(m.req, { ...currentPlanet.buildings, ...state.research }) : true;
+          const canBuild = totalUsed < maxMissiles && canAfford(currentPlanet.resources, cost) && meets;
+
+          return (
+            <div key={id} className="p-5 rounded-3xl bg-[#0c0d1e]/80 border border-white/10 flex flex-col justify-between hover:border-red-500/40 transition-all h-full">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{m.icon}</span>
+                    <div>
+                      <h4 className="text-sm font-bold text-white uppercase">{m.name}</h4>
+                      <span className="text-xs font-mono text-slate-400">Disponibles: <strong className="text-red-300 font-bold">{have}</strong></span>
+                    </div>
+                  </div>
+                  {onOpenCodex && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenCodex && onOpenCodex(id)}
+                      className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 border border-red-500/40 text-red-200 hover:text-white flex items-center justify-center text-xs font-mono font-bold transition-all shadow-sm cursor-pointer"
+                      title="Ver detalles completos del misil"
+                      aria-label="Ver detalles completos del misil"
+                    >
+                      <span>📋</span>
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 mb-4">{m.desc || 'No disponible'}</p>
+                <div className="flex flex-wrap gap-2 text-[10px] font-mono mb-4 bg-[#05070f] p-2.5 rounded-xl border border-white/5">
+                  <span className={`font-medium ${(currentPlanet?.resources?.metal ?? 0) >= cost.metal ? 'text-emerald-400' : 'text-rose-400'}`}>⛏️ {fmt(cost.metal)}</span>
+                  <span className={`font-medium ${(currentPlanet?.resources?.crystal ?? 0) >= cost.crystal ? 'text-emerald-400' : 'text-rose-400'}`}>💎 {fmt(cost.crystal)}</span>
+                  {cost.deuterium > 0 && (
+                    <span className={`font-medium ${(currentPlanet?.resources?.deuterium ?? 0) >= cost.deuterium ? 'text-emerald-400' : 'text-rose-400'}`}>⚗️ {fmt(cost.deuterium)}</span>
+                  )}
+                </div>
+                {m.req && !meets && (
+                  <div className="text-[10px] text-red-400 mb-3 p-1.5 rounded-lg bg-red-950/30 border border-red-500/20 leading-tight font-mono flex items-center gap-1.5">
+                    <span>🔒</span>
+                    <span>Req: {Object.entries(m.req).map(([k, v]) => `${RESEARCH?.[k]?.name || k} Nv.${v}`).join(', ')}</span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                disabled={!canBuild}
+                onClick={() => dispatch({ type: 'BUILD_MISSILE', missileId: id, quantity: 1 })}
+                className={`w-full py-2.5 rounded-xl text-xs font-mono font-bold uppercase transition-all ${
+                  !canBuild
+                    ? 'bg-slate-900 border border-white/10 text-slate-600 cursor-not-allowed'
+                    : 'bg-red-500/20 border border-red-500/50 text-red-300 hover:bg-red-500/30 hover:border-red-400 cursor-pointer shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                }`}
+              >
+                {!meets ? 'Requisitos no cumplidos' : (totalUsed >= maxMissiles ? 'Silo lleno' : 'Fabricar 1 unidad')}
+              </button>
             </div>
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Sistema (1-499)</label>
-              <input
-                type="number"
-                min={1}
-                max={499}
-                value={targetSys}
-                onChange={e => setTargetSys(Math.max(1, Math.min(499, parseInt(e.target.value) || 1)))}
-                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
-              />
+          );
+        })()}
+
+        {/* Tarjeta 3: Consola de Lanzamiento Balístico Suborbital */}
+        <div className="p-5 rounded-3xl bg-[#140a0e]/80 border border-red-500/30 flex flex-col justify-between hover:border-red-500/60 transition-all h-full">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-3xl">🔥</span>
+              <div>
+                <h4 className="text-sm font-bold text-white uppercase leading-tight">Consola Balística</h4>
+                <span className="text-xs font-mono text-slate-400">
+                  Lanzamiento Suborbital ({haveIPMs} disponibles)
+                </span>
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Posición (1-15)</label>
-              <input
-                type="number"
-                min={1}
-                max={15}
-                value={targetPos}
-                onChange={e => setTargetPos(Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))}
-                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Cantidad (Disponibles: {haveIPMs})</label>
-              <input
-                type="number"
-                min={1}
-                max={haveIPMs}
-                value={launchQty}
-                onChange={e => setLaunchQty(Math.max(1, Math.min(haveIPMs, parseInt(e.target.value) || 1)))}
-                className="w-full bg-[#05070f] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
-              />
+
+            <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+              Dispara ráfagas de misiles interplanetarios hacia coordenadas de la galaxia para arrasar defensas.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Galaxia (1-9)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={9}
+                  value={targetGal}
+                  onChange={e => setTargetGal(Math.max(1, Math.min(9, parseInt(e.target.value) || 1)))}
+                  className="w-full bg-[#05070f] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Sistema (1-499)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={499}
+                  value={targetSys}
+                  onChange={e => setTargetSys(Math.max(1, Math.min(499, parseInt(e.target.value) || 1)))}
+                  className="w-full bg-[#05070f] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Posición (1-15)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={15}
+                  value={targetPos}
+                  onChange={e => setTargetPos(Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))}
+                  className="w-full bg-[#05070f] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">Cantidad</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={Math.max(1, haveIPMs)}
+                  value={launchQty}
+                  onChange={e => setLaunchQty(Math.max(1, Math.min(Math.max(1, haveIPMs), parseInt(e.target.value) || 1)))}
+                  className="w-full bg-[#05070f] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-red-300 text-center focus:outline-none focus:border-red-400"
+                />
+              </div>
             </div>
           </div>
+
           <button
+            disabled={haveIPMs < 1}
             onClick={handleLaunch}
-            className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-mono font-black uppercase tracking-widest text-sm shadow-[0_0_25px_rgba(239,68,68,0.5)] transition-all cursor-pointer"
+            className={`w-full py-2.5 rounded-xl font-mono font-black uppercase tracking-wider text-xs transition-all ${
+              haveIPMs < 1
+                ? 'bg-slate-900 border border-white/10 text-slate-600 cursor-not-allowed'
+                : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.4)] cursor-pointer active:scale-98'
+            }`}
           >
-            🚀 Ejecutar Ignición y Disparo Balístico
+            {haveIPMs < 1 ? 'Sin Misiles Listos' : '🚀 Ejecutar Disparo'}
           </button>
         </div>
-      )}
-
-      {/* Tarjeta de Retorno a Alto Mando */}
-      <div className="pt-2">
-        <ActionCardTile
-          type="back"
-          title="Volver al Alto Mando"
-          subtitle="Regresar al Alto Mando"
-          badgeText="VOLVER"
-          onClick={() => {
-            if (navigateBack) navigateBack();
-          }}
-        />
       </div>
     </div>
   );

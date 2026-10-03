@@ -1,5 +1,6 @@
 import React from 'react';
 import { BIOMES } from '../../../data/gameData.js';
+import { getPlanetHeritage } from '../../../data/planetaryHeritageData.js';
 
 /**
  * PlanetTableView — Vista de matriz compacta de mundos del Imperio para evitar el scroll.
@@ -63,8 +64,17 @@ export function PlanetTableView({
                   <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
                     <span className="text-base">🪐</span>
                     <div>
-                      <div className="text-cyan-300 font-black tracking-wide text-xs">
-                        {planet.name}
+                      <div className="text-cyan-300 font-black tracking-wide text-xs flex items-center gap-1.5">
+                        <span>{planet.name}</span>
+                        {(() => {
+                          const h = getPlanetHeritage(planet);
+                          if (!h) return null;
+                          return (
+                            <span title={h.name + ': ' + h.bonusDesc} className="text-[9px] font-normal text-cyan-200 bg-cyan-950/80 px-1 py-0.2 rounded border border-cyan-500/30">
+                              {h.icon}
+                            </span>
+                          );
+                        })()}
                       </div>
                       {planet.isHome && (
                         <span className="text-[9px] text-amber-400 font-bold uppercase">Capital</span>

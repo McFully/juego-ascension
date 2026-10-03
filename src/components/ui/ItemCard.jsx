@@ -134,24 +134,6 @@ export const ItemCard = React.memo(({
               <span className="text-lg font-black text-white tabular-nums">{level}</span>
               {maxLevel && <span className="text-[10px] text-slate-600 font-mono">/ {maxLevel}</span>}
             </div>
-
-            {!maxReached && (
-              <div className="mt-1.5 mb-2">
-                <div className="w-full h-1.5 bg-[#05070f] rounded-full overflow-hidden border border-white/5">
-                  <div
-                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-300"
-                    style={{
-                      width: maxLevel ? `${Math.min(100, (level / maxLevel) * 100)}%` : `${Math.min(90, level * 8)}%`,
-                      boxShadow: '0 0 8px rgba(6,182,212,0.4)',
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between mt-0.5">
-                  <span className="text-[8px] text-slate-600 font-mono">Nv.{level}</span>
-                  <span className="text-[8px] text-cyan-500/60 font-mono">→ Nv.{level + 1}</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -161,7 +143,7 @@ export const ItemCard = React.memo(({
         {extra && <div className="text-xs text-slate-400 mb-2">{extra}</div>}
 
         {/* Sección de Costes Submodularizada */}
-        <ItemCardCostSection cost={cost} time={time} canAfford={canAfford} planetResources={planetResources} />
+        <ItemCardCostSection cost={cost} time={time} canAfford={canAfford} planetResources={planetResources} prodInfo={prodInfo} />
       </div>
 
       {/* Action Buttons */}
@@ -179,11 +161,14 @@ export const ItemCard = React.memo(({
             : actionLabel}
         </button>
         {onOpenCodex && (
-          <button onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
-            className={`px-3 ${S.btn} ${S.btnGhost} flex items-center justify-center focus-ring-game`}
-            title="Ver detalles"
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
+            className={`px-2.5 py-1.5 ${S.btn} bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-200 hover:text-white flex items-center justify-center focus-ring-game text-xs font-mono font-bold transition shadow-sm`}
+            title="Ver detalles completos en Codex"
+            aria-label="Ver detalles completos en Codex"
           >
-            ℹ️
+            <span>📋</span>
           </button>
         )}
         {onOpenInterior && level > 0 && (

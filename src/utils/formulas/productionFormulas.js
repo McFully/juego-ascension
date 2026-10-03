@@ -7,25 +7,14 @@ import {
   GRAVITY_LEVELS,
   PLANET_TRAITS
 } from '../../data/gameData.js';
-import { EXPANDED_BUILDINGS } from '../../data/expandedContent.js';
+import { BUILDINGS } from '../../data/catalog/index.js';
 import { getPOIAtCoordinates } from './coordinatesFormulas.js';
+import { calcBuildingEnergyDemand, rawBuildingEnergyGen, calcBuildingDeutCons } from './energyFormulas.js';
 
-const BUILDINGS = { ...BASE_BUILDINGS, ...EXPANDED_BUILDINGS };
+export { calcBuildingEnergyDemand };
 
 export const REFINERY_REWARD_MULTIPLIER = 200;
 export const BASE_REFINERY_PROD = 5000;
-
-export const calcBuildingEnergyDemand = (id, lvl) => {
-  if (!lvl || lvl <= 0) return 0;
-  const b = BUILDINGS[id];
-  if (!b || !b.energy) return 0;
-  const base = Math.abs(b.energy);
-  const factor = b.energyFactor || ((b.cat === 'civil' || b.cat === 'government') ? 1.04 : 1.0);
-  if (factor > 1) {
-    return Math.floor(base * lvl * Math.pow(factor, lvl));
-  }
-  return Math.floor(base * lvl);
-};
 
 export const calcPlanetMaxPop = (planet) => {
   if (!planet) return 5000;
@@ -38,6 +27,7 @@ export const calcPlanetMaxPop = (planet) => {
   const communityLvl = b.communityCenter || 0;
   const biomeDomeLvl = b.biomeDomeSimulation || 0;
   const arcologyLvl = b.arcologyAlpha || 0;
+  const slagPavingLvl = b.slagPavingPlant || 0;
 
   const bioData = (planet.biome && BIOMES[planet.biome]) ? BIOMES[planet.biome] : {};
   const spaceMod = bioData.buildSpaceMod || 1.0;
@@ -51,7 +41,8 @@ export const calcPlanetMaxPop = (planet) => {
     waterLvl * 10000 +
     communityLvl * 8000 +
     biomeDomeLvl * 80000 +
-    arcologyLvl * 200000
+    arcologyLvl * 200000 +
+    slagPavingLvl * 15000
   );
   return Math.floor(baseMaxPop * spaceMod);
 };
@@ -66,7 +57,7 @@ export const calcStorage = (buildings, research = {}) => {
     metal: Math.floor((storageCapacity(b.metalStorage || 0) + (b.metalMegaStorage || 0) * 500000) * syncedMult),
     crystal: Math.floor((storageCapacity(b.crystalStorage || 0) + (b.crystalMegaStorage || 0) * 500000) * syncedMult),
     deuterium: Math.floor((storageCapacity(b.deutStorage || 0) + (b.deutMegaStorage || 0) * 300000) * syncedMult),
-    slag: Math.floor((100000 + (b.metalStorage || 0) * 20000 + (b.metalMegaStorage || 0) * 200000) * syncedMult),
+    slag: Math.floor((storageCapacity(b.slagStorage || 0) + (b.metalMegaStorage || 0) * 200000) * syncedMult),
   };
 };
 
@@ -80,7 +71,39 @@ export const researchTimeBonus = (b, r = {}) => {
 
 export const LAB_RESEARCH_BONUS_MULT = 10;
 
+// Caché LRU ligera para calcProduction (evita re-computar 200+ operaciones por tick si los datos no cambian)
+const PROD_CACHE = new Map();
+const MAX_PROD_CACHE_SIZE = 100;
+
+export const clearProductionCache = () => PROD_CACHE.clear();
+
 export const calcProduction = (buildings, research, temp, speed = 1, factionKey = 'human', biomeKey = null, gravityIdx = null, trait = null, specialization = null, coords = null, taxRate = 0, relics = []) => {
+  const b = buildings || {};
+  const r = research || {};
+  
+  // Generar firma compacta y determinista
+  const bSig = `${b.metalMine || 0}:${b.crystalMine || 0}:${b.deutSynth || 0}:${b.solarPlant || 0}:${b.fusionReactor || 0}:${b.geoPlant || 0}:${b.orbitalEnergy || 0}:${b.quantumReactor || 0}:${b.refinery || 0}:${b.chemPlant || 0}:${b.synthPlant || 0}:${b.enrichPlant || 0}:${b.slagDenseArmorForge || 0}:${b.slagPavingPlant || 0}:${b.slagSyntheticSynthesizer || 0}:${b.slagRecycler || 0}:${b.arcologyAlpha || 0}:${b.hyperloopNetwork || 0}:${b.civilPowerGrid || 0}:${b.healthCenter || 0}`;
+  const rSig = `${r.plasma || 0}:${r.miningAuto || 0}:${r.aiProd || 0}:${r.energy || 0}:${r.advReactors || 0}:${r.quantumNetworks || 0}:${r.rtgGenerator || 0}:${r.quantumEnergy || 0}`;
+  const traitSig = trait?.id || trait?.name || '';
+  const coordsSig = coords ? `${coords.galaxy || 1}:${coords.system || 1}:${coords.position || 1}` : '';
+  const relicsSig = !relics ? '' : (Array.isArray(relics) ? relics.length : JSON.stringify(relics));
+
+  const cacheKey = `${bSig}|${rSig}|${temp}|${speed}|${factionKey}|${biomeKey}|${gravityIdx}|${traitSig}|${specialization}|${coordsSig}|${taxRate}|${relicsSig}`;
+  if (PROD_CACHE.has(cacheKey)) {
+    return PROD_CACHE.get(cacheKey);
+  }
+
+  const result = calcProductionRaw(b, r, temp, speed, factionKey, biomeKey, gravityIdx, trait, specialization, coords, taxRate, relics);
+  
+  if (PROD_CACHE.size >= MAX_PROD_CACHE_SIZE) {
+    const firstKey = PROD_CACHE.keys().next().value;
+    PROD_CACHE.delete(firstKey);
+  }
+  PROD_CACHE.set(cacheKey, result);
+  return result;
+};
+
+const calcProductionRaw = (buildings, research, temp, speed = 1, factionKey = 'human', biomeKey = null, gravityIdx = null, trait = null, specialization = null, coords = null, taxRate = 0, relics = []) => {
   const ml = buildings.metalMine || 0;
   const cl = buildings.crystalMine || 0;
   const dl = buildings.deutSynth || 0;
@@ -124,18 +147,18 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
   let traitBonusMetal = 0, traitBonusCrystal = 0, traitBonusDeuterium = 0, traitMalus = 0;
   if (trait) {
     const eff = trait.effect ? (typeof trait.effect === 'function' ? trait.effect({}) : trait.effect) : {};
-    traitBonusMetal = eff.metal || 0;
-    traitBonusCrystal = eff.crystal || 0;
-    traitBonusDeuterium = eff.deuterium || 0;
+    traitBonusMetal = eff.metal || trait.prodBonus?.metal || 0;
+    traitBonusCrystal = eff.crystal || trait.prodBonus?.crystal || 0;
+    traitBonusDeuterium = eff.deuterium || trait.prodBonus?.deuterium || 0;
     traitMalus = eff.malus || 0;
   }
 
   const productionFactor = Math.max(0, (1 - (taxRate || 0)));
 
-  const metalBase = 45 * speed * ml * Math.pow(1.1, ml) * productionFactor;
-  const crystalBase = 30 * speed * cl * Math.pow(1.1, cl) * productionFactor;
+  const metalBase = (BUILDINGS.metalMine?.baseProd || 45) * speed * ml * Math.pow(1.1, ml) * productionFactor;
+  const crystalBase = (BUILDINGS.crystalMine?.baseProd || 30) * speed * cl * Math.pow(1.1, cl) * productionFactor;
   const tempFactor = 0.7 + (temp || 0) * 0.006;
-  const deutBase = 22.5 * speed * dl * Math.pow(1.1, dl) * Math.max(0.5, Math.min(1.3, tempFactor)) * productionFactor;
+  const deutBase = (BUILDINGS.deutSynth?.baseProd || 22.5) * speed * dl * Math.pow(1.1, dl) * Math.max(0.5, Math.min(1.3, tempFactor)) * productionFactor;
 
   const plasmaBonus = 1 + pl * 0.10;
   const miningAutoBonus = 1 + (research.miningAuto || 0) * 0.10;
@@ -180,9 +203,9 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
 
   const globalTechMult = plasmaBonus * miningAutoBonus * aiProdBonus;
 
-  let metalProd = metalBase * globalTechMult * prodBonus * govMetalMult * (1 + biomeBonusMetal - traitMalus) * gravProdMult;
-  let crystalProd = crystalBase * globalTechMult * prodBonus * govCrystalMult * (1 + biomeBonusCrystal - traitMalus) * gravProdMult;
-  let deutProd = deutBase * globalTechMult * prodBonus * govDeutMult * (1 + biomeBonusDeuterium - traitMalus) * gravProdMult;
+  let metalProd = metalBase * globalTechMult * prodBonus * govMetalMult * (1 + biomeBonusMetal + traitBonusMetal - traitMalus) * gravProdMult;
+  let crystalProd = crystalBase * globalTechMult * prodBonus * govCrystalMult * (1 + biomeBonusCrystal + traitBonusCrystal - traitMalus) * gravProdMult;
+  let deutProd = deutBase * globalTechMult * prodBonus * govDeutMult * (1 + biomeBonusDeuterium + traitBonusDeuterium - traitMalus) * gravProdMult;
 
   const refineryLvl = buildings.refinery || 0;
   const vacuumForgeLvl = buildings.vacuumForge || 0;
@@ -207,10 +230,21 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
     * speed * productionFactor * hyperloopMult
   );
 
-  // Capacidad de reciclaje activa (slagRecycler y urbanGarbageRecycler)
-  const slagRecyclerCap = Math.round(1500 * slagRecyclerLvl * Math.pow(1.15, slagRecyclerLvl));
+  // Capacidad de reciclaje activa (slagRecycler y urbanGarbageRecycler) — Aumentado 100 veces (dos ceros más)
+  const slagRecyclerCap = Math.round(150000 * slagRecyclerLvl * Math.pow(1.15, slagRecyclerLvl));
   const urbanRecyclerCap = Math.round(500 * urbanRecyclerLvl * 1.1);
-  const maxRecycleCapPerHour = Math.round((slagRecyclerCap + urbanRecyclerCap) * speed);
+
+  // Consumo industrial de escoria para fines avanzados:
+  const slagArmorForgeLvl = buildings.slagDenseArmorForge || 0;
+  const slagPavingPlantLvl = buildings.slagPavingPlant || 0;
+  const slagSynthLvl = buildings.slagSyntheticSynthesizer || 0;
+
+  const slagConsumedByArmor = Math.round(50000 * slagArmorForgeLvl * Math.pow(1.12, slagArmorForgeLvl));
+  const slagConsumedByPaving = Math.round(35000 * slagPavingPlantLvl * Math.pow(1.10, slagPavingPlantLvl));
+  const slagConsumedBySynth = Math.round(60000 * slagSynthLvl * Math.pow(1.12, slagSynthLvl));
+  const industrialSlagDemand = (slagConsumedByArmor + slagConsumedByPaving + slagConsumedBySynth) * speed;
+
+  const maxRecycleCapPerHour = Math.round((slagRecyclerCap + urbanRecyclerCap + industrialSlagDemand) * speed);
 
   // Tasa de reciclaje efectiva:
   // Si la capacidad excede la generación bruta horaria, el reciclador procesa la generación y consume stock acumulado hasta agotar o satisfacer capacidad
@@ -221,20 +255,25 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
   const recycledMetalBonus = Math.round(effectiveRecyclePerHour * 0.70);
   const recycledCrystalBonus = Math.round(effectiveRecyclePerHour * 0.25);
 
+  // Bonificaciones directas de las nuevas factorías de escoria:
+  const armorMetalBonus = Math.round(8500 * slagArmorForgeLvl * Math.pow(1.12, slagArmorForgeLvl));
+  const synthCrystalBonus = Math.round(6200 * slagSynthLvl * Math.pow(1.12, slagSynthLvl));
+  const synthDeutBonus = Math.round(2800 * slagSynthLvl * Math.pow(1.10, slagSynthLvl));
+
   const effectiveRefineryBase = (BASE_REFINERY_PROD * REFINERY_REWARD_MULTIPLIER) * refineryLvl * refineryProdMultiplier;
-  const industryMetalBase = (effectiveRefineryBase + 800 * vacuumForgeLvl + 1200 * automatedMineLvl + 2000 * spaceElevatorLvl) * speed * productionFactor * hyperloopMult + recycledMetalBonus;
+  const industryMetalBase = (effectiveRefineryBase + 800 * vacuumForgeLvl + 1200 * automatedMineLvl + 2000 * spaceElevatorLvl + armorMetalBonus) * speed * productionFactor * hyperloopMult + recycledMetalBonus;
   metalProd += industryMetalBase;
 
   const chemPlantLvl = buildings.chemPlant || 0;
   const siliconPurifierLvl = buildings.siliconPurifier || 0;
-  const industryCrystalBase = (4000 * chemPlantLvl + 700 * siliconPurifierLvl) * speed * productionFactor * hyperloopMult + recycledCrystalBonus;
+  const industryCrystalBase = (4000 * chemPlantLvl + 700 * siliconPurifierLvl + synthCrystalBonus) * speed * productionFactor * hyperloopMult + recycledCrystalBonus;
   crystalProd += industryCrystalBase;
 
   const synthPlantLvl = buildings.synthPlant || 0;
   const enrichPlantLvl = buildings.enrichPlant || 0;
   const heliumExtractorLvl = buildings.heliumExtractor || 0;
   const catalyticDeutLvl = buildings.catalyticDeut || 0;
-  const industryDeutBase = (2500 * synthPlantLvl + 3500 * enrichPlantLvl + 600 * heliumExtractorLvl + 500 * catalyticDeutLvl) * speed * productionFactor * hyperloopMult;
+  const industryDeutBase = (2500 * synthPlantLvl + 3500 * enrichPlantLvl + 600 * heliumExtractorLvl + 500 * catalyticDeutLvl + synthDeutBonus) * speed * productionFactor * hyperloopMult;
   deutProd += industryDeutBase;
 
   const arcologyLvl = buildings.arcologyAlpha || 0;
@@ -315,17 +354,22 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
   const energyTechMult = (1 + (research.energy || 0) * 0.10 + (research.fusionMagnetic || 0) * 0.05 + (research.highTempSuperconduct || 0) * 0.06);
   const advReactorsMult = (1 + (research.advReactors || 0) * 0.15 + (research.plasmaResonance || 0) * 0.08);
 
-  const solarEnergyVal = Math.floor(20 * sl * Math.pow(1.1, sl) * energyTechMult);
-  const fusionEnergyVal = Math.floor(1000 * fl * Math.pow(1.1, fl) * energyTechMult * advReactorsMult);
+  const solarEnergyVal = Math.floor(rawBuildingEnergyGen('solarPlant', sl) * energyTechMult);
+  const fusionEnergyVal = Math.floor(rawBuildingEnergyGen('fusionReactor', fl) * energyTechMult * advReactorsMult);
   const hydroGeoLvl = buildings.hydrothermalGeothermal || 0;
   const rtgLvl = research.rtgGenerator || 0;
   const rtgBonus = 1 + rtgLvl * 0.05;
-  const energyProd = Math.floor((solarEnergyVal + fusionEnergyVal + (75 * gel * Math.pow(1.1, gel) + 120 * hydroGeoLvl * Math.pow(1.1, hydroGeoLvl) + 100 * oel * Math.pow(1.1, oel) + 200 * qrl * Math.pow(1.1, qrl) + 500 * dmp * Math.pow(1.15, dmp))) * energyBonus * civEnergyMult * rtgBonus);
+  const otherEnergyVal = rawBuildingEnergyGen('geoPlant', gel)
+    + rawBuildingEnergyGen('hydrothermalGeothermal', hydroGeoLvl)
+    + rawBuildingEnergyGen('orbitalEnergy', oel)
+    + rawBuildingEnergyGen('quantumReactor', qrl)
+    + rawBuildingEnergyGen('darkMatterPlant', dmp);
+  const energyProd = Math.floor((solarEnergyVal + fusionEnergyVal + otherEnergyVal) * energyBonus * civEnergyMult * rtgBonus);
   const leisureEfficiency = Math.max(0.8, 1 - (buildings.leisureCenter || 0) * 0.01 - (buildings.holographicLeisure || 0) * 0.01);
   const adjustedEnergyCons = Math.floor(energyCons * leisureEfficiency);
   const ratio = adjustedEnergyCons > 0 ? Math.min(1, energyProd / adjustedEnergyCons) : 1;
 
-  const fusionCons = fl > 0 ? Math.floor(10 * fl * Math.pow(1.1, fl)) : 0;
+  const fusionCons = calcBuildingDeutCons('fusionReactor', fl);
 
   const relicsList = Array.isArray(relics) ? relics : (relics?.relics || []);
   const relicMetalMult = relicsList.reduce((acc, r) => r.effect?.metalProd ? acc * r.effect.metalProd : acc, 1);

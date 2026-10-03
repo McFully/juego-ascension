@@ -19,8 +19,8 @@ import { economyReducer } from '../reducers/economyReducer.js';
  */
 
 describe('Fase 17: Auditoría de Cards Estériles, Números Mágicos y Robustez Contract', () => {
-  const researchPageCode = readFileSync(
-    join(process.cwd(), 'src', 'pages', 'ResearchPage.jsx'),
+  const ministryResearchCode = readFileSync(
+    join(process.cwd(), 'src', 'components', 'government', 'MinistryResearchSection.jsx'),
     'utf-8'
   );
   const actionCardCode = readFileSync(
@@ -75,9 +75,9 @@ describe('Fase 17: Auditoría de Cards Estériles, Números Mágicos y Robustez 
     expect(specCardCode).toMatch(/PLANET_SPECIALIZATION_COSTS/);
   });
 
-  it('Contrato 2: ResearchPage conecta el veto de automatización (ItemCard)', () => {
-    expect(researchPageCode).toMatch(/isAutoRestricted=\{Boolean\(currentPlanet\?.automatedExclusions\?\.\[id\]\)\}/);
-    expect(researchPageCode).toMatch(/TOGGLE_AUTOMATION_RESTRICTION/);
+  it('Contrato 2: MinistryResearchSection conecta el veto de automatización (ItemCard)', () => {
+    expect(ministryResearchCode).toMatch(/isAutoRestricted=\{Boolean\(currentPlanet\?.automatedExclusions\?\.\[id\]\)\}/);
+    expect(ministryResearchCode).toMatch(/TOGGLE_AUTOMATION_RESTRICTION/);
   });
 
   it('Contrato 3: ActionCardTile tiene fallback seguro para navegación y sonido táctil', () => {

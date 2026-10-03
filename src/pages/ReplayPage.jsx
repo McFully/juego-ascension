@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { useNavigation } from '../components/navigation/NavigationContext.jsx';
+import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 
-const ReplayPage = ({ state, dispatch, S }) => {
+const ReplayPage = ({ state, dispatch, currentPlanet, production, fmt, S, setActiveTab }) => {
   const { navigateTo, navigateBack } = useNavigation();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentEventIndex, setCurrentEventIndex] = useState(-1);
@@ -101,6 +102,30 @@ const ReplayPage = ({ state, dispatch, S }) => {
 
   return (
     <div className="space-y-4">
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver a Mando Imperial) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Registro Cronológico de Mando (Replay)"
+        breadcrumbIcon="📹"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Mando Imperial"
+        backButtonIcon="👑"
+        onBackToAltoMando={() => {
+          if (navigateBack) navigateBack();
+          else if (setActiveTab) setActiveTab('imperial_hub');
+        }}
+        rightSlot={
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">
+            <span className="text-slate-400">Directivas:</span>
+            <span className="font-bold text-cyan-300">{eventLog.length} eventos</span>
+          </div>
+        }
+      />
+
       {/* Explicación del sistema */}
       <div className={`${S.cardDeep} border border-cyan-500/20`}>
         <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2 mb-2">📹 Registro Cronológico de Operaciones (Replay)</h2>
@@ -249,18 +274,6 @@ const ReplayPage = ({ state, dispatch, S }) => {
         </div>
       </div>
 
-      {/* Tarjeta de Retorno a Pantalla Anterior */}
-      <div className="pt-2">
-        <ActionCardTile
-          type="back"
-          title="Volver Atrás"
-          subtitle="Regresar a la pantalla anterior"
-          badgeText="VOLVER"
-          onClick={() => {
-            if (navigateBack) navigateBack();
-          }}
-        />
-      </div>
     </div>
   );
 };

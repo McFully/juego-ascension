@@ -114,7 +114,8 @@ export const RetrofitShipModal = ({
       dispatch({
         type: 'RETROFIT_SHIP_VARIANT',
         variantKey: variant.variantKey,
-        count: safeQty
+        count: safeQty,
+        planetId: currentPlanet?.id
       });
       if (window.playSfx) window.playSfx('click');
     }

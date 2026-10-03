@@ -75,7 +75,7 @@ describe('Ascensión Core Logic Tests', () => {
   });
 
   it('should apply planetary specialization bonuses to production calculations', () => {
-    const buildings = { metalMine: 10, crystalMine: 8, deutSynth: 5, solarPlant: 10 };
+    const buildings = { metalMine: 10, crystalMine: 8, deutSynth: 5, solarPlant: 100 };
     const research = {};
     
     const prodNormal = calcProduction(buildings, research, 20, 1, 'human', null, null, null, null);
@@ -193,7 +193,7 @@ describe('Ascensión Core Logic Tests', () => {
     });
 
     it('should apply Helium-3 deuterium production boost in calcProduction', () => {
-      const buildings = { deutSynth: 5, solarPlant: 10 };
+      const buildings = { deutSynth: 5, solarPlant: 100 };
       const research = {};
       
       // Find coordinates containing a helium_belt POI

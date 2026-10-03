@@ -76,31 +76,45 @@ export const getShipStats = (id, tech, blueprints, factionKey = 'human', buildin
   let atkBonus = 1 + (tech?.weapons || 0) * 0.1 + (tech?.aiTactics || 0) * 0.02 + (tech?.aiMilitary || 0) * 0.03;
 
   // Conexión de armamento especializado a naves de guerra
-  if (['cruiser', 'lightFighter', 'heavyFighter'].includes(id)) {
+  if (['cruiser', 'lightFighter', 'heavyFighter', 'atmosphericInterceptor', 'quantumFighter'].includes(id)) {
     atkBonus += (tech?.laser || 0) * 0.05;
   }
-  if (['destroyer', 'battleship'].includes(id)) {
+  if (['destroyer', 'battleship', 'dreadnought', 'quantumFighter'].includes(id)) {
     atkBonus += (tech?.ion || 0) * 0.06;
   }
-  if (['heavyFighter', 'cruiser'].includes(id)) {
+  if (['heavyFighter', 'cruiser', 'systemGunship', 'systemCruiser', 'hyperHeavyFighter'].includes(id)) {
     atkBonus += (tech?.ballisticWeapons || 0) * 0.05;
   }
-  if (['bomber', 'interplanetaryMissile'].includes(id)) {
+  if (['bomber', 'interplanetaryMissile', 'systemGunship'].includes(id)) {
     atkBonus += (tech?.advMissiles || 0) * 0.10;
   }
-  if (['deathstar', 'planetDestroyer', 'battleship'].includes(id)) {
+  if (['deathstar', 'planetDestroyer', 'battleship', 'dreadnought'].includes(id)) {
     atkBonus += (tech?.orbitalArtillery || 0) * 0.10;
   }
 
-  if (['smallCargo', 'lightFighter', 'espionageProbe'].includes(id)) {
+  // Bonificaciones estructurales para cascos ligeros y coloniales
+  if (['smallCargo', 'lightFighter', 'espionageProbe', 'atmosphericInterceptor', 'localColonizer'].includes(id)) {
     hullBonus += (tech?.grapheneTitanium || 0) * 0.08;
   }
-  if (id === 'lightFighter') {
+  if (['lightFighter', 'atmosphericInterceptor', 'quantumFighter'].includes(id)) {
     atkBonus += (tech?.geneticWarAlgorithm || 0) * 0.04;
   }
 
+  const ship = SHIPS[id];
+
+  // Bonificaciones de maniobrabilidad y resistencia por motor
+  if (ship?.drive === 'combustion') {
+    hullBonus += (tech?.combustion || 0) * 0.02;
+  } else if (ship?.drive === 'impulse') {
+    hullBonus += (tech?.impulse || 0) * 0.03;
+    atkBonus += (tech?.impulse || 0) * 0.01;
+  } else if (ship?.drive === 'hyperspace') {
+    hullBonus += (tech?.hyperspace || 0) * 0.04;
+    atkBonus += (tech?.hyperspace || 0) * 0.02;
+  }
+
   let cargoMult = 1.0;
-  if (['smallCargo', 'largeCargo'].includes(id)) {
+  if (['smallCargo', 'largeCargo', 'localColonizer', 'colonizer', 'hyperColonizer', 'commercialColonizer'].includes(id)) {
     cargoMult += (tech?.orbitalLogisticExpert || 0) * 0.10 + (tech?.molecularCargoCompress || 0) * 0.15 + (tech?.advLogistics || 0) * 0.10;
   }
 
@@ -129,7 +143,6 @@ export const getShipStats = (id, tech, blueprints, factionKey = 'human', buildin
       return { hull, shd, atk, speed, cargo: Math.floor(s.cargo * cargoMult), fuel: 10, rapid: {} };
     }
   }
-  const ship = SHIPS[id];
   if (!ship) return null;
   return {
     hull: ship.hull * hullBonus * resMult,

@@ -33,12 +33,14 @@ const DefensePage = ({
   const { navigateBack } = useNavigation();
   const bonus = (shipTimeBonus ? shipTimeBonus(currentPlanet?.buildings) : 1) * (currentPlanet?.specialization === 'military' ? 1.20 : 1.0);
 
-  if (!currentPlanet.buildings.shipyard) {
+  const hasShipyardFacility = Boolean(currentPlanet?.buildings?.shipyard || (currentPlanet?.isExchangePlanet && (currentPlanet?.buildings?.exchangeBastion || currentPlanet?.buildings?.exchangeDocks)));
+
+  if (!hasShipyardFacility) {
     return (
       <div className={`${S.card} text-center py-12 view-enter max-w-xl mx-auto space-y-6`}>
         <div className="text-6xl mb-2">🛡️</div>
         <h3 className="text-xl font-bold">Instalaciones Defensivas Requeridas</h3>
-        <p className="text-slate-400 text-sm">Construye un Astillero en el Complejo de Obras para activar el bastión defensivo de superficie.</p>
+        <p className="text-slate-400 text-sm">Construye un Astillero (o Bastión de Seguridad en la Lonja) para activar el bastión defensivo de superficie.</p>
         <div className="pt-2">
           <ActionCardTile
             type="back"

@@ -29,7 +29,7 @@ describe('Fase 15: Save vs Commander Contract', () => {
   );
 
   it('debe tener SCHEMA_VERSION >= 4 en dbManager.cjs y registrar columnas save_name y commander_id', () => {
-    expect(dbManagerCode).toMatch(/const SCHEMA_VERSION = 4;/);
+    expect(dbManagerCode).toMatch(/const SCHEMA_VERSION = [4-9];/);
     expect(dbManagerCode).toMatch(/save_name TEXT/);
     expect(dbManagerCode).toMatch(/commander_id TEXT/);
     expect(dbManagerCode).toMatch(/name:\s*["']save_name_and_commander_id_columns["']/);

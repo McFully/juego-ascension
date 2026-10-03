@@ -57,12 +57,18 @@ const gameReducerInner = (state, action) => {
     // --- MERCADO GALACTICO / DAO / BAZAR / MERCADO NEGRO ---
     case 'MARKET_TRADE':
     case 'MARKET_BUY_USED_SHIPS':
+    case 'MARKET_SELL_SHIPS':
     case 'MARKET_SCRAP_SHIPS':
     case 'MARKET_BUY_BLACK_MARKET':
+    case 'MARKET_BUY_BLUEPRINT':
     case 'CLAIM_DAO_DIVIDENDS':
     case 'CREATE_LIMIT_ORDER':
     case 'CANCEL_LIMIT_ORDER':
     case 'CONTRIBUTE_EXCHANGE_PROJECT':
+    case 'CONTRIBUTE_ALL_EXCHANGE_PROJECT':
+    case 'FINALIZE_EXCHANGE_PROJECT':
+    case 'ESTABLISH_BILATERAL_ROUTE':
+    case 'CANCEL_BILATERAL_ROUTE':
     // --- RED DE COLONIAS ---
     case 'EQUALIZE_COLONY_RESOURCES':
     case 'RELOCATE_COLONY_FLEET':
@@ -71,6 +77,8 @@ const gameReducerInner = (state, action) => {
 
     // --- RESEARCH ---
     case 'START_RESEARCH':
+    case 'TOGGLE_RESEARCH_NODE_LINK':
+    case 'UPGRADE_RESEARCH_NETWORK_SLOT':
       return researchReducer(workingState, action);
 
     // --- FLEET / ASTILLERO / MISILES / BLUEPRINTS ---
@@ -113,6 +121,7 @@ const gameReducerInner = (state, action) => {
     case 'INTERCEPT_INVASION':
     // --- RUTAS DE SUMINISTRO ---
     case 'ADD_TRADE_ROUTE':
+    case 'ADD_PATRICIAN_TRADE_ROUTE':
     case 'REMOVE_TRADE_ROUTE':
     case 'TOGGLE_TRADE_ROUTE':
     case 'PROCESS_TRADE_ROUTES':

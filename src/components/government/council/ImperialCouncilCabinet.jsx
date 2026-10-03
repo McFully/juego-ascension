@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { IMPERIAL_COUNCIL_PORTFOLIOS, IMPERIAL_COUNCIL_CANDIDATES } from '../../../data/imperialCouncilData.js';
+import { SubsystemTopBanner } from '../../navigation/SubsystemTopBanner.jsx';
 
 export const ImperialCouncilCabinet = ({
   state,
   dispatch,
+  currentPlanet,
+  production,
   fmt,
   onBackToGoov
 }) => {
@@ -28,6 +31,20 @@ export const ImperialCouncilCabinet = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver a Mando Imperial) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Consejo de Ministros Supremos"
+        breadcrumbIcon="👑"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Mando Imperial"
+        backButtonIcon="👑"
+        onBackToAltoMando={onBackToGoov}
+      />
       {/* Cabecera del Consejo Supremo */}
       <div className="p-5 rounded-2xl bg-[#090e1e]/90 border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">

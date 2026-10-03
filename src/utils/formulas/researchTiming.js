@@ -52,14 +52,49 @@ const worldMultiplierFor = (planet) => {
 };
 
 /**
+ * Multiplicador global de tiempo de investigación para un planeta (duración del sondeo en segundos).
+ */
+export const researchTimeMultFor = (state, planet) => {
+  if (!planet) return null;
+  return calcPlanetResearchTime(state, planet, { metal: 1000, crystal: 1000, deuterium: 0 });
+};
+
+/**
+ * Obtiene el nivel efectivo de laboratorio de un planeta teniendo en cuenta
+ * la Red Neural de Laboratorios compartida.
+ * Si el planeta está enlazado a la red o es la sede con red activa, consolida
+ * los laboratorios de todos los nodos sincronizados del imperio.
+ */
+export const getPlanetEffectiveLab = (state, planet) => {
+  if (!planet) return 0;
+  const localLab = planet.buildings?.researchLab || 0;
+  const network = state?.researchNetwork;
+  const linkedIds = network?.linkedPlanetIds || [];
+  const planets = state?.planets || [];
+  const homePlanet = planets.find(p => p.isHome) || planets[0];
+  
+  const isNetworkActive = linkedIds.includes(planet.id) || (planet.id === homePlanet?.id && linkedIds.length > 0);
+  if (!isNetworkActive) return localLab;
+
+  const networkPlanetIds = new Set(linkedIds);
+  if (homePlanet) networkPlanetIds.add(homePlanet.id);
+
+  return Array.from(networkPlanetIds).reduce((sum, pid) => {
+    const p = planets.find(item => item.id === pid);
+    return sum + (p?.buildings?.researchLab || 0);
+  }, 0);
+};
+
+/**
  * Tiempo de investigación en SEGUNDOS para un planeta concreto.
  *
  * @param {object} state  estado global (solo se lee `research`)
  * @param {object} planet planeta que realiza la investigación
  * @param {object} cost   { metal, crystal, deuterium }
+ * @param {string} [researchId] identificador opcional de la tecnología
  * @returns {number} segundos, mínimo 1
  */
-export const calcPlanetResearchTime = (state, planet, cost) => {
+export const calcPlanetResearchTime = (state, planet, cost, researchId = null) => {
   if (!planet) return 1;
   const buildings = planet.buildings || {};
   const research = state?.research || {};
@@ -69,21 +104,62 @@ export const calcPlanetResearchTime = (state, planet, cost) => {
     researchTimeBonus(buildings, research)   // ya es 1 + aceleradores
     * worldMultiplierFor(planet);
 
-  return Math.max(1, Math.floor(
-    calcResearchTime(cost, buildings.researchLab || 0, GAME_SPEED, factor, mins, research) || 1
-  ));
+  // Red Neural de Laboratorios: consolida laboratorios compartidos
+  const effectiveLab = getPlanetEffectiveLab(state, planet);
+  let networkTimeMult = 1.0;
+
+  const network = state?.researchNetwork;
+  const linkedIds = network?.linkedPlanetIds || [];
+  const planets = state?.planets || [];
+  const homePlanet = planets.find(p => p.isHome) || planets[0];
+  const isNetworkActive = linkedIds.includes(planet.id) || (planet.id === homePlanet?.id && linkedIds.length > 0);
+
+  if (isNetworkActive) {
+    // Hito de 25 niveles: -10% tiempo en techs de IA y Cómputo
+    const aiComputerTechs = ['computer', 'aiTactics', 'aiProd', 'aiMilitary', 'aiStrategy', 'fullAuto', 'cyberIntegration'];
+    if (effectiveLab >= 25 && researchId && aiComputerTechs.includes(researchId)) {
+      networkTimeMult *= 0.90;
+    }
+    // Hito de 100 niveles: -25% de tiempo adicional
+    if (effectiveLab >= 100) {
+      networkTimeMult *= 0.75;
+    }
+  }
+
+  const baseSeconds = calcResearchTime(cost, effectiveLab, GAME_SPEED, factor, mins, research) || 1;
+  return Math.max(1, Math.floor(baseSeconds * networkTimeMult));
 };
 
 /**
- * Multicplicador de velocidad de la investigación en un planeta, con un coste sonda
- * de 1. Sirve para reajustar operaciones EN CURSO: como `calcResearchTime` es
- * proporcional a `cost`, el cociente de sondeos es el cociente de duraciones reales.
+ * Calcula la capacidad máxima de la cola de investigación.
+ * Base: 8 ranuras concurrentes.
+ * Cada nodo planetario sincronizado a la Red Neural añade +2 ranuras a la cola.
+ * Adicionalmente, cada 25 niveles acumulados de laboratorio en la red añaden +1 ranura extra.
  *
- * @returns {number|null} duración sonda en segundos, o null si no se puede calcular
+ * @param {object} state estado global
+ * @returns {number} slots máximos de cola de investigación
  */
-export const researchTimeMultFor = (state, planet) => {
-  if (!planet) return null;
-  const probe = { metal: 1000, crystal: 1000, deuterium: 0 };
-  const mult = calcPlanetResearchTime(state, planet, probe);
-  return Number.isFinite(mult) && mult > 0 ? mult : null;
+export const getMaxResearchQueueSlots = (state) => {
+  const baseSlots = 8;
+  const network = state?.researchNetwork;
+  const linkedIds = network?.linkedPlanetIds || [];
+  const planets = state?.planets || [];
+  const homePlanet = planets.find(p => p.isHome) || planets[0];
+
+  const networkPlanetIds = new Set(linkedIds);
+  if (homePlanet && linkedIds.length > 0) {
+    networkPlanetIds.add(homePlanet.id);
+  }
+
+  const linkedBonus = linkedIds.length * 2;
+  
+  // Total de laboratorios enlazados
+  const totalLab = Array.from(networkPlanetIds).reduce((sum, pid) => {
+    const p = planets.find(item => item.id === pid);
+    return sum + (p?.buildings?.researchLab || 0);
+  }, 0);
+
+  const labBonus = Math.floor(totalLab / 25);
+
+  return baseSlots + linkedBonus + labBonus;
 };

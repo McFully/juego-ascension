@@ -8,12 +8,32 @@ export const processPlanetTick = (planet, prod, storage, state) => {
 
   // Bonificador por Red Maglev Hyperloop
   const hyperloopBoost = (p.buildings?.hyperloopNetwork > 0) ? 1.12 : 1.0;
-  const effectiveProdFactor = strikeEfficiency * hyperloopBoost;
+
+  // Lógica de Escoria y Bloqueo Fabril por Saturación:
+  // Si el almacén de escoria se llena al 100% y no se procesa, las fábricas colapsan y se paran.
+  const currentSlag = p.resources?.slag || 0;
+  const slagStorageCap = storage.slag || 100000;
+  const isSlagSaturated = currentSlag >= slagStorageCap;
+  
+  // Si la escoria está saturada, la producción fabril/minera se paraliza por completo
+  const slagFactoryPenalty = isSlagSaturated ? 0 : 1.0;
+  const effectiveProdFactor = strikeEfficiency * hyperloopBoost * slagFactoryPenalty;
+
+  // Variación horaria de escoria: prod.slagNet (generación bruta - reciclaje activo)
+  const slagNetPerHour = prod.slagNet !== undefined ? prod.slagNet : (prod.slag || 0);
+  let nextSlag;
+  if (currentSlag <= 0 && slagNetPerHour <= 0) {
+    nextSlag = 0;
+  } else {
+    nextSlag = Math.max(0, Math.min(currentSlag + (slagNetPerHour * strikeEfficiency * hyperloopBoost) / 3600, slagStorageCap));
+    if (nextSlag < 0.001) nextSlag = 0;
+  }
 
   let newRes = {
     metal: Math.min((p.resources.metal || 0) + (prod.metal * effectiveProdFactor) / 3600, storage.metal),
     crystal: Math.min((p.resources.crystal || 0) + (prod.crystal * effectiveProdFactor) / 3600, storage.crystal),
     deuterium: Math.min(Math.max(0, (p.resources.deuterium || 0) + (prod.deuterium * effectiveProdFactor) / 3600), storage.deuterium),
+    slag: nextSlag,
   };
   newRes = clampResources(newRes);
 

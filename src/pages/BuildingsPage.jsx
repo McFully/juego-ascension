@@ -48,6 +48,7 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
     intel: 'deepScanner',
     justice: 'colonySupremeCourt',
     culture: 'stellarProjectionTheater',
+    finance: 'financeMinistry',
   };
 
   const getMinistryStats = (m) => {

@@ -376,5 +376,37 @@ export const CANDIDATES_EXTENDED = {
       "desc": "Guía ideológico del Templo de la Sabiduría Solar.",
       "voiceId": "cand_culture_3"
     }
+  ],
+  "finance": [
+    {
+      "name": "Baronesa Rothschild-Vance",
+      "trait": "Gobernadora del Banco Central",
+      "effect": "+25% Rendimiento de Créditos, -5% Margen de Arancel",
+      "icon": "🏦",
+      "avatarId": "minister_avatar_1",
+      "bonus": "creditsYield",
+      "desc": "Arquitecta del sistema monetario de reservas interestelares.",
+      "voiceId": "cand_economy_1"
+    },
+    {
+      "name": "Corredor Mayor Dax",
+      "trait": "Operador de Alta Frecuencia",
+      "effect": "+20% Volumen y Ganancias en la Lonja Bursátil",
+      "icon": "📈",
+      "avatarId": "minister_avatar_4",
+      "bonus": "marketYield",
+      "desc": "Especialista en cámaras de compensación y arbitraje financiero.",
+      "voiceId": "cand_economy_2"
+    },
+    {
+      "name": "Inspectora Helena Vane",
+      "trait": "Canciller del Tesoro",
+      "effect": "-15% Intereses de Préstamos, +10% Eficiencia Fiscal",
+      "icon": "💼",
+      "avatarId": "minister_avatar_3",
+      "bonus": "taxEfficiency",
+      "desc": "Auditora suprema del Fondo Soberano Federal.",
+      "voiceId": "cand_economy_3"
+    }
   ]
 };

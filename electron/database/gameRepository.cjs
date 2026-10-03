@@ -27,7 +27,7 @@ const GLOBAL_STATE_KEYS = [
   "currentPlanetId", "lastTick", "lastSave", "gameMode",
 
   // Progresion
-  "research", "stats", "achievements", "completedMissions", "activeMissions",
+  "research", "researchNetwork", "stats", "achievements", "completedMissions", "activeMissions",
   "victory", "gameOver", "showTutorial", "tutorialCompleted",
 
   // Mundo y gobierno
@@ -38,6 +38,7 @@ const GLOBAL_STATE_KEYS = [
   // Economia imperial
   "credits", "exchangeOrders", "daoShares", "playerDaoShares",
   "daoDividendPool", "exchangeProjects", "debrisField", "relics",
+  "bilateralTradeRoutes",
 
   // Militar
   "fleetPresets", "patrols", "blueprints", "combatLog", "spyReports",
@@ -281,6 +282,41 @@ function loadFullGameState(slug) {
     if (!state[queueKey]) {
       state[queueKey] = [];
     }
+  }
+
+  // Reconciliación de Naves Huérfanas de SQLite (v4/v5):
+  // Si en la tabla `ships` existen naves para esta sesión o con current_planet_id
+  // que no estuvieran contabilizadas en el fleet del planeta, se reconcilian
+  // automáticamente para que sean 100% funcionales en los hangares y misiones.
+  try {
+    const dockedShips = db.prepare(`
+      SELECT chassis_id, current_planet_id, COUNT(*) as qty
+      FROM ships
+      WHERE (session_id = ? OR session_id IS NULL)
+        AND status = 'docked'
+        AND current_planet_id IS NOT NULL
+      GROUP BY current_planet_id, chassis_id
+    `).all(session.id);
+
+    if (Array.isArray(dockedShips) && dockedShips.length > 0 && Array.isArray(state.planets)) {
+      const planetMap = new Map();
+      state.planets.forEach(p => planetMap.set(p.id, p));
+
+      let hasFleetChanges = false;
+      for (const row of dockedShips) {
+        const targetPlanet = planetMap.get(row.current_planet_id);
+        if (targetPlanet) {
+          const currentCount = (targetPlanet.fleet && targetPlanet.fleet[row.chassis_id]) || 0;
+          if (row.qty > currentCount) {
+            targetPlanet.fleet = targetPlanet.fleet || {};
+            targetPlanet.fleet[row.chassis_id] = row.qty;
+            hasFleetChanges = true;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[Ascensión DB] Advertencia reconciliando naves huérfanas:", err);
   }
 
   return state;

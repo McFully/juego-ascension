@@ -1,6 +1,4 @@
 import {
-  BUILDINGS as BASE_BUILDINGS,
-  RESEARCH as BASE_RESEARCH,
   SHIPS,
   DEFENSES,
   SHIP_CHASSIS,
@@ -9,10 +7,7 @@ import {
   SHIP_SHIELDS,
   SHIP_MODULES
 } from '../../data/gameData.js';
-import { EXPANDED_BUILDINGS, EXPANDED_RESEARCH } from '../../data/expandedContent.js';
-
-const BUILDINGS = { ...BASE_BUILDINGS, ...EXPANDED_BUILDINGS };
-const RESEARCH = { ...BASE_RESEARCH, ...EXPANDED_RESEARCH };
+import { BUILDINGS, RESEARCH } from '../../data/catalog/index.js';
 
 export const constructionDiscount = (constructionCenterLvl = 0) => 1 / (1 + 0.15 * (constructionCenterLvl || 0));
 export const aiResearchDiscount = (aiStrategyLvl = 0) => 1 / (1 + 0.10 * (aiStrategyLvl || 0));
@@ -94,6 +89,7 @@ export const deduct = (res, cost) => ({
   metal: Math.max(0, (res.metal || 0) - (cost.metal || 0)),
   crystal: Math.max(0, (res.crystal || 0) - (cost.crystal || 0)),
   deuterium: Math.max(0, (res.deuterium || 0) - (cost.deuterium || 0)),
+  slag: Math.max(0, res.slag || 0),
 });
 
 export const calcCustomShipCost = (blueprint, constructionCenterLvl = 0) => {

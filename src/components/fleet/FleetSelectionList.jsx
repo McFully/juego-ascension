@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { SafeImg } from '../../assets.jsx';
+import { canShipReachTarget } from '../../utils/fleetClassification.js';
+import { SHIPS } from '../../data/gameData.js';
 
 export const FleetSelectionList = ({ 
   state, 
   dispatch, 
   currentPlanet, 
+  target,
   selectedShips, 
   setSelectedShips, 
   filter, 
@@ -173,14 +176,18 @@ export const FleetSelectionList = ({
             const name = shipDisplayName(id);
             const st = shipStats(id);
             const isSelected = sel > 0;
+            const canReach = !target || canShipReachTarget(id, currentPlanet, target, SHIPS);
+            const sDef = SHIPS[id];
 
             return (
               <div
                 key={id}
                 className={`p-3 rounded-2xl border transition-all flex flex-col justify-between overflow-hidden relative ${
-                  isSelected
-                    ? 'bg-gradient-to-b from-[#0e1d3b]/90 to-[#070d1e] border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)]'
-                    : 'bg-[#05070f]/80 border-white/10 hover:border-white/25 hover:bg-[#070c1e]'
+                  !canReach
+                    ? 'bg-[#080509]/80 border-amber-500/25 opacity-75'
+                    : isSelected
+                      ? 'bg-gradient-to-b from-[#0e1d3b]/90 to-[#070d1e] border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)]'
+                      : 'bg-[#05070f]/80 border-white/10 hover:border-white/25 hover:bg-[#070c1e]'
                 }`}
               >
                 <div>
@@ -194,8 +201,21 @@ export const FleetSelectionList = ({
                         <span className={isSelected ? 'text-cyan-300 font-black' : 'text-slate-400'}>{sel}</span>
                         <span className="text-slate-500"> / {maxQty}</span>
                       </div>
+                      {sDef?.drive && (
+                        <span className={`text-[8px] font-mono px-1 py-0.2 rounded mt-0.5 inline-block ${
+                          sDef.drive === 'combustion' ? 'text-amber-400 bg-amber-950/40' : sDef.drive === 'impulse' ? 'text-cyan-400 bg-cyan-950/40' : 'text-purple-400 bg-purple-950/40'
+                        }`}>
+                          {sDef.drive === 'combustion' ? '🔥 Sistémico' : sDef.drive === 'impulse' ? '💨 Sectorial' : '🌀 Interestelar'}
+                        </span>
+                      )}
                     </div>
                   </div>
+
+                  {!canReach && (
+                    <div className="text-[9px] font-mono text-amber-300/90 bg-amber-950/40 border border-amber-500/30 p-1.5 rounded-lg mb-2 text-center">
+                      ⚠️ Fuera de rango para este destino
+                    </div>
+                  )}
 
                   {st && (
                     <div className="grid grid-cols-3 gap-1 text-[9px] font-mono text-slate-300 p-1.5 rounded-lg bg-black/40 border border-white/5 mb-3 text-center">
@@ -210,12 +230,12 @@ export const FleetSelectionList = ({
                 <div className="space-y-1.5 pt-2 border-t border-white/10">
                   <div className="flex gap-1">
                     <button onClick={() => toggleShip(id, -1)} className="px-2 py-1 bg-white/5 hover:bg-white/15 text-slate-300 rounded-lg text-[10px] font-mono font-bold flex-1">-1</button>
-                    <button onClick={() => toggleShip(id, 1)} className="px-2 py-1 bg-white/5 hover:bg-white/15 text-slate-300 rounded-lg text-[10px] font-mono font-bold flex-1">+1</button>
-                    <button onClick={() => toggleShip(id, 10)} className="px-2 py-1 bg-white/5 hover:bg-white/15 text-slate-300 rounded-lg text-[10px] font-mono font-bold flex-1">+10</button>
+                    <button onClick={() => toggleShip(id, 1)} disabled={!canReach} className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold flex-1 ${!canReach ? 'bg-white/5 text-slate-600 cursor-not-allowed' : 'bg-white/5 hover:bg-white/15 text-slate-300'}`}>+1</button>
+                    <button onClick={() => toggleShip(id, 10)} disabled={!canReach} className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold flex-1 ${!canReach ? 'bg-white/5 text-slate-600 cursor-not-allowed' : 'bg-white/5 hover:bg-white/15 text-slate-300'}`}>+10</button>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => handleSetShipExact(id, maxQty / 2, maxQty)} className="px-2 py-1 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 rounded-lg text-[10px] font-mono font-bold flex-1">50%</button>
-                    <button onClick={() => handleSetShipExact(id, maxQty, maxQty)} className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[10px] font-mono font-black flex-1 shadow-sm">MAX</button>
+                    <button onClick={() => handleSetShipExact(id, maxQty / 2, maxQty)} disabled={!canReach} className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold flex-1 ${!canReach ? 'bg-white/5 text-slate-600 cursor-not-allowed' : 'bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300'}`}>50%</button>
+                    <button onClick={() => handleSetShipExact(id, maxQty, maxQty)} disabled={!canReach} className={`px-2 py-1 rounded-lg text-[10px] font-mono font-black flex-1 shadow-sm ${!canReach ? 'bg-white/5 text-slate-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500 text-white'}`}>MAX</button>
                     {sel > 0 && (
                       <button onClick={() => handleSetShipExact(id, 0, maxQty)} className="px-2 py-1 bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 rounded-lg text-[10px] font-mono font-bold">0</button>
                     )}

@@ -2,8 +2,6 @@ import {
   TICK_MS,
   STORAGE_BASE,
   GAME_SPEED,
-  BUILDINGS as BASE_BUILDINGS,
-  RESEARCH as BASE_RESEARCH,
   SHIPS,
   DEFENSES,
   SHIP_CHASSIS,
@@ -22,7 +20,7 @@ import {
   STORAGE_OVERFLOW_THRESHOLD,
   AUTO_BUILD_STORAGE_THRESHOLD
 } from "./data/gameData.js";
-import { EXPANDED_BUILDINGS, EXPANDED_RESEARCH } from "./data/expandedContent.js";
+import { BUILDINGS, RESEARCH } from "./data/catalog/index.js";
 import { MISSIONS } from "./data/missionsData.js";
 import { ACHIEVEMENTS, RES_NAMES, RES_ICONS, NARRATIVE_EVENTS, ARTIFACTS } from "./data/gameConstants.js";
 
@@ -33,22 +31,14 @@ export {
   MISSILES, MOON_BUILDINGS
 };
 
-export const BUILDINGS = {
-  ...BASE_BUILDINGS,
-  ...EXPANDED_BUILDINGS
-};
-
-export const RESEARCH = {
-  ...BASE_RESEARCH,
-  ...EXPANDED_RESEARCH
-};
+export { BUILDINGS, RESEARCH };
 
 // Re-exports de fórmulas y utilidades
 export {
   calcStorage, shipTimeBonus, researchTimeBonus, calcPlanetMaxPop,
   calcCustomShipCost, calcCustomShipTime, calcCustomShipStats,
   buildingProdDisplay, buildingProdInfo, researchEffectInfo,
-  calcBuildTime, calcEffectiveBuildTime, calcResearchTime, calcPlanetResearchTime, calcShipTime, calcDefenseTime,
+  calcBuildTime, calcEffectiveBuildTime, calcResearchTime, calcPlanetResearchTime, getPlanetEffectiveLab, getMaxResearchQueueSlots, calcShipTime, calcDefenseTime,
   calcRemainingSeconds, calcTotalSeconds,
   calcDistance,
   calcFlightTime, calcFuel, shipSpeed, fleetSpeed, getDefenseStats, getShipStats,

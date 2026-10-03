@@ -132,58 +132,80 @@ export const dispatchTradeRouteMission = (state, route) => {
   const cargoMult = isCommercial ? 1.5 : 1.0;
   const smallCap = 5000 * cargoMult;
   const largeCap = 25000 * cargoMult;
+  const heavyCap = 120000 * cargoMult;
+  const titanCap = 500000 * cargoMult;
 
-  const assigned = route.assignedShips || {};
+  const assigned = route.assignedShips || route.ships || {};
   let smallUsed = 0;
   let largeUsed = 0;
+  let heavyFreighterUsed = 0;
+  let cargoTitanUsed = 0;
   let lightUsed = 0;
   let heavyUsed = 0;
 
   const originFleet = from.fleet || {};
 
-  if (assigned.smallCargo || assigned.largeCargo || assigned.lightFighter || assigned.heavyFighter) {
-    // Convoy configurado explícitamente en la ruta
+  if (assigned.smallCargo || assigned.largeCargo || assigned.heavyFreighter || assigned.cargoTitan || assigned.lightFighter || assigned.heavyFighter) {
+    // Convoy configurado explícitamente en la ruta (Patrician III)
     const availSmall = originFleet.smallCargo || 0;
     const availLarge = originFleet.largeCargo || 0;
+    const availHeavyFreighter = originFleet.heavyFreighter || 0;
+    const availCargoTitan = originFleet.cargoTitan || 0;
     const availLight = originFleet.lightFighter || 0;
     const availHeavy = originFleet.heavyFighter || 0;
 
     smallUsed = Math.min(availSmall, assigned.smallCargo || 0);
     largeUsed = Math.min(availLarge, assigned.largeCargo || 0);
+    heavyFreighterUsed = Math.min(availHeavyFreighter, assigned.heavyFreighter || 0);
+    cargoTitanUsed = Math.min(availCargoTitan, assigned.cargoTitan || 0);
     lightUsed = Math.min(availLight, assigned.lightFighter || 0);
     heavyUsed = Math.min(availHeavy, assigned.heavyFighter || 0);
 
-    const totalConvoyCap = smallUsed * smallCap + largeUsed * largeCap;
+    const totalConvoyCap = smallUsed * smallCap + largeUsed * largeCap + heavyFreighterUsed * heavyCap + cargoTitanUsed * titanCap;
     if (totalConvoyCap <= 0) return state; // Sin cargueros disponibles del convoy en el hangar
     toSend = Math.min(toSend, totalConvoyCap);
   } else {
     // Auto-asignar cargueros disponibles del hangar de origen
     const availSmall = originFleet.smallCargo || 0;
     const availLarge = originFleet.largeCargo || 0;
-    const totalAvailCap = availLarge * largeCap + availSmall * smallCap;
+    const availHeavy = originFleet.heavyFreighter || 0;
+    const availTitan = originFleet.cargoTitan || 0;
+    const totalAvailCap = availTitan * titanCap + availHeavy * heavyCap + availLarge * largeCap + availSmall * smallCap;
     if (totalAvailCap <= 0) return state; // No hay cargueros en la colonia
 
     toSend = Math.min(toSend, totalAvailCap);
     let remNeeded = toSend;
-    largeUsed = Math.min(availLarge, Math.floor(remNeeded / largeCap));
-    remNeeded -= largeUsed * largeCap;
+    cargoTitanUsed = Math.min(availTitan, Math.floor(remNeeded / titanCap));
+    remNeeded -= cargoTitanUsed * titanCap;
+    if (remNeeded > 0) {
+      heavyFreighterUsed = Math.min(availHeavy, Math.floor(remNeeded / heavyCap));
+      remNeeded -= heavyFreighterUsed * heavyCap;
+    }
+    if (remNeeded > 0) {
+      largeUsed = Math.min(availLarge, Math.floor(remNeeded / largeCap));
+      remNeeded -= largeUsed * largeCap;
+    }
     if (remNeeded > 0) {
       smallUsed = Math.min(availSmall, Math.ceil(remNeeded / smallCap));
     }
   }
 
-  if (smallUsed === 0 && largeUsed === 0) return state;
+  if (smallUsed === 0 && largeUsed === 0 && heavyFreighterUsed === 0 && cargoTitanUsed === 0) return state;
 
   // Deducir recursos y naves del origen
   let newState = updatePlanet(state, from.id, p => {
     const updatedFleet = { ...(p.fleet || {}) };
     if (smallUsed > 0) updatedFleet.smallCargo = Math.max(0, (updatedFleet.smallCargo || 0) - smallUsed);
     if (largeUsed > 0) updatedFleet.largeCargo = Math.max(0, (updatedFleet.largeCargo || 0) - largeUsed);
+    if (heavyFreighterUsed > 0) updatedFleet.heavyFreighter = Math.max(0, (updatedFleet.heavyFreighter || 0) - heavyFreighterUsed);
+    if (cargoTitanUsed > 0) updatedFleet.cargoTitan = Math.max(0, (updatedFleet.cargoTitan || 0) - cargoTitanUsed);
     if (lightUsed > 0) updatedFleet.lightFighter = Math.max(0, (updatedFleet.lightFighter || 0) - lightUsed);
     if (heavyUsed > 0) updatedFleet.heavyFighter = Math.max(0, (updatedFleet.heavyFighter || 0) - heavyUsed);
 
     if (updatedFleet.smallCargo === 0) delete updatedFleet.smallCargo;
     if (updatedFleet.largeCargo === 0) delete updatedFleet.largeCargo;
+    if (updatedFleet.heavyFreighter === 0) delete updatedFleet.heavyFreighter;
+    if (updatedFleet.cargoTitan === 0) delete updatedFleet.cargoTitan;
     if (updatedFleet.lightFighter === 0) delete updatedFleet.lightFighter;
     if (updatedFleet.heavyFighter === 0) delete updatedFleet.heavyFighter;
 
@@ -200,6 +222,8 @@ export const dispatchTradeRouteMission = (state, route) => {
   const dispatchedFleet = {};
   if (smallUsed > 0) dispatchedFleet.smallCargo = smallUsed;
   if (largeUsed > 0) dispatchedFleet.largeCargo = largeUsed;
+  if (heavyFreighterUsed > 0) dispatchedFleet.heavyFreighter = heavyFreighterUsed;
+  if (cargoTitanUsed > 0) dispatchedFleet.cargoTitan = cargoTitanUsed;
   if (lightUsed > 0) dispatchedFleet.lightFighter = lightUsed;
   if (heavyUsed > 0) dispatchedFleet.heavyFighter = heavyUsed;
 

@@ -113,10 +113,15 @@ const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, 
     if (window.playSfx) window.playSfx('click');
     if (viewMode === 'chapter_detail') {
       setViewMode('chapters');
-    } else if (navigateBack) {
-      navigateBack();
-    } else if (setActiveTab) {
-      setActiveTab('overview');
+    } else {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ascension:open-section', { detail: { section: 'command_hub' } }));
+      }
+      if (navigateTo) {
+        navigateTo('overview');
+      } else if (setActiveTab) {
+        setActiveTab('overview');
+      }
     }
   };
 
@@ -128,32 +133,14 @@ const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, 
         currentPlanet={currentPlanet}
         production={production}
         fmt={fmt}
-        breadcrumbTitle={viewMode === 'chapter_detail' ? `Capítulo ${selectedChap}` : "Misiones Imperiales"}
+        breadcrumbTitle={viewMode === 'chapter_detail' ? `Capítulo ${selectedChap}` : "Misiones"}
         breadcrumbIcon="🎯"
+        parentHub="imperial_hub"
         showBackToAltoMando={true}
         onBackToAltoMando={handleTopBack}
         backButtonLabelTop="VOLVER A"
-        backButtonLabelBottom={viewMode === 'chapter_detail' ? "Capítulos" : "Alto Mando"}
+        backButtonLabelBottom={viewMode === 'chapter_detail' ? "Capítulos" : "Mando Imperial"}
         backButtonIcon={viewMode === 'chapter_detail' ? "◀" : "👑"}
-        rightSlot={
-          <div className="flex items-center gap-3 bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
-            <div className="w-28 sm:w-36">
-              <div className="flex justify-between text-[10px] font-mono text-cyan-400 mb-0.5">
-                <span>Campaña</span>
-                <span className="font-bold">{campaignProgress}%</span>
-              </div>
-              <div className="w-full bg-slate-950/80 rounded-full h-1.5 border border-white/5 overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full transition-all duration-300"
-                  style={{ width: `${campaignProgress}%` }}
-                />
-              </div>
-            </div>
-            <span className="text-xs font-mono font-bold bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-lg whitespace-nowrap">
-              {totalCompleted}/{totalMissions}
-            </span>
-          </div>
-        }
       />
 
       {/* NIVEL 1: Selector de Eras y Capítulos Compacto (Sin scroll vertical masivo) */}
@@ -182,6 +169,10 @@ const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, 
           completedList={completedList}
           activeList={activeList}
           missionAssetMap={MISSION_ASSET_MAP}
+          onNavigateTo={(target) => {
+            if (navigateTo) navigateTo(target);
+            else if (setActiveTab) setActiveTab(target);
+          }}
           onBackToChapters={() => {
             if (window.playSfx) window.playSfx('click');
             setViewMode('chapters');

@@ -93,5 +93,10 @@ export const MINISTRY_DIRECTIVES = {
     { id: 'dir_open_embassies', name: 'Canales Diplomáticos de Alta Frecuencia', desc: '+20% Reputación con Imperios Vecinos, -10% Éxito de Espionaje Propio', cost: '15 ptos Influencia' },
     { id: 'dir_embargo', name: 'Decreto de Sanciones Comerciales', desc: '-30% Comercio a Facción Hostil, +15% Cohesión Interna', cost: '20 ptos Influencia' },
     { id: 'dir_defensive_pact', name: 'Protocolo de Seguridad Interestelar', desc: '+25% Flota de Refuerzo Federal en Caso de Agresión', cost: '25 ptos Influencia' }
+  ],
+  finance: [
+    { id: 'dir_bank_stimulus', name: 'Estímulo de Liquidez Cuántica', desc: '+20% Generación pasiva de créditos, -5% Estabilidad de Inflación', cost: '15 ptos Influencia' },
+    { id: 'dir_gold_standard', name: 'Patrón Metal Soberano', desc: 'Respalda la moneda con reservas de metal (+10% Valor de Créditos)', cost: '10 ptos Influencia' },
+    { id: 'dir_anti_tax_evasion', name: 'Auditoría Fiscal Automatizada por IA', desc: '+25% Recaudación de Impuestos y Aranceles en el Imperio', cost: '20 ptos Influencia' }
   ]
 };

@@ -55,11 +55,49 @@ export const GovernmentBreadcrumbs = ({
               </button>
               <span className="text-slate-600 font-bold text-sm">/</span>
 
-              {/* Etiqueta del Planeta Sede del Alto Mando */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-bold text-xs" title="Sede del Alto Mando">
+              {/* Botón directo a Mundos del Imperio */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.playSfx) window.playSfx('click');
+                  try {
+                    if (typeof window !== "undefined") {
+                      window.sessionStorage.setItem("ascension_target_section", "planets");
+                    }
+                    window.dispatchEvent(new CustomEvent('ascension:open-section', { detail: { section: 'planets' } }));
+                  } catch (_) {}
+                  onBackToEmpire();
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/40 font-bold text-xs transition-all cursor-pointer"
+                title="Volver a Mundos del Imperio"
+              >
                 <span className="text-sm">🌍</span>
+                <span>Mundos del Imperio</span>
+              </button>
+              <span className="text-slate-600 font-bold text-sm">/</span>
+
+              {/* Etiqueta del Planeta interactiva: clica para ir a Mundos del Imperio filtrado por este planeta */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.playSfx) window.playSfx('click');
+                  const planetName = currentPlanet?.name || state?.planets?.find(p => p.isHome)?.name || '';
+                  try {
+                    window.dispatchEvent(new CustomEvent('ascension:open-section', { detail: { section: 'planets', filter: planetName } }));
+                  } catch (_) {}
+                  onBackToEmpire();
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/40 text-cyan-300 font-bold text-xs transition-all cursor-pointer"
+                title="Ver este mundo en el Catálogo de Mundos del Imperio"
+              >
+                <span className="text-sm">🪐</span>
                 <span>{currentPlanet?.name || state?.planets?.find(p => p.isHome)?.name || 'Capital'}</span>
-              </div>
+                {currentPlanet?.galaxy !== undefined && (
+                  <span className="text-cyan-400 font-mono text-[11px] font-black">
+                    [{currentPlanet.galaxy}:{currentPlanet.system}:{currentPlanet.position}]
+                  </span>
+                )}
+              </button>
               <span className="text-slate-600 font-bold text-sm">/</span>
             </>
           )}
@@ -117,135 +155,94 @@ export const GovernmentBreadcrumbs = ({
               </div>
             </>
           )}
+
+          {/* Badge Ministro Activo ON/OFF en la segunda línea del HUD */}
+          {minState && (
+            <div className="shrink-0 ml-auto flex items-center">
+              <div 
+                className={`border rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-xl select-none transition-all text-xs ${
+                  isAuto
+                    ? 'bg-[#051c14]/90 border-emerald-500/50 text-emerald-300'
+                    : minister
+                      ? 'bg-[#211604]/90 border-amber-500/50 text-amber-300'
+                      : 'bg-[#050814]/90 border-white/20 text-slate-300'
+                }`}
+                title="Estado de automatización del ministro titular"
+              >
+                <span className="relative flex h-2 w-2 shrink-0">
+                  {isAuto && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400"></span>
+                  )}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    isAuto ? 'bg-emerald-400' : minister ? 'bg-amber-400' : 'bg-slate-500'
+                  }`}></span>
+                </span>
+                <span className="text-[10px] font-mono font-black uppercase tracking-wider whitespace-nowrap">
+                  {isAuto ? '⚡ MINISTRO AUTÓNOMO (ON)' : minister ? '👤 MINISTRO MANUAL (OFF)' : '⚠️ CARTERA VACANTE'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* === LÍNEA VERTICAL TOTAL DE SEPARACIÓN === */}
       <div className="hidden xl:block w-[1px] bg-white/15 self-stretch" />
 
-      {/* === SECTOR DERECHO: MINISTRO, INVESTIDURA Y MODO AUTÓNOMO (UNIFICADO VERTICALMENTE) === */}
-      {minState && (
-        <div className="flex items-center justify-between xl:justify-end gap-3.5 px-4 py-2 bg-black/50 shrink-0 border-t xl:border-t-0 border-white/10">
-          {/* Info del Ministro */}
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                if (minister?.voiceId) {
-                  playVoice(minister.voiceId);
-                } else if (window.playSfx) {
-                  window.playSfx('click');
-                }
-              }}
-              title={minister ? (minister.voiceId ? "Haz clic para escuchar la voz del ministro" : "Ministro activo") : undefined}
-              className={`w-9 h-9 rounded-xl overflow-hidden border border-white/15 bg-cyan-950/40 flex items-center justify-center shrink-0 shadow-sm transition-all ${
-                minister ? 'hover:border-cyan-400 hover:scale-105 cursor-pointer' : ''
-              }`}
-            >
-              {minister?.avatarId ? (
-                <SafeImg 
-                  id={minister.avatarId} 
-                  className="w-full h-full object-cover object-top" 
-                  fallback={<span className="text-xl">{minister ? minister.icon : '❓'}</span>}
-                />
-              ) : (
-                <span className="text-xl">{minister ? minister.icon : '❓'}</span>
-              )}
-            </button>
-            <div className="leading-tight">
-              <span 
-                onClick={() => {
-                  if (minister?.voiceId) {
-                    playVoice(minister.voiceId);
-                  } else if (window.playSfx) {
-                    window.playSfx('click');
-                  }
-                }}
-                title={minister ? (minister.voiceId ? "Haz clic para escuchar su voz" : "Ministro activo") : undefined}
-                className={`text-sm font-bold text-white block tracking-wide ${
-                  minister ? 'hover:text-cyan-400 cursor-pointer transition-colors' : ''
-                }`}
-              >
-                {minister ? minister.name : 'Vacante'}
-              </span>
-              <span className="text-xs text-slate-400 block truncate max-w-[170px]">
-                {minister ? minister.trait : 'Sin ministro asignado'}
-              </span>
-            </div>
-          </div>
-
-          {/* Separador */}
-          <div className="h-7 w-[1px] bg-white/20" />
-
-          {/* Botón Cambiar / Investir */}
-          {onOpenCandidates && (
-            <button
-              onClick={onOpenCandidates}
-              className="px-3 py-1.5 bg-white/10 hover:bg-cyan-500/20 text-cyan-300 hover:text-white text-xs font-bold font-mono rounded-xl border border-white/20 hover:border-cyan-400/50 transition-all uppercase tracking-wider cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
-            >
-              {minister ? 'Cambiar' : 'Investir'}
-            </button>
-          )}
-
-          {/* Separador */}
-          <div className="h-7 w-[1px] bg-white/20" />
-
-          {/* Interruptor de Autogestión / Manual */}
-          <div className="relative">
-            <div
-              onClick={() => {
-                if (dispatch && ministryId) {
-                  dispatch({ 
-                    type: 'TOGGLE_MINISTRY_AUTOMATION', 
-                    ministryId, 
-                    planetId: planetId || currentPlanet?.id 
-                  });
-                  if (window.playSfx) window.playSfx('click');
-                }
-              }}
-              className="flex items-center gap-2 select-none p-1 rounded-xl transition-all cursor-pointer hover:bg-white/5"
-              title={
-                isAuto 
-                  ? 'Modo Autónomo activo. Haz click para pasar a Manual' 
-                  : 'Modo Manual. Haz click para activar Autónomo'
+      {/* === SECTOR DERECHO: RECUADRO MINISTRO (ALTO COMPLETO) + RETORNO === */}
+      <div className="flex items-stretch justify-between xl:justify-end shrink-0 border-t xl:border-t-0 border-white/10 flex-wrap overflow-hidden rounded-r-2xl">
+        {minState && (
+          <button
+            type="button"
+            onClick={() => {
+              if (minister?.voiceId) {
+                playVoice(minister.voiceId);
+              } else if (window.playSfx) {
+                window.playSfx('click');
               }
-            >
-              <div
-                className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 flex items-center border ${
-                  isAuto 
-                    ? 'bg-cyan-500 border-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.5)] justify-end' 
-                    : !minister
-                      ? 'bg-slate-900 border-dashed border-amber-500/40 justify-start'
-                      : 'bg-slate-900 border-white/20 justify-start'
-                }`}
-              >
-                <div className={`w-4 h-4 rounded-full shadow-md transform duration-200 ${
-                  !minister && !isAuto ? 'bg-amber-400/80' : 'bg-white'
-                }`} />
-              </div>
-              <div className="flex flex-col">
-                <span className={`text-xs font-mono font-black uppercase tracking-wider transition-colors ${
-                  isAuto 
-                    ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]' 
-                    : !minister
-                      ? 'text-amber-400'
-                      : 'text-slate-400 hover:text-slate-200'
-                }`}>
-                  {isAuto ? 'Automático' : 'Manual'}
-                </span>
-              </div>
+              if (onOpenCandidates) {
+                onOpenCandidates();
+              }
+            }}
+            className={`relative min-h-[58px] min-w-[145px] flex flex-col items-center justify-center px-3 py-1.5 border-r border-white/10 overflow-hidden transition-all duration-300 cursor-pointer group text-center select-none shadow-none ${
+              isAuto
+                ? 'bg-[#051c14] hover:bg-[#072a1e]'
+                : minister
+                  ? 'bg-[#181105] hover:bg-[#281c08]'
+                  : 'bg-[#1c080b] hover:bg-[#2c0d12]'
+            }`}
+            title={minister ? `${minister.name} · ${minister.trait}. Haz clic para gestionar o relevar.` : "Cartera vacante. Haz clic para investir ministro."}
+          >
+            {/* Imagen de fondo con retrato del ministro o fondo ministerial */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <SafeImg
+                id={minister?.avatarId || meta?.assetId || "councilChamber"}
+                className="w-full h-full object-cover object-top opacity-50 group-hover:opacity-85 group-hover:scale-105 transition-all duration-500"
+              />
+              <div className={`absolute inset-0 transition-colors ${
+                isAuto 
+                  ? 'bg-emerald-950/40 group-hover:bg-emerald-500/20' 
+                  : minister 
+                    ? 'bg-amber-950/40 group-hover:bg-amber-500/20' 
+                    : 'bg-rose-950/40 group-hover:bg-rose-500/20'
+              }`} />
             </div>
 
-            {/* Tooltip / Mensaje de advertencia flotante */}
-            {warningMsg && (
-              <div className="absolute bottom-full mb-2 right-0 z-50 whitespace-nowrap px-3 py-1.5 rounded-lg bg-amber-950/95 border border-amber-400/60 text-amber-200 text-[11px] font-bold font-mono shadow-[0_0_20px_rgba(245,158,11,0.4)] animate-in fade-in slide-in-from-bottom-2 duration-150 flex items-center gap-1.5">
-                <span>⚠️</span>
-                <span>{warningMsg}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+            <div className="relative z-10 flex flex-col items-center justify-center leading-tight">
+              <span className={`text-xs font-mono font-black uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] tracking-wider flex items-center gap-1.5 ${
+                isAuto ? 'text-emerald-200 group-hover:text-white' : minister ? 'text-amber-200 group-hover:text-white' : 'text-rose-200 group-hover:text-white'
+              }`}>
+                <span>{minister?.icon || '👤'}</span>
+                <span className="truncate max-w-[125px]">{minister ? minister.name : 'Vacante'}</span>
+              </span>
+              <span className={`text-[9px] font-mono uppercase tracking-widest mt-0.5 ${
+                isAuto ? 'text-emerald-300/80' : minister ? 'text-amber-300/80' : 'text-rose-300/80'
+              }`}>
+                {isAuto ? 'Activo (Autónomo)' : minister ? 'Manual (Asignado)' : 'Investir Ministro'}
+              </span>
+            </div>
+          </button>
+        )}
 
       {/* === LÍNEA VERTICAL TOTAL DE SEPARACIÓN HACIA EL BOTÓN VOLVER === */}
       <div className="hidden xl:block w-[1px] bg-white/15 self-stretch" />
@@ -300,6 +297,7 @@ export const GovernmentBreadcrumbs = ({
           </div>
         </button>
       </div>
-    </nav>
-  );
+    </div>
+  </nav>
+);
 };

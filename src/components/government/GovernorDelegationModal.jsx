@@ -60,11 +60,11 @@ export const GovernorDelegationModal = ({
 
   const content = (
     <div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4 w-screen h-screen animate-in fade-in duration-200"
+      className="fixed inset-0 bg-black/85 backdrop-blur-md z-[99999] flex items-center justify-center p-4 sm:p-6 w-screen h-screen animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div 
-        className="p-6 md:p-8 rounded-3xl bg-[#090d1f] border border-cyan-500/40 max-w-xl w-full space-y-5 shadow-[0_0_50px_rgba(6,182,212,0.3)] relative my-auto animate-in zoom-in-95 duration-200 font-mono"
+        className="p-6 md:p-8 rounded-3xl bg-[#090d1f] border border-cyan-500/40 max-w-4xl w-full space-y-5 shadow-[0_0_50px_rgba(6,182,212,0.3)] relative m-auto animate-in zoom-in-95 duration-200 font-mono"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-3 border-b border-white/10">

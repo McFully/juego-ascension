@@ -26,7 +26,9 @@ export const ResourceBadge = React.memo(({ icon, label, value, rate, color = 'cy
       className={`${
         isLarge
           ? 'h-16 md:h-20 px-4 md:px-5 rounded-2xl gap-3 flex-1 min-w-[130px] md:min-w-[150px]'
-          : 'h-11 px-3 rounded-xl gap-2 shrink-0'
+          : icon === 'slag'
+          ? 'h-11 px-3 rounded-xl gap-2 shrink-0 min-w-[155px]'
+          : 'h-11 px-3 rounded-xl gap-2 shrink-0 min-w-[115px] sm:min-w-[125px]'
       } bg-gradient-to-b ${theme.bg} to-[#060a16]/90 border ${theme.border} flex items-center select-none shadow-sm relative overflow-hidden ${
         onClick ? 'cursor-pointer hover:scale-105 hover:border-cyan-400/60 transition-transform active:scale-95' : ''
       }`}
@@ -41,8 +43,12 @@ export const ResourceBadge = React.memo(({ icon, label, value, rate, color = 'cy
             {typeof value === 'string' ? value : fmt(value)}
           </span>
           {rate !== undefined && (
-            <span className={`${isLarge ? 'text-[10px] md:text-xs font-bold' : 'text-[9px] font-semibold'} font-mono text-emerald-400/90`}>
-              +{fmt(rate)}/h
+            <span className={`${isLarge ? 'text-[10px] md:text-xs font-bold' : 'text-[9px] font-semibold'} font-mono ${
+              rate < 0 
+                ? (icon === 'slag' ? 'text-emerald-400 font-bold' : 'text-rose-400')
+                : (icon === 'slag' && rate > 0 ? 'text-orange-400 font-bold' : 'text-emerald-400/90')
+            }`}>
+              {rate > 0 ? `+${fmt(rate)}/h` : `${fmt(rate)}/h`}
             </span>
           )}
         </div>
@@ -84,11 +90,11 @@ export const ResourceBar = React.memo(({ planet, research, reputation, taxRate =
 
   return (
     <div className="h-full flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-0.5">
-      <ResourceBadge icon="metal" label="Metal" value={planet.resources.metal || 0} rate={netMetal} />
-      <ResourceBadge icon="crystal" label="Cristal" value={planet.resources.crystal || 0} rate={netCrystal} />
-      <ResourceBadge icon="deuterium" label="Deuterio" value={planet.resources.deuterium || 0} rate={netDeut} />
+      <ResourceBadge icon="metal" label="Metal" value={planet?.resources?.metal || 0} rate={netMetal} />
+      <ResourceBadge icon="crystal" label="Cristal" value={planet?.resources?.crystal || 0} rate={netCrystal} />
+      <ResourceBadge icon="deuterium" label="Deuterio" value={planet?.resources?.deuterium || 0} rate={netDeut} />
       <ResourceBadge icon="energy" label="Energía" value={`${energyPrefix}${fmt(prod.energyBalance)}`} />
-      <ResourceBadge icon="slag" label="Escoria" value={planet.resources.slag || 0} rate={netSlag} />
+      <ResourceBadge icon="slag" label="Escoria" value={planet?.resources?.slag || 0} rate={netSlag} />
       <ResourceBadge icon="population" label="Censo" value={`${fmt(pop)}/${fmt(maxPop)}`} />
       <ResourceBadge icon="reputation" label="Reputación" value={`${repPrefix}${displayRep}`} />
     </div>

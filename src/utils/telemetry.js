@@ -11,6 +11,25 @@ export const LOG_LEVELS = {
   AUDIT: 'AUDIT',
 };
 
+// Almacén de metadatos de estado activo para telemetría (sin retener árboles DOM o referencias pesadas)
+let activeTelemetryState = null;
+
+export const setLastTelemetryState = (state, activeTab) => {
+  if (!state || !state.gameStarted) {
+    activeTelemetryState = null;
+    return;
+  }
+  activeTelemetryState = {
+    playerName: state.playerName,
+    currentPlanetId: state.currentPlanetId,
+    gameTick: state.gameTick,
+    activeTab,
+    planetsCount: (state.planets || []).length
+  };
+};
+
+export const getLastTelemetryState = () => activeTelemetryState;
+
 // Almacén circular en memoria de los últimos 2000 eventos para telemetría 360
 const TELEMETRY_BUFFER_LIMIT = 2000;
 const inMemoryTelemetryBuffer = [];
@@ -47,11 +66,9 @@ export const logTelemetry = (level, message, details = {}) => {
  * Obtiene el snapshot de telemetría en memoria junto a diagnósticos del sistema.
  */
 export const getSnapshotTelemetry = (gameState = null) => {
-  const effectiveState = (gameState && gameState.gameStarted) 
-    ? gameState 
-    : (typeof window !== 'undefined' && window.lastActiveGameState && window.lastActiveGameState.gameStarted)
-      ? window.lastActiveGameState
-      : gameState;
+  const effectiveState = (gameState && gameState.gameStarted)
+    ? gameState
+    : (getLastTelemetryState() || gameState || {});
 
   return {
     collectedAt: new Date().toISOString(),

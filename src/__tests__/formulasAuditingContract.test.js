@@ -44,7 +44,8 @@ describe('Fase 18: Auditoría Universal de Fórmulas Contract', () => {
   });
 
   it('Contrato 3: Reliquias de producción (forge_prime, crystal_heart, quantum_core) se aplican fielmente', () => {
-    const buildings = { metalMine: 5, crystalMine: 5, deutSynth: 5, solarPlant: 5 };
+    // Consumo energético x1000: fusión nivel 30 garantiza ratio de energía > 0
+    const buildings = { metalMine: 5, crystalMine: 5, deutSynth: 5, solarPlant: 5, fusionReactor: 30 };
     const research = { plasma: 1 };
     const baseProd = calcProduction(buildings, research, 20, 1, 'human', null, null, null, null, null, 0, []);
 

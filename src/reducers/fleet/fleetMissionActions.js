@@ -2,6 +2,8 @@ import {
   uid, updatePlanet, canAfford, deduct, calcDistance, calcFlightTime, calcFuel, fleetSpeed, getPOIAtCoordinates
 } from '../../core.jsx';
 import { canColonizeNewPlanet, getMaxPlanets, getUsedColonySlots } from '../../utils/formulas.js';
+import { canShipReachTarget } from '../../utils/fleetClassification.js';
+import { SHIPS } from '../../data/gameData.js';
 
 export const handleSendFleet = (state, action) => {
   const { fromId, to, fleet, missionType, missionSpeed = 10, resources = null, autoRetreat = false, formation = 'standard' } = action;
@@ -26,6 +28,36 @@ export const handleSendFleet = (state, action) => {
 
   const from = state.planets.find(p => p.id === fromId);
   if (!from) return state;
+
+  const destPoi = getPOIAtCoordinates(to.galaxy, to.system, to.position);
+  const isWormhole = destPoi && destPoi.type === 'wormhole';
+
+  // Validación de alcance según propulsión (Combustión: mismo sistema | Impulso: misma galaxia | Hiperespacio: universo)
+  // Los agujeros de gusano puentean el espacio y permiten entrada a cualquier nave
+  if (!isWormhole) {
+    for (const [id, qty] of Object.entries(fleet)) {
+      if (qty > 0 && !canShipReachTarget(id, from, to, SHIPS)) {
+        const s = SHIPS[id];
+        const isSameGalaxy = from.galaxy === to.galaxy;
+        const rangeMsg = !isSameGalaxy 
+          ? `no posee motor hiperespacial para saltos intergalácticos` 
+          : `posee motor de combustión y solo puede operar en el sistema solar local`;
+        return {
+          ...state,
+          notifications: [
+            ...(state.notifications || []),
+            {
+              id: uid(),
+              type: 'warning',
+              message: `🚫 Misión rechazada: La nave "${s?.name || id}" ${rangeMsg}.`,
+              timestamp: Date.now()
+            }
+          ]
+        };
+      }
+    }
+  }
+
   // Validate ships exist
   for (const [id, qty] of Object.entries(fleet)) {
     if (qty < 0 || (from.fleet[id] || 0) < qty) return state;
@@ -45,8 +77,6 @@ export const handleSendFleet = (state, action) => {
   }
   // Calculate fuel
   const dist = calcDistance(from, to);
-  const destPoi = getPOIAtCoordinates(to.galaxy, to.system, to.position);
-  const isWormhole = destPoi && destPoi.type === 'wormhole';
 
   const playerFaction = from.faction || 'human';
   let spd = fleetSpeed(fleet, state.research, playerFaction, state.relics || []);
@@ -78,7 +108,20 @@ export const handleSendFleet = (state, action) => {
   if (isWormhole) {
     totalFuel = Math.max(1, Math.floor(totalFuel * 0.5));
   }
-  if (newResources.deuterium < totalFuel) return state;
+  if (newResources.deuterium < totalFuel) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        {
+          id: uid(),
+          type: 'warning',
+          message: `🚫 Deuterio insuficiente para la misión: Requiere ${totalFuel} de Deuterio (Disponible: ${Math.floor(newResources.deuterium)}).`,
+          timestamp: Date.now()
+        }
+      ]
+    };
+  }
   newResources.deuterium -= totalFuel;
 
   let flightTime = calcFlightTime(dist, spd, missionSpeed);

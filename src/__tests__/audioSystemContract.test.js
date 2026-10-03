@@ -74,13 +74,19 @@ describe('FASE 04 — Contrato del Sistema de Audio', () => {
       expect(operationsVol, 'operationsVol debe ser > 0').toBeGreaterThan(0);
     });
 
-    it('useGameLifecycle.js rehidrata userMuted desde localStorage', () => {
-      const lifecycleSrc = fs.readFileSync(path.resolve(__dirname, '../hooks/useGameLifecycle.js'), 'utf-8');
+    it('useGameLifecycle.js o useGameAudio.js rehidrata userMuted desde localStorage', () => {
+      const audioHookPath = fs.existsSync(path.resolve(__dirname, '../hooks/useGameAudio.js'))
+        ? path.resolve(__dirname, '../hooks/useGameAudio.js')
+        : path.resolve(__dirname, '../hooks/useGameLifecycle.js');
+      const lifecycleSrc = fs.readFileSync(audioHookPath, 'utf-8');
       expect(lifecycleSrc).toMatch(/useState\(\(\)\s*=>[\s\S]*?ascension_audio_settings[\s\S]*?userMuted/);
     });
 
-    it('useGameLifecycle.js limpia stopMinistryMusic y stopVoice al volver al menú o desmontar', () => {
-      const lifecycleSrc = fs.readFileSync(path.resolve(__dirname, '../hooks/useGameLifecycle.js'), 'utf-8');
+    it('useGameLifecycle.js o useGameAudio.js limpia stopMinistryMusic y stopVoice al volver al menú o desmontar', () => {
+      const audioHookPath = fs.existsSync(path.resolve(__dirname, '../hooks/useGameAudio.js'))
+        ? path.resolve(__dirname, '../hooks/useGameAudio.js')
+        : path.resolve(__dirname, '../hooks/useGameLifecycle.js');
+      const lifecycleSrc = fs.readFileSync(audioHookPath, 'utf-8');
       expect(lifecycleSrc).toMatch(/stopMinistryMusic\(\);[\s\S]*?stopVoice\(\);/);
     });
 

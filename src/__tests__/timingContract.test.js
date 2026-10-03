@@ -76,12 +76,7 @@ describe('FASE 05 — Contrato de Fuente Única de Duraciones', () => {
     });
   });
 
-  describe('3. Unificación de investigación: ResearchPage y MinistryResearchSection', () => {
-    it('ResearchPage.jsx usa calcPlanetResearchTime en vez de calcResearchTime crudo', () => {
-      const src = fs.readFileSync(path.resolve(__dirname, '../pages/ResearchPage.jsx'), 'utf-8');
-      expect(src).toMatch(/calcPlanetResearchTime\(state,\s*currentPlanet,\s*cost\)/);
-    });
-
+  describe('3. Unificación de investigación: MinistryResearchSection', () => {
     it('MinistryResearchSection.jsx usa calcPlanetResearchTime en vez de calcResearchTime crudo', () => {
       const src = fs.readFileSync(path.resolve(__dirname, '../components/government/MinistryResearchSection.jsx'), 'utf-8');
       expect(src).toMatch(/calcPlanetResearchTime\(\s*state,\s*currentPlanet,\s*cost\s*\)/);

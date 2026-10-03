@@ -83,6 +83,8 @@ export const AppOverlays = ({
           RESEARCH={RESEARCH}
           SHIPS={SHIPS}
           DEFENSES={DEFENSES}
+          state={state}
+          currentPlanet={currentPlanet}
         />
       )}
 

@@ -12,17 +12,7 @@ export const DiplomacyChamberSelector = ({ onSelectChamber, playDiploSound, onBa
 
   return (
     <div className="w-full space-y-3 py-2 animate-in fade-in duration-200">
-      <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm md:text-base font-black text-purple-300 font-mono tracking-wider uppercase flex items-center gap-2">
-          <span>🤝</span>
-          <span>Departamentos y Cámaras del Cuerpo Diplomático</span>
-        </h3>
-        <span className="text-xs text-slate-400 font-mono">
-          Selecciona una cámara para entrar
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full items-stretch pt-2 pb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full items-stretch pt-1 pb-4">
         {chambers.map(t => (
           <button
             key={t.id}

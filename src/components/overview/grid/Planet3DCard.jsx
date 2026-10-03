@@ -2,6 +2,7 @@ import React from 'react';
 import { PlanetViewer3D } from '../../3d/PlanetViewer3D.jsx';
 import { BIOMES } from '../../../data/gameData.js';
 import { ResourceBreakdownTooltip } from '../../ui/ResourceBreakdownTooltip.jsx';
+import { getPlanetHeritage } from '../../../data/planetaryHeritageData.js';
 
 /**
  * Planet3DCard — Tarjeta 3D interactiva para renderizado individual de mundos.
@@ -56,10 +57,10 @@ export const Planet3DCard = React.memo(function Planet3DCard({
         if (isEditing) return;
         handleSelectPlanetAndNavigate(planet.id);
       }}
-      className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border transition-all duration-300 select-none cursor-pointer text-left focus:outline-none w-full bg-[#080d1e]/95 border-white/10 hover:border-cyan-400 hover:bg-[#0c142b] hover:shadow-[0_0_35px_rgba(6,182,212,0.25)] p-4"
+      className="group relative flex flex-col justify-between overflow-visible rounded-3xl border transition-all duration-300 select-none cursor-pointer text-left focus:outline-none w-full bg-[#080d1e]/95 border-white/10 hover:border-cyan-400 hover:bg-[#0c142b] hover:shadow-[0_0_35px_rgba(6,182,212,0.25)] p-4"
     >
-      {/* Badges superiores: Botón Auto-Comercio (en colonias) y Botón Gobernador */}
-      <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
+      {/* Badges superiores: Botón Auto-Comercio (en colonias) y Botón Gobernador (compactos a la mitad y alineados a la derecha) */}
+      <div className="absolute top-2.5 right-2.5 z-20 flex items-center justify-end gap-1.5 max-w-[50%]">
         {!planet.isHome && (
           <button
             type="button"
@@ -71,14 +72,14 @@ export const Planet3DCard = React.memo(function Planet3DCard({
               }
             }}
             title={planet.autoTrade ? "Auto-Comercio ACTIVO: envía excedentes a la capital al superar 75% de almacén. Clic para desactivar" : "Auto-Comercio INACTIVO. Clic para activar envío automático de excedentes a capital"}
-            className={`px-3 py-1 rounded-xl text-xs font-mono font-black uppercase tracking-wider backdrop-blur-md border shadow-lg transition-all cursor-pointer select-none flex items-center gap-1.5 ${
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-black uppercase tracking-tight backdrop-blur-md border shadow transition-all cursor-pointer select-none flex items-center gap-1 shrink-0 ${
               planet.autoTrade
-                ? 'bg-indigo-600 text-white border-indigo-400 hover:bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] scale-105'
+                ? 'bg-indigo-600 text-white border-indigo-400 hover:bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]'
                 : 'bg-black/85 text-slate-300 border-white/30 hover:border-indigo-400 hover:text-indigo-200 hover:bg-indigo-950/40'
             }`}
           >
-            <span>🚚</span>
-            <span>{planet.autoTrade ? 'Auto-Ruta: ACTIVA' : 'Auto-Ruta: OFF'}</span>
+            <span className="text-[11px]">🚚</span>
+            <span>{planet.autoTrade ? 'Ruta: ON' : 'Ruta: OFF'}</span>
           </button>
         )}
 
@@ -92,24 +93,24 @@ export const Planet3DCard = React.memo(function Planet3DCard({
             }
           }}
           title={planet.autoGovernance ? "Gobernador IA activo en este planeta. Clic para cambiar a Manual" : "Modo Manual. Clic para activar Gobernador IA en este planeta"}
-          className={`px-3 py-1 rounded-xl text-xs font-mono font-black uppercase tracking-wider backdrop-blur-md border shadow-lg transition-all cursor-pointer select-none flex items-center gap-1.5 ${
+          className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-black uppercase tracking-tight backdrop-blur-md border shadow transition-all cursor-pointer select-none flex items-center gap-1 shrink-0 ${
             planet.autoGovernance
-              ? 'bg-emerald-600 text-white border-emerald-400 hover:bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-105'
+              ? 'bg-emerald-600 text-white border-emerald-400 hover:bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
               : 'bg-black/85 text-slate-300 border-white/30 hover:border-cyan-400 hover:text-cyan-200 hover:bg-cyan-950/40'
           }`}
         >
           {planet.autoGovernance ? (
             <>
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
               </span>
-              <span>🤖 Gobernador IA: ACTIVO</span>
+              <span>IA: ACTIVA</span>
             </>
           ) : (
             <>
-              <span>👤</span>
-              <span>Gobernador: MANUAL</span>
+              <span className="text-[11px]">👤</span>
+              <span>MANUAL</span>
             </>
           )}
         </button>
@@ -149,7 +150,7 @@ export const Planet3DCard = React.memo(function Planet3DCard({
         <div className="col-span-4 flex items-center justify-center relative pointer-events-none my-auto">
           <div className="relative flex items-center justify-center w-36 h-36">
             <div className="absolute inset-0 bg-cyan-500/10 rounded-full blur-xl pointer-events-none" />
-            <PlanetViewer3D biome={planet.biome || "temperate"} name={planet.name} size={145} />
+            <PlanetViewer3D biome={planet.biome || "temperate"} name={planet.name} size={145} planet={planet} />
           </div>
         </div>
 
@@ -164,7 +165,7 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                 maxLength={20}
                 onChange={(e) => setTempName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveRename(planet.id);
+                  if (e.key === 'Enter') handleSaveRename(planet.id, tempName);
                   if (e.key === 'Escape') setEditingPlanetId(null);
                 }}
                 className="bg-black/90 border border-cyan-400 text-white text-base font-bold px-2 py-1 rounded-md focus:outline-none text-center w-full shadow-[0_0_10px_rgba(6,182,212,0.4)]"
@@ -172,14 +173,20 @@ export const Planet3DCard = React.memo(function Planet3DCard({
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => handleSaveRename(planet.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSaveRename(planet.id, tempName);
+                  }}
                   className="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded cursor-pointer"
                 >
                   ✓ Guardar
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditingPlanetId(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingPlanetId(null);
+                  }}
                   className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded cursor-pointer"
                 >
                   ✕
@@ -199,6 +206,20 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                     🏛️ Lonja Galáctica
                   </span>
                 )}
+
+                {(() => {
+                  const heritage = getPlanetHeritage(planet);
+                  if (!heritage) return null;
+                  return (
+                    <span
+                      title={heritage.desc + ' | ' + heritage.bonusDesc}
+                      className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-tight bg-cyan-950/80 text-cyan-200 border border-cyan-500/40 flex items-center gap-1 shadow-[0_0_10px_rgba(6,182,212,0.25)]"
+                    >
+                      <span>{heritage.icon}</span>
+                      <span className="truncate max-w-[130px]">{heritage.name}</span>
+                    </span>
+                  );
+                })()}
 
                 <button
                   type="button"
@@ -233,7 +254,7 @@ export const Planet3DCard = React.memo(function Planet3DCard({
       <div className="grid grid-cols-5 gap-1.5 mt-3 pt-2.5 border-t border-white/10 font-mono">
         <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">METAL</span>
-          <span className="text-white font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{fmt(planet.resources?.metal || 0)}</span>
+          <span className="text-white font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5 tabular-nums">{fmt(planet.resources?.metal || 0)}</span>
           {pProd?.breakdown && (
             <div className="hidden group-hover/res:block z-[150]">
               <ResourceBreakdownTooltip
@@ -241,13 +262,14 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                 breakdown={pProd.breakdown}
                 currentAmount={planet.resources?.metal}
                 prodVal={pProd.metal}
+                position="top-left"
               />
             </div>
           )}
         </div>
         <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">CRISTAL</span>
-          <span className="text-cyan-300 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{fmt(planet.resources?.crystal || 0)}</span>
+          <span className="text-cyan-300 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5 tabular-nums">{fmt(planet.resources?.crystal || 0)}</span>
           {pProd?.breakdown && (
             <div className="hidden group-hover/res:block z-[150]">
               <ResourceBreakdownTooltip
@@ -255,13 +277,14 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                 breakdown={pProd.breakdown}
                 currentAmount={planet.resources?.crystal}
                 prodVal={pProd.crystal}
+                position="top-left"
               />
             </div>
           )}
         </div>
         <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">DEUTERIO</span>
-          <span className="text-emerald-300 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{fmt(planet.resources?.deuterium || 0)}</span>
+          <span className="text-emerald-300 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5 tabular-nums">{fmt(planet.resources?.deuterium || 0)}</span>
           {pProd?.breakdown && (
             <div className="hidden group-hover/res:block z-[150]">
               <ResourceBreakdownTooltip
@@ -269,13 +292,19 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                 breakdown={pProd.breakdown}
                 currentAmount={planet.resources?.deuterium}
                 prodVal={pProd.deuterium}
+                position="top"
               />
             </div>
           )}
         </div>
         <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">ESCORIA</span>
-          <span className="text-amber-500 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{fmt(planet.resources?.slag || 0)}</span>
+          <span className="text-amber-500 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5 tabular-nums">{fmt(planet.resources?.slag || 0)}</span>
+          {pProd?.slagNet !== undefined && (
+            <span className={`text-[9px] font-mono font-bold leading-none mt-0.5 ${(pProd.slagNet || 0) <= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+              {(pProd.slagNet || 0) > 0 ? `+${fmt(pProd.slagNet)}/h` : `${fmt(pProd.slagNet || 0)}/h`}
+            </span>
+          )}
           {pProd?.breakdown && (
             <div className="hidden group-hover/res:block z-[150]">
               <ResourceBreakdownTooltip
@@ -283,13 +312,14 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                 breakdown={pProd.breakdown}
                 currentAmount={planet.resources?.slag}
                 prodVal={pProd.slag}
+                position="top-right"
               />
             </div>
           )}
         </div>
         <div className="relative group/res bg-black/60 px-1.5 py-1.5 rounded-xl border border-white/10 text-center flex flex-col justify-center cursor-help">
           <span className="text-slate-400 block text-[10px] font-bold tracking-tight">ENERGÍA</span>
-          <span className="text-yellow-400 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5">{energySign}{fmt(pEnergy)}</span>
+          <span className="text-yellow-400 font-black text-xs md:text-sm leading-tight tracking-tight mt-0.5 tabular-nums">{energySign}{fmt(pEnergy)}</span>
           {pProd?.breakdown && (
             <div className="hidden group-hover/res:block z-[150]">
               <ResourceBreakdownTooltip
@@ -297,6 +327,7 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                 breakdown={pProd.breakdown}
                 currentAmount={pEnergy}
                 prodVal={pEnergy}
+                position="top-right"
               />
             </div>
           )}

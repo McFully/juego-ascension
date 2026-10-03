@@ -188,5 +188,15 @@ export const MINISTRY_METADATA = {
     border: 'border-pink-500/40',
     badgeBg: 'bg-pink-500/10 text-pink-400',
     accentColor: '#ec4899'
+  },
+  finance: {
+    name: 'Ministerio de Finanzas y Banca',
+    subtitle: 'Banca Central, Créditos y Tesoro Imperial',
+    icon: '🏦',
+    assetId: 'financeMinistry',
+    desc: 'Regula las reservas bancarias imperiales, emisión de créditos estelares, cámaras de compensación y dividendos del tesoro.',
+    border: 'border-yellow-500/40',
+    badgeBg: 'bg-yellow-500/10 text-yellow-400',
+    accentColor: '#eab308'
   }
 };

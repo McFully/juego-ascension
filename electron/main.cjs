@@ -16,6 +16,12 @@ const {
   scrapShipsFromPlanet
 } = require("./database/shipRepository.cjs");
 const { migrateJsonToSqlite } = require("./database/migrator.cjs");
+const {
+  getCachedResponse,
+  setCachedResponse,
+  getDailyQuotaStatus,
+  recordApiCall,
+} = require("./database/geminiRepository.cjs");
 
 // Permitir autoplay de audio/música sin requerir gesto previo del usuario
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
@@ -365,6 +371,46 @@ ipcMain.handle("db-migrate-json", async (_event, saveSlug) => {
     const savesDir = path.join(app.getPath("userData"), "saves");
     const jsonPath = path.join(savesDir, `${slug}.json`);
     return migrateJsonToSqlite(jsonPath, slug);
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CANALES IPC DE GEMINI IA (Caché local y Cuota)
+// ═══════════════════════════════════════════════════════════════
+ipcMain.handle("gemini-get-cache", async (_event, prompt) => {
+  try {
+    const cached = getCachedResponse(prompt);
+    return { success: true, cached };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("gemini-set-cache", async (_event, payload) => {
+  try {
+    const { prompt, responseText, category } = payload || {};
+    setCachedResponse(prompt, responseText, category);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("gemini-get-quota", async (_event, maxDaily) => {
+  try {
+    const quota = getDailyQuotaStatus(maxDaily || 500);
+    return { success: true, quota };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("gemini-record-call", async () => {
+  try {
+    recordApiCall();
+    return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
   }

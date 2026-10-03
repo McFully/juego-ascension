@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { IMPERIAL_SENATE_BILLS } from '../../../data/imperialCouncilData.js';
 import { SafeImg } from '../../../assets.jsx';
+import { SubsystemTopBanner } from '../../navigation/SubsystemTopBanner.jsx';
 
 /**
  * ImperialSenateView — Cámara Alta Federal y Diplomacia del Imperio.
@@ -15,6 +16,8 @@ import { SafeImg } from '../../../assets.jsx';
 export const ImperialSenateView = ({
   state,
   dispatch,
+  currentPlanet,
+  production,
   fmt,
   onBackToGoov,
   onNavigateTab
@@ -52,6 +55,26 @@ export const ImperialSenateView = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver a Mando Imperial) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Senado Imperial Interplanetario"
+        breadcrumbIcon="🏛️"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Mando Imperial"
+        backButtonIcon="👑"
+        onBackToAltoMando={onBackToGoov}
+        rightSlot={
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs font-mono">
+            <span className="text-purple-400">Escaños Totales:</span>
+            <span className="font-bold text-purple-200">{totalSenateSeats}</span>
+          </div>
+        }
+      />
       {/* Cabecera Solemne del Senado */}
       <div className="relative p-6 rounded-3xl bg-gradient-to-r from-[#110b29] via-[#0c0821] to-[#070514] border border-purple-500/30 shadow-[0_0_40px_rgba(168,85,247,0.2)] flex flex-col md:flex-row md:items-center justify-between gap-4 overflow-hidden">
         <div className="relative z-10 flex items-center gap-4">

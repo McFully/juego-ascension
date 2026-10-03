@@ -48,7 +48,8 @@ export const handleStartShip = (state, action) => {
 export const handleStartDefense = (state, action) => {
   const { defenseId, quantity, planetId } = action;
   const planet = (planetId ? state.planets.find(p => p.id === planetId) : null) || state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
-  if (!planet || !planet.buildings.shipyard) return state;
+  const hasShipyardFacility = Boolean(planet?.buildings?.shipyard || (planet?.isExchangePlanet && (planet?.buildings?.exchangeBastion || planet?.buildings?.exchangeDocks)));
+  if (!planet || !hasShipyardFacility) return state;
   const d = DEFENSES[defenseId];
   if (!meetsResearchReq(d?.req, { ...planet.buildings, ...state.research })) return state;
   if (d?.max && (planet.defenses[defenseId] || 0) >= d.max) return state;

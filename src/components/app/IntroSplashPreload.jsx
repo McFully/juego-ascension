@@ -2,7 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { StarField } from '../../ui.jsx';
 import { asset } from '../../assets.jsx';
 
+import { REAL_IMAGES } from '../../data/assetsCatalog.js';
+
 const APP_VERSION = (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev');
+
+// Caché en memoria para evitar re-decodificar durante la misma sesión
+let preloadedVRAMDone = false;
+function preloadAllAssetsToVRAM() {
+  if (preloadedVRAMDone || typeof window === 'undefined') return;
+  preloadedVRAMDone = true;
+  const urls = Object.values(REAL_IMAGES || {}).filter(Boolean);
+  urls.forEach(src => {
+    try {
+      const img = new Image();
+      img.src = src;
+      if (img.decode) {
+        img.decode().catch(() => {});
+      }
+    } catch (_) {}
+  });
+}
 
 const BOOT_STEPS = [
   { progress: 18, text: 'INICIALIZANDO SUBSISTEMAS CUÁNTICOS...' },
@@ -17,6 +36,10 @@ export const IntroSplashPreload = ({ ready = true, onForceReady, onComplete }) =
   const [stepIndex, setStepIndex] = useState(0);
   const [fadingOut, setFadingOut] = useState(false);
   const [stuck, setStuck] = useState(false);
+
+  useEffect(() => {
+    preloadAllAssetsToVRAM();
+  }, []);
 
   // Watchdog de 10s según regla maestra de estabilidad del ejecutable
   useEffect(() => {

@@ -103,8 +103,10 @@ export function useAppSaveHandlers({
       return { success: false, error: "No hay una partida activa para guardar." };
     }
 
+    const isSameName = (currentSave.saveName && currentSave.saveName === name) || (currentSave._saveName && currentSave._saveName === name);
+    const baseState = isSameName ? withSessionIdentity(currentSave) : { ...currentSave, _sessionId: undefined };
     const snap = {
-      ...withSessionIdentity(currentSave),
+      ...baseState,
       saveName: name,
       playerName: currentSave.playerName || state?.playerName || "Comandante",
       version: 4,

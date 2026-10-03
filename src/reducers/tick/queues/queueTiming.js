@@ -52,7 +52,7 @@ import {
 } from '../../../utils/formulas.js';
 import { GAME_SPEED } from '../../../data/gameData.js';
 import { calculateRetrofitUnitTime } from '../../../utils/formulas/retrofitFormulas.js';
-import { researchTimeMultFor } from '../../../utils/formulas/researchTiming.js';
+import { calcPlanetResearchTime } from '../../../utils/formulas/researchTiming.js';
 import { logTelemetry } from '../../../utils/telemetry.js';
 
 /** Coste sonda. Cualquier valor positivo vale: solo importa el cociente. */
@@ -91,9 +91,8 @@ export const timeMultFor = (state, kind, item) => {
       }));
 
     case 'research':
-      // Mismo helper que usan START_RESEARCH y la auto-investigación, así que el
-      // multiplicador grabado y el recalculado son siempre comparables.
-      return researchTimeMultFor(state, planet);
+      // Sondeo de duración con PROBE_COST idéntico al resto de colas: permite comparar antes y después
+      return safe(calcPlanetResearchTime(state, planet, PROBE_COST, item?.researchId));
 
     case 'ship': {
       let bonus = shipTimeBonus(buildings);

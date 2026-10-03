@@ -54,19 +54,21 @@ export const ShipProductionCard = ({
           
           <div className="flex items-start justify-between mb-2">
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <h4 className="font-bold text-white text-sm truncate">{s.name}</h4>
                 <span className="px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[9px] font-mono font-black">
                   Mk.{calculateTechGeneration(extractShipTechSnapshot(state.research || {}))}
                 </span>
-                {onOpenCodex && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
-                    className="w-4 h-4 rounded bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition cursor-pointer"
-                    title="Ver detalles"
-                  >
-                    <span className="material-symbols-outlined text-[10px]">menu_book</span>
-                  </button>
+                {s.drive && (
+                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase ${
+                    s.drive === 'combustion' 
+                      ? 'bg-amber-950/80 border border-amber-500/40 text-amber-300' 
+                      : s.drive === 'impulse'
+                        ? 'bg-cyan-950/80 border border-cyan-500/40 text-cyan-300'
+                        : 'bg-purple-950/80 border border-purple-500/40 text-purple-300'
+                  }`} title={s.range === 'system' ? 'Propulsión Química: Solo Sistema Solar' : s.range === 'galaxy' ? 'Impulso Iónico: Galaxia Local' : 'Hiperespacio: Intergaláctico'}>
+                    {s.drive === 'combustion' ? '🔥 Sistémico' : s.drive === 'impulse' ? '💨 Sectorial' : '🌀 Interestelar'}
+                  </span>
                 )}
               </div>
               <div className="text-[10px] font-mono text-cyan-400">En hangar: {fmt(count)}</div>
@@ -137,7 +139,7 @@ export const ShipProductionCard = ({
         </div>
 
         <div>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1.5">
             {[1, 5, 10].map(q => {
               const qCost = shipCost(id, q, currentPlanet.buildings?.constructionCenter || 0);
               const canQ = canAfford(currentPlanet.resources, qCost) && meets;
@@ -146,7 +148,12 @@ export const ShipProductionCard = ({
                   key={q}
                   onClick={() => dispatch({ type: 'START_SHIP', shipId: id, quantity: q })}
                   disabled={!canQ}
-                  className="flex-1 text-[11px] py-1 focus-ring-game"
+                  className={`flex-1 py-1 rounded-lg font-mono text-xs font-bold transition-all focus-ring-game ${
+                    canQ
+                      ? 'bg-cyan-500/20 hover:bg-cyan-500/35 text-cyan-200 border border-cyan-500/40 hover:border-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)] cursor-pointer active:scale-95'
+                      : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed opacity-50'
+                  }`}
+                  title={`Construir +${q} ${s.name}`}
                 >
                   +{q}
                 </button>
@@ -154,18 +161,35 @@ export const ShipProductionCard = ({
             })}
             <button
               onClick={() => {
+                const pRes = currentPlanet?.resources || { metal: 0, crystal: 0, deuterium: 0 };
                 const maxAfford = Math.max(1, Math.floor(Math.min(
-                  (currentPlanet.resources.metal / (s.cost.m * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1)),
-                  (currentPlanet.resources.crystal / (s.cost.c * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1)),
-                  (currentPlanet.resources.deuterium / ((s.cost.d || 0) * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1))
+                  (pRes.metal / (s.cost.m * constructionDiscount(currentPlanet?.buildings?.constructionCenter || 0) || 1)),
+                  (pRes.crystal / (s.cost.c * constructionDiscount(currentPlanet?.buildings?.constructionCenter || 0) || 1)),
+                  (pRes.deuterium / ((s.cost.d || 0) * constructionDiscount(currentPlanet?.buildings?.constructionCenter || 0) || 1))
                 )));
                 if (maxAfford > 0) dispatch({ type: 'START_SHIP', shipId: id, quantity: maxAfford });
               }}
               disabled={!meets || !affordable1}
-              className={`${S.btn} text-[11px] py-1 px-2.5 focus-ring-game font-bold`}
+              className={`py-1 px-3 rounded-lg font-mono text-xs font-black transition-all focus-ring-game ${
+                meets && affordable1
+                  ? 'bg-gradient-to-r from-cyan-600/30 to-emerald-600/30 hover:from-cyan-500/40 hover:to-emerald-500/40 text-white border border-cyan-400/50 hover:border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)] cursor-pointer active:scale-95'
+                  : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed opacity-50'
+              }`}
+              title="Construir el máximo de unidades posible según recursos disponibles"
             >
               MAX
             </button>
+            {onOpenCodex && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
+                className="py-1 px-2.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-500/40 hover:border-cyan-300 text-cyan-200 hover:text-white flex items-center justify-center gap-1 transition-all cursor-pointer shrink-0 shadow-sm active:scale-95 font-mono text-xs font-bold"
+                title="Ver detalles de la nave en Codex"
+              >
+                <span>📋</span>
+                <span className="hidden sm:inline">Ver Detalles</span>
+              </button>
+            )}
           </div>
           {s.req && !meets && (
             <div className="text-[9px] text-red-400 mt-1.5 leading-tight font-mono">

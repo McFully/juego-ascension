@@ -18,6 +18,7 @@ import {
 export const ImperialCommandHub = React.memo(({
   state,
   dispatch,
+  currentPlanet,
   production,
   fmt,
   onNavigateTab,
@@ -30,12 +31,13 @@ export const ImperialCommandHub = React.memo(({
 
   const cardsMap = useMemo(() => buildImperialCommandCards({
     onNavigateTab,
+    onBackToEmpire,
     readyMissions,
     claimedCount,
     missions,
     fmt,
     state
-  }), [onNavigateTab, readyMissions, claimedCount, missions, fmt, state]);
+  }), [onNavigateTab, onBackToEmpire, readyMissions, claimedCount, missions, fmt, state]);
 
   const order = useCardOrder(IMPERIAL_COMMAND_STORAGE_KEY, IMPERIAL_COMMAND_CARDS);
 
@@ -43,7 +45,7 @@ export const ImperialCommandHub = React.memo(({
     <div className="space-y-6 animate-in fade-in duration-200">
       {showTopBar && (
         <HubTopBar
-          currentPlanet={null}
+          currentPlanet={currentPlanet}
           production={production}
           state={state}
           dispatch={dispatch}
@@ -53,14 +55,15 @@ export const ImperialCommandHub = React.memo(({
           isReordering={order.isReordering}
           onToggleReorder={() => order.setIsReordering(prev => !prev)}
           onResetOrder={order.handleResetOrder}
-          showResources={false}
+          showResources={true}
         />
       )}
 
       <CommandHubGrid
         cardsMap={cardsMap}
         cardOrder={order.cardOrder}
-        columnsClass="lg:grid-cols-4"
+        lockedCardId="back_to_empire"
+        columnsClass="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5"
         {...order}
       />
     </div>

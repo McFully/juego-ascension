@@ -4,11 +4,13 @@ import { MainMenuScreen } from "./components/app/MainMenuScreen";
 import { LoadGameScreen } from "./components/app/LoadGameScreen";
 import { SaveGameScreen } from "./components/app/SaveGameScreen";
 import { IntroSplashPreload } from "./components/app/IntroSplashPreload";
+import { LoadingScreen } from "./components/LoadingScreen";
 import { useGameKeyboardShortcuts } from "./hooks/useGameKeyboardShortcuts";
 import { useGameLifecycle } from "./hooks/useGameLifecycle";
 import { useAppSaveHandlers } from "./hooks/useAppSaveHandlers";
+import { usePlanetEconomy } from "./hooks/usePlanetEconomy";
 import { useUIDiagnostics } from "./hooks/useUIDiagnostics";
-import { logTelemetry, getSnapshotTelemetry } from "./utils/telemetry.js";
+import { logTelemetry, getSnapshotTelemetry, setLastTelemetryState, getLastTelemetryState } from "./utils/telemetry.js";
 import * as GameCore from "./core.jsx";
 import { S } from "./styles.js";
 import { SafeImg, CardBanner } from "./assets.jsx";
@@ -46,12 +48,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.lastActiveGameState = {
-        ...state,
-        activeTab
-      };
-    }
+    setLastTelemetryState(state, activeTab);
   }, [state, activeTab]);
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [renaming, setRenaming] = useState(false);
@@ -88,53 +85,7 @@ function App() {
   // Las props onOpenCodex y planetResources se pasan desde cada página que lo necesita.
   const ItemCardWithCodex = ItemCard;
 
-  const safeCalcProduction = useCallback((...args) => {
-    try {
-      return calcProduction(...args);
-    } catch (e) {
-      console.error("[Ascensión] calcProduction error:", e, args);
-      if (window.electronAPI && window.electronAPI.logError) {
-        window.electronAPI.logError(`calcProduction crash: ${e?.message || e}`, e?.stack || "", `player=${state.playerName}`);
-      }
-      return { metal: 0, crystal: 0, deuterium: 0, energyProd: 0, energyCons: 0, energyBalance: 0, ratio: 1 };
-    }
-  }, [state.playerName]);
-
-  const production = useMemo(() => {
-    if (!currentPlanet) return { metal: 0, crystal: 0, deuterium: 0, energyBalance: 0, ratio: 1 };
-    const rawProd = safeCalcProduction(
-      currentPlanet.buildings, state.research || {}, currentPlanet.temperature, GAME_SPEED,
-      currentPlanet.faction || "human", currentPlanet.biome, currentPlanet.gravity, currentPlanet.trait,
-      currentPlanet.specialization, { galaxy: currentPlanet.galaxy, system: currentPlanet.system, position: currentPlanet.position },
-      // Misma precedencia que el motor: pacto tributario del planeta primero,
-      // impuesto del Ministerio de Economía como respaldo.
-      currentPlanet.taxRate ?? state.ministries?.economy?.taxRate ?? 0
-    );
-    if (!rawProd || !rawProd.breakdown) return rawProd || { metal: 0, crystal: 0, deuterium: 0, energyBalance: 0, ratio: 1 };
-
-    const pop = currentPlanet.population || 1000;
-    const rates = GameCore.POPULATION_CONSUMPTION_RATES;
-    const popMetal = Math.round(pop * rates.metal * 3600);
-    const popCrystal = Math.round(pop * rates.crystal * 3600);
-    const popDeut = Math.round(pop * rates.deuterium * 3600);
-
-    const b = rawProd.breakdown;
-    if (b.metal) {
-      b.metal.popConsumption = popMetal;
-      b.metal.netTotal = Math.max(0, (rawProd.metal || 0) - popMetal);
-    }
-    if (b.crystal) {
-      b.crystal.popConsumption = popCrystal;
-      b.crystal.netTotal = Math.max(0, (rawProd.crystal || 0) - popCrystal);
-    }
-    if (b.deuterium) {
-      b.deuterium.popConsumption = popDeut;
-      b.deuterium.netTotal = Math.max(0, (rawProd.deuterium || 0) - popDeut);
-    }
-    return rawProd;
-  }, [currentPlanet, state.research, state.ministries, safeCalcProduction]);
-
-  const storage = useMemo(() => currentPlanet ? calcStorage(currentPlanet.buildings) : { metal: 0, crystal: 0, deuterium: 0 }, [currentPlanet]);
+  const { production, storage, safeCalcProduction } = usePlanetEconomy(currentPlanet, state);
 
   useUIDiagnostics(activeTab, currentPlanet);
 
@@ -337,7 +288,7 @@ function App() {
   }
 
   if (!currentPlanet) {
-    return <div className={S.page + " flex items-center justify-center"}>Cargando...</div>;
+    return <LoadingScreen onForceReady={() => dispatch({ type: "SET_PLANET", payload: state?.planets?.[0]?.id })} />;
   }
 
   return (
@@ -453,7 +404,7 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
     try {
-      const activeState = (typeof window !== 'undefined' && window.lastActiveGameState) ? window.lastActiveGameState : null;
+      const activeState = getLastTelemetryState();
       logTelemetry("ERROR", `ErrorBoundary capturó excepción: ${error?.message || error}`, {
         stack: error?.stack,
         componentStack: errorInfo?.componentStack,
@@ -468,7 +419,7 @@ class ErrorBoundary extends React.Component {
 
   handleExportFromCrash = async () => {
     try {
-      const activeState = (typeof window !== 'undefined' && window.lastActiveGameState) ? window.lastActiveGameState : null;
+      const activeState = getLastTelemetryState();
       const snapshot = getSnapshotTelemetry(activeState);
       if (window.electronAPI && window.electronAPI.exportLogs) {
         const res = await window.electronAPI.exportLogs(snapshot);

@@ -30,13 +30,13 @@ export const GAME_TABS = [
   // Órganos del imperio. Sin `parent`: no cuelgan del gabinete de un planeta
   // porque no son asunto de ningún mundo. Se abren desde `ImperialCommandPage`.
   { id: "imperial_hub", label: "👑 Mando Imperial", quadrant: "imperial" },
+  { id: "tactical_advisor", label: "🧠 Almirante Táctico IA", quadrant: "imperial", parent: "imperial_hub" },
   { id: "imperial_council", label: "⚖️ Consejo Imperial", quadrant: "imperial", parent: "imperial_hub" },
   { id: "imperial_senate", label: "🏛️ Senado Imperial", quadrant: "imperial", parent: "imperial_hub" },
 
   // === II. INFRAESTRUCTURA & CIENCIA ===
   { id: "buildings", label: "🏗️ Complejo de Obras", quadrant: "infra" },
-  { id: "research", label: "🔬 Laboratorio Central", quadrant: "infra" },
-  { id: "techTree", label: "🌌 Árbol Tecnológico", quadrant: "infra", parent: "research" },
+  { id: "techTree", label: "🌌 Árbol Tecnológico", quadrant: "infra", parent: "ministry_science" },
 
   // === III. ALTO MANDO MILITAR ===
   { id: "shipyard", label: "🚀 Astillero Naval", quadrant: "military" },

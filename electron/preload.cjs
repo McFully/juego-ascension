@@ -72,4 +72,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   dbResolveCombatShips: (payload) => ipcRenderer.invoke('db-resolve-combat-ships', payload),
   dbScrapShips: (payload) => ipcRenderer.invoke('db-scrap-ships', payload),
   dbMigrateJson: (saveSlug) => ipcRenderer.invoke('db-migrate-json', saveSlug),
+
+  // Gemini IA (Caché local y Cuota)
+  geminiGetCache: (prompt) => ipcRenderer.invoke('gemini-get-cache', prompt),
+  geminiSetCache: (payload) => ipcRenderer.invoke('gemini-set-cache', payload),
+  geminiGetQuota: (maxDaily) => ipcRenderer.invoke('gemini-get-quota', maxDaily),
+  geminiRecordCall: () => ipcRenderer.invoke('gemini-record-call'),
 });

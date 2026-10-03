@@ -21,7 +21,8 @@ export const CardImage = ({ id, category, className = "w-full h-auto object-cove
         draggable={false}
         onDragStart={(e) => e.preventDefault()}
         onError={() => setHasError(true)}
-        loading="lazy"
+        loading="eager"
+        decoding="sync"
       />
     );
   }
@@ -40,7 +41,8 @@ export const SafeImg = ({ id, category, className = "w-full h-auto", fallback = 
         draggable={false}
         onDragStart={(e) => e.preventDefault()}
         onError={() => setHasError(true)}
-        loading="lazy"
+        loading="eager"
+        decoding="sync"
       />
     );
   }
@@ -58,7 +60,8 @@ export const CardBanner = ({ id, category, children }) => {
           alt=""
           className="w-full h-full object-cover"
           onError={() => setHasError(true)}
-          loading="lazy"
+          loading="eager"
+          decoding="sync"
         />
       ) : (
         <div className="w-full h-full bg-[#05070f]" />

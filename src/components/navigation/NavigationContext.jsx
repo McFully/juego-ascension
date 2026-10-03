@@ -32,7 +32,7 @@ const LABELS = {
   ministry_intel: '🕵️ Inteligencia',
   ministry_justice: '⚖️ Justicia y Orden Federal',
   ministry_culture: '🎭 Cultura y Propaganda',
-  missions: '🎯 Misiones y Objetivos',
+  missions: '🎯 Misiones',
   stats: '📊 Estadísticas del Imperio',
   buildings: '🏗️ Complejo de Obras',
   research: '🔬 Laboratorio Central',
@@ -54,23 +54,24 @@ const LABELS = {
 
 // Jerarquía de navegación — define qué padre tiene cada vista
 const PARENT_MAP = {
-  // Órganos del imperio: cuelgan del Mando Imperial, no del gabinete de un mundo.
+  // Órganos de Mando Imperial: las 8 tarjetas cuelgan de Mando Imperial
+  missions: 'imperial_hub',
+  diplomacy: 'imperial_hub',
   imperial_council: 'imperial_hub',
   imperial_senate: 'imperial_hub',
+  colony_network: 'imperial_hub',
+  combat: 'imperial_hub',
+  shipDesign: 'imperial_hub',
+  stats: 'imperial_hub',
 
   // Nivel superior del imperio
-  missions: 'overview',
-  stats: 'overview',
-  colony_network: 'overview',
   market: 'overview',
 
-  // Nivel militar
-  shipDesign: 'shipyard',
-  combat: 'fleet',
+  // Nivel militar planetario
   missiles: 'defense',
 
   // Ciencia
-  techTree: 'research',
+  techTree: 'government',
 
   // Diplomacia e Inteligencia
   communications: 'diplomacy',

@@ -198,9 +198,9 @@ export const SYSTEM_AUDIO_FILES = {
   stats: 'musica-sistema-archivo-stats.ogg',
   buildings: 'musica-sistema-planeta.ogg',
   telemetry: 'musica-sistema-archivo-stats.ogg',
-  imperial_hub: 'musica-sistema-planeta.ogg',
+  imperial_hub: 'musica-sistema-mando-imperial.ogg',
   imperial_council: 'musica-sistema-diplomacia.ogg',
-  imperial_senate: 'musica-sistema-diplomacia.ogg'
+  imperial_senate: 'musica-sistema-senado-imperial.ogg'
 };
 
 let currentSystemMusic = null;

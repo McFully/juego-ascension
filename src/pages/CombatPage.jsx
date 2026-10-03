@@ -39,6 +39,13 @@ const CombatPage = ({ state, currentPlanet, production, SHIPS, DEFENSES, S, Prog
         fmt={fmt}
         breadcrumbTitle="Simulador y Centro de Guerra"
         breadcrumbIcon="⚔️"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Mando Imperial"
+        backButtonIcon="👑"
+        onBackToAltoMando={() => {
+          if (navigateBack) navigateBack();
+        }}
         rightSlot={
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-950/40 border border-red-500/30 text-xs font-mono">

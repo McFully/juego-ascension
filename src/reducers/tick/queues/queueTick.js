@@ -1,6 +1,6 @@
 import {
   BUILDINGS, RESEARCH, SHIPS, DEFENSES,
-  uid, researchCost, clampResources, meetsResearchReq, updatePlanet
+  uid, researchCost, clampResources, meetsResearchReq, updatePlanet, getPlanetEffectiveLab
 } from '../../../core.jsx';
 import { getShipStats, getDefenseStats } from '../../../utils/formulas/combatFormulas.js';
 import {
@@ -183,8 +183,9 @@ export const processAllQueuesTick = (state, currentTime = Date.now()) => {
       const rDef = RESEARCH[item.researchId];
       const ownerPlanet = newState.planets?.find(pl => pl.id === item.planetId)
         || newState.planets?.find(pl => pl.id === newState.currentPlanetId);
-      const hasLab = (ownerPlanet?.buildings?.researchLab || 0) >= 1;
-      const reqCtx = { ...(ownerPlanet?.buildings || {}), ...(newState.research || {}) };
+      const effectiveLab = getPlanetEffectiveLab(newState, ownerPlanet);
+      const hasLab = effectiveLab >= 1;
+      const reqCtx = { ...(ownerPlanet?.buildings || {}), researchLab: effectiveLab, ...(newState.research || {}) };
       const reqMet = hasLab && (!rDef || !rDef.req || meetsResearchReq(rDef.req, reqCtx));
       if (!reqMet) {
         const p = newState.planets?.find(pl => pl.id === item.planetId);
@@ -194,6 +195,7 @@ export const processAllQueuesTick = (state, currentTime = Date.now()) => {
           newState = updatePlanet(newState, item.planetId, pl => ({
             ...pl,
             resources: clampResources({
+              ...pl.resources,
               metal: (pl.resources?.metal || 0) + refundCost.metal,
               crystal: (pl.resources?.crystal || 0) + refundCost.crystal,
               deuterium: (pl.resources?.deuterium || 0) + refundCost.deuterium,

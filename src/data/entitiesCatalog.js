@@ -11,17 +11,9 @@ import {
   MISSILES,
   MOON_BUILDINGS
 } from './gameData.js';
-import { EXPANDED_BUILDINGS, EXPANDED_RESEARCH } from './expandedContent.js';
+import { BUILDINGS as ALL_BUILDINGS, RESEARCH as ALL_RESEARCH } from './catalog/index.js';
 
-export const ALL_BUILDINGS = {
-  ...BUILDINGS,
-  ...EXPANDED_BUILDINGS
-};
-
-export const ALL_RESEARCH = {
-  ...RESEARCH,
-  ...EXPANDED_RESEARCH
-};
+export { ALL_BUILDINGS, ALL_RESEARCH };
 
 export {
   BUILDINGS,

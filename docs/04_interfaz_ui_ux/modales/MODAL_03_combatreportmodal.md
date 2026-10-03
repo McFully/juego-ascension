@@ -11,7 +11,7 @@
 - **Ruta Exacta en Repositorio:** `src/components/combat/CombatReportModal.jsx`
 - **Tipo de Modulo:** Componente Reactivo (JSX)
 - **Contrato de Exportacion:** Named (`export const CombatReportModal`)
-- **Dependencias e Importaciones:**
+- **Dependencias e Importaciones Principales:**
 - `import React, { useState } from 'react';`
 - `import { motion } from 'framer-motion';`
 - `import { CombatTacticalArena2D } from './CombatTacticalArena2D.jsx';`
@@ -19,50 +19,50 @@
 ---
 
 ## 2. PROPOSITO DE NEGOCIO Y DOMINIO
-Proporcionar una ventana modal flotante contextual para **CombatReportModal**, permitiendo la confirmacion, configuracion tactica o interaccion detallada sin perder la referencia visual de la pantalla activa.
+Orquestar y renderizar de forma reactiva y determinista la unidad **CombatReportModal** en el cliente de escritorio nativo de Ascensión. Asegura la inmersión de estrategia espacial, persistencia local y consistencia según los cánones visuales del juego.
 
 ---
 
 ## 3. PROPS Y CONTRATO DE ENTRADA
 | Prop | Tipo Inferido | Default | Requerido | Proposito Funcional |
 | :--- | :--- | :--- | :--- | :--- |
-| `selectedReport` | `any` | `undefined` | No | Control y renderizado operativo en CombatReportModal |
-| `onClose` | `function` | `undefined` | Si | Control y renderizado operativo en CombatReportModal |
-| `fmt` | `any` | `undefined` | No | Control y renderizado operativo en CombatReportModal |
-| `SHIPS` | `any` | `undefined` | No | Control y renderizado operativo en CombatReportModal |
-| `DEFENSES` | `any` | `undefined` | No | Control y renderizado operativo en CombatReportModal |
+| `selectedReport` | `any` | `undefined` | Si | Parámetro operativo de control en CombatReportModal |
+| `onClose` | `any` | `undefined` | Si | Parámetro operativo de control en CombatReportModal |
+| `fmt` | `any` | `undefined` | Si | Parámetro operativo de control en CombatReportModal |
+| `SHIPS` | `any` | `undefined` | Si | Parámetro operativo de control en CombatReportModal |
+| `DEFENSES` | `any` | `undefined` | Si | Parámetro operativo de control en CombatReportModal |
 
 ---
 
 ## 4. ESTADO INTERNO, HOOKS Y CONSUMO GLOBAL
 - **Hooks React Utilizados:** `useState`
-- **Manejo de Estado Local:** Controla estados reactivos de seleccion, visibilidad de menus secundarios y disparadores de animacion local.
-- **Suscripcion a Estado Global:** Conecta con el reductor maestro de estado (`state`, `dispatch`) o consume contextos de navegacion.
+- **Manejo de Estado Local:** Gestiona estados interactivos locales, transiciones y reactividad visual.
+- **Suscripción a Estado Global:** Conecta con el reductor maestro de estado o contexto de navegación según corresponda.
 
 ---
 
 ## 5. ESTILOS VISUALES Y DISENO SCI-FI (PIXEL-PERFECT)
-- **Paleta y Tematica:** Estilo espacial profundo con fondo `#030712` / `slate-950`, paneles `slate-900/80` con bordes azul cian tenue `cyan-500/30`, acentos en amarillo dorado para economia y rojo de combate tactico.
-- **Efectos y Microinteracciones:** Transiciones `transition-all duration-200`, hovers reactivos (`hover:border-cyan-400`, `hover:scale-[1.01]`), sombras tenues (`shadow-lg`, `shadow-cyan-950/50`) y barras de desplazamiento estilizadas.
-- **Tipografia y Escala:** Fuentes monoespaciadas y sans-serif militares de alta legibilidad (`font-mono`, `text-xs`, `text-sm`, `tracking-wider`).
+- **Paleta y Tematica:** Estilo espacial profundo con fondo `#030712` / `slate-950`, paneles `slate-900/80` con bordes azul cian tenue `cyan-500/30`, acentos en amarillo dorado para economía y rojo para combate táctico.
+- **Efectos y Microinteracciones:** Transiciones `transition-all duration-200`, hovers reactivos (`hover:border-cyan-400`, `hover:scale-[1.01]`), sombras espaciales tenues (`shadow-lg`, `shadow-cyan-950/50`).
+- **Tipografia y Escala:** Fuentes monoespaciadas militares de alta legibilidad (`font-mono`, `text-xs`, `text-sm`, `tracking-wider`).
 
 ---
 
 ## 6. ESTRUCTURA DOM Y ACCESIBILIDAD (WCAG 2.2 AAA)
 - **Etiquetas Semanticas Empleadas:** `<section>`, `<div>`, `<header>`, `<button>`, `<span>`
-- **Contraste y Legibilidad:** Relacion de contraste minima de 7:1 garantizada sobre fondos oscuros espaciales.
-- **Navegabilidad por Teclado:** Elementos interactivos nativos (`button`, enlaces) accesibles mediante `Tab` y `Enter` con soporte de atajos globales.
-- **Atributos ARIA:** `aria-label`, `role` e indicadores semanticos para lectura asistida.
+- **Contraste y Legibilidad:** Relación de contraste mínima de 7:1 garantizada sobre fondos oscuros espaciales.
+- **Navegabilidad por Teclado:** Elementos interactivos nativos (`button`, enlaces) accesibles mediante teclado con feedback visual.
+- **Atributos ARIA:** `aria-label`, `role` e indicadores semánticos para lectura asistida.
 
 ---
 
 ## 7. MAPEO DE EVENTOS E INTERACCIONES TACTICAS
-- **Manejadores de Eventos Detectados:** Disparos de seleccion, cambios de pestana, envio de flotas y reclamos.
-- **Efectos de Sonido Integrados:** Conexion con `window.playSfx` para retroalimentacion sonora en clicks tacticos, alarmas o confirmaciones.
-- **Despacho de Acciones:** Genera y envia payloads estructurados hacia `gameReducer` para mutar planetas, colas o flotas de forma inmutable.
+- **Manejadores de Eventos:** Disparos de selección, cambios de pestaña, órdenes tácticas o modales.
+- **Efectos de Sonido Integrados:** Conexión con `window.playSfx` para retroalimentación sonora en clicks e interacciones.
+- **Despacho de Acciones:** Emite payloads hacia `dispatch` para mutar el estado global de forma inmutable.
 
 ---
 
 ## 8. MANEJO DE ERRORES, FALLBACKS Y CASOS EXTREMOS
-- **Resiliencia ante Datos Nulos:** Protegido contra datos indefinidos mediante encadenamiento opcional (`?.`) y valores por defecto seguros.
-- **Limites de Renderizado (Error Boundary):** Los errores aislados en este componente son capturados por el boundary de aplicacion sin congelar el bucle principal de juego.
+- **Resiliencia ante Datos Nulos:** Protegido contra datos indefinidos mediante encadenamiento opcional (`?.`) y valores de respaldo seguros.
+- **Límites de Renderizado (Error Boundary):** Los errores aislados en este módulo son capturados por el boundary de aplicación sin congelar el bucle principal de juego.

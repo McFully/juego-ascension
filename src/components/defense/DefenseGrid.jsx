@@ -105,7 +105,7 @@ export const DefenseGrid = ({
                   </div>
 
                   <div className="p-3">
-                    {/* Encabezado con Nombre, Nivel Mk de Vanguardia y Codex */}
+                    {/* Encabezado con Nombre y Nivel Mk de Vanguardia */}
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <div>
                         <div className="flex items-center gap-1.5">
@@ -117,15 +117,6 @@ export const DefenseGrid = ({
                           </span>
                         </div>
                       </div>
-                      {onOpenCodex && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
-                          className="w-5 h-5 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-cyan-300 hover:border-cyan-400/40 hover:bg-cyan-500/10 transition cursor-pointer shrink-0"
-                          title="Ver detalles en Codex"
-                        >
-                          <span className="material-symbols-outlined text-[12px]">menu_book</span>
-                        </button>
-                      )}
                     </div>
 
                     {/* HUD Balístico Táctico Visual - Valores Estándar Consolidados */}
@@ -182,7 +173,8 @@ export const DefenseGrid = ({
                                     dispatch({
                                       type: 'RETROFIT_DEFENSE_VARIANT',
                                       variantKey: ov.variantKey,
-                                      count: ov.count
+                                      count: ov.count,
+                                      planetId: currentPlanet?.id
                                     });
                                     if (window.playSfx) window.playSfx('click');
                                   }}
@@ -235,20 +227,24 @@ export const DefenseGrid = ({
 
                 {/* Botonera de Despliegue Operativo */}
                 <div className="p-3 pt-0">
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="flex items-center gap-1.5">
                     {[1, 5, 10].map(q => {
                       const qCost = defenseCost(id, q, currentPlanet.buildings?.constructionCenter || 0);
                       const canQ = canAfford(currentPlanet.resources, qCost) && meets && !maxReached;
                       return (
                         <button
                           key={q}
-                          onClick={() => dispatch({ type: 'START_DEFENSE', defenseId: id, quantity: q })}
+                          onClick={() => {
+                            dispatch({ type: 'START_DEFENSE', defenseId: id, quantity: q, planetId: currentPlanet?.id });
+                            if (window.playSfx) window.playSfx('build');
+                          }}
                           disabled={!canQ}
-                          className={`py-1.5 rounded-lg font-mono text-xs font-bold transition-all focus-ring-game ${
+                          className={`flex-1 py-1.5 rounded-lg font-mono text-xs font-bold transition-all focus-ring-game ${
                             canQ 
-                              ? 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-500/40 hover:border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.15)] cursor-pointer active:scale-95' 
+                              ? 'bg-cyan-500/20 hover:bg-cyan-500/35 text-cyan-200 border border-cyan-500/40 hover:border-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)] cursor-pointer active:scale-95' 
                               : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed opacity-50'
                           }`}
+                          title={`Desplegar +${q} ${d.name}`}
                         >
                           +{q}
                         </button>
@@ -256,22 +252,38 @@ export const DefenseGrid = ({
                     })}
                     <button
                       onClick={() => {
+                        const pRes = currentPlanet?.resources || { metal: 0, crystal: 0, deuterium: 0 };
                         const maxAfford = Math.max(1, Math.floor(Math.min(
-                          (currentPlanet.resources.metal / (d.cost.m * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1)),
-                          (currentPlanet.resources.crystal / (d.cost.c * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1)),
-                          (currentPlanet.resources.deuterium / ((d.cost.d || 0) * constructionDiscount(currentPlanet.buildings?.constructionCenter || 0) || 1))
+                          (pRes.metal / (d.cost.m * constructionDiscount(currentPlanet?.buildings?.constructionCenter || 0) || 1)),
+                          (pRes.crystal / (d.cost.c * constructionDiscount(currentPlanet?.buildings?.constructionCenter || 0) || 1)),
+                          (pRes.deuterium / ((d.cost.d || 0) * constructionDiscount(currentPlanet?.buildings?.constructionCenter || 0) || 1))
                         )));
-                        if (maxAfford > 0) dispatch({ type: 'START_DEFENSE', defenseId: id, quantity: maxAfford });
+                        if (maxAfford > 0) {
+                          dispatch({ type: 'START_DEFENSE', defenseId: id, quantity: maxAfford, planetId: currentPlanet?.id });
+                          if (window.playSfx) window.playSfx('build');
+                        }
                       }}
                       disabled={!meets || maxReached || !affordable1}
-                      className={`py-1.5 rounded-lg font-mono text-xs font-black transition-all focus-ring-game ${
+                      className={`py-1.5 px-3 rounded-lg font-mono text-xs font-black transition-all focus-ring-game ${
                         meets && !maxReached && affordable1
-                          ? 'bg-gradient-to-r from-cyan-600/30 to-emerald-600/30 hover:from-cyan-500/40 hover:to-emerald-500/40 text-white border border-cyan-400/50 cursor-pointer active:scale-95'
+                          ? 'bg-gradient-to-r from-cyan-600/30 to-emerald-600/30 hover:from-cyan-500/40 hover:to-emerald-500/40 text-white border border-cyan-400/50 hover:border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)] cursor-pointer active:scale-95'
                           : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed opacity-50'
                       }`}
+                      title="Desplegar el máximo de baterías posible"
                     >
                       MAX
                     </button>
+                    {onOpenCodex && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onOpenCodex && onOpenCodex(id); }}
+                        className="py-1.5 px-2.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-500/40 hover:border-cyan-300 text-cyan-200 hover:text-white flex items-center justify-center gap-1 transition-all cursor-pointer shrink-0 shadow-sm active:scale-95 font-mono text-xs font-bold"
+                        title="Ver detalles de la defensa en Codex"
+                      >
+                        <span>📋</span>
+                        <span className="hidden sm:inline">Ver Detalles</span>
+                      </button>
+                    )}
                   </div>
 
                   {d.req && !meets && (

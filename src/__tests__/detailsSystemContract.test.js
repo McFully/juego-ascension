@@ -28,8 +28,8 @@ describe('Fase 16: Ver Detalles y Sistema Unificado Contract', () => {
     join(process.cwd(), 'src', 'components', 'defense', 'DefenseGrid.jsx'),
     'utf-8'
   );
-  const missileSectionCode = readFileSync(
-    join(process.cwd(), 'src', 'components', 'defense', 'DefenseMissileSilosSection.jsx'),
+  const missilePageCode = readFileSync(
+    join(process.cwd(), 'src', 'pages', 'MissilesPage.jsx'),
     'utf-8'
   );
   const shipCardCode = readFileSync(
@@ -44,9 +44,9 @@ describe('Fase 16: Ver Detalles y Sistema Unificado Contract', () => {
     expect(itemCardCode).toMatch(/onOpenCodex\s*&&\s*onOpenCodex\(id\)/);
   });
 
-  it('Los botones de ver detalles en DefenseGrid, DefenseMissileSilosSection y ShipProductionCard deben tener guarda de onOpenCodex', () => {
+  it('Los botones de ver detalles en DefenseGrid, MissilesPage y ShipProductionCard deben tener guarda de onOpenCodex', () => {
     expect(defenseGridCode).toMatch(/onOpenCodex\s*&&\s*onOpenCodex\(id\)/);
-    expect(missileSectionCode).toMatch(/onOpenCodex\s*&&\s*onOpenCodex\(id\)/);
+    expect(missilePageCode).toMatch(/onOpenCodex\s*&&\s*onOpenCodex\(id\)/);
     expect(shipCardCode).toMatch(/onOpenCodex\s*&&\s*onOpenCodex\(id\)/);
   });
 

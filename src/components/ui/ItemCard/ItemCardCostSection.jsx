@@ -4,7 +4,7 @@ import { fmt, fmtTime } from '../../../core.jsx';
 /**
  * ItemCardCostSection — Desglose de costes de metal, cristal, deuterio y tiempo.
  */
-export const ItemCardCostSection = React.memo(({ cost = {}, time = 0, canAfford, planetResources }) => {
+export const ItemCardCostSection = React.memo(({ cost = {}, time = 0, canAfford, planetResources, prodInfo }) => {
   // Evaluación granular recurso por recurso si se dispone de planetResources
   const hasMetal = planetResources ? (planetResources.metal ?? 0) >= (cost.metal || 0) : canAfford;
   const hasCrystal = planetResources ? (planetResources.crystal ?? 0) >= (cost.crystal || 0) : canAfford;
@@ -34,6 +34,14 @@ export const ItemCardCostSection = React.memo(({ cost = {}, time = 0, canAfford,
           <span className="text-emerald-400">⚗️ Deuterio</span>
           <span className={`font-mono font-medium ${hasDeuterium ? 'text-emerald-400' : 'text-rose-400'}`}>
             {fmt(cost.deuterium)}
+          </span>
+        </div>
+      )}
+      {(cost.energy > 0 || (prodInfo?.next?.cons > 0 && prodInfo?.next?.consType === 'energy')) && (
+        <div className="flex justify-between text-xs">
+          <span className="text-amber-300">⚡ Demanda Energía</span>
+          <span className="font-mono font-bold text-amber-300">
+            -{fmt(cost.energy || prodInfo?.next?.cons || 0)}/h
           </span>
         </div>
       )}

@@ -164,6 +164,19 @@ export const migrateLoadState = (payload = {}) => {
           defense: { budgetShare: 0.20, activeTasks: [] },
         }
       },
+      resources: {
+        metal: p.resources?.metal || 0,
+        crystal: p.resources?.crystal || 0,
+        deuterium: p.resources?.deuterium || 0,
+        slag: p.resources?.slag !== undefined ? p.resources.slag : 0,
+      },
+      fleet: p.fleet || {},
+      defenses: p.defenses || {},
+      buildings: {
+        ...(p.buildings || {}),
+        slagRecycler: (p.buildings?.slagRecycler !== undefined && p.buildings?.slagRecycler > 0) ? p.buildings.slagRecycler : 1,
+        slagStorage: (p.buildings?.slagStorage !== undefined && p.buildings?.slagStorage > 0) ? p.buildings.slagStorage : 1,
+      },
       automatedExclusions: p.automatedExclusions || {},
       fleetVariants: p.fleetVariants || {},
       defenseVariants: p.defenseVariants || {},
@@ -246,6 +259,10 @@ export const migrateLoadState = (payload = {}) => {
     playerDaoShares: payload.playerDaoShares || 100,
     daoDividendPool: payload.daoDividendPool !== undefined ? payload.daoDividendPool : 250000,
     exchangeProjects: payload.exchangeProjects || {},
+    researchNetwork: payload.researchNetwork || {
+      baseSlots: 2,
+      linkedPlanetIds: payload.planets?.[0]?.id ? [payload.planets[0].id] : []
+    },
   };
 
 // Amnistía Imperial: asegurar compatibilidad con expansiones previas

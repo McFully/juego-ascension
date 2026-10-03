@@ -1,543 +1,87 @@
+import { handleStartBuilding } from './economy/buildActions.js';
 import {
-  GAME_SPEED, FACTIONS, BUILDINGS, RESEARCH, SHIPS, DEFENSES,
-  MOON_BUILDINGS, MISSIONS, MISSILES, BIOME_KEYS, AI_STRATEGIES,
-  NARRATIVE_EVENTS, EVENTS, checkAchievements, checkMissions, clampResources,
-  fmt, uid, buildingCost, researchCost, shipCost, defenseCost, canAfford, deduct,
-  calcRequiredPopulation,
-  calcResourceValueForAI, meetsResearchReq, calcProduction, calcStorage, shipTimeBonus,
-  researchTimeBonus, calcCustomShipCost, calcCustomShipTime, calcBuildTime, calcEffectiveBuildTime,
-  calcResearchTime, calcShipTime, calcDefenseTime, calcDistance, calcFlightTime,
-  calcFuel, fleetSpeed, getPOIAtCoordinates, getVirginPlanet,
-  updatePlanet, shouldKeepNotification
-} from '../core.jsx';
-import { processMission, returnFleetToOrigin, processEvent } from '../missions.jsx';
-import { stampTimeMult } from './tick/queues/queueTiming.js';
-import { PLANET_SPECIALIZATION_COSTS } from '../data/gameData.js';
-
-
+  handleClaimDaoDividends,
+  handleCreateLimitOrder,
+  handleCancelLimitOrder,
+  handleContributeExchangeProject,
+  handleContributeAllExchangeProject,
+  handleFinalizeExchangeProject
+} from './economy/exchangeActions.js';
+import {
+  handleMarketTrade,
+  handleMarketBuyUsedShips,
+  handleMarketScrapShips,
+  handleMarketBuyBlackMarket,
+  handleMarketSellShips,
+  handleMarketBuyBlueprint
+} from './economy/marketActions.js';
+import {
+  handleSetPlanet,
+  handleRenamePlanet,
+  handlePlanetSpecialize,
+  handlePlanetToggleAutotrade,
+  handleEqualizeColonyResources,
+  handleRelocateColonyFleet,
+  handleStartPlanetTerraforming,
+  handleEstablishBilateralRoute,
+  handleCancelBilateralRoute
+} from './economy/planetActions.js';
+// Delegación modular: START_BUILDING usa calcEffectiveBuildTime({ cost, planet, state, speed }) en buildActions.js
 export const economyReducer = (state, action) => {
   const getCurrentPlanet = () => state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
-  let newState = { ...state };
+
   switch (action.type) {
-    case 'CLAIM_DAO_DIVIDENDS': {
-      const claimAmount = Number(action.amount || 0);
-      if (claimAmount <= 0) return state;
-      const currentCredits = state.credits || 0;
-      return {
-        ...state,
-        credits: currentCredits + claimAmount,
-        daoDividendPool: Math.max(0, (state.daoDividendPool || 250000) - claimAmount),
-        notifications: [...(state.notifications || []), {
-          id: uid(),
-          type: 'success',
-          message: `💎 Dividendos del Exchange liquidados: +${fmt(claimAmount)} Créditos Estelares ingresados al Tesoro Imperial.`,
-          timestamp: Date.now()
-        }]
-      };
-    }
-
-    case 'CREATE_LIMIT_ORDER': {
-      const { orderType, resource, amount, targetPrice, hasParkedShip, destinationPlanetId } = action;
-      if (!resource || amount <= 0 || targetPrice <= 0) return state;
-
-      const currentCredits = state.credits || 0;
-      let newCredits = currentCredits;
-
-      if (orderType === 'buy_limit') {
-        const requiredCredits = Math.floor(amount * targetPrice);
-        if (currentCredits < requiredCredits) {
-          return {
-            ...state,
-            notifications: [...(state.notifications || []), {
-              id: uid(),
-              type: 'warning',
-              message: `⚠️ Fondos insuficientes para la orden Limit (${fmt(requiredCredits)} ₢ requeridos).`,
-              timestamp: Date.now()
-            }]
-          };
-        }
-        newCredits -= requiredCredits;
-      }
-
-      const newOrder = {
-        id: uid(),
-        type: orderType, // 'buy_limit' | 'sell_limit'
-        resource,
-        amount,
-        targetPrice,
-        reservedCredits: orderType === 'buy_limit' ? Math.floor(amount * targetPrice) : 0,
-        hasParkedShip: !!hasParkedShip,
-        destinationPlanetId: destinationPlanetId || state.currentPlanetId,
-        createdAt: Date.now()
-      };
-
-      return {
-        ...state,
-        credits: newCredits,
-        exchangeOrders: [...(state.exchangeOrders || []), newOrder],
-        notifications: [...(state.notifications || []), {
-          id: uid(),
-          type: 'info',
-          message: `📜 Orden Limit programada: ${orderType === 'buy_limit' ? 'Comprar' : 'Vender'} ${fmt(amount)} ${resource} a umbral de ${targetPrice} ₢.`,
-          timestamp: Date.now()
-        }]
-      };
-    }
-
-    case 'CANCEL_LIMIT_ORDER': {
-      const { orderId } = action;
-      const order = (state.exchangeOrders || []).find(o => o.id === orderId);
-      if (!order) return state;
-
-      const currentCredits = state.credits || 0;
-      const refund = order.reservedCredits || 0;
-
-      return {
-        ...state,
-        credits: currentCredits + refund,
-        exchangeOrders: (state.exchangeOrders || []).filter(o => o.id !== orderId),
-        notifications: [...(state.notifications || []), {
-          id: uid(),
-          type: 'info',
-          message: `🚫 Orden Limit cancelada. Saldo reembolsado (+${fmt(refund)} ₢).`,
-          timestamp: Date.now()
-        }]
-      };
-    }
-
-    case 'CONTRIBUTE_EXCHANGE_PROJECT': {
-      const { buildingId, amount, resource } = action;
-      const exchangePlanet = (state.planets || []).find(p => p.isExchangePlanet);
-      if (!exchangePlanet || !buildingId || amount <= 0) return state;
-
-      const currentPlanet = state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
-      const resKey = resource || 'metal';
-
-      if ((currentPlanet.resources[resKey] || 0) < amount) {
-        return {
-          ...state,
-          notifications: [...(state.notifications || []), {
-            id: uid(),
-            type: 'warning',
-            message: `⚠️ Recursos insuficientes en ${currentPlanet.name} para aportar al proyecto (${fmt(amount)} ${resKey} requeridos).`,
-            timestamp: Date.now()
-          }]
-        };
-      }
-
-      // Descontar recursos del planeta aportante
-      let updatedPlanets = state.planets.map(p => {
-        if (p.id === currentPlanet.id) {
-          return {
-            ...p,
-            resources: {
-              ...p.resources,
-              [resKey]: Math.max(0, (p.resources[resKey] || 0) - amount)
-            }
-          };
-        }
-        return p;
-      });
-
-      // Calcular acciones ganadas (1 acción por cada 50.000 recursos aportados)
-      const sharesEarned = Math.max(1, Math.floor(amount / 50000));
-      const playerShares = (state.playerDaoShares || 100) + sharesEarned;
-      const totalShares = (state.daoShares || 1000) + sharesEarned;
-
-      // Actualizar progreso del edificio en la Lonja
-      const projects = { ...(state.exchangeProjects || {}) };
-      const currentProgress = (projects[buildingId] || 0) + amount;
-      const reqForLevel = 50000000; // 50M base por hito de crowdfunding
-
-      let updatedExchangePlanet = updatedPlanets.find(p => p.isExchangePlanet);
-      let levelUpMessage = '';
-
-      if (currentProgress >= reqForLevel) {
-        projects[buildingId] = currentProgress - reqForLevel;
-        const currentLvl = updatedExchangePlanet.buildings?.[buildingId] || 1;
-        updatedExchangePlanet.buildings = {
-          ...updatedExchangePlanet.buildings,
-          [buildingId]: currentLvl + 1
-        };
-        levelUpMessage = ` ¡La mega-estructura ha subido al Nivel ${currentLvl + 1}!`;
-      } else {
-        projects[buildingId] = currentProgress;
-      }
-
-      return {
-        ...state,
-        planets: updatedPlanets,
-        playerDaoShares: playerShares,
-        daoShares: totalShares,
-        exchangeProjects: projects,
-        notifications: [...(state.notifications || []), {
-          id: uid(),
-          type: 'success',
-          message: `🏛️ Aporte al Crowdfunding registrado: -${fmt(amount)} ${resKey}. Has recibido +${sharesEarned} Acciones DAO.${levelUpMessage}`,
-          timestamp: Date.now()
-        }]
-      };
-    }
-
-    case 'SET_PLANET': {
-      const targetId = action.payload || action.planetId;
-      return targetId ? { ...state, currentPlanetId: targetId } : state;
-    }
-
-    case 'RENAME_PLANET': {
-      const { planetId, name } = action;
-      if (!name || name.trim().length === 0) return state;
-      return updatePlanet(state, planetId, p => ({ ...p, name: name.trim().slice(0, 20) }));
-    }
-
-    case 'PLANET_SPECIALIZE': {
-      const { planetId, specialization } = action; // 'industrial', 'scientific', 'military', 'commercial', or null
-      const planet = state.planets.find(p => p.id === planetId);
-      if (!planet) return state;
-
-      const cost = PLANET_SPECIALIZATION_COSTS[specialization] || { metal: 0, crystal: 0, deuterium: 0 };
-
-      if (!canAfford(planet.resources, cost)) return state;
-
-      let newState = updatePlanet(state, planetId, p => ({
-        ...p,
-        resources: deduct(p.resources, cost),
-        specialization: specialization
-      }));
-
-      const specNames = {
-        industrial: 'Industrial/Minera',
-        scientific: 'Científica',
-        military: 'Militar',
-        commercial: 'Comercial'
-      };
-      const specName = specNames[specialization] || 'Ninguna';
-
-      newState.notifications = [...(newState.notifications || []), {
-        id: uid(),
-        type: 'success',
-        message: `🌟 Planeta ${planet.name} especializado en rama: ${specName}`,
-        timestamp: Date.now()
-      }];
-
-      return newState;
-    }
-
-    case 'PLANET_TOGGLE_AUTOTRADE': {
-      const { planetId } = action;
-      return updatePlanet(state, planetId, p => ({ ...p, autoTrade: !p.autoTrade }));
-    }
-
-    case 'START_BUILDING': {
-      const { buildingId, planetId } = action;
-      const planet = (planetId ? state.planets.find(p => p.id === planetId) : null) || getCurrentPlanet();
-      if (!planet) return state;
-      const b = BUILDINGS[buildingId];
-      const lvl = planet.buildings[buildingId] || 0;
-      
-      const planetBuildQueue = state.buildQueue.filter(q => q.planetId === planet.id);
-      const queuedCount = planetBuildQueue.filter(q => q.buildingId === buildingId).length;
-      const targetLvl = lvl + queuedCount + 1;
-      const requiredPopulation = calcRequiredPopulation(buildingId, targetLvl);
-      const currentPopulation = planet.population || 1000;
-      if (currentPopulation < requiredPopulation) {
-        return {
-          ...state,
-          notifications: [...(state.notifications || []), {
-            id: uid(),
-            type: 'warning',
-            message: `👥 Población insuficiente para ${b.name} Nivel ${targetLvl}. Requiere ${requiredPopulation} habitantes (tienes ${currentPopulation}).`,
-            timestamp: Date.now()
-          }]
-        };
-      }
-      const cost = buildingCost(buildingId, targetLvl - 1, planet.buildings?.constructionCenter || 0);
-      
-      if (!canAfford(planet.resources, cost)) return state;
-      if (!meetsResearchReq(b.req, { ...planet.buildings, ...state.research })) return state;
-      if (planetBuildQueue.length >= 8) return state;
-
-      const newRes = clampResources(deduct(planet.resources, cost));
-      const time = calcEffectiveBuildTime({ cost, planet, state, speed: GAME_SPEED });
-      
-      const startTime = Date.now();
-      const endTime = startTime + time * 1000;
-
-      let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: newRes }));
-      const queued = stampTimeMult(newState, 'build', {
-        id: uid(), planetId: planet.id, buildingId, startTime, endTime, level: targetLvl,
-      });
-      newState.buildQueue = [...state.buildQueue, queued];
-      return newState;
-    }
-
-    case 'MARKET_TRADE': {
-      const { planetId, sellResource, buyResource, sellAmount, buyAmount } = action;
-      const targetPlanet = state.planets.find(p => p.id === (planetId || state.currentPlanetId)) || getCurrentPlanet();
-      if (!targetPlanet) return state;
-      if (!sellResource || !buyResource || sellAmount <= 0 || buyAmount <= 0) return state;
-      if ((targetPlanet.resources[sellResource] || 0) < sellAmount) {
-        return {
-          ...state,
-          notifications: [...(state.notifications || []), {
-            id: uid(),
-            type: 'warning',
-            message: `⚠️ Recursos insuficientes en ${targetPlanet.name} para completar la transacción.`,
-            timestamp: Date.now()
-          }]
-        };
-      }
-
-      const newRes = {
-        ...targetPlanet.resources,
-        [sellResource]: Math.max(0, targetPlanet.resources[sellResource] - sellAmount),
-        [buyResource]: (targetPlanet.resources[buyResource] || 0) + buyAmount
-      };
-
-      const resNames = { metal: 'Metal', crystal: 'Cristal', deuterium: 'Deuterio', credits: 'Créditos Estelares' };
-      let newState = updatePlanet(state, targetPlanet.id, p => ({ ...p, resources: newRes }));
-      if (buyResource === 'credits' || sellResource === 'credits') {
-        const currentCredits = state.credits || 0;
-        const delta = (buyResource === 'credits' ? buyAmount : 0) - (sellResource === 'credits' ? sellAmount : 0);
-        newState.credits = Math.max(0, currentCredits + delta);
-      }
-      newState.notifications = [...(newState.notifications || []), {
-        id: uid(),
-        type: 'success',
-        message: `💼 Transacción completada: -${fmt(sellAmount)} ${resNames[sellResource] || sellResource} -> +${fmt(buyAmount)} ${resNames[buyResource] || buyResource}`,
-        timestamp: Date.now()
-      }];
-      return newState;
-    }
-
-    case 'EQUALIZE_COLONY_RESOURCES': {
-      if (!state.planets || state.planets.length <= 1) return state;
-      let totalMetal = 0, totalCrystal = 0, totalDeut = 0;
-      state.planets.forEach(p => {
-        totalMetal += p.resources.metal || 0;
-        totalCrystal += p.resources.crystal || 0;
-        totalDeut += p.resources.deuterium || 0;
-      });
-
-      const count = state.planets.length;
-      const avgMetal = Math.floor(totalMetal / count);
-      const avgCrystal = Math.floor(totalCrystal / count);
-      const avgDeut = Math.floor(totalDeut / count);
-
-      const newPlanets = state.planets.map(p => ({
-        ...p,
-        resources: {
-          metal: avgMetal,
-          crystal: avgCrystal,
-          deuterium: avgDeut
-        }
-      }));
-
-      return {
-        ...state,
-        planets: newPlanets,
-        notifications: [...(state.notifications || []), {
-          id: uid(),
-          type: 'success',
-          message: `⚖️ Recursos equilibrados en las ${count} colonias (${fmt(avgMetal)}M / ${fmt(avgCrystal)}C / ${fmt(avgDeut)}D por mundo)`,
-          timestamp: Date.now()
-        }]
-      };
-    }
-
-    case 'RELOCATE_COLONY_FLEET': {
-      const { fromPlanetId, toPlanetId, ships } = action;
-      if (!fromPlanetId || !toPlanetId || fromPlanetId === toPlanetId || !ships) return state;
-      const fromP = state.planets.find(p => p.id === fromPlanetId);
-      const toP = state.planets.find(p => p.id === toPlanetId);
-      if (!fromP || !toP) return state;
-
-      const newFromFleet = { ...(fromP.fleet || {}) };
-      const newToFleet = { ...(toP.fleet || {}) };
-      let movedCount = 0;
-
-      for (const [shipId, qty] of Object.entries(ships)) {
-        const available = newFromFleet[shipId] || 0;
-        const toMove = Math.min(available, Math.max(0, qty));
-        if (toMove > 0) {
-          newFromFleet[shipId] = available - toMove;
-          if (newFromFleet[shipId] <= 0) delete newFromFleet[shipId];
-          newToFleet[shipId] = (newToFleet[shipId] || 0) + toMove;
-          movedCount += toMove;
-        }
-      }
-
-      if (movedCount === 0) return state;
-
-      let newState = updatePlanet(state, fromPlanetId, p => ({ ...p, fleet: newFromFleet }));
-      newState = updatePlanet(newState, toPlanetId, p => ({ ...p, fleet: newToFleet }));
-      newState.notifications = [...(newState.notifications || []), {
-        id: uid(),
-        type: 'info',
-        message: `🚀 Reubicación completada: ${movedCount} naves transferidas de ${fromP.name} a ${toP.name}`,
-        timestamp: Date.now()
-      }];
-      return newState;
-    }
-
-    case 'START_PLANET_TERRAFORMING': {
-      const { planetId } = action;
-      const planet = state.planets.find(p => p.id === planetId);
-      if (!planet) return state;
-
-      const hasShip = (planet.fleet?.terraformerShip || 0) >= 1;
-      if (!hasShip) {
-        return {
-          ...state,
-          notifications: [
-            ...(state.notifications || []),
-            {
-              id: uid(),
-              type: 'warning',
-              message: `🚫 Se requiere una Nave Terraformatriz en órbita de ${planet.name} para acondicionar el planeta.`,
-              timestamp: Date.now()
-            }
-          ]
-        };
-      }
-
-      return updatePlanet(state, planetId, p => ({
-        ...p,
-        isTerraformingActive: true,
-        terraformingProgress: 5
-      }));
-    }
-
-    case 'MARKET_BUY_USED_SHIPS': {
-      const { planetId, lot, cost } = action;
-      const targetPlanet = state.planets.find(p => p.id === (planetId || state.currentPlanetId)) || getCurrentPlanet();
-      if (!targetPlanet || !lot || !cost) return state;
-
-      if (!canAfford(targetPlanet.resources, cost)) {
-        return {
-          ...state,
-          notifications: [...(state.notifications || []), {
-            id: uid(),
-            type: 'warning',
-            message: `⚠️ Recursos insuficientes en ${targetPlanet.name} para adquirir este lote naval de ocasión.`,
-            timestamp: Date.now()
-          }]
-        };
-      }
-
-      const newRes = deduct(targetPlanet.resources, cost);
-      const currentFleet = { ...(targetPlanet.fleet || {}) };
-      currentFleet[lot.shipId] = (currentFleet[lot.shipId] || 0) + lot.quantity;
-
-      let newState = updatePlanet(state, targetPlanet.id, p => ({
-        ...p,
-        resources: newRes,
-        fleet: currentFleet
-      }));
-
-      newState.notifications = [...(newState.notifications || []), {
-        id: uid(),
-        type: 'success',
-        message: `🛸 Lote de ocasión adquirido: +${lot.quantity} ${lot.title} asignadas al hangar de ${targetPlanet.name}.`,
-        timestamp: Date.now()
-      }];
-      return newState;
-    }
-
-    case 'MARKET_SCRAP_SHIPS': {
-      const { planetId, shipId, quantity, returnResources } = action;
-      const targetPlanet = state.planets.find(p => p.id === (planetId || state.currentPlanetId)) || getCurrentPlanet();
-      if (!targetPlanet || !shipId || quantity <= 0) return state;
-
-      const available = targetPlanet.fleet?.[shipId] || 0;
-      if (available < quantity) return state;
-
-      const currentFleet = { ...(targetPlanet.fleet || {}) };
-      currentFleet[shipId] = available - quantity;
-      if (currentFleet[shipId] <= 0) delete currentFleet[shipId];
-
-      const newRes = {
-        ...targetPlanet.resources,
-        metal: (targetPlanet.resources.metal || 0) + (returnResources?.metal || 0),
-        crystal: (targetPlanet.resources.crystal || 0) + (returnResources?.crystal || 0),
-        deuterium: (targetPlanet.resources.deuterium || 0) + (returnResources?.deuterium || 0)
-      };
-
-      let newState = updatePlanet(state, targetPlanet.id, p => ({
-        ...p,
-        resources: newRes,
-        fleet: currentFleet
-      }));
-
-      newState.notifications = [...(newState.notifications || []), {
-        id: uid(),
-        type: 'success',
-        message: `♻️ Desguace completado: ${quantity} unidades recicladas en ${targetPlanet.name}. Materiales recuperados con éxito.`,
-        timestamp: Date.now()
-      }];
-      return newState;
-    }
-
-    case 'MARKET_BUY_BLACK_MARKET': {
-      const { planetId, item, cost } = action;
-      const targetPlanet = state.planets.find(p => p.id === (planetId || state.currentPlanetId)) || getCurrentPlanet();
-      if (!targetPlanet || !item || !cost) return state;
-
-      if (!canAfford(targetPlanet.resources, cost)) {
-        return {
-          ...state,
-          notifications: [...(state.notifications || []), {
-            id: uid(),
-            type: 'warning',
-            message: `⚠️ Recursos insuficientes para pactar con el sindicato del Mercado Negro.`,
-            timestamp: Date.now()
-          }]
-        };
-      }
-
-      let newRes = deduct(targetPlanet.resources, cost);
-      if (item.grantResources) {
-        newRes = {
-          ...newRes,
-          metal: (newRes.metal || 0) + (item.grantResources.metal || 0),
-          crystal: (newRes.crystal || 0) + (item.grantResources.crystal || 0),
-          deuterium: (newRes.deuterium || 0) + (item.grantResources.deuterium || 0)
-        };
-      }
-
-      const currentFleet = { ...(targetPlanet.fleet || {}) };
-      if (item.grantFleet) {
-        Object.entries(item.grantFleet).forEach(([sId, qty]) => {
-          currentFleet[sId] = (currentFleet[sId] || 0) + qty;
-        });
-      }
-
-      const currentDefenses = { ...(targetPlanet.defenses || {}) };
-      if (item.grantDefenses) {
-        Object.entries(item.grantDefenses).forEach(([dId, qty]) => {
-          currentDefenses[dId] = (currentDefenses[dId] || 0) + qty;
-        });
-      }
-
-      let newState = updatePlanet(state, targetPlanet.id, p => ({
-        ...p,
-        resources: newRes,
-        fleet: currentFleet,
-        defenses: currentDefenses
-      }));
-
-      if (item.grantInfluence) {
-        newState.influence = (newState.influence || 0) + item.grantInfluence;
-      }
-
-      newState.notifications = [...(newState.notifications || []), {
-        id: uid(),
-        type: 'success',
-        message: `🕵️ Transacción clandestina sellada: "${item.title}". Beneficios ingresados en ${targetPlanet.name}.`,
-        timestamp: Date.now()
-      }];
-      return newState;
-    }
+    // === LONJA / EXCHANGE DAO ===
+    case 'CLAIM_DAO_DIVIDENDS':
+      return handleClaimDaoDividends(state, action);
+    case 'CREATE_LIMIT_ORDER':
+      return handleCreateLimitOrder(state, action);
+    case 'CANCEL_LIMIT_ORDER':
+      return handleCancelLimitOrder(state, action);
+    case 'CONTRIBUTE_EXCHANGE_PROJECT':
+      return handleContributeExchangeProject(state, action);
+    case 'CONTRIBUTE_ALL_EXCHANGE_PROJECT':
+      return handleContributeAllExchangeProject(state, action);
+    case 'FINALIZE_EXCHANGE_PROJECT':
+      return handleFinalizeExchangeProject(state, action);
+
+    // === GESTIÓN DE PLANETAS Y COLONIAS ===
+    case 'SET_PLANET':
+      return handleSetPlanet(state, action);
+    case 'RENAME_PLANET':
+      return handleRenamePlanet(state, action);
+    case 'PLANET_SPECIALIZE':
+      return handlePlanetSpecialize(state, action);
+    case 'PLANET_TOGGLE_AUTOTRADE':
+      return handlePlanetToggleAutotrade(state, action);
+    case 'EQUALIZE_COLONY_RESOURCES':
+      return handleEqualizeColonyResources(state, action);
+    case 'RELOCATE_COLONY_FLEET':
+      return handleRelocateColonyFleet(state, action);
+    case 'START_PLANET_TERRAFORMING':
+      return handleStartPlanetTerraforming(state, action);
+    case 'ESTABLISH_BILATERAL_ROUTE':
+      return handleEstablishBilateralRoute(state, action);
+    case 'CANCEL_BILATERAL_ROUTE':
+      return handleCancelBilateralRoute(state, action);
+
+    // === CONSTRUCCIÓN ===
+    case 'START_BUILDING':
+      return handleStartBuilding(state, action, getCurrentPlanet);
+
+    // === MERCADO Y FLOTA USADA ===
+    case 'MARKET_TRADE':
+      return handleMarketTrade(state, action, getCurrentPlanet);
+    case 'MARKET_BUY_USED_SHIPS':
+      return handleMarketBuyUsedShips(state, action, getCurrentPlanet);
+    case 'MARKET_SCRAP_SHIPS':
+      return handleMarketScrapShips(state, action, getCurrentPlanet);
+    case 'MARKET_BUY_BLACK_MARKET':
+      return handleMarketBuyBlackMarket(state, action, getCurrentPlanet);
+    case 'MARKET_SELL_SHIPS':
+      return handleMarketSellShips(state, action, getCurrentPlanet);
+    case 'MARKET_BUY_BLUEPRINT':
+      return handleMarketBuyBlueprint(state, action);
 
     default:
       return state;

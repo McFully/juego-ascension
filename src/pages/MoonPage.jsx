@@ -129,11 +129,13 @@ const MoonPage = ({ state, dispatch, currentPlanet, production, MOON_BUILDINGS, 
                   </div>
                   {onOpenCodex && (
                     <button
+                      type="button"
                       onClick={() => onOpenCodex(id)}
-                      className="p-1 rounded bg-white/5 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 transition-all text-xs"
-                      title="Ver detalles"
+                      className="p-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-200 hover:text-white flex items-center justify-center text-xs font-mono font-bold transition-all shadow-sm cursor-pointer"
+                      title="Ver detalles completos del edificio lunar"
+                      aria-label="Ver detalles completos del edificio lunar"
                     >
-                      📖
+                      <span>📋</span>
                     </button>
                   )}
                 </div>

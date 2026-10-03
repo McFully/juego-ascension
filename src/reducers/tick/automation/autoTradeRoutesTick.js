@@ -71,6 +71,7 @@ export const processAutoTradeRoutesTick = (state) => {
     const updatedColony = {
       ...colony,
       resources: {
+        ...colony.resources,
         metal: Math.max(0, colony.resources.metal - metalToSend),
         crystal: Math.max(0, colony.resources.crystal - crystalToSend),
         deuterium: Math.max(0, colony.resources.deuterium - deutToSend),

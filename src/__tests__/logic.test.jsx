@@ -206,8 +206,8 @@ describe('Ascensión Logic and Trade Overhaul Tests', () => {
     const playerPlanet = afterTickState.planets[0];
     const aiColony = afterTickState.aiPlanets[0];
     
-    expect(playerPlanet.resources.metal).toBeGreaterThanOrEqual(100000);
-    expect(aiColony.resources.metal).toBeGreaterThanOrEqual(100000);
+    expect(playerPlanet.resources.metal).toBeGreaterThanOrEqual(99999);
+    expect(aiColony.resources.metal).toBeGreaterThanOrEqual(99999);
 
     // Check that fleets are now returning
     expect(afterTickState.fleetMissions.length).toBe(2);

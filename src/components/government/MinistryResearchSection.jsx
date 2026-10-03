@@ -1,13 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ActionCardTile } from '../ui/ActionCardTile.jsx';
 import { MINISTRY_MAPPING } from '../../data/buildingOperationsData.js';
-import {
-  buildResearchScoreConfig,
-  rankResearch,
-  TECH_FOCUS_KEYS,
-  TECH_FOCUS_LABELS,
-} from '../../reducers/tick/ai/researchScoring.js';
-import { calcPlanetResearchTime } from '../../core.jsx';
+import { calcPlanetResearchTime, getPlanetEffectiveLab, getMaxResearchQueueSlots } from '../../core.jsx';
 
 /**
  * MinistryResearchSection — Panel de Tecnologías asignadas a un Ministerio de Nicho.
@@ -36,9 +30,9 @@ export const MinistryResearchSection = ({
   const assignedResearchIds = mapping.research || [];
   const ministryTechs = Object.entries(RESEARCH).filter(([id]) => assignedResearchIds.includes(id));
 
-  // Verificar si hay laboratorio construido
-  const labLevel = currentPlanet.buildings?.researchLab || 0;
-  const isLabMissing = labLevel < 1;
+  // Verificar si hay laboratorio construido o red compartida activa
+  const effectiveLab = getPlanetEffectiveLab(state, currentPlanet);
+  const isLabMissing = effectiveLab < 1;
 
   if (isLabMissing) {
     return (
@@ -88,83 +82,16 @@ export const MinistryResearchSection = ({
 
   const researchQueue = state.researchQueue || [];
 
-  // 1.6 — "Foco científico": el ajuste que el jugador elige pesa de verdad en el
-  // scoring (researchScoring lo lee vía buildResearchScoreConfig). Antes se
-  // guardaba y ningún tick lo miraba.
-  const ministryState = state.ministries?.[ministryId] || {};
-  const techFocus = ministryState.techFocus || 'general';
-
-  // 1.6 — los candidatos que el ministerio consideraría, ordenados por puntuación real.
-  // Sirve para que el jugador vea por qué se eligió lo que se eligió.
-  const rankedCandidates = useMemo(() => {
-    try {
-      const config = buildResearchScoreConfig(state, currentPlanet, { ministryId });
-      return rankResearch(config, Object.keys(RESEARCH))
-        .slice(0, 5)
-        .map(({ id: techId, score }) => ({
-          id: techId,
-          name: RESEARCH[techId]?.name || techId,
-          score,
-        }));
-    } catch (e) {
-      // La UI nunca debe romperse por un fallo de scoring.
-      console.error('[MinistryResearchSection] scoring no disponible:', e);
-      return [];
-    }
-  }, [state, currentPlanet, ministryId]);
-
   return (
     <section className="space-y-4 pt-1">
-      <div className="bg-black/40 border border-white/10 rounded-2xl p-4 space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Foco Científico</h4>
-            <p className="text-[10px] text-slate-400 font-mono">
-              Prioriza estas categorías al elegir automáticamente.
-            </p>
-          </div>
-          <select
-            value={techFocus}
-            onChange={(e) => dispatch({
-              type: 'SET_MINISTRY_STATE',
-              ministryId,
-              patch: { techFocus: e.target.value },
-            })}
-            className="bg-[#05070f] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono cursor-pointer"
-            aria-label="Foco científico del ministerio"
-          >
-            {TECH_FOCUS_KEYS.map((k) => (
-              <option key={k} value={k}>{TECH_FOCUS_LABELS[k] || k}</option>
-            ))}
-          </select>
-        </div>
-
-        {rankedCandidates.length > 0 && (
-          <div className="pt-2 border-t border-white/10">
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 font-mono">
-              Candidatos por puntuación
-            </p>
-            <ul className="space-y-0.5">
-              {rankedCandidates.map((c, i) => (
-                <li key={c.id} className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="text-slate-300">
-                    <span className="text-slate-500 mr-1.5">{i + 1}.</span>{c.name}
-                  </span>
-                  <span className="text-cyan-400">{c.score.toFixed(0)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch">
         {ministryTechs.map(([id, r]) => {
           const allInQueue = researchQueue.filter(q => q.researchId === id);
           const inQueue = allInQueue[0] || null;
           const queuedCount = allInQueue.length;
           const researchLvl = state.research?.[id] || 0;
-          const meets = meetsReq ? meetsReq(r.req, { ...(currentPlanet.buildings || {}), ...(state.research || {}) }) : true;
+          const reqBuildings = { ...(currentPlanet.buildings || {}), researchLab: effectiveLab };
+          const meets = meetsReq ? meetsReq(r.req, { ...reqBuildings, ...(state.research || {}) }) : true;
           const lvl = researchLvl;
           const targetLvl = lvl + queuedCount;
           const nextLvl = targetLvl + 1;
@@ -192,7 +119,7 @@ export const MinistryResearchSection = ({
           }
 
           return (
-            <div key={id} className="relative">
+            <div key={id} id={`research-card-${id}`} className="relative transition-all duration-300">
               {ItemCard ? (
                 <ItemCard
                   id={id}
@@ -203,7 +130,7 @@ export const MinistryResearchSection = ({
                   time={time}
                   canAfford={affordable}
                   planetResources={currentPlanet?.resources}
-                  isQueueFull={(state?.researchQueue || []).length >= 8}
+                  isQueueFull={(state?.researchQueue || []).length >= getMaxResearchQueueSlots(state)}
                   meetsRequirements={meets}
                   prodInfo={prodInfo}
                   onAction={() => {

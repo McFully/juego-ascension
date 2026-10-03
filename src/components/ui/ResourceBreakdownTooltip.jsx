@@ -6,7 +6,7 @@ import { fmt } from '../../core.jsx';
  * Desglose exacto de extracción de minas, complejos industriales, gastos civiles,
  * multiplicadores tecnológicos, bioma, directivas y balance neto por hora.
  */
-export const ResourceBreakdownTooltip = ({ resourceType, breakdown, currentAmount, prodVal }) => {
+export const ResourceBreakdownTooltip = ({ resourceType, breakdown, currentAmount, prodVal, position = 'bottom' }) => {
   if (!breakdown) return null;
 
   const resMeta = {
@@ -28,9 +28,18 @@ export const ResourceBreakdownTooltip = ({ resourceType, breakdown, currentAmoun
   const grossProduction = b.total !== undefined ? b.total : (mineExtracted + industryExtracted);
   const netProduction = b.netTotal !== undefined ? b.netTotal : Math.max(0, grossProduction - popExpense);
 
+  const posClasses = position === 'top'
+    ? 'bottom-full mb-3'
+    : 'top-full mt-2';
+
+  // Si position es 'top-left' o 'top-right' o default
+  const alignClass = position === 'top-right'
+    ? 'right-0'
+    : (position === 'top-left' ? 'left-0' : (position === 'top' ? 'left-1/2 -translate-x-1/2' : 'left-0'));
+
   return (
     <div
-      className="absolute top-full left-0 mt-2 w-[480px] max-w-[94vw] bg-[#050814] border border-cyan-500/50 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,1),0_0_30px_rgba(6,182,212,0.22)] z-[200] text-left font-mono text-xs pointer-events-none animate-in fade-in zoom-in-95 duration-150 ue-hud-grid backdrop-blur-xl"
+      className={`absolute ${posClasses} ${alignClass} w-[420px] max-w-[85vw] max-h-[80vh] overflow-y-auto bg-[#050814]/95 border border-cyan-500/50 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,1),0_0_30px_rgba(6,182,212,0.22)] z-[200] text-left font-mono text-xs pointer-events-none animate-in fade-in zoom-in-95 duration-150 ue-hud-grid backdrop-blur-xl`}
       style={{ boxShadow: `0 20px 50px rgba(0,0,0,1), 0 0 30px ${resMeta.glow}` }}
     >
       {/* Cabecera táctica militar */}

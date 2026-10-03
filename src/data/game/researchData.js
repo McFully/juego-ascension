@@ -41,6 +41,8 @@ export const RESEARCH = {
   industrialOpt: { name: 'Optimización Industrial', icon: '📈', cost: { m: 10000, c: 8000, d: 4000 }, factor: 2, cat: 'economy', req: { miningAuto: 3, robotFactory: 5 }, effect: 'Acelera velocidad de construcción de edificios (+10%/nv)', perLevel: { buildSpeed: 10 }, unit: '%' },
   galacticTrade: { name: 'Comercio Galáctico', icon: '💰', cost: { m: 20000, c: 30000, d: 10000 }, factor: 2, cat: 'economy', req: { industrialOpt: 3, computer: 6 }, effect: 'Mejora tipos de cambio en mercado galáctico (+10%/nv)', perLevel: { tradeRate: 10 }, unit: '%' },
   advLogistics: { name: 'Logística Avanzada', icon: '📦', cost: { m: 30000, c: 25000, d: 15000 }, factor: 2, cat: 'economy', req: { galacticTrade: 3, hyperspace: 4 }, effect: 'Capacidad de carga de naves (+10%/nv)', perLevel: { cargoCap: 10 }, unit: '%' },
+  // molecularCargoCompress vive en expanded/expandedResearch.js (única definición activa)
+
 
   // ===== IA =====
   aiProd: { name: 'IA de Producción', icon: '🏭', cost: { m: 20000, c: 30000, d: 10000 }, factor: 2, cat: 'ai', req: { computer: 6, miningAuto: 3 }, effect: 'Multiplica producción planetaria global (+10%/nv)', perLevel: { aiProdBoost: 10 }, unit: '%' },

@@ -41,10 +41,10 @@ export const DiplomacyChat = ({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
       {/* Faction selection list (Componente Modular) */}
       {!detailView && (
-        <div className="lg:col-span-4 flex flex-col">
+        <div className="lg:col-span-5 flex flex-col">
           <DiplomacyFactionList
             aiList={aiList}
             activeContact={activeContact}
@@ -58,7 +58,7 @@ export const DiplomacyChat = ({
       )}
 
       {/* Narratives & Transmission Console */}
-      <div className={`${detailView ? 'lg:col-span-12' : 'lg:col-span-8'} flex flex-col`}>
+      <div className={`${detailView ? 'lg:col-span-12' : 'lg:col-span-7'} flex flex-col`}>
         {activeContact && detailView && (
           <button onClick={onBackToList}
             className="self-start mb-2 px-3 py-1.5 border border-white/10 hover:border-cyan-500/50 rounded-xl text-[10px] text-slate-400 hover:text-cyan-400 font-mono transition-all flex items-center gap-1.5">

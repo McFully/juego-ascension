@@ -15,16 +15,49 @@ import { stampTimeMult } from '../tick/queues/queueTiming.js';
  * Moderniza una variante de naves específica en el planeta
  */
 export const handleRetrofitShipVariant = (state, action) => {
-  const { variantKey, count } = action;
-  const planet = state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
+  const { variantKey, count, planetId } = action;
+  const targetPlanetId = planetId || state.currentPlanetId;
+  const planet = state.planets.find(p => p.id === targetPlanetId) || state.planets[0];
   if (!planet) return state;
 
-  const variant = planet.fleetVariants?.[variantKey];
-  if (!variant || !variant.count || variant.count <= 0) return state;
+  let variant = planet.fleetVariants?.[variantKey];
+  // Si no existe la variante exacta (por ejemplo, save antiguo/legacy con naves no versionadas)
+  if (!variant && variantKey && variantKey.endsWith('__legacy')) {
+    const baseId = variantKey.replace('__legacy', '');
+    const currentQty = planet.fleet?.[baseId] || 0;
+    if (currentQty > 0) {
+      variant = {
+        baseId,
+        variantKey,
+        techGen: 1,
+        techSnapshot: {},
+        count: currentQty
+      };
+    }
+  }
+
+  if (!variant || !variant.count || variant.count <= 0) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        { id: uid(), type: 'warning', message: '⚠️ No hay unidades disponibles para modernizar en esta dársena.', timestamp: Date.now() }
+      ]
+    };
+  }
 
   const qtyToRetrofit = Math.min(variant.count, count && count > 0 ? count : variant.count);
   if (qtyToRetrofit <= 0) return state;
-  if ((state.retrofitQueue || []).length >= 5) return state;
+
+  if ((state.retrofitQueue || []).length >= 5) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        { id: uid(), type: 'warning', message: '⚠️ Dársenas de modernización saturadas (5/5 en curso). Espera a que finalice una orden.', timestamp: Date.now() }
+      ]
+    };
+  }
 
   const currentTech = extractShipTechSnapshot(state.research || {});
   const unitCost = calculateRetrofitUnitCost(variant.baseId, variant.techSnapshot, currentTech, 'ship');
@@ -34,7 +67,15 @@ export const handleRetrofitShipVariant = (state, action) => {
     deuterium: unitCost.deuterium * qtyToRetrofit
   };
 
-  if (!canAfford(planet.resources, totalCost)) return state;
+  if (!canAfford(planet.resources, totalCost)) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        { id: uid(), type: 'warning', message: `⚠️ Recursos insuficientes para modernizar ${qtyToRetrofit}x ${SHIPS[variant.baseId]?.name || variant.baseId}.`, timestamp: Date.now() }
+      ]
+    };
+  }
 
   const unitTime = calculateRetrofitUnitTime(
     variant.baseId,
@@ -99,16 +140,48 @@ export const handleRetrofitShipVariant = (state, action) => {
  * Moderniza una variante de defensas específica en el planeta
  */
 export const handleRetrofitDefenseVariant = (state, action) => {
-  const { variantKey, count } = action;
-  const planet = state.planets.find(p => p.id === state.currentPlanetId) || state.planets[0];
+  const { variantKey, count, planetId } = action;
+  const targetPlanetId = planetId || state.currentPlanetId;
+  const planet = state.planets.find(p => p.id === targetPlanetId) || state.planets[0];
   if (!planet) return state;
 
-  const variant = planet.defenseVariants?.[variantKey];
-  if (!variant || !variant.count || variant.count <= 0) return state;
+  let variant = planet.defenseVariants?.[variantKey];
+  if (!variant && variantKey && variantKey.endsWith('__legacy')) {
+    const baseId = variantKey.replace('__legacy', '');
+    const currentQty = planet.defenses?.[baseId] || 0;
+    if (currentQty > 0) {
+      variant = {
+        baseId,
+        variantKey,
+        techGen: 1,
+        techSnapshot: {},
+        count: currentQty
+      };
+    }
+  }
+
+  if (!variant || !variant.count || variant.count <= 0) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        { id: uid(), type: 'warning', message: '⚠️ No hay baterías defensivas disponibles para calibrar.', timestamp: Date.now() }
+      ]
+    };
+  }
 
   const qtyToRetrofit = Math.min(variant.count, count && count > 0 ? count : variant.count);
   if (qtyToRetrofit <= 0) return state;
-  if ((state.retrofitQueue || []).length >= 5) return state;
+
+  if ((state.retrofitQueue || []).length >= 5) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        { id: uid(), type: 'warning', message: '⚠️ Línea de modernización saturada (5/5 en curso). Espera a que termine un ensamblaje.', timestamp: Date.now() }
+      ]
+    };
+  }
 
   const currentTech = extractDefenseTechSnapshot(state.research || {});
   const unitCost = calculateRetrofitUnitCost(variant.baseId, variant.techSnapshot, currentTech, 'defense');
@@ -118,7 +191,15 @@ export const handleRetrofitDefenseVariant = (state, action) => {
     deuterium: unitCost.deuterium * qtyToRetrofit
   };
 
-  if (!canAfford(planet.resources, totalCost)) return state;
+  if (!canAfford(planet.resources, totalCost)) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        { id: uid(), type: 'warning', message: `⚠️ Recursos insuficientes para calibrar ${qtyToRetrofit}x ${DEFENSES[variant.baseId]?.name || variant.baseId}.`, timestamp: Date.now() }
+      ]
+    };
+  }
 
   const unitTime = calculateRetrofitUnitTime(
     variant.baseId,

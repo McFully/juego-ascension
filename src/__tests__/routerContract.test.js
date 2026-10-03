@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { gameReducer } from '../reducers/index.js';
@@ -215,8 +215,8 @@ describe('cartas del hub que antes no se renderizaban', () => {
     const { PLANETARY_COMMAND_CARDS, buildPlanetaryCommandCards } = await import(
       '../components/government/hub/planetaryCommandCardsConfig.jsx'
     );
-    expect(PLANETARY_COMMAND_CARDS).toContain('shipDesign');
-    expect(PLANETARY_COMMAND_CARDS).toContain('combat');
+    expect(PLANETARY_COMMAND_CARDS).not.toContain('shipDesign');
+    expect(PLANETARY_COMMAND_CARDS).not.toContain('combat');
 
     const cards = buildPlanetaryCommandCards({
       onEnterMinistries: () => {},

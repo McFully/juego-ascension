@@ -16,9 +16,10 @@ import { GameCarousel } from "../components/ui/GameCarousel.jsx";
 import { ActionCardTile } from "../components/ui/ActionCardTile.jsx";
 import { DiplomacyChamberSelector } from "../components/diplomacy/DiplomacyChamberSelector.jsx";
 import { useNavigation } from "../components/navigation/NavigationContext.jsx";
+import { SubsystemTopBanner } from "../components/navigation/SubsystemTopBanner.jsx";
 import { SafeImg } from "../assets.jsx";
 
-const DiplomacyPage = ({ state, dispatch, SHIPS, FACTIONS, AI_STRATEGIES, S, fmt, getGalacticAlignment }) => {
+const DiplomacyPage = ({ state, dispatch, currentPlanet: propPlanet, production, SHIPS, FACTIONS, AI_STRATEGIES, S, fmt, getGalacticAlignment, setActiveTab }) => {
   const { navigateTo, navigateBack } = useNavigation();
   const [tradeAIPlanet, setTradeAIPlanet] = useState(null);
   const [tradeGive, setTradeGive] = useState({ metal: 0, crystal: 0, deuterium: 0, influence: 0 });
@@ -250,22 +251,38 @@ const DiplomacyPage = ({ state, dispatch, SHIPS, FACTIONS, AI_STRATEGIES, S, fmt
         }
       `}</style>
 
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver al Mando Imperial) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={propPlanet || currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle={
+          subTab === 'relations' ? 'Embajada y Líderes Extraterrestres' :
+          subTab === 'council' ? 'Consejo Galáctico Soberano' :
+          subTab === 'federations' ? 'Pactos Federativos' :
+          subTab === 'crises' ? 'Mando de Alertas y Crisis' :
+          'Cuerpo Diplomático Interestelar'
+        }
+        breadcrumbIcon="🤝"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom={subTab ? 'Cámaras' : 'Mando Imperial'}
+        backButtonIcon={subTab ? '🤝' : '👑'}
+        onBackToAltoMando={() => {
+          if (subTab) {
+            setSubTab(null);
+          } else {
+            if (setActiveTab) setActiveTab('imperial_hub');
+            if (navigateTo) navigateTo('imperial_hub');
+            if (window.playSfx) window.playSfx('click');
+          }
+        }}
+      />
+
       {/* Cancillería Imperial Header */}
-      <section className="bg-[#0b1021]/90 border border-purple-500/25 rounded-2xl p-5 shadow-[0_0_30px_rgba(168,85,247,0.1)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <section className="bg-[#0b1021]/90 border border-purple-500/25 rounded-2xl p-4 shadow-[0_0_30px_rgba(168,85,247,0.1)] flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          {subTab && (
-            <button
-              onClick={() => {
-                playDiploSound('click');
-                setSubTab(null);
-              }}
-              className="px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 hover:text-white transition-all text-xs font-mono font-bold flex items-center gap-1.5 focus-ring-game cursor-pointer"
-              title="Volver a las Cámaras Diplomáticas"
-            >
-              <span>◀</span>
-              <span>Cámaras</span>
-            </button>
-          )}
           <span className="text-3xl">🤝</span>
           <div>
             <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">Cuerpo Diplomático Interestelar</h2>
@@ -278,10 +295,6 @@ const DiplomacyPage = ({ state, dispatch, SHIPS, FACTIONS, AI_STRATEGIES, S, fmt
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-[#05070f]/80 border border-white/8 px-4 py-2 rounded-xl text-xs font-mono">
-          <span className="text-purple-400">Influencia Soberana:</span>
-          <span className="text-white font-bold text-sm">{fmt(influence)}</span>
-        </div>
       </section>
 
       {/* NIVEL 1: Selector de Cámaras en Grid */}
@@ -291,7 +304,7 @@ const DiplomacyPage = ({ state, dispatch, SHIPS, FACTIONS, AI_STRATEGIES, S, fmt
           playDiploSound={playDiploSound}
           onBack={() => {
             if (navigateBack) navigateBack();
-            else if (setActiveTab) setActiveTab('overview');
+            else if (navigateTo) navigateTo('overview');
           }}
         />
       )}
@@ -299,18 +312,6 @@ const DiplomacyPage = ({ state, dispatch, SHIPS, FACTIONS, AI_STRATEGIES, S, fmt
       {/* NIVEL 2: Vista Dedicada de la Cámara Seleccionada */}
       {subTab && (
         <div className="space-y-4 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between pb-1">
-            <button
-              onClick={() => {
-                playDiploSound('click');
-                setSubTab(null);
-              }}
-              className="px-3.5 py-2 rounded-xl bg-[#090d1f] border border-purple-500/40 text-purple-300 hover:bg-purple-950/40 hover:text-white transition-all text-xs font-mono font-bold flex items-center gap-2 cursor-pointer shadow-lg"
-            >
-              <span>◀</span>
-              <span>Volver a Cámaras Diplomáticas</span>
-            </button>
-          </div>
 
           {subTab === 'relations' && (
             <DiplomacyChat

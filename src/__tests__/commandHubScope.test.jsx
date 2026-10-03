@@ -35,10 +35,11 @@ describe('tableros de mando independientes', () => {
     expect(IMPERIAL_COMMAND_CARDS).not.toContain('back_to_empire');
   });
 
-  it('el tablero de un mundo tiene su gobierno local y el retorno al imperio', () => {
+  it('el tablero de un mundo tiene su gobierno local y la banca galáctica', () => {
     expect(PLANETARY_COMMAND_CARDS).toContain('ministries');
     expect(PLANETARY_COMMAND_CARDS).toContain('planetary_senate');
-    expect(PLANETARY_COMMAND_CARDS[PLANETARY_COMMAND_CARDS.length - 1]).toBe('back_to_empire');
+    expect(PLANETARY_COMMAND_CARDS).toContain('bank');
+    expect(PLANETARY_COMMAND_CARDS).not.toContain('back_to_empire');
   });
 
   it('los órganos del imperio no cuelgan de un mundo', () => {

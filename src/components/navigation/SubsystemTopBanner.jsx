@@ -15,16 +15,32 @@ export const SubsystemTopBanner = ({
   onBackToAltoMando = null,
   backButtonLabelTop = 'VOLVER A',
   backButtonLabelBottom = 'Alto Mando',
-  backButtonIcon = '👑'
+  backButtonIcon = '👑',
+  parentHub = 'auto' // 'auto' | 'government' | 'imperial_hub'
 }) => {
-  const { navigateTo } = useNavigation();
+  const { navigateTo, activeView } = useNavigation();
+
+  // Determinar si la pantalla actual pertenece a la rama de Mando Imperial o Alto Mando
+  const isImperialBranch = parentHub === 'imperial_hub' || (
+    parentHub === 'auto' && (
+      backButtonLabelBottom?.toLowerCase().includes('mando imperial') ||
+      activeView === 'missions' ||
+      activeView === 'diplomacy' ||
+      activeView === 'combat' ||
+      activeView === 'stats' ||
+      activeView === 'shipDesign' ||
+      activeView === 'colony_network' ||
+      activeView === 'imperial_council' ||
+      activeView === 'imperial_senate'
+    )
+  );
 
   const handleBackToAltoMando = () => {
     if (window.playSfx) window.playSfx('click');
     if (onBackToAltoMando) {
       onBackToAltoMando();
     } else if (navigateTo) {
-      navigateTo('government');
+      navigateTo(isImperialBranch ? 'imperial_hub' : 'government');
     }
   };
 
@@ -35,14 +51,14 @@ export const SubsystemTopBanner = ({
         {/* FILA SUPERIOR: Recursos (Metal, Cristal, Deuterio, Energía, Reputación) */}
         <div className="flex items-center gap-1 sm:gap-2 px-4 py-2 border-b border-white/10 overflow-visible bg-black/40 rounded-tl-2xl">
           {/* Metal */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⛏️</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
+          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[130px] sm:min-w-[145px]">
+            <span className="text-xl shrink-0">⛏️</span>
+            <div className="flex items-baseline gap-1.5 leading-none tabular-nums">
               <span className="font-black text-amber-400 text-base md:text-lg">
                 {fmt ? fmt(currentPlanet?.resources?.metal || 0) : (currentPlanet?.resources?.metal || 0)}
               </span>
               {production?.metal !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
+                <span className="text-xs text-emerald-400 font-bold tabular-nums">
                   +{fmt ? fmt(production.metal) : production.metal}
                 </span>
               )}
@@ -60,14 +76,14 @@ export const SubsystemTopBanner = ({
           <div className="w-[1px] h-5 bg-white/15 shrink-0" />
 
           {/* Cristal */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">💎</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
+          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[130px] sm:min-w-[145px]">
+            <span className="text-xl shrink-0">💎</span>
+            <div className="flex items-baseline gap-1.5 leading-none tabular-nums">
               <span className="font-black text-cyan-400 text-base md:text-lg">
                 {fmt ? fmt(currentPlanet?.resources?.crystal || 0) : (currentPlanet?.resources?.crystal || 0)}
               </span>
               {production?.crystal !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
+                <span className="text-xs text-emerald-400 font-bold tabular-nums">
                   +{fmt ? fmt(production.crystal) : production.crystal}
                 </span>
               )}
@@ -85,14 +101,14 @@ export const SubsystemTopBanner = ({
           <div className="w-[1px] h-5 bg-white/15 shrink-0" />
 
           {/* Deuterio */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⚗️</span>
-            <div className="flex items-baseline gap-1.5 leading-none">
+          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[130px] sm:min-w-[145px]">
+            <span className="text-xl shrink-0">⚗️</span>
+            <div className="flex items-baseline gap-1.5 leading-none tabular-nums">
               <span className="font-black text-emerald-400 text-base md:text-lg">
                 {fmt ? fmt(currentPlanet?.resources?.deuterium || 0) : (currentPlanet?.resources?.deuterium || 0)}
               </span>
               {production?.deuterium !== undefined && (
-                <span className="text-xs text-emerald-400 font-bold">
+                <span className="text-xs text-emerald-400 font-bold tabular-nums">
                   +{fmt ? fmt(production.deuterium) : production.deuterium}
                 </span>
               )}
@@ -109,10 +125,35 @@ export const SubsystemTopBanner = ({
 
           <div className="w-[1px] h-5 bg-white/15 shrink-0" />
 
+          {/* Escoria Industrial */}
+          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[115px] sm:min-w-[130px]">
+            <span className="text-xl shrink-0">🪨</span>
+            <div className="flex items-baseline gap-1.5 leading-none tabular-nums">
+              <span className="font-black text-orange-400 text-base md:text-lg">
+                {fmt ? fmt(currentPlanet?.resources?.slag || 0) : (currentPlanet?.resources?.slag || 0)}
+              </span>
+              {production?.slagNet !== undefined && (
+                <span className={`text-xs font-bold tabular-nums ${(production.slagNet || 0) <= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                  {(production.slagNet || 0) > 0 ? `+${fmt ? fmt(production.slagNet) : production.slagNet}` : (fmt ? fmt(production.slagNet || 0) : (production.slagNet || 0))}
+                </span>
+              )}
+            </div>
+            <div className="hidden group-hover/res:block z-[100]">
+              <ResourceBreakdownTooltip
+                resourceType="slag"
+                breakdown={production?.breakdown}
+                currentAmount={currentPlanet?.resources?.slag}
+                prodVal={production?.slagNet}
+              />
+            </div>
+          </div>
+
+          <div className="w-[1px] h-5 bg-white/15 shrink-0" />
+
           {/* Energía */}
-          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
-            <span className="text-xl">⚡</span>
-            <div className="flex items-baseline leading-none">
+          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[90px] sm:min-w-[105px]">
+            <span className="text-xl shrink-0">⚡</span>
+            <div className="flex items-baseline leading-none tabular-nums">
               <span className="font-black text-yellow-400 text-base md:text-lg">
                 {((production?.energyBalance ?? 0) >= 0 ? '+' : '')}{fmt ? fmt(production?.energyBalance ?? 0) : (production?.energyBalance ?? 0)}
               </span>
@@ -171,25 +212,86 @@ export const SubsystemTopBanner = ({
 
           <span className="text-slate-600 font-bold text-sm">/</span>
 
-          {/* Etiqueta del Planeta Sede del Alto Mando */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-bold text-xs" title="Sede del Alto Mando">
-            <span className="text-sm">🌍</span>
-            <span>{currentPlanet?.name || state?.planets?.find(p => p.isHome)?.name || 'Capital'}</span>
-          </div>
+          {isImperialBranch ? (
+            /* Rama Imperial: Directo a Mando Imperial (sin planeta local) */
+            <>
+              <button
+                onClick={() => {
+                  if (window.playSfx) window.playSfx('click');
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('ascension:open-section', { detail: { section: 'command_hub' } }));
+                  }
+                  if (navigateTo) navigateTo('overview');
+                }}
+                className="flex items-center gap-2 px-2.5 py-1 rounded-xl transition-all text-slate-300 hover:text-white hover:bg-white/10 font-bold cursor-pointer text-sm"
+                title="Ir a Mando Imperial"
+              >
+                <span className="text-base">👑</span>
+                <span>Mando Imperial</span>
+              </button>
+            </>
+          ) : (
+            /* Rama Planetaria: Planeta local -> Alto Mando */
+            <>
+              {/* Botón directo a Mundos del Imperio */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.playSfx) window.playSfx('click');
+                  try {
+                    if (typeof window !== "undefined") {
+                      window.sessionStorage.setItem("ascension_target_section", "planets");
+                    }
+                    window.dispatchEvent(new CustomEvent('ascension:open-section', { detail: { section: 'planets' } }));
+                  } catch (_) {}
+                  if (navigateTo) navigateTo('overview');
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/40 font-bold text-xs transition-all cursor-pointer"
+                title="Volver a Mundos del Imperio"
+              >
+                <span className="text-sm">🌍</span>
+                <span>Mundos del Imperio</span>
+              </button>
+              <span className="text-slate-600 font-bold text-sm">/</span>
 
-          <span className="text-slate-600 font-bold text-sm">/</span>
+              {/* Etiqueta del Planeta Sede del Alto Mando interactiva */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.playSfx) window.playSfx('click');
+                  const planetName = currentPlanet?.name || state?.planets?.find(p => p.isHome)?.name || '';
+                  try {
+                    window.dispatchEvent(new CustomEvent('ascension:open-section', { detail: { section: 'planets', filter: planetName } }));
+                  } catch (_) {}
+                  if (navigateTo) navigateTo('overview');
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/40 text-cyan-300 font-bold text-xs transition-all cursor-pointer"
+                title="Ver este mundo en el Catálogo de Mundos del Imperio"
+              >
+                <span className="text-sm">🪐</span>
+                <span>{currentPlanet?.name || state?.planets?.find(p => p.isHome)?.name || 'Capital'}</span>
+                {currentPlanet?.galaxy !== undefined && (
+                  <span className="text-cyan-400 font-mono text-[11px] font-black">
+                    [{currentPlanet.galaxy}:{currentPlanet.system}:{currentPlanet.position}]
+                  </span>
+                )}
+              </button>
 
-          <button
-            onClick={() => {
-              if (window.playSfx) window.playSfx('click');
-              if (navigateTo) navigateTo('government');
-            }}
-            className="flex items-center gap-2 px-2.5 py-1 rounded-xl transition-all text-slate-300 hover:text-white hover:bg-white/10 font-bold cursor-pointer text-sm"
-            title="Ir al Alto Mando"
-          >
-            <span className="text-base">👑</span>
-            <span>Alto Mando</span>
-          </button>
+              <span className="text-slate-600 font-bold text-sm">/</span>
+
+              <button
+                onClick={() => {
+                  if (window.playSfx) window.playSfx('click');
+                  if (navigateTo) navigateTo('government');
+                }}
+                className="flex items-center gap-2 px-2.5 py-1 rounded-xl transition-all text-slate-300 hover:text-white hover:bg-white/10 font-bold cursor-pointer text-sm"
+                title="Ir al Alto Mando"
+              >
+                <span className="text-base">👑</span>
+                <span>Alto Mando</span>
+              </button>
+            </>
+          )}
 
           <span className="text-slate-600 font-bold text-sm">/</span>
 
@@ -214,11 +316,11 @@ export const SubsystemTopBanner = ({
         {showBackToAltoMando && (
           <>
             {rightSlot && <div className="w-[1px] bg-white/15 self-stretch" />}
-            <div className="flex items-stretch justify-center shrink-0 w-full xl:w-48">
+            <div className="flex items-stretch justify-center shrink-0 w-full xl:w-56 min-w-[190px]">
               <button
                 type="button"
                 onClick={handleBackToAltoMando}
-                className="relative w-full h-full min-h-[58px] flex flex-col items-center justify-center px-0.5 py-1.5 overflow-hidden bg-[#060a16] hover:bg-[#0c1328] transition-all duration-300 cursor-pointer group text-center select-none"
+                className="relative w-full h-full min-h-[58px] flex flex-col items-center justify-center px-2 py-1.5 overflow-hidden bg-[#060a16] hover:bg-[#0c1328] transition-all duration-300 cursor-pointer group text-center select-none"
                 title={`Volver a ${backButtonLabelBottom}`}
               >
                 {/* Imagen de fondo con SafeImg */}
@@ -232,12 +334,12 @@ export const SubsystemTopBanner = ({
 
                 {/* Contenido frontal maximizado a todo el ancho */}
                 <div className="relative z-10 flex flex-col items-center justify-center w-full min-w-0 leading-none px-1">
-                  <span className="w-full text-center text-lg sm:text-xl font-mono font-black uppercase tracking-[0.28em] text-purple-300 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] transition-colors">
+                  <span className="w-full text-center text-xs sm:text-sm font-mono font-black uppercase tracking-[0.18em] text-purple-300 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] transition-colors whitespace-nowrap">
                     {backButtonLabelTop}
                   </span>
-                  <span className="w-full text-center text-base sm:text-lg font-mono font-black uppercase text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] tracking-wider truncate group-hover:text-purple-100 transition-colors flex items-center justify-center gap-1.5 mt-1">
+                  <span className="w-full text-center text-sm sm:text-base font-mono font-black uppercase text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] tracking-wide group-hover:text-purple-100 transition-colors flex items-center justify-center gap-1.5 mt-1 whitespace-nowrap">
                     <span className="text-base shrink-0">{backButtonIcon}</span>
-                    <span className="truncate">{backButtonLabelBottom}</span>
+                    <span className="whitespace-nowrap">{backButtonLabelBottom}</span>
                   </span>
                 </div>
               </button>

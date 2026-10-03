@@ -86,6 +86,8 @@ export const REAL_IMAGES = {
   deathstar: asset('Estrella de la Muerte.webp'),
   smallCargo: asset('Carguera Pequeña.webp'),
   largeCargo: asset('Gran Carguero.webp'),
+  heavyFreighter: asset('solarPropulsionFreight.webp'),
+  cargoTitan: asset('cargo_titan_colossus.jpg'),
   espionageProbe: asset('Sonda Espionaje.webp'),
   spyProbe: asset('Sonda Espionaje.webp'),
   colonizer: asset('Colonizador.webp'),
@@ -685,7 +687,34 @@ export const REAL_IMAGES = {
   patrol_system: asset('patrol_system.webp'),
 
   // Modales Tácticos y Espionaje
-  modal_espionage_tactical: asset('modal_espionage_tactical.webp')
+  modal_espionage_tactical: asset('modal_espionage_tactical.webp'),
+
+  // Lonja Galáctica y Depósitos
+  slagStorage: asset('slagStorage.webp'),
+  exchangeDocks: asset('exchangeDocks.webp'),
+  exchangeVaults: asset('exchangeVaults.webp'),
+  exchangeEngine: asset('exchangeEngine.webp'),
+  exchangeBank: asset('exchangeBank.webp'),
+  exchangeBastion: asset('exchangeBastion.webp'),
+  exchangeBunkers: asset('exchangeBunkers.webp'),
+  exchangePatrols: asset('exchangePatrols.webp'),
+  exchangeBeacon: asset('exchangeBeacon.webp'),
+
+  // Naves de Combate y Colonización
+  atmosphericInterceptor: asset('atmosphericInterceptor.webp'),
+  quantumFighter: asset('quantumFighter.webp'),
+  systemGunship: asset('systemGunship.webp'),
+  hyperHeavyFighter: asset('hyperHeavyFighter.webp'),
+  systemCruiser: asset('systemCruiser.webp'),
+  dreadnought: asset('dreadnought.webp'),
+  localColonizer: asset('localColonizer.webp'),
+  hyperColonizer: asset('hyperColonizer.webp'),
+  commercialColonizer: asset('commercialColonizer.webp'),
+  carrier: asset('carrier.webp'),
+
+  // Lonja Naval e Intercambio de Naves
+  lonjaNaval: asset('lonja_naval_espacial.jpg'),
+  astilleroChatarra: asset('astillero_chatarra.jpg')
 };
 
 

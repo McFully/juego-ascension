@@ -9,7 +9,7 @@ export const sectorReducer = (state, action) => {
       const { name, planetIds = [] } = action;
       const newSector = {
         id: 'sector_' + uid(),
-        name: name || Sector ,
+        name: name || `Sector ${sectors.length + 1}`,
         planetIds,
         viceroy: null,
         doctrine: 'mining',

@@ -25,10 +25,12 @@ export const MinistryBuildingsSection = ({
 
   if (!BUILDINGS || !currentPlanet) return null;
 
-  // Obtener edificios asignados a este ministerio
+  // Obtener edificios asignados a este ministerio respetando el orden explícito de la configuración
   const mapping = MINISTRY_MAPPING[ministryId];
   const assignedBuildingIds = mapping?.buildings || [];
-  const ministryBuildings = Object.entries(BUILDINGS).filter(([id]) => assignedBuildingIds.includes(id));
+  const ministryBuildings = assignedBuildingIds
+    .filter(id => BUILDINGS[id])
+    .map(id => [id, BUILDINGS[id]]);
 
   if (ministryBuildings.length === 0) {
     return (
@@ -121,7 +123,10 @@ export const MinistryBuildingsSection = ({
               meetsRequirements={meets}
               lackOfPop={!hasPop}
               prodInfo={prodInfo}
-              onAction={() => dispatch({ type: 'START_BUILDING', buildingId: id })}
+              onAction={() => {
+                dispatch({ type: 'START_BUILDING', buildingId: id, planetId: currentPlanet?.id });
+                if (window.playSfx) window.playSfx('build');
+              }}
               actionLabel={`Construir (Nv.${nextLvl})`}
               extra={extraLines.join(' | ') || null}
               onOpenCodex={onOpenCodex}

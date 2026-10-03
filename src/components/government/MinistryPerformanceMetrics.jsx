@@ -47,7 +47,7 @@ export const MinistryPerformanceMetrics = ({ selectedMinistry, currentPlanet, cu
                   { key: 'midClass', name: 'Negocio Clase Media', cost: { metal: 15000, crystal: 8000 }, revenue: '+15 CR', label: 'Incentivar' },
                   { key: 'highClass', name: 'Negocio Clase Alta', cost: { metal: 50000, crystal: 25000 }, revenue: '+50 CR', label: 'Subvencionar' }
                 ].map(b => {
-                  const canAff = planetResources.metal >= b.cost.metal && planetResources.crystal >= b.cost.crystal;
+                  const canAff = ((planetResources?.metal ?? 0) >= b.cost.metal) && ((planetResources?.crystal ?? 0) >= b.cost.crystal);
                   return (
                     <div key={b.key} className="flex justify-between items-center bg-black/40 p-2 rounded-lg border border-white/5 text-[10px]">
                       <div className="text-left">

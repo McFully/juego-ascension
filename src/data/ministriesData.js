@@ -69,7 +69,7 @@ export const MINISTRY_PROGRAMS = {
   industry: [
     { id: 'ind_catalyst', name: 'Catalizadores Moleculares', desc: 'Acelera el refinado de materias primas en productos avanzados.', baseCost: { metal: 14000, crystal: 8000 }, bonusText: '+15% Eficiencia de Refinerías por nivel' },
     { id: 'ind_assembly', name: 'Líneas de Montaje Sincrónicas', desc: 'Estandarización de componentes pesados y aleaciones.', baseCost: { metal: 18000, crystal: 10000 }, bonusText: '-10% Tiempo de Fabricación por nivel' },
-    { id: 'ind_reclaim', name: 'Reciclaje de Escorias Industriales', desc: 'Recuperación de minerales de subproductos metalúrgicos.', baseCost: { metal: 12000, deuterium: 6000 }, bonusText: '+8% Retorno de Materiales por nivel' },
+    { id: 'ind_reclaim', name: 'Reciclaje de Escorias Industriales', desc: 'Recuperación masiva de minerales de subproductos metalúrgicos y escorias.', baseCost: { metal: 12000, deuterium: 6000 }, bonusText: '+800% Capacidad de Reciclaje y Retorno por nivel' },
     { id: 'ind_poly', name: 'Polímeros Hiperdensos', desc: 'Nuevos materiales compuestos para blindajes y estructuras.', baseCost: { crystal: 16000, deuterium: 10000 }, bonusText: '+12% Durabilidad Estructural por nivel' }
   ],
   innovation: [
@@ -113,5 +113,11 @@ export const MINISTRY_PROGRAMS = {
     { id: 'dip_trade_pacts', name: 'Tratados Arancelarios Mutuos', desc: 'Exención impositiva en puertos y mercados neutrales.', baseCost: { metal: 15000, crystal: 10000 }, bonusText: '+12% Ganancias en Rutas Diplomáticas por nivel' },
     { id: 'dip_cultural_exch', name: 'Intercambio Académico Interestelar', desc: 'Becas de estudio conjuntas entre imperios y especies.', baseCost: { crystal: 14000, influence: 25 }, bonusText: '+10% Velocidad de Acuerdos por nivel' },
     { id: 'dip_federation', name: 'Pactos de Defensa Compartida', desc: 'Protocolos de asistencia mutua ante incursiones piratas o hostiles.', baseCost: { metal: 20000, influence: 50 }, bonusText: '+20% Fuerza de Alianzas por nivel' }
+  ],
+  finance: [
+    { id: 'fin_central_bank', name: 'Encaje Bancario Fraccionario', desc: 'Regula coeficientes de liquidez y créditos para inversión colonial.', baseCost: { metal: 12000, crystal: 10000 }, bonusText: '+15% Créditos generados por nivel' },
+    { id: 'fin_interest_yield', name: 'Cuentas de Rendimiento Cuántico', desc: 'Rendimiento pasivo continuo sobre los créditos en tesorería.', baseCost: { crystal: 15000, deuterium: 8000 }, bonusText: '+2.5% Interés pasivo por ciclo por nivel' },
+    { id: 'fin_anti_inflation', name: 'Estabilizadores Antidevaluación', desc: 'Deflación controlada y subsidio al spread de la Lonja.', baseCost: { metal: 18000, crystal: 14000 }, bonusText: '-10% Comisiones de Mercado por nivel' },
+    { id: 'fin_sovereign_bond', name: 'Bonos del Tesoro Interestelar', desc: 'Emisión de deuda federal soberana respaldada por colonias.', baseCost: { metal: 25000, influence: 40 }, bonusText: '+20% Capacidad de Endeudamiento y Créditos por nivel' }
   ]
 };

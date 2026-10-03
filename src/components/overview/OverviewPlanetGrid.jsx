@@ -15,7 +15,9 @@ export const OverviewPlanetGrid = ({
   currentPlanet,
   dispatch,
   handleNavigate,
-  fmt
+  fmt,
+  initialSearch = '',
+  onSearchChange
 }) => {
   const [editingPlanetId, setEditingPlanetId] = useState(null);
   const [tempName, setTempName] = useState('');
@@ -23,8 +25,18 @@ export const OverviewPlanetGrid = ({
 
   // Controles de visualización y antiscroll
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
-  const [searchFilter, setSearchFilter] = useState('');
+  const [searchFilter, setSearchFilter] = useState(initialSearch);
   const [galaxyFilter, setGalaxyFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
+
+  // Sincronizar si cambia initialSearch externamente (ej: al clicar en un planeta concreto)
+  React.useEffect(() => {
+    if (initialSearch !== undefined) {
+      setSearchFilter(initialSearch);
+      setCurrentPage(1);
+    }
+  }, [initialSearch]);
 
   const rawPlanets = state?.planets || (currentPlanet ? [currentPlanet] : []);
 
@@ -48,16 +60,58 @@ export const OverviewPlanetGrid = ({
     });
   }, [rawPlanets, galaxyFilter, searchFilter]);
 
+  // Cálculo de páginas totales
+  const totalPages = Math.max(1, Math.ceil(filteredPlanets.length / ITEMS_PER_PAGE));
+
+  // Ajustar página activa si cambia el filtro y queda fuera de rango
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedPlanets = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredPlanets.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPlanets, currentPage, ITEMS_PER_PAGE]);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(p => p - 1);
+      if (window.playSfx) window.playSfx('click');
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(p => p + 1);
+      if (window.playSfx) window.playSfx('click');
+    }
+  };
+
+  const handleGalaxyChange = (g) => {
+    setGalaxyFilter(g);
+    setCurrentPage(1);
+    if (window.playSfx) window.playSfx('click');
+  };
+
+  const handleSearchChange = (val) => {
+    setSearchFilter(val);
+    setCurrentPage(1);
+  };
+
   const handleStartRename = (e, planet) => {
     e.stopPropagation();
     setEditingPlanetId(planet.id);
     setTempName(planet.name || '');
   };
 
-  const handleSaveRename = (planetId) => {
-    const trimmed = tempName.trim();
+  const handleSaveRename = (planetId, explicitName) => {
+    const raw = typeof explicitName === 'string' ? explicitName : tempName;
+    const trimmed = (raw || '').trim();
     if (trimmed && dispatch) {
       dispatch({ type: 'RENAME_PLANET', planetId, name: trimmed.slice(0, 20) });
+      if (window.playSfx) window.playSfx('tradeSuccess');
     }
     setEditingPlanetId(null);
   };
@@ -69,12 +123,14 @@ export const OverviewPlanetGrid = ({
   };
 
   const handleSelectPlanetAndNavigate = (planetId) => {
-    // El reducer actualiza `currentPlanetId` en el mismo lote que la
-    // navegación, así que el Alto Mando que se monte a continuación ya es el
-    // de este mundo y no el que estaba activo antes.
     if (dispatch) {
       dispatch({ type: "SET_PLANET", payload: planetId, planetId });
     }
+    try {
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem("ascension_target_planet_id", planetId);
+      }
+    } catch (_) {}
     handleNavigate("government");
   };
 
@@ -83,7 +139,7 @@ export const OverviewPlanetGrid = ({
       {/* ── BARRA DE CONTROL TÁCTICA: FILTROS, BUSCADOR Y MODO DE VISTA (ANTI-SCROLL) ── */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-[#060a18]/90 border border-white/10 backdrop-blur-md">
         
-        {/* Filtros de Galaxia y Buscador */}
+        {/* Filtros de Galaxia y Buscador (Izquierda) */}
         <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
           <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 text-xs font-mono">
             <button
@@ -124,7 +180,7 @@ export const OverviewPlanetGrid = ({
             {searchFilter && (
               <button
                 type="button"
-                onClick={() => setSearchFilter('')}
+                onClick={() => handleSearchChange('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
               >
                 ✕
@@ -133,7 +189,45 @@ export const OverviewPlanetGrid = ({
           </div>
         </div>
 
-        {/* Alternador de Modo de Vista: Cuadrícula 3D vs Matriz Compacta */}
+        {/* Paginador centrado en la mitad horizontal exacta del layout */}
+        <div className="flex items-center justify-center my-1 md:my-0">
+          <div className="flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-2xl border border-cyan-500/30 text-xs font-mono select-none shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={handlePrevPage}
+              className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold transition-all cursor-pointer ${
+                currentPage <= 1
+                  ? 'text-slate-600 border border-transparent cursor-not-allowed opacity-40'
+                  : 'bg-cyan-950/70 text-cyan-300 border border-cyan-500/50 hover:bg-cyan-500/30 hover:border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.25)] active:scale-95'
+              }`}
+              title="Página anterior"
+            >
+              ◀
+            </button>
+            <div className="px-3 text-xs font-bold tracking-wider text-slate-200 whitespace-nowrap">
+              <span className="text-cyan-300 font-mono text-sm">{currentPage}</span>
+              <span className="text-slate-500 mx-1.5">/</span>
+              <span className="text-slate-400">{totalPages}</span>
+              <span className="text-slate-500 text-[10px] ml-2 hidden sm:inline">({filteredPlanets.length} mundos)</span>
+            </div>
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={handleNextPage}
+              className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold transition-all cursor-pointer ${
+                currentPage >= totalPages
+                  ? 'text-slate-600 border border-transparent cursor-not-allowed opacity-40'
+                  : 'bg-cyan-950/70 text-cyan-300 border border-cyan-500/50 hover:bg-cyan-500/30 hover:border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.25)] active:scale-95'
+              }`}
+              title="Página siguiente"
+            >
+              ▶
+            </button>
+          </div>
+        </div>
+
+        {/* Alternador de Modo de Vista (Derecha) */}
         <div className="flex items-center gap-2 self-end md:self-auto">
           <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider hidden sm:inline">Vista:</span>
           <div className="flex items-center bg-black/60 p-1 rounded-xl border border-white/10 text-xs font-mono">
@@ -169,7 +263,7 @@ export const OverviewPlanetGrid = ({
       {/* ── MODO 1: CUADRÍCULA 3D DE PLANETAS ── */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full items-stretch pt-1 pb-2">
-          {filteredPlanets.map((planet) => (
+          {paginatedPlanets.map((planet) => (
             <Planet3DCard
               key={planet.id}
               planet={planet}
@@ -190,8 +284,8 @@ export const OverviewPlanetGrid = ({
             />
           ))}
 
-          {/* Huecos de Colonización Disponibles */}
-          {(() => {
+          {/* Huecos de Colonización Disponibles (mostrados en la última página) */}
+          {currentPage === totalPages && (() => {
             const astroLvl = state?.research?.astrophysics || 0;
             const maxAllowed = Math.max(rawPlanets.length + 1, 1 + Math.ceil(astroLvl / 2));
             const availableSlots = Math.max(1, maxAllowed - rawPlanets.length);

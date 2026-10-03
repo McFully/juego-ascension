@@ -99,6 +99,13 @@ const ShipDesignPage = ({
         fmt={fmt}
         breadcrumbTitle={step === 1 ? `Diseñador de Naves (${bpName || 'Borrador'})` : 'Diseñador de Naves'}
         breadcrumbIcon="🛠️"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Mando Imperial"
+        backButtonIcon="👑"
+        onBackToAltoMando={() => {
+          if (navigateBack) navigateBack();
+        }}
         rightSlot={
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">

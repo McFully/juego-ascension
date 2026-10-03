@@ -19,11 +19,11 @@ describe('Phase 08 - Navigation, Empire vs Planet & Tax Contracts', () => {
     expect(PARENT_MAP.imperial_council).toBe('imperial_hub');
     expect(PARENT_MAP.missiles).toBe('defense');
 
-    // Colony network, market, missions, stats are empire top level (parent overview)
-    expect(PARENT_MAP.colony_network).toBe('overview');
+    // Colony network, missions, stats map to imperial_hub (Imperio: Mando Imperial)
+    expect(PARENT_MAP.colony_network).toBe('imperial_hub');
     expect(PARENT_MAP.market).toBe('overview');
-    expect(PARENT_MAP.missions).toBe('overview');
-    expect(PARENT_MAP.stats).toBe('overview');
+    expect(PARENT_MAP.missions).toBe('imperial_hub');
+    expect(PARENT_MAP.stats).toBe('imperial_hub');
   });
 
   it('NAV_LABELS and GAME_TABS use unified naming for Alto Mando vs Mando Imperial', () => {

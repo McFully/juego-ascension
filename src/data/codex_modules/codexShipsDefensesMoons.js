@@ -11,29 +11,82 @@ export const CODEX_SHIPS_DEFENSES_MOONS = {
     stats: "Carga: 25,000 | Velocidad: 7,500 | Consumo: 50/h",
     usage: "Transporte masivo de recursos entre colonias.",
   },
+  heavyFreighter: {
+    name: "Mega-Carguero Pesado",
+    lore: "Coloso logístico con motores de hiperespacio para transportar suministros industriales a través de las estrellas.",
+    stats: "Carga: 120,000 | Velocidad: 6,000 | Consumo: 150/h",
+    usage: "Vaciado de depósitos mineros y grandes rutas comerciales de abastecimiento.",
+  },
+  cargoTitan: {
+    name: "Titán de Carga Estelar",
+    lore: "El leviatán mercantil definitivo. Una megaestructura móvil con bahías de carga presurizadas de escala continental.",
+    stats: "Carga: 500,000 | Velocidad: 4,500 | Consumo: 500/h",
+    usage: "Operaciones de transporte estratégico masivo y abastecimiento de megaestructuras.",
+  },
+  // --- CAZADORES LIGEROS (3 TIERS) ---
+  atmosphericInterceptor: {
+    name: "Interceptor Suborbital",
+    lore: "Interceptor de bajo coste con motor de combustión. Diseñado para defensa planetaria y patrullas de reconocimiento dentro del sistema solar.",
+    stats: "Ataque: 35 | Escudo: 5 | Integridad: 280 | Velocidad: 11,000 | Alcance: Sistema",
+    usage: "Defensa barata de sistema local y patrulla de órbitas cercanas.",
+  },
   lightFighter: {
     name: "Cazador Ligero",
-    lore: "Una nave monoplaza ágil diseñada para interceptar sondas y escoltar cargueros. Barata de producir y rápida.",
-    stats: "Ataque: 50 | Escudo: 10 | Integridad: 400 | Velocidad: 12,500",
+    lore: "Una nave monoplaza ágil diseñada para interceptar sondas y escoltar cargueros. Barata de producir y rápida con motor de impulso.",
+    stats: "Ataque: 50 | Escudo: 10 | Integridad: 400 | Velocidad: 12,500 | Alcance: Galaxia",
     usage: "Carne de cañón ideal para absorber fuego enemigo y escolta básica.",
+  },
+  quantumFighter: {
+    name: "Cazador de Salto Cuántico",
+    lore: "Caza de asalto estelar avanzado con micro-núcleo hiperespacial capaz de ejecutar saltos entre cúmulos y galaxias distantes.",
+    stats: "Ataque: 90 | Escudo: 20 | Integridad: 650 | Velocidad: 18,000 | Alcance: Universo",
+    usage: "Incursiones rápidas intergalácticas y ataque quirúrgico a convoyes enemigos.",
+  },
+
+  // --- CAZADORES PESADOS (3 TIERS) ---
+  systemGunship: {
+    name: "Gunship de Fisión",
+    lore: "Cañonera fuertemente blindada con propulsión química y cañones balísticos pesados para defensa de lunas y bases en el sistema solar.",
+    stats: "Ataque: 110 | Escudo: 15 | Integridad: 750 | Velocidad: 8,000 | Alcance: Sistema",
+    usage: "Combate posicional pesado y control de sector local.",
   },
   heavyFighter: {
     name: "Cazador Pesado",
-    lore: "Blindaje reforzado y cañones de iones. Diseñado para enfrentarse a naves de su misma clase y sobrevivir.",
-    stats: "Ataque: 150 | Escudo: 25 | Integridad: 1,000 | Velocidad: 10,000",
-    usage: "Excelente contra cazadores ligeros y defensas básicas.",
+    lore: "Blindaje reforzado y cañones de iones impulsados por motor iónico. Diseñado para enfrentarse a naves de su misma clase y sobrevivir.",
+    stats: "Ataque: 150 | Escudo: 25 | Integridad: 1,000 | Velocidad: 10,000 | Alcance: Galaxia",
+    usage: "Excelente contra cazadores ligeros y defensas básicas en toda la galaxia.",
+  },
+  hyperHeavyFighter: {
+    name: "Interceptor Hiperespacial Pesado",
+    lore: "Aparato de combate de largo radio equipado con salto hiperespacial, propulsores vectoriales y baterías de iones de alta cadencia.",
+    stats: "Ataque: 260 | Escudo: 60 | Integridad: 1,700 | Velocidad: 14,000 | Alcance: Universo",
+    usage: "Escolta pesada de flotas de batalla intergalácticas y caza de destructores.",
+  },
+
+  // --- NAVES DE LÍNEA Y BATALLA (3 TIERS) ---
+  systemCruiser: {
+    name: "Crucero de Guardia de Sistema",
+    lore: "Plataforma blindada de defensa de sector, motorizada por propulsión convencional con baterías masivas de proyectiles para el sistema local.",
+    stats: "Ataque: 280 | Escudo: 40 | Integridad: 2,000 | Velocidad: 9,000 | Alcance: Sistema",
+    usage: "Baluarte móvil para neutralizar cazas y bombardeos en órbita local.",
   },
   cruiser: {
     name: "Crucero",
-    lore: "El depredador de cazadores. Equipado con sistemas de apuntado rápido para diezmar flotas pequeñas.",
-    stats: "Ataque: 400 | Escudo: 50 | Integridad: 2,700 | Velocidad: 15,000",
-    usage: "Eficacia extrema contra cazadores ligeros (Rapid Fire).",
+    lore: "El depredador de cazadores. Equipado con propulsión de impulso y sistemas de apuntado rápido para diezmar flotas pequeñas.",
+    stats: "Ataque: 400 | Escudo: 50 | Integridad: 2,700 | Velocidad: 15,000 | Alcance: Galaxia",
+    usage: "Eficacia extrema contra cazadores ligeros (Rapid Fire) en toda la galaxia.",
   },
   battleship: {
     name: "Nave de Batalla",
-    lore: "La columna vertebral de la flota de combate. Gran potencia de fuego y blindaje pesado.",
-    stats: "Ataque: 1,000 | Escudo: 200 | Integridad: 6,000 | Velocidad: 10,000",
-    usage: "Dominancia en batallas campales contra otras flotas pesadas.",
+    lore: "La columna vertebral de la flota de combate. Gran potencia de fuego, salto hiperespacial y blindaje pesado.",
+    stats: "Ataque: 1,000 | Escudo: 200 | Integridad: 6,000 | Velocidad: 10,000 | Alcance: Universo",
+    usage: "Dominancia en batallas campales contra otras flotas pesadas en cualquier cuadrante.",
+  },
+  dreadnought: {
+    name: "Acorazado Dreadnought",
+    lore: "Fortaleza móvil intergaláctica armada con cañones cinéticos titánicos y escudos multilaminares para arrasar flotas y estaciones enteras.",
+    stats: "Ataque: 2,200 | Escudo: 600 | Integridad: 14,000 | Velocidad: 7,500 | Alcance: Universo",
+    usage: "Supernave de choque capaz de quebrar las líneas más fortificadas del universo.",
   },
   bomber: {
     name: "Bombardero",
@@ -65,11 +118,23 @@ export const CODEX_SHIPS_DEFENSES_MOONS = {
     stats: "Ataque: 0 | Escudo: 0 | Integridad: 1 | Velocidad: Extremadamente alta",
     usage: "Enviadas para recolectar informes detallados de tecnologías y recursos en otros planetas.",
   },
+  localColonizer: {
+    name: "Arca Colonial de Proximidad",
+    lore: "Arca colonial básica con motor químico de combustión. Diseñada para establecer cabezas de puente en mundos dentro del sistema solar de origen.",
+    stats: "Hull: 12,000 | Carga: 3,000 | Velocidad: 2,000 | Alcance: Sistema",
+    usage: "Consumible para fundar colonias tempranas en el mismo sistema solar.",
+  },
   colonizer: {
     name: "Colonizador",
-    lore: "Inmensas naves de transporte adaptadas para albergar cúpulas habitacionales y maquinaria de fundición inicial.",
-    stats: "Nave consumible de colonización planetaria. Hull: 30,000 | Carga: 7,500",
+    lore: "Inmensas naves de transporte dotadas de impulso iónico adaptadas para albergar cúpulas habitacionales y maquinaria de fundición inicial en cualquier sistema del sector.",
+    stats: "Hull: 30,000 | Carga: 7,500 | Velocidad: 2,500 | Alcance: Galaxia",
     usage: "Enviada a posiciones vacías de la galaxia para fundar una nueva colonia imperial.",
+  },
+  hyperColonizer: {
+    name: "Arca Hiperespacial de Conquista",
+    lore: "Superarca de colonización intergaláctica dotada de hiper-motores y soporte biológico autosuficiente para cruzar el vacío cósmico entre galaxias.",
+    stats: "Hull: 75,000 | Carga: 25,000 | Velocidad: 3,500 | Alcance: Universo",
+    usage: "Colonización de mundos lejanos en otras galaxias con mayor dotación de recursos de arranque.",
   },
   commercialColonizer: {
     name: "Arca Mercantil",

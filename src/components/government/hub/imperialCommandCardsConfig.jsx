@@ -10,6 +10,7 @@ import { sharedCommandCards } from './sharedCommandCards.jsx';
  * planeta activo, porque el Mando Imperial no es el mando de ningún mundo.
  */
 export const IMPERIAL_COMMAND_CARDS = [
+  'tactical_advisor',
   'missions',
   'diplomacy',
   'imperial_council',
@@ -20,10 +21,11 @@ export const IMPERIAL_COMMAND_CARDS = [
   'stats'
 ];
 
-export const IMPERIAL_COMMAND_STORAGE_KEY = 'ascension_cmd_hub_imperial_v1';
+export const IMPERIAL_COMMAND_STORAGE_KEY = 'ascension_cmd_hub_imperial_v2';
 
 export function buildImperialCommandCards({
   onNavigateTab,
+  onBackToEmpire,
   readyMissions,
   claimedCount,
   missions,
@@ -31,6 +33,24 @@ export function buildImperialCommandCards({
   state
 }) {
   return {
+    tactical_advisor: (
+      <HubCard
+        onClick={() => onNavigateTab && onNavigateTab('tactical_advisor')}
+        borderColor="border-cyan-500/40"
+        hoverBorderColor="hover:border-cyan-300"
+        hoverShadow="hover:shadow-[0_0_35px_rgba(6,182,212,0.35)]"
+        assetId="quantumTelecom"
+        badgeText="IA ACTIVA"
+        badgeClasses="bg-cyan-950/90 text-cyan-300 border border-cyan-400/60 shadow-[0_0_10px_rgba(6,182,212,0.4)]"
+        title="Almirante Táctico IA"
+        icon="🧠"
+        titleHoverColor="group-hover:text-cyan-300"
+        description="Enlace neuronal cuántico con el Núcleo Gemini: auditoría estratégica del imperio, asesoría bélica y telemetría avanzada."
+        footerLabel="Estado de enlace:"
+        footerValue="Operativo / 500 llamadas"
+        footerValueClasses="text-cyan-300"
+      />
+    ),
     missions: (
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('missions')}
@@ -40,7 +60,7 @@ export function buildImperialCommandCards({
         assetId="councilChamber"
         badgeText={readyMissions > 0 ? `⭐ ${readyMissions} POR RECLAMAR` : 'DIRECTIVAS'}
         badgeClasses={readyMissions > 0 ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.7)] animate-pulse' : 'bg-black/70 text-amber-300 border border-amber-500/40'}
-        title="Misiones y Directivas"
+        title="Misiones"
         icon="📜"
         titleHoverColor="group-hover:text-amber-300"
         description="Órdenes supremas de colonización, expansión militar y desarrollo tecnológico con recompensas sustanciales."
@@ -119,9 +139,9 @@ export function buildImperialCommandCards({
         title="Red de Colonias"
         icon="🪐"
         titleHoverColor="group-hover:text-indigo-300"
-        description="Gestión logística interplanetaria: rutas automáticas de transporte, nivelación de recursos y despliegue rápido de flotas."
-        footerLabel="Mundos federados:"
-        footerValue={`${(state?.planets || []).length} mundos`}
+        description="Gestión logística y científica: rutas de transporte, matriz neural de investigación compartida y despliegue de flotas."
+        footerLabel="Mundos y Red Neural:"
+        footerValue={`${(state?.planets || []).length} mundos (${(state?.researchNetwork?.linkedPlanetIds || []).length} en red)`}
         footerValueClasses="text-indigo-300"
       />
     ),
@@ -141,6 +161,24 @@ export function buildImperialCommandCards({
         footerLabel="Logros imperiales:"
         footerValue={`${(state?.achievements || []).length} desbloqueados`}
         footerValueClasses="text-emerald-300"
+      />
+    ),
+    back_to_empire: (
+      <HubCard
+        onClick={onBackToEmpire}
+        borderColor="border-cyan-500/20"
+        hoverBorderColor="hover:border-cyan-400/60"
+        hoverShadow="hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]"
+        assetId="deepColonizationPsych"
+        badgeText="MUNDOS"
+        badgeClasses="bg-cyan-950/80 text-cyan-300 border border-cyan-500/40"
+        title="Volver a Mundos del Imperio"
+        icon="🪐"
+        titleHoverColor="group-hover:text-cyan-300"
+        description="Regresa a la cuadrícula de planetas del Imperio para inspeccionar colonias, defensas generales y censos poblacionales."
+        footerLabel="Vista destino:"
+        footerValue="Catálogo de Mundos"
+        footerValueClasses="text-cyan-300"
       />
     ),
     ...sharedCommandCards({ onNavigateTab, fmt, state })

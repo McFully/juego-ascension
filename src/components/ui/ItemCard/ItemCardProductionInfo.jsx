@@ -30,7 +30,7 @@ export const ItemCardProductionInfo = React.memo(({ prodInfo, level }) => {
         </div>
         {prodInfo.next.cons > 0 && (
           <div className="flex justify-between items-center">
-            <span className="text-slate-500 text-[8px]">Cons. Nv.{level + 1}</span>
+            <span className="text-slate-500 text-[8px]">Consumo Nivel {level + 1}</span>
             <span className="text-amber-300 font-mono">
               {prodInfo.next.consIcon} -{fmt(prodInfo.next.cons)}/h
               {prodInfo.deltaCons !== 0 && <span className={prodInfo.deltaCons > 0 ? 'text-red-400' : 'text-emerald-400'}> ({prodInfo.deltaCons > 0 ? '+' : ''}{fmt(prodInfo.deltaCons)})</span>}
@@ -60,7 +60,7 @@ export const ItemCardProductionInfo = React.memo(({ prodInfo, level }) => {
         )}
         {prodInfo.deltaCons > 0 && prodInfo.current.cons > 0 && (
           <div className="flex justify-between items-center border-t border-white/5 pt-1 text-[9px]">
-            <span className="text-slate-500">Cons. Nv.{level + 1}</span>
+            <span className="text-slate-500">Consumo Nivel {level + 1}</span>
             <span className="text-amber-300 font-mono">⚡ -{fmt(prodInfo.next.cons)}/h <span className="text-red-400">(+{fmt(prodInfo.deltaCons)})</span></span>
           </div>
         )}
@@ -69,12 +69,31 @@ export const ItemCardProductionInfo = React.memo(({ prodInfo, level }) => {
   }
 
   if (prodInfo.kind === 'civil' || prodInfo.kind === 'government') {
+    const hasStat = prodInfo.next?.statLabel && prodInfo.deltaStat !== undefined;
     return (
       <div className="text-[10px] space-y-1 mb-2.5 px-2 py-2 rounded-xl bg-[#05070f]/60 border border-white/5 text-slate-400">
         <div className="flex justify-between items-center">
-          <span>{prodInfo.kind === 'government' ? '👑 Gobierno' : '🏛️ Civil'}</span>
-          <span className="font-mono text-cyan-300">Nv.{level} → Nv.{level + 1}</span>
+          <span className="flex items-center gap-1 font-semibold text-slate-300">
+            <span>{prodInfo.next?.statIcon || (prodInfo.kind === 'government' ? '👑' : '🏛️')}</span>
+            <span>{prodInfo.next?.statLabel || (prodInfo.kind === 'government' ? 'Gobierno' : 'Civil')}</span>
+          </span>
+          <span className="font-mono text-cyan-300 font-bold">Nv.{level} → Nv.{level + 1}</span>
         </div>
+
+        {hasStat && (
+          <div className="flex justify-between items-center border-t border-white/5 pt-1 text-[9px]">
+            <span className="text-slate-500 uppercase tracking-wider text-[8px]">Efecto Nv.{level + 1}</span>
+            <span className="font-mono text-cyan-300 font-bold">
+              +{typeof prodInfo.next.statValue === 'number' ? fmt(prodInfo.next.statValue) : prodInfo.next.statValue}{prodInfo.statUnit}
+              {prodInfo.deltaStat > 0 && (
+                <span className="text-emerald-400 ml-1 font-mono font-black">
+                  (+{typeof prodInfo.deltaStat === 'number' ? fmt(prodInfo.deltaStat) : prodInfo.deltaStat}{prodInfo.statUnit})
+                </span>
+              )}
+            </span>
+          </div>
+        )}
+
         {prodInfo.current.cons > 0 && (
           <div className="flex justify-between items-center border-t border-white/5 pt-1 text-[9px]">
             <span className="text-slate-500">Demanda energética</span>
@@ -89,7 +108,7 @@ export const ItemCardProductionInfo = React.memo(({ prodInfo, level }) => {
         )}
         {prodInfo.deltaCons > 0 && prodInfo.current.cons > 0 && (
           <div className="flex justify-between items-center border-t border-white/5 pt-1 text-[9px]">
-            <span className="text-slate-500">Cons. Nv.{level + 1}</span>
+            <span className="text-slate-500">Consumo Nivel {level + 1}</span>
             <span className="text-amber-300 font-mono">⚡ -{fmt(prodInfo.next.cons)}/h <span className="text-red-400">(+{fmt(prodInfo.deltaCons)})</span></span>
           </div>
         )}

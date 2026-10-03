@@ -183,6 +183,24 @@ function createSchema(db) {
       FOREIGN KEY(session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_game_logs_session ON game_logs(session_id, log_type);
+
+    -- ═══════════════════════════════════════════════════════════════
+    -- GEMINI IA CACHÉ Y CUOTA (v5)
+    -- ═══════════════════════════════════════════════════════════════
+    CREATE TABLE IF NOT EXISTS gemini_cache (
+      id TEXT PRIMARY KEY,
+      prompt_hash TEXT UNIQUE,
+      response_text TEXT,
+      category TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_gemini_cache_hash ON gemini_cache(prompt_hash);
+    CREATE INDEX IF NOT EXISTS idx_gemini_cache_cat ON gemini_cache(category);
+
+    CREATE TABLE IF NOT EXISTS gemini_quota (
+      date TEXT PRIMARY KEY,
+      calls_count INTEGER DEFAULT 0
+    );
   `;
 
   db.exec(schema);
@@ -195,7 +213,7 @@ function createSchema(db) {
 // ═══════════════════════════════════════════════════════════════
 
 // Versión de esquema actual. Súbele SOLO cuando añadas una migración abajo.
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 function tableExists(db, table) {
   return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?").get(table);
@@ -275,6 +293,29 @@ const MIGRATIONS = [
         db.exec("ALTER TABLE game_sessions ADD COLUMN commander_id TEXT");
         db.exec("UPDATE game_sessions SET commander_id = id WHERE commander_id IS NULL");
       }
+    },
+  },
+  {
+    // v4 -> v5: tablas de caché y cuota para Gemini IA
+    version: 5,
+    name: "gemini_cache_and_quota_tables",
+    up(db) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS gemini_cache (
+          id TEXT PRIMARY KEY,
+          prompt_hash TEXT UNIQUE,
+          response_text TEXT,
+          category TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_gemini_cache_hash ON gemini_cache(prompt_hash);
+        CREATE INDEX IF NOT EXISTS idx_gemini_cache_cat ON gemini_cache(category);
+
+        CREATE TABLE IF NOT EXISTS gemini_quota (
+          date TEXT PRIMARY KEY,
+          calls_count INTEGER DEFAULT 0
+        );
+      `);
     },
   },
 ];

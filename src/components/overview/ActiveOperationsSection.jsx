@@ -1,6 +1,7 @@
 import React from 'react';
 import { SafeImg } from '../../assets.jsx';
 import { MINISTRY_MAPPING } from '../../data/buildingOperationsData.js';
+import { getMinistryResearchRoute } from '../../utils/researchMinistryResolver.js';
 
 /**
  * ActiveOperationsSection — Renderizado modular de operaciones y colas activas en OverviewPage.
@@ -29,11 +30,13 @@ export const ActiveOperationsSection = ({
     if (item.type === 'building') {
       const minEntry = Object.values(MINISTRY_MAPPING).find(m => (m.buildings || []).includes(item.id));
       if (minEntry) {
-        return `ministry_${minEntry.id}`;
+        return `ministry_${minEntry.id}_buildings`;
       }
       return 'buildings';
     }
-    if (item.type === 'research') return 'research';
+    if (item.type === 'research') {
+      return getMinistryResearchRoute(item.id);
+    }
     if (item.type === 'ship') return 'shipyard';
     return 'defense';
   };
@@ -110,10 +113,28 @@ export const ActiveOperationsSection = ({
     }
   };
 
-  // Filtrado reactivo de items
+  const rawPlanets = state?.planets || (currentPlanet ? [currentPlanet] : []);
+  const defaultPlanetId = currentPlanet?.id || rawPlanets[0]?.id || 'all';
+  const [selectedPlanetFilter, setSelectedPlanetFilter] = React.useState(defaultPlanetId);
+
+  // Filtrado reactivo de items (categoría y planeta)
   const filteredItems = React.useMemo(() => {
-    if (!filter) return activeItems;
-    return activeItems.filter(item => {
+    let list = activeItems;
+
+    // Filtro por planeta (las investigaciones son globales del imperio, pero si el usuario selecciona un planeta, se pueden ver obras, astillero y defensas de ese planeta, o I+D si pertenece o si es 'all')
+    if (selectedPlanetFilter && selectedPlanetFilter !== 'all') {
+      list = list.filter(item => {
+        if (item.type === 'research') {
+          // Si es investigación, se muestra si es 'all' o si coincide con el planeta donde se inició la investigación
+          return item.planetId === selectedPlanetFilter;
+        }
+        return item.planetId === selectedPlanetFilter;
+      });
+    }
+
+    if (!filter) return list;
+
+    return list.filter(item => {
       if (filter.type === 'research') {
         return item.type === 'research';
       }
@@ -125,7 +146,7 @@ export const ActiveOperationsSection = ({
       }
       return true;
     });
-  }, [activeItems, filter]);
+  }, [activeItems, filter, selectedPlanetFilter]);
 
   const hasItems = filteredItems && filteredItems.length > 0;
 
@@ -227,6 +248,66 @@ export const ActiveOperationsSection = ({
 
   return (
     <section className="space-y-4 w-full pt-1 pb-6">
+      {/* ── SELECTOR DE PLANETA PARA FILTRAR OPERACIONES EN CURSO (2 LÍNEAS / FLEX-WRAP PARA 14+ MUNDOS) ── */}
+      <div className="flex flex-wrap items-center gap-2 p-2.5 bg-[#060a18]/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg">
+        <span className="text-[11px] font-mono text-slate-400 font-bold uppercase tracking-wider pl-2 pr-1 shrink-0 flex items-center gap-1.5 py-1">
+          <span>🪐</span>
+          <span>Mundo:</span>
+        </span>
+
+        {/* Botón Todos los Mundos */}
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedPlanetFilter('all');
+            if (window.playSfx) window.playSfx('click');
+          }}
+          className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+            selectedPlanetFilter === 'all'
+              ? 'bg-amber-500/30 text-amber-200 border border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+              : 'bg-black/40 text-slate-400 hover:text-white border border-white/10 hover:border-white/20'
+          }`}
+        >
+          <span>🌌</span>
+          <span>Todos los Mundos</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-white/10 text-slate-300">
+            {activeItems.length}
+          </span>
+        </button>
+
+        {/* Botón para cada Planeta */}
+        {rawPlanets.map((planet) => {
+          const isSelected = selectedPlanetFilter === planet.id;
+          const planetQueuesCount = activeItems.filter(item => item.planetId === planet.id).length;
+
+          return (
+            <button
+              key={planet.id}
+              type="button"
+              onClick={() => {
+                setSelectedPlanetFilter(planet.id);
+                if (window.playSfx) window.playSfx('click');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                isSelected
+                  ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                  : 'bg-black/40 text-slate-400 hover:text-white border border-white/10 hover:border-white/20'
+              }`}
+            >
+              <span>{planet.isHome ? '👑' : '🪐'}</span>
+              <span>{planet.name}</span>
+              {planetQueuesCount > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold ${
+                  isSelected ? 'bg-cyan-400/30 text-cyan-100' : 'bg-white/10 text-slate-300'
+                }`}>
+                  {planetQueuesCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Selector de Categorías de Operaciones en Curso (4 Botones con el mismo diseño que los superiores) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-2 bg-[#080d22]/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
         {categories.map((cat) => {

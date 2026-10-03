@@ -51,6 +51,8 @@ export const TradeRouteCreatorForm = React.memo(({
   activeRoutesCount,
   fmt
 }) => {
+  const selectedFromPlanet = state?.planets?.find(p => p.id === fromPlanetId) || currentPlanet;
+
   return (
     <div className="bg-[#0b1021]/80 border border-white/10 rounded-2xl p-4 md:p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">

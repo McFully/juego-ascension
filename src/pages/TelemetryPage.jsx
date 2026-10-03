@@ -1,5 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { TacticalEventDetail } from '../components/ui/TacticalEventDetail.jsx';
+import { TacticalListeningChannelGrid } from '../components/navigation/TacticalListeningChannelGrid.jsx';
+import { useNavigation } from '../components/navigation/NavigationContext.jsx';
+import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 
 /**
  * TelemetryPage — Bandeja de comunicaciones (Registro Táctico Imperial).
@@ -36,7 +39,8 @@ const formatStamp = (ts) => {
   });
 };
 
-export const TelemetryPage = ({ state, dispatch, safeSetActiveTab }) => {
+export const TelemetryPage = ({ state, dispatch, currentPlanet, production, fmt, safeSetActiveTab }) => {
+  const { navigateBack } = useNavigation();
   const log = state?.tacticalEventLog || [];
   const [filter, setFilter] = useState('all');
   const [selectedId, setSelectedId] = useState(null);
@@ -84,39 +88,40 @@ export const TelemetryPage = ({ state, dispatch, safeSetActiveTab }) => {
 
   return (
     <div className="space-y-5 view-enter w-full">
-      {/* Cabecera */}
-      <header className="bg-[#090d1f] border border-cyan-500/30 rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-2">
-            <span>📡</span>
-            <span>Registro Táctico Imperial</span>
-          </h2>
-          <p className="text-[11px] text-slate-400 font-mono mt-1">
-            Nada se abre solo. Tú decides cuándo leer.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="text-center">
-            <span className={`block text-2xl font-black font-mono leading-none ${
-              pendingDecisions > 0 ? 'text-red-400' : unreadCount > 0 ? 'text-amber-400' : 'text-slate-500'
-            }`}>
-              {unreadCount}
-            </span>
-            <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Sin leer</span>
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver a Mando Imperial) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Registro Táctico Imperial"
+        breadcrumbIcon="📡"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Mando Imperial"
+        backButtonIcon="👑"
+        onBackToAltoMando={() => {
+          if (navigateBack) navigateBack();
+          else if (safeSetActiveTab) safeSetActiveTab('imperial_hub');
+        }}
+        rightSlot={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">
+              <span className="text-slate-400">Sin leer:</span>
+              <span className={`font-bold ${unreadCount > 0 ? 'text-amber-400' : 'text-slate-400'}`}>{unreadCount}</span>
+            </div>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={markAllRead}
+                className="px-2.5 py-1 rounded-lg bg-cyan-950/50 border border-cyan-500/40 hover:bg-cyan-900/60 text-cyan-300 text-[10px] font-bold font-mono uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Marcar todo leído
+              </button>
+            )}
           </div>
-
-          {unreadCount > 0 && (
-            <button
-              type="button"
-              onClick={markAllRead}
-              className="px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/40 hover:bg-cyan-900/60 text-cyan-300 text-[10px] font-bold font-mono uppercase tracking-wider transition-all cursor-pointer"
-            >
-              Marcar todo leído
-            </button>
-          )}
-        </div>
-      </header>
+        }
+      />
 
       {/* Aviso de decisión pendiente: no se descarta sola. */}
       {pendingDecisions > 0 && (
@@ -131,23 +136,16 @@ export const TelemetryPage = ({ state, dispatch, safeSetActiveTab }) => {
         </div>
       )}
 
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-2">
-        {CATEGORIES.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => setFilter(c.id)}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider transition-all cursor-pointer border ${
-              filter === c.id
-                ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-200'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:border-cyan-500/40 hover:text-cyan-300'
-            }`}
-          >
-            {c.label} ({counts[c.id] || 0})
-          </button>
-        ))}
-      </div>
+      {/* Selector de Canales de Escucha Táctica en Card Grid */}
+      <TacticalListeningChannelGrid
+        filter={filter}
+        onSelectFilter={setFilter}
+        counts={counts}
+        unreadByCat={CATEGORIES.reduce((acc, c) => {
+          acc[c.id] = log.filter((e) => !e.read && c.match(e)).length;
+          return acc;
+        }, {})}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* Lista estilo correo */}

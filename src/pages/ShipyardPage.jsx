@@ -8,8 +8,9 @@ import { ShipyardQueueSection } from '../components/shipyard/ShipyardQueueSectio
 import { ShipProductionCard } from '../components/shipyard/ShipProductionCard.jsx';
 
 const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEARCH, BUILDINGS, S, CardBanner, ProgressBar, fmt, fmtTime, shipTimeBonus, shipCost, calcShipTime, meetsReq, getShipStats, canAfford, constructionDiscount, GAME_SPEED, onOpenCodex }) => {
-  const { navigateBack } = useNavigation();
+  const { navigateTo, navigateBack } = useNavigation();
   const [shipCat, setShipCat] = useState('civil');
+  const [driveFilter, setDriveFilter] = useState('all');
   const bonus = shipTimeBonus(currentPlanet.buildings);
 
   if (!currentPlanet.buildings.shipyard) {
@@ -162,6 +163,18 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
           >
             <span>⚔️ Escuadrón de Choque</span>
           </button>
+
+          {/* Enlace directo a la Lonja Naval */}
+          <button
+            onClick={() => {
+              if (navigateTo) navigateTo('galactic_market');
+              if (window.playSfx) window.playSfx('click');
+            }}
+            className="px-3 py-1.5 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-500/50 text-indigo-300 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer ml-auto"
+            title="Ir a la Lonja Naval para comprar naves usadas o vender excedentes"
+          >
+            <span>⚓ Lonja Naval (Venta y Ocasión)</span>
+          </button>
         </div>
       </section>
 
@@ -255,23 +268,57 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
         </div>
       </div>
 
-      {/* Carrusel Horizontal de Naves de Videojuego */}
+      {/* Carrusel / Grid de Naves con Filtros por Propulsión y Motor */}
       <div className="w-full space-y-3 py-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-2">
-            <span>{categories.find(c => c.key === shipCat)?.icon || '🚀'}</span>
-            <span>Línea de Ensamblaje — {categories.find(c => c.key === shipCat)?.title || 'Categoría'}</span>
-          </h3>
-          <span className="text-[11px] font-mono text-slate-400">
-            {Object.entries(SHIPS).filter(([, s]) => s.cat === shipCat).length} Modelos Disponibles
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{categories.find(c => c.key === shipCat)?.icon || '🚀'}</span>
+            <h3 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase">
+              Línea de Ensamblaje — {categories.find(c => c.key === shipCat)?.title || 'Categoría'}
+            </h3>
+          </div>
+
+          {/* Filtro por Rango de Motor y Alcance */}
+          <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
+            <span className="text-slate-500 mr-1 hidden sm:inline">Propulsión:</span>
+            {[
+              { id: 'all', label: 'Todos' },
+              { id: 'combustion', label: '🔥 Sistémicos (Combustión)' },
+              { id: 'impulse', label: '💨 Sectoriales (Impulso)' },
+              { id: 'hyperspace', label: '🌀 Interestelares (Hiperespacio)' },
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => setDriveFilter(f.id)}
+                className={`px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer ${
+                  driveFilter === f.id
+                    ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-sm'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {(() => {
           const bonus = (shipTimeBonus ? shipTimeBonus(currentPlanet?.buildings) : 1) * (currentPlanet?.specialization === 'military' ? 1.20 : 1.0);
+          const filteredShips = Object.entries(SHIPS)
+            .filter(([, s]) => s.cat === shipCat)
+            .filter(([, s]) => driveFilter === 'all' || s.drive === driveFilter);
+
+          if (filteredShips.length === 0) {
+            return (
+              <div className="p-8 text-center rounded-2xl bg-[#05070f]/50 border border-white/5 text-slate-500 text-xs font-mono">
+                No hay modelos de esta división naval con el motor seleccionado.
+              </div>
+            );
+          }
+
           return (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full items-stretch pt-2 pb-4">
-              {Object.entries(SHIPS).filter(([, s]) => s.cat === shipCat).map(([id, s]) => (
+              {filteredShips.map(([id, s]) => (
                 <ShipProductionCard
               key={id}
               id={id}

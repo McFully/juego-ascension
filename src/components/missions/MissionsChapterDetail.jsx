@@ -1,12 +1,136 @@
 import React from 'react';
 import { SafeImg } from '../../assets.jsx';
 
+/**
+ * Resuelve el acceso directo contextual para cada misión hacia su destino exacto.
+ */
+const getMissionAction = (mission) => {
+  if (!mission) return null;
+  const id = mission.id;
+  const targetTech = mission.targetTech;
+
+  // Investigaciones científicas
+  if (targetTech || id.includes('tech') || id.includes('astro') || id.includes('plasma') || id.includes('weapons') || id.includes('shields') || id.includes('armour') || id.includes('impulse') || id.includes('combustion') || id.includes('hyper') || id.includes('spacenav')) {
+    return {
+      target: 'research',
+      label: 'Ir a Investigar',
+      icon: '🔬',
+      hint: 'Abre el Laboratorio Central'
+    };
+  }
+
+  // Astillero y construcción de naves
+  if (id.includes('cargo') || id.includes('col') || id.includes('probe') || id.includes('cruiser') || id.includes('battleship') || id.includes('terra_ship') || id === 'm6_shipyard' || id === 'm16_2_shipyard10') {
+    if (id === 'm6_shipyard' || id === 'm16_2_shipyard10') {
+      return {
+        target: 'buildings',
+        label: 'Ir a Edificar',
+        icon: '🏗️',
+        hint: 'Abre Complejo de Obras'
+      };
+    }
+    return {
+      target: 'shipyard',
+      label: 'Construir Naves',
+      icon: '🚀',
+      hint: 'Abre el Astillero Naval'
+    };
+  }
+
+  // Defensas planetarias
+  if (id.includes('defense') || id.includes('laser') || id.includes('silo') || id.includes('dome')) {
+    if (id.includes('silo')) {
+      return {
+        target: 'buildings',
+        label: 'Construir Silo',
+        icon: '🏗️',
+        hint: 'Abre Complejo de Obras'
+      };
+    }
+    return {
+      target: 'defense',
+      label: 'Desplegar Defensas',
+      icon: '🛡️',
+      hint: 'Abre Bastión Defensivo'
+    };
+  }
+
+  // Diplomacia, tratados, alianzas y reputación
+  if (id.includes('diplo') || id.includes('pacts') || id.includes('alliance') || id.includes('rep') || id.includes('influence')) {
+    if (id === 'm5_1_diplo') {
+      return {
+        target: 'buildings',
+        label: 'Construir Embajada',
+        icon: '🏗️',
+        hint: 'Abre Complejo de Obras'
+      };
+    }
+    return {
+      target: 'diplomacy',
+      label: 'Mando Diplomático',
+      icon: '🤝',
+      hint: 'Abre Cuerpo Diplomático'
+    };
+  }
+
+  // Comercio y rutas de mercado
+  if (id.includes('market') || id.includes('trade') || id.includes('supply')) {
+    if (id === 'm6_1_market') {
+      return {
+        target: 'buildings',
+        label: 'Edificar Mercado',
+        icon: '🏗️',
+        hint: 'Abre Complejo de Obras'
+      };
+    }
+    return {
+      target: 'market',
+      label: 'Ir al Mercado',
+      icon: '💼',
+      hint: 'Abre Mercado Galáctico'
+    };
+  }
+
+  // Combate y simulador
+  if (id.includes('combat')) {
+    return {
+      target: 'combat',
+      label: 'Simulador Bélico',
+      icon: '⚔️',
+      hint: 'Abre Táctica y Combate'
+    };
+  }
+
+  // Infraestructuras y minas generales
+  if (id.includes('metal') || id.includes('solar') || id.includes('deuterium') || id.includes('lab') || id.includes('infra') || id.includes('storage') || id.includes('fusion') || id.includes('spy')) {
+    return {
+      target: 'buildings',
+      label: 'Ir a Edificar',
+      icon: '🏗️',
+      hint: 'Abre Complejo de Obras'
+    };
+  }
+
+  // Mundos, sectores y colonias
+  if (id.includes('world') || id.includes('sector') || id.includes('newcol') || id.includes('pop')) {
+    return {
+      target: 'colony_network',
+      label: 'Red de Colonias',
+      icon: '🪐',
+      hint: 'Abre Red de Mundos y Logística'
+    };
+  }
+
+  return null;
+};
+
 export const MissionsChapterDetail = ({
   currentChapInfo,
   currentChapMissions,
   completedList,
   activeList,
   missionAssetMap,
+  onNavigateTo,
   onBackToChapters
 }) => {
   const completedCount = currentChapMissions.filter(m => completedList.includes(m.id)).length;
@@ -104,14 +228,41 @@ export const MissionsChapterDetail = ({
                     {m.desc}
                   </p>
 
-                  <div className="p-3 rounded-xl bg-[#030612]/90 border border-white/10 mt-auto">
-                    <div className="text-[9px] text-slate-400 uppercase font-mono tracking-wider mb-1 flex items-center gap-1">
-                      <span>🎁</span>
-                      <span>Recompensa Imperial</span>
+                  <div className="space-y-2 mt-auto">
+                    <div className="p-3 rounded-xl bg-[#030612]/90 border border-white/10">
+                      <div className="text-[9px] text-slate-400 uppercase font-mono tracking-wider mb-1 flex items-center gap-1">
+                        <span>🎁</span>
+                        <span>Recompensa Imperial</span>
+                      </div>
+                      <div className="text-xs font-black text-cyan-300 font-mono">
+                        {m.rewardDesc}
+                      </div>
                     </div>
-                    <div className="text-xs font-black text-cyan-300 font-mono">
-                      {m.rewardDesc}
-                    </div>
+
+                    {/* Acceso Directo Contextual al lugar de ejecución */}
+                    {(() => {
+                      const action = getMissionAction(m);
+                      if (!action || isCompleted || isLocked) return null;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.playSfx) window.playSfx('click');
+                            if (onNavigateTo) onNavigateTo(action.target);
+                          }}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 hover:text-white transition-all duration-200 cursor-pointer text-xs font-mono font-bold group/btn select-none shadow-md"
+                          title={action.hint}
+                        >
+                          <span className="flex items-center gap-1.5 truncate">
+                            <span>{action.icon}</span>
+                            <span className="truncate">{action.label}</span>
+                          </span>
+                          <span className="text-cyan-400 group-hover/btn:translate-x-1 transition-transform">
+                            ➔
+                          </span>
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

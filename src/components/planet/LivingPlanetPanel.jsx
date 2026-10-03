@@ -3,6 +3,7 @@ import { GOVERNOR_TRAITS, MINISTERIAL_SUBTASKS, BIOME_THERMAL_PROFILES } from '.
 import { BIOMES } from '../../data/game/galaxyData.js';
 import { GovernorDossier } from './GovernorDossier.jsx';
 import { calcPlanetMaxPop } from '../../core.jsx';
+import { getPlanetHeritage } from '../../data/planetaryHeritageData.js';
 
 export const LivingPlanetPanel = ({ planet, dispatch, fmt }) => {
   const [activeTab, setActiveTab] = useState('biosphere'); // 'biosphere' | 'thermal' | 'governance'
@@ -94,8 +95,31 @@ export const LivingPlanetPanel = ({ planet, dispatch, fmt }) => {
 
       {/* Pestaña: Biosfera y Soporte Vital */}
       {activeTab === 'biosphere' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="bg-black/30 border border-white/5 rounded-xl p-3 space-y-1">
+        <div className="space-y-3">
+          {(() => {
+            const heritage = getPlanetHeritage(planet);
+            if (!heritage) return null;
+            return (
+              <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-black/40 border border-cyan-500/30 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl p-1 rounded-lg bg-black/40 border border-white/10">{heritage.icon}</span>
+                  <div>
+                    <div className="font-bold text-white flex items-center gap-1.5">
+                      <span>Hito Natural: {heritage.name}</span>
+                      <span className="text-[10px] font-mono text-cyan-300 font-bold bg-cyan-950/60 px-1.5 py-0.2 rounded border border-cyan-500/30">PATRIMONIO</span>
+                    </div>
+                    <div className="text-[11px] text-slate-300 leading-snug">{heritage.desc}</div>
+                  </div>
+                </div>
+                <div className="text-right font-mono text-[10px] text-emerald-400 font-bold shrink-0 bg-black/50 px-2.5 py-1.5 rounded-lg border border-white/5">
+                  ⚡ {heritage.bonusDesc}
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-black/30 border border-white/5 rounded-xl p-3 space-y-1">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Presión y Oxígeno</span>
             <div className="text-base font-bold text-white font-mono">{bio.pressureAtm?.toFixed?.(2) || '1.00'} atm</div>
             <div className="text-xs text-slate-400">Fracción O₂: <span className="text-cyan-400">{((bio.o2Level || 0.21) * 100).toFixed(1)}%</span></div>
@@ -137,6 +161,7 @@ export const LivingPlanetPanel = ({ planet, dispatch, fmt }) => {
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* Pestaña: Matriz Térmica */}

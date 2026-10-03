@@ -7,6 +7,49 @@ export const MARKET_BASE_VALUES = {
   credits: 1.0
 };
 
+/**
+ * Devuelve los multiplicadores locales de cotización para un planeta concreto.
+ * Refleja abundancia y escasez según el bioma y su peculiaridad ancestral.
+ */
+export function getPlanetMarketModifiers(planet) {
+  if (!planet) return { metal: 1.0, crystal: 1.0, deuterium: 1.0, credits: 1.0 };
+  let mults = { metal: 1.0, crystal: 1.0, deuterium: 1.0, credits: 1.0 };
+
+  // Bioma
+  switch (planet.biome) {
+    case 'volcanic':
+      mults.metal *= 0.75; // Mucho metal, cotiza más bajo
+      mults.crystal *= 1.25;
+      mults.deuterium *= 1.10;
+      break;
+    case 'tundra':
+    case 'frozen':
+      mults.deuterium *= 0.70; // Mucho deuterio, cotiza barato
+      mults.metal *= 1.25;
+      mults.crystal *= 1.10;
+      break;
+    case 'desert':
+    case 'toxic':
+      mults.crystal *= 0.80;
+      mults.metal *= 1.10;
+      mults.deuterium *= 1.20;
+      break;
+    case 'oceanic':
+      mults.crystal *= 0.85;
+      mults.deuterium *= 1.15;
+      break;
+    default:
+      break;
+  }
+
+  // Si tiene rasgo ancestral con modificadores
+  if (planet.heritageId && typeof planet.heritageId === 'string') {
+    // se aplica a través de planetaryHeritageData
+  }
+
+  return mults;
+}
+
 // Naves usadas y de ocasión disponibles en el bazar
 export const USED_SHIPS_CATALOG = [
   {
@@ -198,3 +241,78 @@ export const CORPORATE_CONTRACTS = [
     description: 'Microprocesadores ópticos y componentes refractarios para cargueros interestelares.'
   }
 ];
+
+// Naves Exóticas Foráneas de Facciones Alienígenas y Chatarreros
+export const ALIEN_EXOTIC_SHIPS = [
+  {
+    id: 'exotic_therian_frigate',
+    shipId: 'destroyer',
+    title: 'Fragata de Plasma Therian "Vanguardia Estelar"',
+    faction: 'Therian',
+    quantity: 1,
+    condition: 'Tecnología Foránea (Generador de Plasma Refractario)',
+    cost: { metal: 45000, crystal: 30000, deuterium: 12000 },
+    creditsPrice: 75000,
+    seller: 'Emisarios de la Enclave Therian',
+    description: 'Nave alienígena armada con lanzadores de plasma supercalentado y escudos de fase ionizada.',
+    icon: '🛸',
+    badge: 'ALIENÍGENA'
+  },
+  {
+    id: 'exotic_krynn_swarm_drone',
+    shipId: 'quantumFighter',
+    title: 'Escuadra de Drones Enjambre Krynn',
+    faction: 'Krynn',
+    quantity: 6,
+    condition: 'Red Neural Autónoma (Sin tripulación biológica)',
+    cost: { metal: 32000, crystal: 24000, deuterium: 8000 },
+    creditsPrice: 50000,
+    seller: 'Comerciantes Nómadas del Vacío',
+    description: 'Cazas bio-mecánicos con maniobrabilidad inercial extrema y enlaces telepáticos de ataque coordinado.',
+    icon: '👾',
+    badge: 'ENJAMBRE'
+  },
+  {
+    id: 'exotic_pirate_corsair_hull',
+    shipId: 'cruiser',
+    title: 'Casco Averiado: Corsario del Sindicato Rojo',
+    faction: 'Pirata',
+    quantity: 1,
+    condition: 'Chatarra Militar (Requiere reparaciones en astillero)',
+    cost: { metal: 12000, crystal: 4000, deuterium: 1000 },
+    creditsPrice: 20000,
+    seller: 'Chatarreros de Desguace Orbital',
+    description: 'Crucero interceptor blindado rescatado de un cementerio de naves. Motores quemados pero chasis intacto.',
+    icon: '🏴‍☠️',
+    badge: 'CHATARRA REPARABLE'
+  }
+];
+
+// Holo-Net: Diseños y Patentes Navales Disponibles
+export const MARKET_BLUEPRINTS = [
+  {
+    id: 'bp_phantom_interceptor',
+    name: 'Interceptor Fantasma MK-III',
+    chassis: 'lightFighter',
+    weapon: 'plasmaBlaster',
+    engine: 'quantumImpulse',
+    shield: 'phaseDeflector',
+    modules: ['stealthCoating', 'overchargeCapacitor'],
+    creditsPrice: 40000,
+    creator: 'Astilleros Militares de Kuat Prime',
+    description: 'Caza de ataque rápido indetectable a sensores de largo alcance con pegada devastadora.'
+  },
+  {
+    id: 'bp_armored_hauler',
+    name: 'Supercarguero Blindado "Muro de Orión"',
+    chassis: 'largeCargo',
+    weapon: 'gaussTurret',
+    engine: 'heavyHyperdrive',
+    shield: 'heavyReinforcedDome',
+    modules: ['cargoCompressor', 'nanoHullRepair'],
+    creditsPrice: 35000,
+    creator: 'Consorcio Logístico Corelliano',
+    description: 'Transporte de ultra-capacidad diseñado para penetrar zonas hostiles de piratería sin escolta.'
+  }
+];
+

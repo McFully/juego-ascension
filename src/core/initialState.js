@@ -14,11 +14,13 @@ export const createInitial = (playerName, homeFaction = 'human', mode = 'standar
     system: 1,
     position: 1,
     temperature: isSurvivor ? -50 : 25,
-    resources: isSurvivor ? { metal: 200, crystal: 50, deuterium: 10 } : (isDecay ? { metal: 500, crystal: 500, deuterium: 200 } : { metal: 800, crystal: 500, deuterium: 200 }),
-    buildings: isDecay ? { metalMine: 25, crystalMine: 20, deutSynth: 15, solarPlant: 20, fusionReactor: 10, robotics: 10, shipyard: 8, researchLab: 10, nanite: 3 } : {
+    resources: isSurvivor ? { metal: 200, crystal: 50, deuterium: 10, slag: 0 } : (isDecay ? { metal: 500, crystal: 500, deuterium: 200, slag: 50 } : { metal: 800, crystal: 500, deuterium: 200, slag: 0 }),
+    buildings: isDecay ? { metalMine: 25, crystalMine: 20, deutSynth: 15, solarPlant: 20, fusionReactor: 10, robotics: 10, shipyard: 8, researchLab: 10, nanite: 3, slagRecycler: 5, slagStorage: 5 } : {
       metalMine: isSurvivor ? 0 : 2,
       crystalMine: isSurvivor ? 0 : 1,
       solarPlant: isSurvivor ? 0 : 1,
+      slagRecycler: isSurvivor ? 0 : 1,
+      slagStorage: isSurvivor ? 0 : 1,
     },
     research: isDecay ? { energy: 12, laser: 10, ion: 8, plasma: 5, combustion: 15, impulse: 10, hyperspace: 8, espionage: 8, computer: 10, astrophysics: 10 } : {},
     fleet: isSurvivor ? { colonyShip: 0, heavyFighter: 5, largeCargo: 1 } : (isDecay ? { battleship: 50, destroyer: 20, cruiser: 100 } : {}),
@@ -34,6 +36,7 @@ export const createInitial = (playerName, homeFaction = 'human', mode = 'standar
     planetSize: 100,
     gravity: 1,
     trait: null,
+    heritageId: 'precursor_ruins',
     achievements: [],
     stats: {
       totalBuildings: isSurvivor ? 0 : (isDecay ? 100 : 3),
@@ -120,6 +123,10 @@ export const createInitial = (playerName, homeFaction = 'human', mode = 'standar
     activeCrises: [],
     chatHistory: {},
     ministries: buildMinistriesState(null, isDecay ? DECAY_MINISTRY_OVERRIDES : {}),
+    researchNetwork: {
+      baseSlots: 2,
+      linkedPlanetIds: [homeId]
+    },
     gameMode: mode,
     leaders: [],
     activeEvents: [],

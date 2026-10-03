@@ -1,6 +1,5 @@
 import React from 'react';
 import { HubCard } from './HubCard.jsx';
-import { sharedCommandCards } from './sharedCommandCards.jsx';
 
 /**
  * Catálogo del Alto Mando de un mundo.
@@ -20,12 +19,10 @@ export const PLANETARY_COMMAND_CARDS = [
   'defense',
   'missiles',
   'shipyard',
-  'shipDesign',
   'fleet',
-  'combat',
+  'bank',
   'moon',
-  'debris',
-  'back_to_empire'
+  'debris'
 ];
 
 export const planetaryCommandStorageKey = (planetId) =>
@@ -51,6 +48,7 @@ export function buildPlanetaryCommandCards({
   totalShips,
   hasMoon,
   totalDebrisTons,
+  bankLevel = (planet?.buildings?.exchangeBank || planet?.buildings?.futuresExchange || 0),
   dispatch
 }) {
   return {
@@ -224,6 +222,26 @@ export function buildPlanetaryCommandCards({
         footerValueClasses="text-cyan-300"
       />
     ),
+    bank: (
+      <HubCard
+        onClick={() => onNavigateTab && onNavigateTab('ministry_finance_buildings')}
+        isLocked={bankLevel < 1}
+        lockReason="Requiere construir la Banca Galáctica Central (Nv. 1) en el Ministerio de Finanzas para desbloquear los servicios bancarios."
+        borderColor="border-yellow-500/30"
+        hoverBorderColor="hover:border-yellow-400"
+        hoverShadow="hover:shadow-[0_0_35px_rgba(234,179,8,0.3)]"
+        assetId="futuresExchange"
+        badgeText="FINANZAS"
+        badgeClasses="bg-yellow-950/80 text-yellow-300 border border-yellow-500/50"
+        title="Banca Galáctica"
+        icon="🏦"
+        titleHoverColor="group-hover:text-yellow-300"
+        description="Servicios bancarios y de crédito estelar: custodia de activos, colocación de depósitos e intereses en el mercado interplanetario."
+        footerLabel="Nivel de Banca:"
+        footerValue={bankLevel > 0 ? `Nv. ${bankLevel} Operativo` : 'Bloqueado'}
+        footerValueClasses={bankLevel > 0 ? 'text-yellow-300' : 'text-slate-500'}
+      />
+    ),
     moon: (
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('moon')}
@@ -263,25 +281,6 @@ export function buildPlanetaryCommandCards({
         footerValue={`${fmt ? fmt(totalDebrisTons) : totalDebrisTons} Tons`}
         footerValueClasses="text-amber-300"
       />
-    ),
-    back_to_empire: (
-      <HubCard
-        onClick={onBackToEmpire}
-        borderColor="border-cyan-500/20"
-        hoverBorderColor="hover:border-cyan-400/60"
-        hoverShadow="hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]"
-        assetId="deepColonizationPsych"
-        badgeText="IMPERIO"
-        badgeClasses="bg-cyan-950/80 text-cyan-300 border border-cyan-500/40"
-        title="Volver a Imperio"
-        icon="🪐"
-        titleHoverColor="group-hover:text-cyan-300"
-        description="Regresa a la vista general del Imperio para consultar la producción de mundos, infraestructuras y colonias activas."
-        footerLabel="Vista destino:"
-        footerValue="Imperio General"
-        footerValueClasses="text-cyan-300"
-      />
-    ),
-    ...sharedCommandCards({ onNavigateTab, fmt, state })
+    )
   };
 }

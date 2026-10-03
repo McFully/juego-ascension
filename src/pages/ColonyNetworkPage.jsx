@@ -4,7 +4,10 @@ import { FleetRelocationView } from '../components/colonyNetwork/FleetRelocation
 import { SupplyRoutesView } from '../components/colonyNetwork/SupplyRoutesView.jsx';
 import { ColonyDemandsView } from '../components/colonyNetwork/ColonyDemandsView.jsx';
 import { SectorManagementView } from '../components/sectors/SectorManagementView.jsx';
+import { ResearchMatrixView } from '../components/colonyNetwork/ResearchMatrixView.jsx';
+import { ColonyStationCardGrid } from '../components/colonyNetwork/ColonyStationCardGrid.jsx';
 import { useNavigation } from '../components/navigation/NavigationContext.jsx';
+import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 
 export const ColonyNetworkPage = ({
   state,
@@ -17,7 +20,7 @@ export const ColonyNetworkPage = ({
   setActiveTab
 }) => {
   const { navigateBack } = useNavigation();
-  const [activeSubTab, setActiveSubTab] = useState('overview'); // 'overview' | 'relocate' | 'routes' | 'demands' | 'sectors'
+  const [activeSubTab, setActiveSubTab] = useState(null); // null = Selector de Estaciones (Card Grid), 'overview' | 'relocate' | 'routes' | 'demands' | 'sectors' | 'researchMatrix'
   const [fromPlanetId, setFromPlanetId] = useState(currentPlanet?.id || state?.planets?.[0]?.id);
   const [toPlanetId, setToPlanetId] = useState(
     state?.planets?.find(p => p.id !== currentPlanet?.id)?.id || state?.planets?.[0]?.id
@@ -58,122 +61,74 @@ export const ColonyNetworkPage = ({
     if (window.playSfx) window.playSfx('fleetLaunch');
   };
 
+  const getSubTabTitle = () => {
+    switch (activeSubTab) {
+      case 'overview': return 'Matriz Colonial en Vivo';
+      case 'relocate': return 'Reubicación Rápida de Flotas';
+      case 'routes': return 'Convoy Comercial y Logística';
+      case 'demands': return 'Demandas y Abastecimiento';
+      case 'sectors': return 'Prefecturas Coloniales y Virreinatos';
+      case 'researchMatrix': return 'Matriz de Investigación';
+      default: return 'Red de Colonias y Logística';
+    }
+  };
+
   return (
-    <div className="space-y-6 relative z-10">
-      {/* Cabecera del Centro de Mando Colonial */}
-      <div className="p-5 rounded-2xl bg-[#080d1e]/90 border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.15)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              if (window.playSfx) window.playSfx('click');
-              if (navigateBack) {
-                navigateBack();
-              } else if (setActiveTab) {
-                setActiveTab('government');
-              }
-            }}
-            className="px-3 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/20 hover:text-white transition-all text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
-            title="Volver a la pantalla anterior"
-          >
-            <span>◀</span>
-            <span>Volver</span>
-          </button>
-          <div className="w-12 h-12 rounded-xl bg-indigo-950/80 border border-indigo-500/50 flex items-center justify-center text-2xl shadow-inner">
-            🪐
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-white uppercase tracking-wider">
-                Red de Colonias y Logística Interplanetaria
-              </h1>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-mono">
-                {planets.length} MUNDOS CONECTADOS
-              </span>
+    <div className="space-y-6 relative z-10 pb-20">
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver a Mando Imperial / Estaciones) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle={getSubTabTitle()}
+        breadcrumbIcon="🪐"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom={activeSubTab ? 'Estaciones' : 'Mando Imperial'}
+        backButtonIcon={activeSubTab ? '🪐' : '👑'}
+        onBackToAltoMando={() => {
+          if (activeSubTab) {
+            setActiveSubTab(null);
+          } else {
+            if (setActiveTab) setActiveTab('imperial_hub');
+            else if (navigateBack) navigateBack();
+          }
+          if (window.playSfx) window.playSfx('click');
+        }}
+        rightSlot={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs font-mono">
+              <span className="text-slate-400">Mundos:</span>
+              <span className="font-bold text-indigo-300">{planets.length}</span>
             </div>
-            <p className="text-xs text-slate-400">
-              Control de rutas de suministros, nivelación automática de recursos y despliegue rápido de contingentes navales.
-            </p>
+            <button
+              onClick={handleEqualize}
+              disabled={planets.length <= 1}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all ${
+                planets.length > 1
+                  ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.3)] hover:brightness-110 active:scale-[0.98] cursor-pointer'
+                  : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
+              }`}
+              title="Equilibrar excedentes de recursos entre todos los mundos colonizados"
+            >
+              <span>⚖️</span>
+              <span>Nivelar Recursos</span>
+            </button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Botón Táctico Nivelador */}
-        <button
-          onClick={handleEqualize}
-          disabled={planets.length <= 1}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
-            planets.length > 1
-              ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:brightness-110 active:scale-[0.98]'
-              : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
-          }`}
-        >
-          <span>⚖️</span>
-          <span>Nivelar Recursos del Imperio</span>
-        </button>
-      </div>
-
-      {/* Selector de Pestañas Logísticas */}
-      <div className="flex flex-wrap gap-2 border-b border-white/10 pb-2">
-        <button
-          onClick={() => setActiveSubTab('overview')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'overview'
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/60 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          🌐 Matriz Colonial en Vivo
-        </button>
-        <button
-          onClick={() => setActiveSubTab('relocate')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'relocate'
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/60 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          🚀 Reubicación Rápida de Flotas
-        </button>
-        <button
-          onClick={() => setActiveSubTab('routes')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'routes'
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/60 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          🚚 Rutas de Suministro Automáticas
-        </button>
-        <button
-          onClick={() => setActiveSubTab('demands')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-            activeSubTab === 'demands'
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/60 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          <span>📦 Demandas de Colonias</span>
-          {colonyDemands.length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-black text-[10px] font-black">
-              {colonyDemands.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveSubTab('sectors')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-            activeSubTab === 'sectors'
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/60 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          <span>🗺️ Sectores y Virreyes</span>
-          {(state?.sectors || []).length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-teal-500 text-black text-[10px] font-black">
-              {(state?.sectors || []).length}
-            </span>
-          )}
-        </button>
-      </div>
+      {/* Selector de Estaciones Logísticas en Card Grid Estandarizado (solo cuando no hay vista activa) */}
+      {!activeSubTab && (
+        <ColonyStationCardGrid
+          activeSubTab={activeSubTab}
+          onSelectSubTab={setActiveSubTab}
+          planetsCount={planets.length}
+          activeRoutesCount={(state?.tradeRoutes || []).length}
+          pendingDemandsCount={colonyDemands.length}
+        />
+      )}
 
       {/* Subvista: Matriz Colonial */}
       {activeSubTab === 'overview' && (
@@ -232,6 +187,15 @@ export const ColonyNetworkPage = ({
           state={state}
           dispatch={dispatch}
           currentPlanet={currentPlanet}
+          fmt={fmt}
+        />
+      )}
+
+      {/* Subvista: Matriz de Investigación Interplanetaria */}
+      {activeSubTab === 'researchMatrix' && (
+        <ResearchMatrixView
+          state={state}
+          dispatch={dispatch}
           fmt={fmt}
         />
       )}

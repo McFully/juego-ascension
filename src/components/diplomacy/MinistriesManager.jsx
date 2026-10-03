@@ -13,6 +13,7 @@ export const MinistriesManager = ({
   aiList,
   FACTIONS
 }) => {
+  const safeRes = resources || { metal: 0, crystal: 0, deuterium: 0 };
   const upgrades = state.ministryUpgrades || {};
   const currentMinUpgrades = upgrades[selectedMinistry] || {};
   const playerInfluence = state.influence || 0;
@@ -28,9 +29,9 @@ export const MinistriesManager = ({
 
     let canBuy = true;
     if (cost.influence && playerInfluence < cost.influence) canBuy = false;
-    if (cost.metal && resources.metal < cost.metal) canBuy = false;
-    if (cost.crystal && resources.crystal < cost.crystal) canBuy = false;
-    if (cost.deuterium && resources.deuterium < cost.deuterium) canBuy = false;
+    if (cost.metal && (safeRes.metal || 0) < cost.metal) canBuy = false;
+    if (cost.crystal && (safeRes.crystal || 0) < cost.crystal) canBuy = false;
+    if (cost.deuterium && (safeRes.deuterium || 0) < cost.deuterium) canBuy = false;
 
     if (!canBuy) {
       playDiploSound('warn');
@@ -108,9 +109,9 @@ export const MinistriesManager = ({
 
             let canBuy = true;
             if (cost.influence && playerInfluence < cost.influence) canBuy = false;
-            if (cost.metal && resources.metal < cost.metal) canBuy = false;
-            if (cost.crystal && resources.crystal < cost.crystal) canBuy = false;
-            if (cost.deuterium && resources.deuterium < cost.deuterium) canBuy = false;
+            if (cost.metal && (safeRes.metal || 0) < cost.metal) canBuy = false;
+            if (cost.crystal && (safeRes.crystal || 0) < cost.crystal) canBuy = false;
+            if (cost.deuterium && (safeRes.deuterium || 0) < cost.deuterium) canBuy = false;
 
             return (
               <div key={prog.id} className="p-3 bg-black/40 border border-white/5 rounded-lg space-y-2">

@@ -35,7 +35,9 @@ export const ActionCardTile = React.memo(({
     if (onClick) {
       onClick();
     } else if (isBack) {
-      if (nav?.navigateBack) {
+      if (nav?.navigateBackWithSync) {
+        nav.navigateBackWithSync();
+      } else if (nav?.navigateBack) {
         nav.navigateBack();
       } else if (nav?.navigateTo) {
         nav.navigateTo(targetScreen || 'overview');

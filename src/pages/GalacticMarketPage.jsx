@@ -4,7 +4,11 @@ import { MarketPriceChart } from '../components/market/MarketPriceChart.jsx';
 import { UsedShipBazaarView } from '../components/market/UsedShipBazaarView.jsx';
 import { BlackMarketView } from '../components/market/BlackMarketView.jsx';
 import { AutomatedTradeRulesView } from '../components/market/AutomatedTradeRulesView.jsx';
-import { CORPORATE_CONTRACTS, MARKET_BASE_VALUES } from '../data/galacticMarketData.js';
+import { MarketDistrictCardGrid } from '../components/market/MarketDistrictCardGrid.jsx';
+import { MarketRoutesView } from '../components/market/MarketRoutesView.jsx';
+import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
+import { CORPORATE_CONTRACTS, MARKET_BASE_VALUES, getPlanetMarketModifiers } from '../data/galacticMarketData.js';
+import { getPlanetHeritage } from '../data/planetaryHeritageData.js';
 
 export const GalacticMarketPage = ({
   state,
@@ -25,10 +29,22 @@ export const GalacticMarketPage = ({
 
   const planetRes = currentPlanet?.resources || { metal: 0, crystal: 0, deuterium: 0 };
 
-  // Cálculo de ratio y comisión
+  // Cálculo de ratio y comisión con cotización local de este planeta
+  const localMods = useMemo(() => {
+    const baseMods = getPlanetMarketModifiers(currentPlanet);
+    const heritage = getPlanetHeritage(currentPlanet);
+    if (heritage?.marketModifiers) {
+      Object.entries(heritage.marketModifiers).forEach(([k, v]) => {
+        if (baseMods[k]) baseMods[k] *= v;
+      });
+    }
+    return baseMods;
+  }, [currentPlanet]);
+
   const tradeCalculation = useMemo(() => {
     if (sellRes === buyRes) return { buyAmount: 0, fee: 0, rate: 1 };
-    const sellUnitVal = MARKET_BASE_VALUES[sellRes] || 1;
+    const sellUnitVal = (MARKET_BASE_VALUES[sellRes] || 1) * (localMods[sellRes] || 1);
+    const buyUnitVal = (MARKET_BASE_VALUES[buyRes] || 1) * (localMods[buyRes] || 1);
     const tradeLvl = state.research?.galacticTrade || 0;
     const feeRate = Math.max(0.01, 0.08 - tradeLvl * 0.01); // 8% base, reducible hasta 1%
     const grossBuy = (sellAmount * sellUnitVal) / buyUnitVal;
@@ -36,7 +52,7 @@ export const GalacticMarketPage = ({
     const fee = Math.floor(grossBuy * feeRate);
     const rate = ((sellUnitVal / buyUnitVal) * (1 - feeRate)).toFixed(3);
     return { buyAmount: Math.max(0, netBuy), fee, rate, feePct: Math.round(feeRate * 100) };
-  }, [sellRes, buyRes, sellAmount, state.research?.galacticTrade]);
+  }, [sellRes, buyRes, sellAmount, state.research?.galacticTrade, localMods]);
 
   const availableSell = sellRes === 'credits' ? (state.credits || 0) : (planetRes[sellRes] || 0);
 
@@ -100,124 +116,86 @@ export const GalacticMarketPage = ({
         </div>
       </div>
 
-      {/* Header Comercial */}
-      <div className="p-5 rounded-2xl bg-[#080d1e]/90 border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              if (window.playSfx) window.playSfx('click');
-              if (navigateBack) {
-                navigateBack();
-              } else if (setActiveTab) {
-                setActiveTab('government');
-              }
-            }}
-            className="px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition-all text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
-            title="Volver a la pantalla anterior"
-          >
-            <span>◀</span>
-            <span>Volver</span>
-          </button>
-          <div className="w-12 h-12 rounded-xl bg-emerald-950/80 border border-emerald-500/50 flex items-center justify-center text-2xl shadow-inner">
-            💼
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver al Mando Imperial) */}
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Mercado Galáctico"
+        breadcrumbIcon="💼"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Mando Imperial"
+        backButtonIcon="👑"
+        onBackToAltoMando={() => {
+          if (navigateBack) navigateBack();
+          else if (setActiveTab) setActiveTab('imperial_hub');
+        }}
+        rightSlot={
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-xs font-mono">
+            <span className="text-amber-400">₢ Créditos:</span>
+            <span className="font-bold text-amber-300">{fmt(state.credits || 0)}</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-white uppercase tracking-wider">
-                Mercado Galáctico y Logística Comercial
-              </h1>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono">
-                TERMINAL ENLACE CUÁNTICO
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">
-              Bolsa de materias primas en tiempo real, bazar naval de naves usadas, licitaciones corporativas y mercado negro.
-            </p>
-          </div>
-        </div>
+        }
+      />
 
-        {/* Balance rápido del planeta */}
-        <div className="flex items-center gap-3 bg-black/50 px-4 py-2.5 rounded-xl border border-white/10 text-xs font-mono">
-          <div>
-            <span className="text-slate-400">Metal:</span>{' '}
-            <span className="text-cyan-300 font-bold">{fmt(planetRes.metal)}</span>
-          </div>
-          <span className="text-slate-600">|</span>
-          <div>
-            <span className="text-slate-400">Cristal:</span>{' '}
-            <span className="text-emerald-300 font-bold">{fmt(planetRes.crystal)}</span>
-          </div>
-          <span className="text-slate-600">|</span>
-          <div>
-            <span className="text-slate-400">Deuterio:</span>{' '}
-            <span className="text-amber-300 font-bold">{fmt(planetRes.deuterium)}</span>
-          </div>
-          <span className="text-slate-600">|</span>
-          <div className="flex items-center gap-1">
-            <span className="text-amber-400">₢</span>{' '}
-            <span className="text-slate-400">Créditos:</span>{' '}
-            <span className="text-amber-300 font-bold">{fmt(state.credits || 0)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Selector de Pestañas Principales */}
-      <div className="flex flex-wrap gap-2 border-b border-white/10 pb-2">
-        <button
-          onClick={() => setActiveSubTab('exchange')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'exchange'
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          📈 Bolsa de Materias Primas
-        </button>
-        <button
-          onClick={() => setActiveSubTab('used_ships')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'used_ships'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          🚀 Astillero de Ocasión y Desguace
-        </button>
-        <button
-          onClick={() => setActiveSubTab('contracts')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'contracts'
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          📜 Contratos Corporativos ({CORPORATE_CONTRACTS.length})
-        </button>
-        <button
-          onClick={() => setActiveSubTab('black_market')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'black_market'
-              ? 'bg-red-500/20 text-red-300 border border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          🕶️ Mercado Negro y Contrabando
-        </button>
-        <button
-          onClick={() => setActiveSubTab('automated_rules')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'automated_rules'
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/60 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          🤖 Consola Algorítmica y Fletes
-        </button>
-      </div>
+      {/* Selector de Distritos Mercantiles en Card Grid Estandarizado */}
+      <MarketDistrictCardGrid
+        activeSubTab={activeSubTab}
+        onSelectSubTab={setActiveSubTab}
+        contractsCount={CORPORATE_CONTRACTS.length}
+        automatedRulesCount={(state?.automatedTradeRules || []).length}
+      />
 
       {/* Subvista: Bolsa y Conversor de Materias Primas */}
       {activeSubTab === 'exchange' && (
         <div className="space-y-6">
+          {/* Indicador de Parqué Local y Arbitraje */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-[#060a16] to-cyan-950/40 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🪐</span>
+              <div>
+                <div className="text-white font-bold flex items-center gap-2">
+                  <span>Parqué Local de {currentPlanet?.name || 'este mundo'}</span>
+                  {(() => {
+                    const h = getPlanetHeritage(currentPlanet);
+                    if (!h) return null;
+                    return (
+                      <span className="text-[10px] text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/40">
+                        {h.icon} {h.name}
+                      </span>
+                    );
+                  })()}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">
+                  Los biomas y peculiaridades geológicas alteran la cotización spot en esta lonja:
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 text-[11px]">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 border border-white/10">
+                <span className="text-amber-400">⛏️ Metal:</span>
+                <strong className={localMods.metal < 1 ? 'text-emerald-400' : (localMods.metal > 1 ? 'text-rose-400' : 'text-slate-200')}>
+                  x{localMods.metal?.toFixed(2) || '1.00'}
+                </strong>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 border border-white/10">
+                <span className="text-cyan-400">💎 Cristal:</span>
+                <strong className={localMods.crystal < 1 ? 'text-emerald-400' : (localMods.crystal > 1 ? 'text-rose-400' : 'text-slate-200')}>
+                  x{localMods.crystal?.toFixed(2) || '1.00'}
+                </strong>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 border border-white/10">
+                <span className="text-blue-400">⚗️ Deuterio:</span>
+                <strong className={localMods.deuterium < 1 ? 'text-emerald-400' : (localMods.deuterium > 1 ? 'text-rose-400' : 'text-slate-200')}>
+                  x{localMods.deuterium?.toFixed(2) || '1.00'}
+                </strong>
+              </span>
+            </div>
+          </div>
+
           <MarketPriceChart />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -412,6 +390,16 @@ export const GalacticMarketPage = ({
       {/* Subvista: Consola Algorítmica y Fletes */}
       {activeSubTab === 'automated_rules' && (
         <AutomatedTradeRulesView
+          state={state}
+          dispatch={dispatch}
+          currentPlanet={currentPlanet}
+          fmt={fmt}
+        />
+      )}
+
+      {/* Subvista: Rutas Comerciales Bilaterales */}
+      {activeSubTab === 'bilateral_routes' && (
+        <MarketRoutesView
           state={state}
           dispatch={dispatch}
           currentPlanet={currentPlanet}

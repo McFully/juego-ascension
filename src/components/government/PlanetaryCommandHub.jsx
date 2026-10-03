@@ -49,6 +49,8 @@ export const PlanetaryCommandHub = React.memo(({
   const globalDebris = (state?.debrisField?.metal || 0) + (state?.debrisField?.crystal || 0);
   const totalDebrisTons = localDebris > 0 ? localDebris : globalDebris;
 
+  const bankLevel = (planet.buildings?.exchangeBank || planet.buildings?.futuresExchange || 0);
+
   const cardsMap = useMemo(() => buildPlanetaryCommandCards({
     onEnterMinistries,
     onNavigateTab,
@@ -69,6 +71,7 @@ export const PlanetaryCommandHub = React.memo(({
     totalShips,
     hasMoon,
     totalDebrisTons,
+    bankLevel,
     dispatch
   }), [
     onEnterMinistries,
@@ -90,6 +93,7 @@ export const PlanetaryCommandHub = React.memo(({
     totalShips,
     hasMoon,
     totalDebrisTons,
+    bankLevel,
     dispatch
   ]);
 
@@ -105,7 +109,7 @@ export const PlanetaryCommandHub = React.memo(({
           dispatch={dispatch}
           fmt={fmt}
           onBackToEmpire={onBackToEmpire}
-          hubLabel={`Alto Mando · ${planet.name || 'Mundo'}`}
+          hubLabel="Alto Mando"
           isReordering={order.isReordering}
           onToggleReorder={() => order.setIsReordering(prev => !prev)}
           onResetOrder={order.handleResetOrder}
@@ -116,7 +120,7 @@ export const PlanetaryCommandHub = React.memo(({
       <CommandHubGrid
         cardsMap={cardsMap}
         cardOrder={order.cardOrder}
-        lockedCardId="back_to_empire"
+        lockedCardId={null}
         columnsClass="lg:grid-cols-4 xl:grid-cols-6"
         {...order}
       />

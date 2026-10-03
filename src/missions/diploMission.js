@@ -1,6 +1,7 @@
 import { updatePlanet, getVirginPlanet } from '../core.jsx';
 import { SHIPS } from '../data/gameData.js';
 import { fmt, uid, getMaxPlanets, calcStorage } from '../utils/formulas.js';
+import { getPlanetHeritage } from '../data/planetaryHeritageData.js';
 
 export const handleColonizeMission = (mission, state) => {
   const { galaxy, system, position } = mission.to;
@@ -47,8 +48,8 @@ export const handleColonizeMission = (mission, state) => {
     name: isCommercialColonizer ? `Lonja Galáctica G${galaxy}` : `Colonia ${state.planets.length}`,
     galaxy, system, position,
     temperature: virgin.temperature,
-    resources: isCommercialColonizer ? { metal: 50000, crystal: 50000, deuterium: 25000 } : { metal: 500, crystal: 300, deuterium: 100 },
-    buildings: isCommercialColonizer ? { exchangeDocks: 1, exchangeVaults: 1, exchangeEngine: 1, exchangeBank: 1, exchangeBastion: 1 } : {},
+    resources: isCommercialColonizer ? { metal: 50000, crystal: 50000, deuterium: 25000, slag: 0 } : { metal: 500, crystal: 300, deuterium: 100, slag: 0 },
+    buildings: isCommercialColonizer ? { exchangeDocks: 1, exchangeVaults: 1, exchangeEngine: 1, exchangeBank: 1, exchangeBastion: 1, slagRecycler: 1, slagStorage: 1 } : { slagRecycler: 1, slagStorage: 1 },
     research: {}, fleet: {}, defenses: {},
     isHome: false,
     isExchangePlanet: !!isCommercialColonizer,
@@ -57,6 +58,7 @@ export const handleColonizeMission = (mission, state) => {
     planetSize: virgin.planetSize + (state.research?.advColonization || 0) * 2,
     gravity: virgin.gravity,
     trait: isCommercialColonizer ? 'Eje Mercantil Cuántico' : virgin.trait,
+    heritageId: isCommercialColonizer ? 'orbital_shipyards_heritage' : getPlanetHeritage(virgin)?.id,
   };
 
   const returnFleet = { ...mission.fleet };

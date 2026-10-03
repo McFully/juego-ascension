@@ -20,6 +20,8 @@ import { processAutoTradeRoutesTick } from './automation/autoTradeRoutesTick.js'
 import { processAutoResearchTick } from './automation/autoResearchTick.js';
 import { processExchangeOrdersTick } from './exchangeOrdersTick.js';
 import { processPirateRaidTick } from './pirateRaidTick.js';
+import { processWorldAlertsTick } from './worldAlertTick.js';
+import { createFleetReturnEvent, appendFleetReturnTacticalEvent } from './fleetReturnEvents.js';
 
 export const processTick = (state) => {
   const now = Date.now();
@@ -29,46 +31,7 @@ export const processTick = (state) => {
   newState = ensureMinistries(newState);
 
   // 1.1 3.6 — Estados continuos del mundo, anotados en la bandeja.
-  //
-  // El aviso de invasión (`RedAlertOverlay`) y el de crisis energética
-  // (`PerimeterEmergencyAlert`) NO pasan a la bandeja: son overlays que se quedan
-  // mientras dura el estado, que es lo correcto. Pero 3.6 pide que además quede
-  // RASTRO, para que el jugador pueda revisar después qué pasó y por qué.
-  // Se registra una entrada al empezar el estado y otra al terminarlo, y no se
-  // repite cada tick (`alreadyLogged` evita el spam).
-  const invasionMsgs = (newState.fleetMissions || [])
-    .filter(m => m.type === 'attack' && m.isAI && m.remainingTicks <= 300);
-  const hayInvasion = invasionMsgs.length > 0;
-  const crisisEnergia = (newState.planets || [])
-    .some(p => (p.production?.energyBalance ?? 0) < 0);
-
-  const registrarEstadoMundo = (key, entry) => {
-    const yaEstaba = Boolean(newState.worldAlertLog?.[key]);
-    const ahora = Boolean(entry);
-    if (yaEstaba === ahora) return;
-    newState.worldAlertLog = { ...(newState.worldAlertLog || {}), [key]: ahora };
-    newState = eventReducer(newState, {
-      type: 'APPEND_TACTICAL_EVENT_LOG',
-      payload: { ...entry, kind: 'tactical', read: false, priority: 'critica' },
-    });
-  };
-
-  registrarEstadoMundo('invasion', hayInvasion && {
-    id: `alert-invasion-${now}`,
-    type: 'invasion',
-    title: 'Invasión detectada',
-    subtitle: 'Flota hostil en Sector Perimetral',
-    description: invasionMsgs.length > 1
-      ? `${invasionMsgs.length} flotas hostiles se aproximan a tus planetas.`
-      : 'Una flota hostil se aproxima a tus planetas. El aviso se mantiene mientras dure el ataque.',
-  });
-  registrarEstadoMundo('crisisEnergia', crisisEnergia && {
-    id: `alert-energia-${now}`,
-    type: 'crisis_energetica',
-    title: 'Crisis energética',
-    subtitle: 'Balance de energía negativo',
-    description: 'Alguno de tus planetas consume más energía de la que produce. El aviso se mantiene mientras dure la crisis.',
-  });
+  newState = processWorldAlertsTick(newState, now);
 
   // 2. Narrative events check
   // 3.6 — La guarda ya no mira slots efímeros (`activeEvent` etc.), que con 3.4
@@ -170,86 +133,9 @@ export const processTick = (state) => {
 
           // Si es una misión del jugador, generar tarjeta modal de retorno táctico
           if (!m.isAI && !m.autoRoute) {
-            const isTransport = m.type === 'transport';
-            const isRecycle = m.type === 'recycle';
-            const isEspionage = m.type === 'espionage';
-            const isAttack = m.type === 'attack' || m.type === 'planet_destruction';
-
-            let returnEvent = null;
-            const originPlanetName = m.from?.name || 'Base Imperial';
-
-            if (isTransport) {
-              returnEvent = {
-                id: uid(),
-                type: 'transport_return',
-                title: 'Retorno Logístico Completado',
-                subtitle: `Atraque en ${originPlanetName}`,
-                description: `Los convoyes de transporte han concluido su ruta comercial y han atracado de regreso en los muelles de atraque de ${originPlanetName}. Las tripulaciones están listas para nueva orden de flete.`,
-                image: 'Carguera Pequeña.webp',
-                targetPlanetId: m.from.id,
-                returnedFleet: m.fleet,
-                ministryId: 'transport',
-                ministryName: 'Ministerio de Transporte y Tránsito',
-                voiceText: `Convoy logístico de vuelta en ${originPlanetName}. Atraque confirmado.`
-              };
-            } else if (isRecycle) {
-              returnEvent = {
-                id: uid(),
-                type: 'recycle_return',
-                title: 'Flota de Reciclaje en Base',
-                subtitle: `Atraque en ${originPlanetName}`,
-                description: `Las naves recicladoras han tocado tierra en ${originPlanetName}. Los materiales rescatados han sido descargados en los almacenes centrales y la maquinaria pesada entra en ciclo de mantenimiento.`,
-                image: 'Reciclador.webp',
-                targetPlanetId: m.from.id,
-                returnedFleet: m.fleet,
-                ministryId: 'resources',
-                ministryName: 'Ministerio de Recursos y Minería',
-                voiceText: `Recicladores atracados en ${originPlanetName}. Materiales procesados.`
-              };
-            } else if (isEspionage) {
-              returnEvent = {
-                id: uid(),
-                type: 'espionage_return',
-                title: 'Sonda de Reconocimiento Recuperada',
-                subtitle: `Atraque en ${originPlanetName}`,
-                description: `La sonda de espionaje ha completado su vector de telemetría y aterriza de vuelta en las instalaciones de inteligencia de ${originPlanetName}.`,
-                image: 'Sonda Espionaje.webp',
-                targetPlanetId: m.from.id,
-                returnedFleet: m.fleet,
-                ministryId: 'defense',
-                ministryName: 'Ministerio de Defensa e Inteligencia',
-                voiceText: `Sonda de espionaje recuperada en ${originPlanetName}. Datos encriptados descargados.`
-              };
-            } else if (isAttack) {
-              returnEvent = {
-                id: uid(),
-                type: 'combat_return',
-                title: 'Flota de Combate Atracada',
-                subtitle: `Atraque en ${originPlanetName}`,
-                description: `Los escuadrones de ataque han finalizado el repliegue táctico y vuelven a estar operativos en los silos y hangares de ${originPlanetName}.`,
-                image: 'Nave de Batalla.webp',
-                targetPlanetId: m.from.id,
-                returnedFleet: m.fleet,
-                ministryId: 'defense',
-                ministryName: 'Ministerio de Defensa y Operaciones Navales',
-                voiceText: `Flota de combate de vuelta en ${originPlanetName}. Reabastecimiento en curso.`
-              };
-            }
-
+            const returnEvent = createFleetReturnEvent(m, newState);
             if (returnEvent) {
-              if (returnEvent.ministryId) {
-                const currentPl = newState.planets?.find(p => p.id === returnEvent.targetPlanetId) || newState.planets?.[0];
-                const assignedMinister = currentPl?.ministries?.[returnEvent.ministryId]?.minister || newState.ministries?.[returnEvent.ministryId]?.minister || null;
-                if (assignedMinister) {
-                  returnEvent.minister = assignedMinister;
-                }
-              }
-              newState.tacticalEvents = [...(newState.tacticalEvents || []), returnEvent];
-              // 3.3 — también al registro persistente de la bandeja.
-              newState = eventReducer(newState, {
-                type: 'APPEND_TACTICAL_EVENT_LOG',
-                payload: { ...returnEvent, kind: 'tactical', read: false },
-              });
+              newState = appendFleetReturnTacticalEvent(newState, returnEvent);
             }
           }
         } else {
@@ -411,6 +297,12 @@ export const processTick = (state) => {
 
   // 12.6. Amenaza pirata y asaltos corsarios a la Lonja Galáctica
   newState = processPirateRaidTick(newState);
+
+  // 12.7. Rutas comerciales bilaterales: devengo pasivo de dividendos mercantiles
+  if (Array.isArray(newState.bilateralTradeRoutes) && newState.bilateralTradeRoutes.length > 0) {
+    const totalRouteDividends = newState.bilateralTradeRoutes.reduce((acc, r) => acc + (r.rewardCredits || 150), 0);
+    newState.credits = (newState.credits || 0) + totalRouteDividends;
+  }
 
   // 13. Diálogos y transmisiones proactivas
   newState = processDialogueTransmissionTick(newState);
