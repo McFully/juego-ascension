@@ -4,6 +4,7 @@ import { CombatSimulatorModal } from "../components/fleet/CombatSimulatorModal";
 import { FleetSelectionList } from "../components/fleet/FleetSelectionList";
 import { IncomingInvasionsAlert } from "../components/fleet/IncomingInvasionsAlert.jsx";
 import { MissionConfigPanel } from "../components/fleet/MissionConfigPanel.jsx";
+import { EspionageBriefPanel } from "../components/fleet/EspionageBriefPanel.jsx";
 import { TradeRoutesSection } from "../components/fleet/TradeRoutesSection.jsx";
 import { SpyReportsSection } from "../components/fleet/SpyReportsSection.jsx";
 import { DestinationSelectorSection } from "../components/fleet/DestinationSelectorSection.jsx";
@@ -346,6 +347,17 @@ const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget,
           sendFleet={sendFleet}
           fmt={fmt}
           S={S}
+        />
+      )}
+
+      {/* Aviso de coste y riesgo antes de comprometer la operación. */}
+      {activeCardView === 'dispatch' && missionType === 'espionage' && (
+        <EspionageBriefPanel
+          state={state}
+          currentPlanet={currentPlanet}
+          target={target}
+          selectedShips={selectedShips}
+          fmt={fmt}
         />
       )}
 

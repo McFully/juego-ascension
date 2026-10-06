@@ -14,6 +14,7 @@ import { ExchangeCommandHubView } from '../components/market/ExchangeCommandHubV
 import { FederalDistrictView } from '../components/government/FederalDistrictView';
 import { MinistryBuildingInterior } from '../components/government/MinistryBuildingInterior';
 import { MinistryDeskView } from '../components/government/MinistryDeskView';
+import { IntelDossierView } from '../components/government/IntelDossierView';
 import { MinistryBuildingsSection } from '../components/government/MinistryBuildingsSection';
 import { MinistryResearchSection } from '../components/government/MinistryResearchSection';
 import { GovernmentBreadcrumbs } from '../components/government/GovernmentBreadcrumbs';
@@ -406,7 +407,15 @@ if (window.playSfx) window.playSfx('success');
         />
       )}
 
-      {navLevel === 3 && activeSubview !== 'buildings' && activeSubview !== 'research' && (
+      {navLevel === 3 && activeSubview === 'espionage' && (
+        <IntelDossierView
+          state={state}
+          currentPlanet={currentPlanet}
+          onBack={() => handleNavigate(2)}
+        />
+      )}
+
+      {navLevel === 3 && activeSubview !== 'buildings' && activeSubview !== 'research' && activeSubview !== 'espionage' && (
         <MinistryDeskView
           ministryId={activeMinistry}
           subview={activeSubview}
@@ -417,6 +426,7 @@ if (window.playSfx) window.playSfx('success');
           directives={MINISTRY_DIRECTIVES[activeMinistry]}
           onUpgradeProgram={handleUpgradeProgram}
           onToggleDirective={handleToggleDirective}
+          onOpenDossier={() => handleOpenDesk('espionage')}
           onBack={() => handleNavigate(2)}
           planetResources={planetResources}
           playerInfluence={playerInfluence}

@@ -88,24 +88,39 @@ describe('Tactical Events Overlay System', () => {
   });
 
   it('genera un tacticalEvent de espionaje al escanear un planeta objetivo', () => {
+    // El nivel de espionaje vive en `research` del ESTADO, no en el planeta.
+    // Inyectarlo en `planet.research` es lo que hacia que este test pasara
+    // mientras el juego de verdad espiaba siempre con nivel cero.
     const initialState = {
       playerName: 'Comandante',
       planets: [
-        { id: 'p1', name: 'Base', galaxy: 1, system: 1, position: 1, research: { espionage: 10 } }
+        { id: 'p1', name: 'Base', galaxy: 1, system: 1, position: 1 }
       ],
       aiPlanets: [
         { id: 'ai-1', name: 'Mundo Espiado', galaxy: 1, system: 1, position: 3, resources: { metal: 5000, crystal: 3000, deuterium: 1000 }, espDefenseLvl: 0 }
       ],
+      research: { espionage: 10 },
       spyReports: []
     };
 
     const spyMission = {
-      from: { id: 'p1', name: 'Base', research: { espionage: 10 } },
+      id: 'm-espionaje',
+      type: 'espionage',
+      from: { id: 'p1', name: 'Base' },
       to: { galaxy: 1, system: 1, position: 3 },
       fleet: { espionageProbe: 3 }
     };
 
-    const res = handleEspionageMission(spyMission, initialState);
+    // El suelo de deteccion es del 2%: con la tecnologia de este caso la sonda es
+    // indetectable, pero se tira una vez y el test no puede depender de la suerte.
+    const originalRandom = Math.random;
+    Math.random = () => 0.99;
+    let res;
+    try {
+      res = handleEspionageMission(spyMission, initialState);
+    } finally {
+      Math.random = originalRandom;
+    }
     expect(res.tacticalEvent).toBeDefined();
     expect(res.tacticalEvent.type).toBe('espionage');
     expect(res.tacticalEvent.image).toBe('Centro de Espionaje.webp');

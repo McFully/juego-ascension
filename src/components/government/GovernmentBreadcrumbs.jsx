@@ -147,10 +147,10 @@ export const GovernmentBreadcrumbs = ({
               <span className="text-slate-600 font-bold text-sm">/</span>
               <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl text-white font-bold bg-white/15 border border-white/20 text-sm">
                 <span className="text-base">
-                  {subview === 'buildings' ? '🏗️' : subview === 'research' ? '🔬' : subview === 'programs' ? '💼' : '📜'}
-                </span>
+{subview === 'buildings' ? '🏗️' : subview === 'research' ? '🔬' : subview === 'programs' ? '💼' : subview === 'espionage' ? '🕵️' : '📜'}
+                  </span>
                 <span>
-                  {subview === 'buildings' ? 'Instalaciones' : subview === 'research' ? 'Investigaciones' : subview === 'programs' ? 'Despacho de Programas' : 'Gabinete de Decretos'}
+                  {subview === 'buildings' ? 'Instalaciones' : subview === 'research' ? 'Investigaciones' : subview === 'programs' ? 'Despacho de Programas' : subview === 'espionage' ? 'Dossier de Inteligencia' : 'Gabinete de Decretos'}
                 </span>
               </div>
             </>

@@ -3,7 +3,11 @@
  * El render lee esta cadena. No hay un segundo estado que pueda contradecirla.
  */
 
-const DESK_SUBVIEWS = ['buildings', 'research', 'programs', 'directives'];
+// `espionage` es el dossier del Ministerio de Inteligencia. Va aquí para que
+// `parseGovernmentRoute` lo resuelva como cualquier otro despacho: la ruta
+// `ministry_intel_espionage` se genera sola y el breadcrumb cuelga del
+// ministerio sin tocar nada más.
+export const DESK_SUBVIEWS = ['buildings', 'research', 'programs', 'directives', 'espionage'];
 
 export const COMMAND_CARD_TARGETS = {
   exchangeMinistries: 'government_ministries',

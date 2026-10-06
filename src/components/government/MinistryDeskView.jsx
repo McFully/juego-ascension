@@ -219,6 +219,7 @@ export const MinistryDeskView = ({
   directives = [],
   onUpgradeProgram,
   onToggleDirective,
+  onOpenDossier,
   onBack,
   planetResources,
   playerInfluence,
@@ -226,6 +227,23 @@ export const MinistryDeskView = ({
 }) => {
   return (
     <div className="space-y-4 pt-1">
+      {/* Acceso al dossier. Solo el Ministerio de Inteligencia tiene uno. */}
+      {ministryId === 'intel' && onOpenDossier && (
+        <button
+          type="button"
+          onClick={onOpenDossier}
+          className="w-full rounded-2xl border border-cyan-500/40 bg-cyan-950/25 px-4 py-3 text-left hover:bg-cyan-900/30 transition-colors flex items-center justify-between gap-3"
+        >
+          <span className="min-w-0">
+            <span className="block text-xs font-black uppercase tracking-widest text-cyan-300">Dossier de Inteligencia</span>
+            <span className="block text-[11px] text-slate-400 mt-0.5">
+              Qué sabes de cada mundo enemigo y qué sigue oculto
+            </span>
+          </span>
+          <span className="text-cyan-400 text-lg leading-none" aria-hidden="true">→</span>
+        </button>
+      )}
+
       {/* Subview 1: Programs (Tarjetas interactivas con imagen y selector de niveles) */}
       {subview === 'programs' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3.5 items-stretch">

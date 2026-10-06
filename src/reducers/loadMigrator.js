@@ -219,6 +219,8 @@ export const migrateLoadState = (payload = {}) => {
     fleetMissions: Array.isArray(payload.fleetMissions) ? payload.fleetMissions : [],
     combatLog: Array.isArray(payload.combatLog) ? payload.combatLog : [],
     spyReports: Array.isArray(payload.spyReports) ? payload.spyReports : [],
+    aiIntel: payload.aiIntel && typeof payload.aiIntel === 'object' ? payload.aiIntel : {},
+    planetIntel: payload.planetIntel && typeof payload.planetIntel === 'object' ? payload.planetIntel : {},
     events: Array.isArray(payload.events) ? payload.events : [],
     notifications: Array.isArray(payload.notifications) ? payload.notifications : [],
     blueprints: Array.isArray(payload.blueprints) ? payload.blueprints : [],

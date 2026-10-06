@@ -1,3 +1,12 @@
+/**
+ * Ids de las sondas de espionaje. Vive junto al dato y no en la vista porque la
+ * clasificacion por subcadena anterior (`id.includes('spy') || includes('probe')`)
+ * nunca casaba con el id real: `espionageProbe` no contiene 'spy' y su 'probe'
+ * empieza en mayuscula. La pestana "Espionaje e Inteligencia" salia siempre
+ * vacia. Anadir aqui una sonda nueva la hace aparecer en todas partes.
+ */
+export const INTEL_SHIP_IDS = new Set(['espionageProbe']);
+
 export const SHIPS = {
   // --- CARGUEROS Y LOGÍSTICA ---
   smallCargo: { name: 'Carguera Pequeña', icon: '📦', cost: { m: 2000, c: 2000, d: 0 }, speed: 5000, cargo: 5000, fuel: 20, drive: 'combustion', range: 'system', atk: 5, shd: 10, hull: 400, rapid: { espionageProbe: 5 }, cat: 'civil', desc: 'Transporte ligero suborbital para logística dentro del mismo sistema solar.' },

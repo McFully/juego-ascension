@@ -63,11 +63,28 @@ export const handleCombatMission = (mission, state) => {
     intelBonus += spyLevel * 0.02;
     const relicSpyMult = (state.relics || []).reduce((acc, r) => r.effect?.spyBonus ? acc * r.effect.spyBonus : acc, 1);
     intelBonus *= relicSpyMult;
-    const recentSpy = (state.spyReports || []).find(r => r.targetId === targetAI?.id || (targetPlanet && r.coords && r.coords.galaxy === targetPlanet.galaxy && r.coords.system === targetPlanet.system && r.coords.position === targetPlanet.position));
-    if (recentSpy) {
-      if (recentSpy.intelLevel === 'high') intelBonus += 0.08;
-      else if (recentSpy.intelLevel === 'full') intelBonus += 0.15;
+    // El informe debe ser el MAS RECIENTE de ese objetivo. `find()` sobre el array
+    // (ordenado por insercion) devolvia el mas antiguo de la ventana de 50, de
+    // modo que un `high` de hace horas bonificaba como si fuera nuevo.
+    const reports = state.spyReports || [];
+    const recentSpy = reports[reports.length - 1];
+    const targetId = targetAI?.id || targetPlanet?.id;
+    if (recentSpy && targetId) {
+      const coordsMatch = targetPlanet && recentSpy.coords &&
+        recentSpy.coords.galaxy === targetPlanet.galaxy &&
+        recentSpy.coords.system === targetPlanet.system &&
+        recentSpy.coords.position === targetPlanet.position;
+      if (recentSpy.targetId === targetId || coordsMatch) {
+        if (recentSpy.intelLevel === 'high') intelBonus += 0.08;
+        else if (recentSpy.intelLevel === 'full') intelBonus += 0.15;
+      }
     }
+  } else if (targetPlanet) {
+    // Si la IA te espió y no la detectaste, ataca con mejor puntería. Es el
+    // unico sitio donde el jugador nota el espionaje sin que se lo digamos.
+    const aiIntel = state.aiIntel?.[targetPlanet.id];
+    if (aiIntel?.level === 'high') intelBonus += 0.08;
+    else if (aiIntel?.level === 'medium') intelBonus += 0.04;
   }
   let result;
   try {

@@ -4,6 +4,8 @@ import {
 import { canColonizeNewPlanet, getMaxPlanets, getUsedColonySlots } from '../../utils/formulas.js';
 import { canShipReachTarget } from '../../utils/fleetClassification.js';
 import { SHIPS } from '../../data/gameData.js';
+import { INTEL_SHIP_IDS } from '../../data/game/shipsData.js';
+import { countProbes, getEspionageMissionCost, ESPIONAGE_PHASES } from '../../utils/espionageFormulas.js';
 
 export const handleSendFleet = (state, action) => {
   const { fromId, to, fleet, missionType, missionSpeed = 10, resources = null, autoRetreat = false, formation = 'standard' } = action;
@@ -28,6 +30,47 @@ export const handleSendFleet = (state, action) => {
 
   const from = state.planets.find(p => p.id === fromId);
   if (!from) return state;
+
+// Espionaje sin sonda no es espionaje. Antes solo lo filtraba la interfaz, de
+  // modo que una flota sin sondas con deteccion las borraba sin combate.
+  const espionageProbes = missionType === 'espionage' ? countProbes(fleet) : 0;
+  if (missionType === 'espionage' && espionageProbes <= 0) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        {
+          id: uid(),
+          type: 'warning',
+          message: '🚫 Misión de espionaje rechazada: no llevas ninguna sonda a bordo.',
+          timestamp: Date.now()
+        }
+      ]
+    };
+  }
+
+  // Al reves: una sonda en una misión de asalto o transporte. Antes se perdia
+  // sola: `expeditionMission` las contaba como "naves pequeñas" destruibles y en
+  // cualquier otra mision no habia nada que dijera que una sonda no es un caza.
+  if (missionType !== 'espionage') {
+    const sondasDeMas = fleet
+      ? Object.entries(fleet).reduce((acc, [id, qty]) => acc + (INTEL_SHIP_IDS.has(id) ? qty : 0), 0)
+      : 0;
+    if (sondasDeMas > 0) {
+      return {
+        ...state,
+        notifications: [
+          ...(state.notifications || []),
+          {
+            id: uid(),
+            type: 'warning',
+            message: '🚫 Misión rechazada: las sondas de espionaje no viajan en misiones de combate, transporte ni expedición.',
+            timestamp: Date.now()
+          }
+        ]
+      };
+    }
+  }
 
   const destPoi = getPOIAtCoordinates(to.galaxy, to.system, to.position);
   const isWormhole = destPoi && destPoi.type === 'wormhole';
@@ -108,7 +151,16 @@ export const handleSendFleet = (state, action) => {
   if (isWormhole) {
     totalFuel = Math.max(1, Math.floor(totalFuel * 0.5));
   }
-  if (newResources.deuterium < totalFuel) {
+  // Coste operativo propio del espionaje, aparte del combustible del viaje.
+  // Antes una operacion de espionaje no costaba nada.
+  const espionageCost = espionageProbes > 0
+    ? getEspionageMissionCost(espionageProbes, state.research?.espionage || 0)
+    : { metal: 0, crystal: 0, deuterium: 0 };
+
+  const requiredDeuterium = totalFuel + espionageCost.deuterium;
+  const requiredCrystal = espionageCost.crystal;
+
+  if (newResources.deuterium < requiredDeuterium) {
     return {
       ...state,
       notifications: [
@@ -116,13 +168,28 @@ export const handleSendFleet = (state, action) => {
         {
           id: uid(),
           type: 'warning',
-          message: `🚫 Deuterio insuficiente para la misión: Requiere ${totalFuel} de Deuterio (Disponible: ${Math.floor(newResources.deuterium)}).`,
+          message: `🚫 Deuterio insuficiente para la misión: Requiere ${requiredDeuterium} de Deuterio (Disponible: ${Math.floor(newResources.deuterium)}).`,
           timestamp: Date.now()
         }
       ]
     };
   }
-  newResources.deuterium -= totalFuel;
+  if (newResources.crystal < requiredCrystal) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        {
+          id: uid(),
+          type: 'warning',
+          message: `🚫 Cristal insuficiente para la misión: Requiere ${requiredCrystal} de Cristal (Disponible: ${Math.floor(newResources.crystal)}).`,
+          timestamp: Date.now()
+        }
+      ]
+    };
+  }
+  newResources.deuterium -= requiredDeuterium;
+  newResources.crystal -= requiredCrystal;
 
   let flightTime = calcFlightTime(dist, spd, missionSpeed);
   if (isOverRange) {
@@ -150,6 +217,7 @@ export const handleSendFleet = (state, action) => {
   newState.fleetMissions = [...(state.fleetMissions || []), {
     id: missionId, type: missionType, from, to, fleet, resources, fuel: totalFuel,
     departure: Date.now(), arrivalTime, returnTime, isAI: false, autoRetreat, formation,
+    ...(missionType === 'espionage' ? { probes: espionageProbes, phase: ESPIONAGE_PHASES.EN_VUELO, espionageCost } : {}),
     ...(action.missionMeta || {})
   }];
   newState.notifications = [...newState.notifications, {

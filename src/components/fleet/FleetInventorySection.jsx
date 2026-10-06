@@ -7,6 +7,7 @@ import {
   calculateRetrofitUnitCost
 } from '../../utils/formulas/retrofitFormulas.js';
 import { getShipStats } from '../../utils/formulas/combatFormulas.js';
+import { INTEL_SHIP_IDS } from '../../data/game/shipsData.js';
 import { RetrofitShipModal } from './RetrofitShipModal.jsx';
 import { FleetRetrofitQueueSection } from './FleetRetrofitQueueSection.jsx';
 import { FleetShipCard } from './FleetShipCard.jsx';
@@ -33,17 +34,19 @@ export const FleetInventorySection = React.memo(({
     .filter(([_, q]) => q > 0);
 
   const getShipCategory = (id) => {
+    // Antes de mirar la categoria: la sonda es 'civil' en el dato, asi que el
+    // filtro por subcadena la mandaba a 'civil' y la dejaba fuera de la
+    // pestana de inteligencia.
+    if (INTEL_SHIP_IDS.has(id)) return 'intel';
     const s = SHIPS[id];
     if (s?.cat === 'civil') {
       if (id.includes('Cargo')) return 'mercantile';
-      if (id.includes('spy') || id.includes('probe')) return 'intel';
       return 'civil';
     }
     if (id.startsWith('custom_')) return 'combat';
     if (['lightFighter', 'heavyFighter', 'cruiser', 'battleship', 'bomber', 'destroyer', 'deathstar', 'planetDestroyer'].includes(id)) {
       return 'combat';
     }
-    if (['spyProbe', 'scannerDrone'].includes(id)) return 'intel';
     return 'civil';
   };
 

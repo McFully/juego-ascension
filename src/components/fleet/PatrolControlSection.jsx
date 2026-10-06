@@ -217,7 +217,7 @@ export const PatrolControlSection = ({
                   <span>🛡️</span> Órbita Planetaria
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1">
-                  Escudo directo sobre {targetPlanet.name}. Intercepta asaltos y espías.
+                  Escudo directo sobre {targetPlanet.name}. Intercepta fleets de asalto.
                 </div>
               </button>
 

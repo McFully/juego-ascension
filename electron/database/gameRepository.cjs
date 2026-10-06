@@ -42,6 +42,7 @@ const GLOBAL_STATE_KEYS = [
 
   // Militar
   "fleetPresets", "patrols", "blueprints", "combatLog", "spyReports",
+  "aiIntel", "planetIntel",
   "tradeRoutes", "federalFleet", "diplomaticHistory",
 
   // Eventos y avisos

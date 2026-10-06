@@ -1,5 +1,6 @@
 import React from "react";
 import { SafeImg } from "../../assets.jsx";
+import { getEspionagePhaseLabel } from "../../utils/espionageFormulas.js";
 
 /**
  * InFlightMissionsSection — Subcomponente modularizado para monitorear flotas en vuelo.
@@ -54,6 +55,15 @@ export const InFlightMissionsSection = React.memo(({
               };
               const typeLabel = typeMap[m.type] || (m.type ? m.type.charAt(0).toUpperCase() + m.type.slice(1) : 'Tránsito');
 
+              // Espionaje: la fase distingue "hacia el objetivo" de "volviendo con
+              // los datos", que antes solo se deducía del contador.
+              const espionagePhase = m.type === 'espionage'
+                ? getEspionagePhaseLabel(isReturning ? 'regresando' : m.phase)
+                : null;
+              const probesLabel = m.type === 'espionage' && m.probes
+                ? ` · ${m.probes} ${m.probes === 1 ? 'sonda' : 'sondas'}`
+                : '';
+
               const planets = state?.planets || [];
               const originPlanet = m.from?.id ? planets.find(p => p.id === m.from.id) : (m.from?.name ? planets.find(p => p.name === m.from.name) : planets.find(p => p.galaxy === m.from?.galaxy && p.system === m.from?.system && p.position === m.from?.position));
               const originName = originPlanet?.name || m.from?.name || 'Base';
@@ -71,6 +81,11 @@ export const InFlightMissionsSection = React.memo(({
                   <div className="flex flex-col min-w-[150px] leading-tight space-y-0.5">
                     <span className="text-xs font-black text-white uppercase tracking-wide">
                       {isReturning ? `Misión de ${typeLabel} (Regreso)` : `Misión de ${typeLabel}`}
+                      {espionagePhase && (
+                        <span className="ml-2 text-blue-300 font-bold normal-case tracking-normal">
+                          {espionagePhase}{probesLabel}
+                        </span>
+                      )}
                     </span>
                     <div className="text-[11px] font-mono text-slate-300 flex items-center gap-1">
                       <span className="text-slate-400">Desde:</span>

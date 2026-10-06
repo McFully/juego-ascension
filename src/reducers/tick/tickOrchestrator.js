@@ -12,6 +12,8 @@ import { reconcileQueueTimings } from './queues/queueTiming.js';
 import { processAIEmpireTick } from './ai/aiEmpireTick.js';
 import { eventReducer } from '../eventReducer.js';
 import { processFederationTick } from './ai/federationTick.js';
+import { ESPIONAGE_PHASES } from '../../utils/espionageFormulas.js';
+import { processAiEspionageTick } from './ai/aiEspionageTick.js';
 import { processDialogueTransmissionTick } from './events/dialogueTransmissionTick.js';
 import { processPatrolsTick } from './patrolTick.js';
 import { processAutoBuildTick } from './automation/autoBuildTick.js';
@@ -181,6 +183,7 @@ export const processTick = (state) => {
               const flightTime = calcFlightTime(dist, spd, 10, newState.research);
               ongoingMissions.push({
                 ...m, fleet: returnFleet, returning: true, returnDeparture: now, returnTime: now + flightTime * 1000,
+                ...(m.type === 'espionage' ? { phase: ESPIONAGE_PHASES.REGRESANDO } : {}),
               });
             }
           } else if (m.type === 'trade_receive') {
@@ -250,6 +253,9 @@ export const processTick = (state) => {
   // 10. Simulación de IA y federaciones
   newState = processAIEmpireTick(newState);
   newState = processFederationTick(newState, state);
+  // La IA espía tus mundos: sin esto, `hawk_eye`, `counterIntelLevel`,
+  // `espionageBudget`, `quantumCrypto` y `stealthSilos` no protegen de nada.
+  newState = processAiEspionageTick(newState);
 
   // 11. Automatizaciones escalonadas (Alternancia en ticks pares e impares)
   // Ticks pares: Autogestión económica, defensiva y construcción

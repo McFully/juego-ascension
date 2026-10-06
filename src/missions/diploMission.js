@@ -1,7 +1,20 @@
 import { updatePlanet, getVirginPlanet } from '../core.jsx';
 import { SHIPS } from '../data/gameData.js';
-import { fmt, uid, getMaxPlanets, calcStorage } from '../utils/formulas.js';
+import { fmt, uid, getMaxPlanets, calcStorage, getEffectiveTech } from '../utils/formulas.js';
 import { getPlanetHeritage } from '../data/planetaryHeritageData.js';
+import {
+  getTargetEspDefense,
+  getFactionEspionageMult,
+  getEspionageCountermeasures,
+  getFleetStealth,
+  computeEspionageDetection,
+  applyIntelCeiling,
+  getIntelCeilingBonus,
+  getFactionEspionageDiffBonus,
+  getPlayerEspDefense,
+  PATROL_INTERCEPT_BONUS,
+  bestIntelLevel,
+} from '../utils/espionageFormulas.js';
 
 export const handleColonizeMission = (mission, state) => {
   const { galaxy, system, position } = mission.to;
@@ -135,17 +148,128 @@ export const handleAllyTradeMission = (mission, state) => {
   return { state: newState, type: 'info', message: `🤝 Flota mercantil se retiró.`, returnFleet: {} };
 };
 
+/**
+ * ESPIONAJE CONTRA EL JUGADOR.
+ *
+ * El camino inverso: una IA lanza sondas a uno de tus mundos. Si tu
+ * contraespionaje las detecta, avisa y las destruye. Si no, la IA se queda con
+ * los datos y usa ese conocimiento en su próximo ataque (ver `combatMission`).
+ *
+ * Aquí es donde por fin tienen efecto `hawk_eye`, `counterIntelLevel`,
+ * `espionageBudget`, `quantumCrypto` y `stealthSilos`: cinco mecánicas
+ * compradas que hasta ahora no protegían de nada porque nadie espiaba.
+ */
+const resolveAiEspionageMission = (mission, state, targetPlanet) => {
+  const spyTech = mission.from?.research?.espionage || 0;
+  const playerDefense = getPlayerEspDefense(targetPlanet, state);
+  const rawDiff = spyTech - playerDefense.defense;
+
+  // Patrulla orbital o de sistema: interceptar sondas es lo que el jugador
+  // compraba que hiciera y nunca lo hacia.
+  const patrol = (state.patrols || []).find(p =>
+    (p.status === 'active') &&
+    ((p.planetId && p.planetId === targetPlanet.id) ||
+      (p.galaxy === targetPlanet.galaxy && p.system === targetPlanet.system))
+  );
+  const patrolBonus = patrol ? PATROL_INTERCEPT_BONUS : 0;
+
+  let detectionChance = computeEspionageDetection({
+    techDiff: rawDiff,
+    countermeasures: {},
+    stealth: getFleetStealth(mission.fleet, state.blueprints || []),
+  });
+  detectionChance = Math.max(0, Math.min(1, detectionChance * (1 - playerDefense.reduction) + patrolBonus));
+
+  const detected = Math.random() < detectionChance;
+  const newState = { ...state };
+
+  if (detected) {
+    newState.notifications = [...(newState.notifications || []), {
+      id: uid(),
+      type: 'warning',
+      message: `🕵️ Espía neutralizado sobre ${targetPlanet.name}${patrol ? ` (interceptado por tu patrulla)` : ''}. Tu contraespionaje ha detectado la sonda antes de que transmitiera.`,
+      timestamp: Date.now()
+    }];
+    return {
+      state: newState,
+      type: 'warning',
+      message: `🕵️ Espía de ${mission.from?.empireName || mission.from?.name || 'una facción'} neutralizado sobre ${targetPlanet.name}`,
+      returnFleet: {},
+      tacticalEvent: {
+        id: uid(),
+        type: 'espionage_alert',
+        title: '¡Espía Enemigo Neutralizado!',
+        subtitle: `Sonda interceptada sobre ${targetPlanet.name} [${targetPlanet.galaxy}:${targetPlanet.system}:${targetPlanet.position}]`,
+        description: `La contraespionaje de ${targetPlanet.name} detectó la sonda ${patrol ? 'y tu patrulla la interceptó' : 'antes de que pudiera transmitir'}. El espía ha perdido su enlace táctico.`,
+        image: 'Centro de Espionaje.webp',
+        targetPlanetId: targetPlanet.id,
+        ministryId: 'intel',
+        ministryName: 'Ministerio de Inteligencia',
+        voiceText: `Alerta: sonda enemiga neutralizada sobre ${targetPlanet.name}.`
+      }
+    };
+  }
+
+  // Espionaje exitoso: la IA guarda lo aprendido. No se avisa al jugador, que es
+  // justo lo que hace que la contraespionaje importa.
+  const ledger = { ...(state.aiIntel || {}) };
+  ledger[targetPlanet.id] = {
+    level: rawDiff >= 6 ? 'high' : rawDiff >= 1 ? 'medium' : 'low',
+    at: Date.now(),
+    spyTech,
+  };
+  newState.aiIntel = ledger;
+
+  return {
+    state: newState,
+    type: 'info',
+    message: `🕵️ Informe de espionaje completado sobre ${targetPlanet.name}`,
+    returnFleet: mission.fleet || {},
+  };
+};
+
 export const handleEspionageMission = (mission, state) => {
-  const target = state.aiPlanets.find(p => p.galaxy === mission.to.galaxy && p.system === mission.to.system && p.position === mission.to.position);
+  const coordsMatch = (p) =>
+    p.galaxy === mission.to.galaxy && p.system === mission.to.system && p.position === mission.to.position;
+  const target = mission.isAI
+    ? (state.planets || []).find(coordsMatch)
+    : (state.aiPlanets || []).find(coordsMatch);
   let newState = { ...state };
 
-  if (target) {
-    const spyTech = mission.from.research?.espionage || 0;
-    const targetEspDef = target.espDefenseLvl || Math.floor((target.aiLevel || 1) * 0.5);
-    const techDiff = spyTech - targetEspDef;
+  if (target && mission.isAI) {
+    return resolveAiEspionageMission(mission, state, target);
+  }
 
-    const detectionChance = Math.max(0, Math.min(0.95, 0.20 - techDiff * 0.10));
-    const detected = detectionChance > 0 && Math.random() < detectionChance;
+  if (target) {
+    // La investigacion vive en `state.research`, no en el planeta: leer
+    // `mission.from.research` daba siempre 0 y dejo inalcanzables los niveles
+    // `medium`, `high` y `full`, con ellos el bonus de combate. El mismo
+    // patrón que usa `combatMission` para el defensor.
+    const spyTech = getEffectiveTech(mission.from, state.research)?.espionage || 0;
+
+    // `espDefenseLvl` era un numero sorteado al generar la galaxia y congelado
+    // para siempre. Ahora la defensa sale de lo que el objetivo tiene montado.
+    const targetEspDef = getTargetEspDefense(target);
+    const rawDiff = spyTech - targetEspDef;
+
+    const countermeasures = getEspionageCountermeasures(mission.from, state);
+    const stealth = getFleetStealth(mission.fleet, state.blueprints || []);
+    const factionMult = getFactionEspionageMult(mission.from?.faction || 'human');
+
+    // `sleeper_net` ("+10% Intel Máxima de IAs por nivel") baja el listón para
+    // saltar de `high` a `full`, que pedia techDiff > 6. El bonus de facción
+    // suma escalones por el mismo lado: espia mejor, no se esconde mejor.
+    const techDiff = applyIntelCeiling(
+      rawDiff,
+      getIntelCeilingBonus(state) + getFactionEspionageDiffBonus(factionMult)
+    );
+
+    const detectionChance = computeEspionageDetection({
+      techDiff: rawDiff,
+      countermeasures,
+      stealth,
+    });
+    const detected = Math.random() < detectionChance;
 
     if (detected) {
       let newRelation = Math.max(-100, (target.relation || 0) - 20);
@@ -184,6 +308,22 @@ export const handleEspionageMission = (mission, state) => {
           message: `⚠️ Tratados cancelados con ${target.name} debido a hostilidades. ¡Se ha declarado la guerra!`,
           timestamp: Date.now()
         }];
+      }
+
+      // Las sondas destruidas existen como filas `in_flight` en el Registro Naval
+      // (las asigno `assignShipsToMission` al lanzar). Sin esta llamada quedaban
+      // colgadas para siempre: `returnFleet` vacio solo las borra del estado del
+      // juego, no de la base de datos.
+      if (!mission.isAI && typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.dbResolveCombatShips === 'function') {
+        window.electronAPI.dbResolveCombatShips({
+          missionId: mission.id,
+          lossesByChassis: { ...(mission.fleet || {}) },
+          battleDetails: {
+            gameTick: state.gameTick || 0,
+            location: `${target.name} [${target.galaxy}:${target.system}:${target.position}]`,
+            winner: 'defender'
+          }
+        }).catch(e => console.warn('[Ascensión DB] Error al resolver destrucción de sondas:', e));
       }
 
       return { 
@@ -280,6 +420,27 @@ export const handleEspionageMission = (mission, state) => {
     };
     const sr = [...(newState.spyReports || []), report];
     newState.spyReports = sr.length > 50 ? sr.slice(-50) : sr;
+
+    // Lo que el jugador SABE de cada mundo, acumulado. `spyReports` es un
+    // historial que se descarta a los 50; esto responde a otra pregunta: qué se
+    // sabe de este planeta concreto y qué sigue sin saberse.
+    const intelLedger = { ...(newState.planetIntel || {}) };
+    const previo = intelLedger[target.id];
+    intelLedger[target.id] = {
+      id: target.id,
+      name: target.name,
+      coords: { galaxy: target.galaxy, system: target.system, position: target.position },
+      level: bestIntelLevel(previo?.level, report.intelLevel),
+      at: report.timestamp,
+      reports: (previo?.reports || 0) + 1,
+      resources: report.resources ?? previo?.resources ?? null,
+      buildings: report.buildings ?? previo?.buildings ?? null,
+      fleet: report.fleet ?? previo?.fleet ?? null,
+      defenses: report.defenses ?? previo?.defenses ?? null,
+      researchSnapshot: report.extendedInfo?.researchSnapshot ?? previo?.researchSnapshot ?? null,
+      behaviorPrediction: report.extendedInfo?.behaviorPrediction ?? previo?.behaviorPrediction ?? null,
+    };
+    newState.planetIntel = intelLedger;
     return { 
       state: newState, 
       type: 'info', 
