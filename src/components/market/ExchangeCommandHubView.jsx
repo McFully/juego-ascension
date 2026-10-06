@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BUILDINGS } from '../../data/game/buildingsData.js';
 import { ExchangeAmmTerminalTab } from './ExchangeAmmTerminalTab.jsx';
 import { GalacticSpotExchangeView } from './GalacticSpotExchangeView.jsx';
