@@ -10,6 +10,14 @@ import { sectorReducer } from './sectorReducer.js';
 import { shouldKeepNotification } from '../core.jsx';
 
 export const gameReducer = (state, action) => {
+  // Rebase: el worker calcula el tick sobre un snapshot. Las acciones del
+  // jugador despachadas mientras el tick estaba en vuelo se reaplican sobre
+  // el estado resultante para que ningún clic quede revertido.
+  if (action.type === 'APPLY_TICK_STATE' && Array.isArray(action.replay) && action.replay.length) {
+    let rebased = gameReducer(state, { type: 'APPLY_TICK_STATE', payload: action.payload });
+    for (const pending of action.replay) rebased = gameReducer(rebased, pending);
+    return rebased;
+  }
   const result = gameReducerInner(state, action);
   if (result && result.notifications) {
     result.notifications = result.notifications.filter(shouldKeepNotification);
@@ -64,6 +72,8 @@ const gameReducerInner = (state, action) => {
     case 'CLAIM_DAO_DIVIDENDS':
     case 'CREATE_LIMIT_ORDER':
     case 'CANCEL_LIMIT_ORDER':
+    case 'MODIFY_SPOT_ORDER':
+    case 'DISPATCH_SPOT_ARBITRAGE':
     case 'CONTRIBUTE_EXCHANGE_PROJECT':
     case 'CONTRIBUTE_ALL_EXCHANGE_PROJECT':
     case 'FINALIZE_EXCHANGE_PROJECT':

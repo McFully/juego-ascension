@@ -62,21 +62,10 @@ export const MINISTRY_MAPPING = {
     icon: '⚡',
     color: '#eab308',
     buildings: [
-      'solarPlant', 'fusionReactor', 'geoPlant', 'orbitalEnergy',
+      'solarPlant', 'geoPlant', 'orbitalEnergy', 'fusionReactor',
       'quantumReactor', 'darkMatterPlant'
     ],
-    research: ['energy', 'miningAuto', 'industrialOpt', 'galacticTrade', 'advLogistics']
-  },
-  energy: {
-    id: 'energy',
-    name: 'Ministerio de Energía',
-    icon: '⚡',
-    color: '#eab308',
-    buildings: [
-      'solarPlant', 'fusionReactor', 'geoPlant', 'orbitalEnergy',
-      'quantumReactor', 'darkMatterPlant'
-    ],
-    research: ['energy', 'advReactors', 'quantumEnergy', 'quantumNetworks']
+    research: ['energy', 'advReactors', 'quantumEnergy', 'quantumNetworks', 'rtgGenerator']
   },
   science: {
     id: 'science',

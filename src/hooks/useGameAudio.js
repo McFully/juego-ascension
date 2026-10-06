@@ -40,12 +40,12 @@ export function useGameAudio({ state, activeTab }) {
   useEffect(() => {
     if (!state?.gameStarted) return;
     const clickHandler = (e) => {
-      const target = e.target.closest("button, [role=\"button\"], .tab-btn, .sidebarTab");
+      const target = e.target.closest("button, [role=\"button\"], .tab-btn");
       if (target) {
         const now = Date.now();
         if (now - lastClickTimeRef.current > 120) {
           lastClickTimeRef.current = now;
-          const isTab = target.closest(".sidebarTab") || target.classList.contains("sidebarTab") || target.closest(".tab-btn");
+          const isTab = target.closest(".tab-btn");
           if (!isTab) {
             const pan = e.clientX ? (e.clientX / window.innerWidth) * 2 - 1 : 0;
             safeSfx(sfx.uiClick, pan);
@@ -54,7 +54,7 @@ export function useGameAudio({ state, activeTab }) {
       }
     };
     const hoverHandler = (e) => {
-      const target = e.target.closest("button, [role=\"button\"], .tab-btn, .sidebarTab");
+      const target = e.target.closest("button, [role=\"button\"], .tab-btn");
       if (target && target !== lastHoverTargetRef.current) {
         const now = Date.now();
         if (now - lastHoverTimeRef.current > 80) {
@@ -66,7 +66,7 @@ export function useGameAudio({ state, activeTab }) {
       }
     };
     const mouseOutHandler = (e) => {
-      const target = e.target.closest("button, [role=\"button\"], .tab-btn, .sidebarTab");
+      const target = e.target.closest("button, [role=\"button\"], .tab-btn");
       if (!target) {
         lastHoverTargetRef.current = null;
       }

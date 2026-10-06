@@ -167,7 +167,7 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
           {/* Enlace directo a la Lonja Naval */}
           <button
             onClick={() => {
-              if (navigateTo) navigateTo('galactic_market');
+              if (navigateTo) navigateTo('market');
               if (window.playSfx) window.playSfx('click');
             }}
             className="px-3 py-1.5 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-500/50 text-indigo-300 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer ml-auto"

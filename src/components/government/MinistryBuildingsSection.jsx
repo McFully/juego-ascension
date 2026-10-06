@@ -58,9 +58,15 @@ export const MinistryBuildingsSection = ({
     );
   }
 
+  const isEnergyMinistry = ministryId === 'energy';
+
   return (
     <section className="space-y-4 pt-1">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3 items-stretch">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
+        isEnergyMinistry 
+          ? 'lg:grid-cols-6 xl:grid-cols-6' 
+          : 'lg:grid-cols-5 xl:grid-cols-5'
+      } gap-3 items-stretch`}>
         {ministryBuildings.map(([id, b]) => {
           const totalPlanetBuildQueue = (state.buildQueue || []).filter(
             q => q.planetId === currentPlanet.id
@@ -145,8 +151,8 @@ export const MinistryBuildingsSection = ({
           );
         })}
 
-        {/* Tarjeta de Retorno a la Sede al final del grid */}
-        {onBack && (
+        {/* Tarjeta de Retorno a la Sede al final del grid (oculta en el Ministerio de Energía) */}
+        {onBack && !isEnergyMinistry && (
           <ActionCardTile
             type="back"
             title={`Volver a ${mapping.name || 'Sede'}`}

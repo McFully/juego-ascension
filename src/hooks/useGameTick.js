@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { processColonyGovernor } from "../reducers/colonyGovernor.js";
 import { auditGameState, logTelemetry } from "../utils/telemetry.js";
 
-export function useGameTick({ state, dispatch, production, TICK_MS, stateRef }) {
+export function useGameTick({ state, dispatch, production, TICK_MS, stateRef, journalRef }) {
   const productionRef = useRef(production);
   productionRef.current = production;
 
@@ -12,28 +12,38 @@ export function useGameTick({ state, dispatch, production, TICK_MS, stateRef }) 
     let worker = null;
     let isProcessingTick = false;
     let lastTickSentTime = 0;
+    const journal = journalRef?.current || { tickId: null, pending: [] };
+    const releaseTick = () => {
+      isProcessingTick = false;
+      journal.tickId = null;
+      journal.pending = [];
+    };
 
     try {
       if (typeof Worker !== 'undefined') {
         worker = new Worker(new URL('../workers/game.worker.js', import.meta.url), { type: 'module' });
         worker.onmessage = (e) => {
+          const { action, payload } = e.data || {};
+          // Respuesta de un tick ya invalidado (watchdog o cambio de partida): se descarta.
+          if (payload?.tickId !== journal.tickId) return;
+          const replay = journal.pending;
+          releaseTick();
           try {
-            const { action, payload } = e.data || {};
             if (action === 'TICK_SUCCESS' && payload?.newState) {
-              dispatch({ type: 'APPLY_TICK_STATE', payload: payload.newState });
+              dispatch({ type: 'APPLY_TICK_STATE', payload: payload.newState, replay });
               try { processColonyGovernor(payload.newState, dispatch); } catch (gErr) { console.error('[Ascensión] Governor error:', gErr); }
               try { auditGameState(payload.newState, productionRef.current); } catch (aErr) { console.error('[Ascensión] Audit error:', aErr); }
             } else if (action === 'TICK_ERROR') {
               console.warn('[Ascensión] Worker TICK error, procesando fallback síncrono:', payload?.error);
               dispatch({ type: 'TICK' });
             }
-          } finally {
-            isProcessingTick = false;
+          } catch (applyErr) {
+            console.error('[Ascensión] Error aplicando tick del worker:', applyErr);
           }
         };
         worker.onerror = (err) => {
           console.warn('[Ascensión] Worker exception, ejecutando fallback:', err);
-          isProcessingTick = false;
+          releaseTick();
         };
       }
     } catch (workerInitErr) {
@@ -46,15 +56,17 @@ export function useGameTick({ state, dispatch, production, TICK_MS, stateRef }) 
         const currentState = stateRef.current || state;
         const now = Date.now();
 
-        // Watchdog: si el worker tarda más de 3.5s en responder, desbloquear bandera
+        // Watchdog: si el worker tarda más de 3.5s, se invalida ese tick (su respuesta se ignorará).
         if (isProcessingTick && (now - lastTickSentTime > 3500)) {
           console.warn('[Ascensión] Watchdog: Worker tick tardó demasiado, forzando desbloqueo');
-          isProcessingTick = false;
+          releaseTick();
         }
 
         if (worker && !isProcessingTick) {
           isProcessingTick = true;
           lastTickSentTime = now;
+          journal.tickId = now;
+          journal.pending = [];
           try {
             worker.postMessage({
               action: 'TICK',
@@ -62,7 +74,7 @@ export function useGameTick({ state, dispatch, production, TICK_MS, stateRef }) 
             });
           } catch (postErr) {
             console.error('[Ascensión] worker.postMessage error, ejecutando fallback síncrono:', postErr);
-            isProcessingTick = false;
+            releaseTick();
             dispatch({ type: 'TICK' });
           }
         } else if (!worker) {
@@ -86,6 +98,7 @@ export function useGameTick({ state, dispatch, production, TICK_MS, stateRef }) 
 
     return () => {
       clearInterval(interval);
+      releaseTick();
       if (worker) {
         try { worker.terminate(); } catch (_) {}
       }

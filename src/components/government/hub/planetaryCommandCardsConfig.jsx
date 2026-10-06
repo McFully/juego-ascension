@@ -1,5 +1,6 @@
 import React from 'react';
 import { HubCard } from './HubCard.jsx';
+import { COMMAND_CARD_TARGETS } from '../../../utils/governmentRoute.js';
 
 /**
  * Catálogo del Alto Mando de un mundo.
@@ -224,7 +225,7 @@ export function buildPlanetaryCommandCards({
     ),
     bank: (
       <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('ministry_finance_buildings')}
+        onClick={() => onNavigateTab && onNavigateTab(COMMAND_CARD_TARGETS.planetaryBank)}
         isLocked={bankLevel < 1}
         lockReason="Requiere construir la Banca Galáctica Central (Nv. 1) en el Ministerio de Finanzas para desbloquear los servicios bancarios."
         borderColor="border-yellow-500/30"

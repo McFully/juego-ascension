@@ -34,7 +34,7 @@ export function useImperialTotals(state) {
         ecoSustainability: 100,
         details: { slagFromMetalMine: 0, slagFromCrystalMine: 0, slagFromIndustry: 0 }
       },
-      energy: { solar: 0, fusion: 0, others: 0, totalProd: 0, totalCons: 0, energyBalance: 0 }
+      energy: { solar: 0, geo: 0, orbital: 0, fusion: 0, quantum: 0, darkMatter: 0, others: 0, totalProd: 0, totalCons: 0, energyBalance: 0 }
     };
 
     planets.forEach(p => {
@@ -126,7 +126,11 @@ export function useImperialTotals(state) {
             if (prod.breakdown.energy) {
               const eb = prod.breakdown.energy;
               breakdown.energy.solar += (eb.solar || 0);
+              breakdown.energy.geo += (eb.geo || 0);
+              breakdown.energy.orbital += (eb.orbital || 0);
               breakdown.energy.fusion += (eb.fusion || 0);
+              breakdown.energy.quantum += (eb.quantum || 0);
+              breakdown.energy.darkMatter += (eb.darkMatter || 0);
               breakdown.energy.others += (eb.others || 0);
               breakdown.energy.totalProd += (eb.totalProd || 0);
               breakdown.energy.totalCons += (eb.totalCons || 0);

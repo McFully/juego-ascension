@@ -1,6 +1,7 @@
 import {
   uid, canAfford, deduct, updatePlanet, SHIPS
 } from '../../core.jsx';
+import { recordFactionMemory, updateIntelLedger } from '../tick/ai/factionProfileManager.js';
 
 export const handleDiplomacyApplyAction = (state, action) => {
   const { planetId, actionType } = action;
@@ -169,7 +170,25 @@ export const handleDiplomacyApplyAction = (state, action) => {
         updated.pna = false;
         updated.defensivePact = false;
         updated.activePacts = [];
+        return recordFactionMemory(updated, {
+          type: 'betrayal',
+          targetId: 'player',
+          targetName: state.playerName || 'Comandante Humano',
+          tick: Number(state.gameTick) || 0,
+          reason: 'ruptura_unilateral_de_relaciones'
+        });
       }
+
+      if (['trade_agreement', 'defense_agreement', 'cultural_exchange', 'scientific_exchange', 'economic_exchange'].includes(actionType)) {
+        return recordFactionMemory(updated, {
+          type: 'aid',
+          targetId: 'player',
+          targetName: state.playerName || 'Comandante Humano',
+          tick: Number(state.gameTick) || 0,
+          reason: `acuerdo_${actionType}`
+        });
+      }
+
       return updated;
     }
     return p;
@@ -274,12 +293,29 @@ export const handleDiplomacyDeclareWar = (state, action) => {
   let newState = { ...state };
   newState.aiPlanets = state.aiPlanets.map(p => {
     if (p.id === planetId) {
-      return {
+      const updated = {
         ...p,
         relation: declareWar ? -100 : 0,
         pna: false,
         alliance: false
       };
+      if (declareWar) {
+        return recordFactionMemory(updated, {
+          type: 'betrayal',
+          targetId: 'player',
+          targetName: state.playerName || 'Comandante Humano',
+          tick: Number(state.gameTick) || 0,
+          reason: 'declaracion_de_guerra'
+        });
+      } else {
+        return recordFactionMemory(updated, {
+          type: 'war_ended',
+          targetId: 'player',
+          targetName: state.playerName || 'Comandante Humano',
+          won: true,
+          tick: Number(state.gameTick) || 0
+        });
+      }
     }
     return p;
   });

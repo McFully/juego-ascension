@@ -20,6 +20,7 @@ import { GovernmentBreadcrumbs } from '../components/government/GovernmentBreadc
 import { PlanetarySenateModal } from '../components/planet/PlanetarySenateModal';
 import { MINISTRY_METADATA } from '../data/ministryMetadata.js';
 import { buildPlanetMinistries } from '../data/ministryState.js';
+import { buildGovernmentTab, parseGovernmentRoute } from '../utils/governmentRoute.js';
 export { MINISTRY_METADATA };
 
 export const GovernmentPage = ({
@@ -53,77 +54,32 @@ export const GovernmentPage = ({
   // son órganos del imperio y se abren desde `ImperialCommandPage`. Antes
   // colgaban de esta página, que es la de un planeta, y por eso compartían
   // gabinete y recursos con el mundo activo.
-  const [navLevel, setNavLevel] = useState(() => {
-    if (activeTab && activeTab.startsWith('ministry_')) { return (activeTab.endsWith('_buildings') || activeTab.endsWith('_research')) ? 3 : 2; }
-    if (activeTab === 'government_ministries') return 1;
-    return 0; // Alto Mando del planeta por defecto
-  });
-  const [activeMinistry, setActiveMinistry] = useState(() => {
-    if (activeTab && activeTab.startsWith('ministry_')) {
-      return activeTab.replace('ministry_', '').replace('_buildings', '').replace('_research', '');
-    }
-    return 'economy';
-  });
-  const [activeSubview, setActiveSubview] = useState(() => {
-    if (activeTab && activeTab.endsWith('_buildings')) return 'buildings';
-    if (activeTab && activeTab.endsWith('_research')) return 'research';
-    return 'overview';
-  }); // 'overview' | 'programs' | 'directives'
+  //
+  // La pantalla sale solo de `activeTab`. Antes había otro estado local
+  // (nivel, ministerio, despacho) que un efecto reescribía con el tab anterior.
+  // Por eso Banca a veces seguía mostrando Investigaciones de Finanzas.
+  const route = parseGovernmentRoute(activeTab) || {
+    level: 0,
+    ministryId: null,
+    subview: 'overview',
+    tab: 'government',
+  };
+  const navLevel = route.level;
+  const activeMinistry = route.ministryId;
+  const activeSubview = route.subview;
   const [candidateModal, setCandidateModal] = useState(null);
   const [planetarySenateOpen, setPlanetarySenateOpen] = useState(false);
 
+  // Cambiar de mundo cierra el despacho. El gabinete es del planeta.
+  // No reinterpreta el tab viejo: vuelve al Alto Mando del mundo nuevo.
+  const planetNavRef = React.useRef(state.currentPlanetId);
   React.useEffect(() => {
-    if (activeTab && activeTab.startsWith('ministry_')) {
-      const rest = activeTab.replace('ministry_', '');
-      let minKey = rest;
-      let targetSubview = 'overview';
-      let targetLevel = 2;
-      if (rest.endsWith('_buildings')) {
-        minKey = rest.replace('_buildings', '');
-        targetSubview = 'buildings';
-        targetLevel = 3;
-      } else if (rest.endsWith('_research')) {
-        minKey = rest.replace('_research', '');
-        targetSubview = 'research';
-        targetLevel = 3;
-      }
-      setActiveMinistry(minKey);
-      setNavLevel(targetLevel);
-      setActiveSubview(targetSubview);
-    } else if (activeTab === 'government_ministries') {
-      setNavLevel(1);
-    } else if (activeTab === 'government') {
-      setNavLevel(0);
-    }
-  }, [activeTab]);
-
-  // Cambiar de mundo reinicia la navegación: el gabinete, el distrito y el
-  // despacho pertenecen al planeta, no al jugador.
-  React.useEffect(() => {
-    if (activeTab && activeTab.startsWith('ministry_')) {
-      const rest = activeTab.replace('ministry_', '');
-      let minKey = rest;
-      let targetSubview = 'overview';
-      let targetLevel = 2;
-      if (rest.endsWith('_buildings')) {
-        minKey = rest.replace('_buildings', '');
-        targetSubview = 'buildings';
-        targetLevel = 3;
-      } else if (rest.endsWith('_research')) {
-        minKey = rest.replace('_research', '');
-        targetSubview = 'research';
-        targetLevel = 3;
-      }
-      setActiveMinistry(minKey);
-      setNavLevel(targetLevel);
-      setActiveSubview(targetSubview);
-    } else if (activeTab === 'government_ministries') {
-      setNavLevel(1);
-    } else {
-      setNavLevel(0);
-      setActiveSubview('overview');
-    }
+    if (planetNavRef.current === state.currentPlanetId) return;
+    planetNavRef.current = state.currentPlanetId;
     setCandidateModal(null);
+    if (setActiveTab && activeTab !== 'government') {
+      setActiveTab('government');
+    }
   }, [state.currentPlanetId]);
 
   // Gestión de música de ministerios: al estar en nivel >= 2 suena el ministerio de forma continua.
@@ -146,19 +102,7 @@ export const GovernmentPage = ({
     };
   }, []);
 
-  const effectivePlanetId = (() => {
-    try {
-      if (typeof window !== "undefined") {
-        const targetId = window.sessionStorage.getItem("ascension_target_planet_id");
-        if (targetId && state.planets?.some(p => p.id === targetId)) {
-          return targetId;
-        }
-      }
-    } catch (_) {}
-    return state.currentPlanetId;
-  })();
-
-  const currentPlanet = state.planets?.find(p => p.id === effectivePlanetId) || state.planets?.find(p => p.id === state.currentPlanetId) || state.planets?.[0];
+  const currentPlanet = state.planets?.find(p => p.id === state.currentPlanetId) || state.planets?.[0];
   const planetResources = currentPlanet?.resources || { metal: 0, crystal: 0, deuterium: 0 };
   const playerInfluence = state.influence || 0;
 
@@ -213,24 +157,17 @@ export const GovernmentPage = ({
   };
 
   const handleNavigate = (targetLevel, minId = activeMinistry, subview = 'overview') => {
-    setNavLevel(targetLevel);
-    if (minId) setActiveMinistry(minId);
-    setActiveSubview(subview);
-    if (targetLevel === 0 && setActiveTab) {
-      setActiveTab('government');
-    } else if (targetLevel === 1 && setActiveTab) {
-      setActiveTab('government_ministries');
-    } else if (targetLevel >= 2 && minId && setActiveTab) {
-      setActiveTab(`ministry_${minId}`);
-    }
+    if (!setActiveTab) return;
+    setActiveTab(buildGovernmentTab({
+      level: targetLevel,
+      ministryId: minId,
+      subview: targetLevel >= 3 ? subview : 'overview',
+    }));
     if (window.playSfx) window.playSfx('click');
   };
 
   const handleEnterMinistry = (minId) => {
-    setActiveMinistry(minId);
-    setNavLevel(2);
-    setActiveSubview('overview');
-    if (setActiveTab) setActiveTab(`ministry_${minId}`);
+    if (setActiveTab) setActiveTab(buildGovernmentTab({ level: 2, ministryId: minId }));
 
     const mState = getMinistryState(minId);
     if (mState?.minister?.voiceId) {
@@ -241,8 +178,8 @@ export const GovernmentPage = ({
   };
 
   const handleOpenDesk = (subview) => {
-    setNavLevel(3);
-    setActiveSubview(subview);
+    if (!activeMinistry || !setActiveTab) return;
+    setActiveTab(buildGovernmentTab({ level: 3, ministryId: activeMinistry, subview }));
     if (window.playSfx) window.playSfx('click');
   };
 
@@ -305,7 +242,16 @@ if (window.playSfx) window.playSfx('success');
     });
   };
 
-  const activeMeta = MINISTRY_METADATA[activeMinistry] || MINISTRY_METADATA.economy;
+  const activeMeta = (activeMinistry && MINISTRY_METADATA[activeMinistry]) || {
+    name: 'Ministerio',
+    subtitle: '',
+    icon: '🏛️',
+    assetId: 'sectorGovPalace',
+    desc: '',
+    border: 'border-cyan-500/40',
+    badgeBg: 'bg-cyan-500/10 text-cyan-400',
+    accentColor: '#06b6d4',
+  };
   const currentMinState = getMinistryState(activeMinistry);
   const currentMinUpgrades = upgrades[activeMinistry] || {};
 

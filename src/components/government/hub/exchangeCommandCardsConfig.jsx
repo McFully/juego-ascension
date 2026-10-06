@@ -8,6 +8,7 @@ import { HubCard } from './HubCard.jsx';
  * logística, megaproyectos y defensa neutral de la Lonja.
  */
 export const EXCHANGE_COMMAND_CARDS = [
+  'ministries_of_planet',
   'directorate',
   'terminal',
   'megaprojects',
@@ -18,14 +19,14 @@ export const EXCHANGE_COMMAND_CARDS = [
   'merchant_shipyard',
   'cargo_docks',
   'orbital_beacon',
-  'scrap_depot',
-  'back_to_empire'
+  'scrap_depot'
 ];
 
 export const exchangeCommandStorageKey = (planetId) =>
-  `ascension_cmd_hub_exchange_${planetId || 'default'}_v1`;
+  `ascension_cmd_hub_exchange_${planetId || 'default'}_v2`;
 
 export function buildExchangeCommandCards({
+  onOpenMinistriesOfPlanet,
   onOpenDirectorate,
   onOpenTerminal,
   onOpenMegaprojects,
@@ -37,7 +38,6 @@ export function buildExchangeCommandCards({
   onOpenCargoDocks,
   onOpenOrbitalBeacon,
   onOpenScrapDepot,
-  onBackToEmpire,
   planet,
   state,
   fmt
@@ -52,6 +52,25 @@ export function buildExchangeCommandCards({
   const totalDebris = (planet?.debris?.metal || 0) + (planet?.debris?.crystal || 0);
 
   return {
+    ministries_of_planet: (
+      <HubCard
+        onClick={onOpenMinistriesOfPlanet}
+        borderColor="border-cyan-500/30"
+        hoverBorderColor="hover:border-cyan-400"
+        hoverShadow="hover:shadow-[0_0_35px_rgba(6,182,212,0.3)]"
+        assetId="ministryCouncil"
+        badgeText="GOBIERNO"
+        badgeClasses="bg-cyan-950/80 text-cyan-300 border border-cyan-500/50"
+        title="Ministerios de este planeta"
+        icon="🏛️"
+        titleHoverColor="group-hover:text-cyan-300"
+        description="Gabinete de ministros activo en este enclave. Gestiona las carteras de política interior, economía y administración de la Zona Franca."
+        footerLabel="Estado del gabinete:"
+        footerValue="Ministerios Activos"
+        footerValueClasses="text-cyan-300"
+      />
+    ),
+
     directorate: (
       <HubCard
         onClick={onOpenDirectorate}
@@ -258,25 +277,6 @@ export function buildExchangeCommandCards({
         footerLabel="Chatarra acumulada:"
         footerValue={`${fmt ? fmt(totalDebris) : totalDebris} Tons`}
         footerValueClasses="text-yellow-300"
-      />
-    ),
-
-    back_to_empire: (
-      <HubCard
-        onClick={onBackToEmpire}
-        borderColor="border-cyan-500/20"
-        hoverBorderColor="hover:border-cyan-400/60"
-        hoverShadow="hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]"
-        assetId="deepColonizationPsych"
-        badgeText="MUNDOS"
-        badgeClasses="bg-cyan-950/80 text-cyan-300 border border-cyan-500/40"
-        title="Volver a Mundos del Imperio"
-        icon="🪐"
-        titleHoverColor="group-hover:text-cyan-300"
-        description="Regresa a la cuadrícula de planetas del Imperio para inspeccionar colonias, defensas generales y censos poblacionales."
-        footerLabel="Vista destino:"
-        footerValue="Catálogo de Mundos"
-        footerValueClasses="text-cyan-300"
       />
     )
   };

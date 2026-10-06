@@ -3,9 +3,11 @@ import {
   handleClaimDaoDividends,
   handleCreateLimitOrder,
   handleCancelLimitOrder,
+  handleModifySpotOrder,
   handleContributeExchangeProject,
   handleContributeAllExchangeProject,
-  handleFinalizeExchangeProject
+  handleFinalizeExchangeProject,
+  handleDispatchSpotArbitrage
 } from './economy/exchangeActions.js';
 import {
   handleMarketTrade,
@@ -38,6 +40,10 @@ export const economyReducer = (state, action) => {
       return handleCreateLimitOrder(state, action);
     case 'CANCEL_LIMIT_ORDER':
       return handleCancelLimitOrder(state, action);
+    case 'MODIFY_SPOT_ORDER':
+      return handleModifySpotOrder(state, action);
+    case 'DISPATCH_SPOT_ARBITRAGE':
+      return handleDispatchSpotArbitrage(state, action);
     case 'CONTRIBUTE_EXCHANGE_PROJECT':
       return handleContributeExchangeProject(state, action);
     case 'CONTRIBUTE_ALL_EXCHANGE_PROJECT':

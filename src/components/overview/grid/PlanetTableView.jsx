@@ -8,6 +8,7 @@ import { getPlanetHeritage } from '../../../data/planetaryHeritageData.js';
 export function PlanetTableView({
   filteredPlanets,
   currentPlanet,
+  state,
   fmt,
   dispatch,
   calcProduction,
@@ -41,14 +42,16 @@ export function PlanetTableView({
               try {
                 const prod = calcProduction(
                   planet.buildings || {},
-                  {},
+                  state?.research || {},
                   planet.temperature || 20,
                   GAME_SPEED,
-                  1.0,
-                  planet.biome || 'terran',
-                  planet.gravity || 2,
+                  planet.faction || 'human',
+                  planet.biome,
+                  planet.gravity,
+                  planet.trait,
                   planet.specialization,
-                  planet.traits || []
+                  { galaxy: planet.galaxy, system: planet.system, position: planet.position },
+                  planet.taxRate ?? state?.ministries?.economy?.taxRate ?? 0
                 );
                 pEnergy = prod?.energyBalance ?? 0;
               } catch (_) {}

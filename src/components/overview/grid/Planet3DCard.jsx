@@ -43,7 +43,7 @@ export const Planet3DCard = React.memo(function Planet3DCard({
       planet.trait,
       planet.specialization,
       { galaxy: planet.galaxy, system: planet.system, position: planet.position },
-      state?.ministries?.economy?.taxRate || 0
+      planet.taxRate ?? state?.ministries?.economy?.taxRate ?? 0
     );
     pEnergy = pProd?.energyBalance || 0;
   } catch (_) {

@@ -9,6 +9,7 @@ import {
 } from './hub/exchangeCommandCardsConfig.jsx';
 import { ExchangeAmmTerminalTab } from '../market/ExchangeAmmTerminalTab.jsx';
 import { SafeImg } from '../../assets.jsx';
+import { COMMAND_CARD_TARGETS } from '../../utils/governmentRoute.js';
 
 /**
  * ExchangePlanetaryCommandHub — Alto Mando especializado de la Lonja Galáctica.
@@ -60,6 +61,9 @@ export const ExchangePlanetaryCommandHub = React.memo(({
   ];
 
   const cardsMap = useMemo(() => buildExchangeCommandCards({
+    onOpenMinistriesOfPlanet: () => {
+      if (onNavigateTab) onNavigateTab(COMMAND_CARD_TARGETS.exchangeMinistries);
+    },
     onOpenDirectorate: () => setActiveSubview('directorate'),
     onOpenTerminal: () => setActiveSubview('terminal'),
     onOpenMegaprojects: () => setActiveSubview('megaprojects'),
@@ -85,11 +89,10 @@ export const ExchangePlanetaryCommandHub = React.memo(({
     onOpenScrapDepot: () => {
       if (onNavigateTab) onNavigateTab('fleet');
     },
-    onBackToEmpire,
     planet,
     state,
     fmt
-  }), [onNavigateTab, onBackToEmpire, planet, state, fmt]);
+  }), [onNavigateTab, planet, state, fmt]);
 
   const order = useCardOrder(exchangeCommandStorageKey(planet.id), EXCHANGE_COMMAND_CARDS);
 
@@ -164,7 +167,6 @@ export const ExchangePlanetaryCommandHub = React.memo(({
         <CommandHubGrid
           cardsMap={cardsMap}
           cardOrder={order.cardOrder}
-          lockedCardId="back_to_empire"
           columnsClass="lg:grid-cols-4 xl:grid-cols-6"
           {...order}
         />

@@ -21,6 +21,7 @@ const CommunicationsPage = lazy(() => import("../../pages/CommunicationsPage.jsx
 const TelemetryPage = lazy(() => import("../../pages/TelemetryPage.jsx").then(m => ({ default: m.TelemetryPage })));
 const GalacticMarketPage = lazy(() => import("../../pages/GalacticMarketPage.jsx").then(m => ({ default: m.GalacticMarketPage })));
 const ColonyNetworkPage = lazy(() => import("../../pages/ColonyNetworkPage.jsx").then(m => ({ default: m.ColonyNetworkPage })));
+const GalacticObservatoryPage = lazy(() => import("../../pages/GalacticObservatoryPage.jsx").then(m => ({ default: m.GalacticObservatoryPage })));
 
 export const GameViewports = ({
   activeTab,
@@ -88,12 +89,9 @@ export const GameViewports = ({
       {activeTab === "overview" && <OverviewPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} storage={storage} MISSIONS={MISSIONS} BUILDINGS={BUILDINGS} RESEARCH={RESEARCH} SHIPS={SHIPS} DEFENSES={DEFENSES} S={S} QueueDisplay={QueueDisplay} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} isOutdated={isOutdated} onOpenCodex={onOpenCodex} safeSetActiveTab={safeSetActiveTab} onOpenSettings={onOpenSettings} onReturnToMenu={onReturnToMenu} />}
       {activeTab === "missions" && <MissionsPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} setActiveTab={safeSetActiveTab} MISSIONS={MISSIONS} S={S} onOpenCodex={onOpenCodex} production={production} fmt={fmt} />}
       {activeTab === "buildings" && <BuildingsPage dispatch={dispatch} setActiveTab={safeSetActiveTab} safeSetActiveTab={safeSetActiveTab} currentPlanet={currentPlanet} state={state} production={production} fmt={fmt} />}
-      {activeTab === "research" && (() => {
-        // Redirección de seguridad: la pantalla legacy de investigación fue suprimida.
-        // Toda investigación vive en el ministerio correspondiente.
-        if (safeSetActiveTab) setTimeout(() => safeSetActiveTab("ministry_science_research"), 0);
-        return <div className="text-center text-cyan-400 font-mono py-12">Accediendo a carteras de investigación ministerial...</div>;
-      })()}
+      {activeTab === "research" && (
+        <div className="text-center text-cyan-400 font-mono py-12">Accediendo a carteras de investigación ministerial...</div>
+      )}
       {activeTab === "shipyard" && <ShipyardPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} SHIPS={SHIPS} RESEARCH={RESEARCH} BUILDINGS={BUILDINGS} S={S} SafeImg={SafeImg} CardBanner={CardBanner} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} shipCost={shipCost} calcShipTime={calcShipTime} meetsReq={meetsReq} getShipStats={getShipStats} canAfford={canAfford} constructionDiscount={constructionDiscount} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />}
       {activeTab === "defense" && <DefensePage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} DEFENSES={DEFENSES} MISSILES={MISSILES} RESEARCH={RESEARCH} S={S} SafeImg={SafeImg} CardBanner={CardBanner} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} defenseCost={defenseCost} calcDefenseTime={calcDefenseTime} meetsReq={meetsReq} getDefenseStats={getDefenseStats} getEffectiveTech={getEffectiveTech} canAfford={canAfford} constructionDiscount={constructionDiscount} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />}
       {activeTab === "missiles" && <MissilesPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} MISSILES={MISSILES} S={S} fmt={fmt} canAfford={canAfford} constructionDiscount={constructionDiscount} onOpenCodex={onOpenCodex} meetsReq={meetsReq} RESEARCH={RESEARCH} />}
@@ -108,6 +106,7 @@ export const GameViewports = ({
       {activeTab === "telemetry" && <TelemetryPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} safeSetActiveTab={safeSetActiveTab} />}
       {activeTab === "market" && <GalacticMarketPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
       {activeTab === "colony_network" && <ColonyNetworkPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
+      {activeTab === "galactic_observatory" && <GalacticObservatoryPage state={state} fmt={fmt} />}
       {(activeTab === "imperial_hub" || activeTab === "tactical_advisor" || activeTab === "imperial_council" || activeTab === "imperial_senate") && (
         <ImperialCommandPage
           state={state}

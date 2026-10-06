@@ -365,17 +365,45 @@ export const ResourceBreakdownTooltip = ({ resourceType, breakdown, currentAmoun
               Fuentes de Generación:
             </div>
             <div className="space-y-1 bg-black/40 rounded-lg p-2 border border-white/5 text-[11px]">
-              <div className="flex justify-between text-slate-300">
-                <span>☀️ Plantas Solares:</span>
-                <span className="font-bold text-emerald-400">+{fmt(b.solar)}/h</span>
-              </div>
-              <div className="flex justify-between text-slate-300">
-                <span>⚛️ Reactores de Fusión:</span>
-                <span className="font-bold text-emerald-400">+{fmt(b.fusion)}/h</span>
-              </div>
+              {(b.solar > 0 || (!b.geo && !b.orbital && !b.fusion && !b.quantum && !b.darkMatter)) && (
+                <div className="flex justify-between text-slate-300">
+                  <span>☀️ Planta Solar:</span>
+                  <span className="font-bold text-emerald-400">+{fmt(b.solar || 0)}/h</span>
+                </div>
+              )}
+              {(b.geo > 0) && (
+                <div className="flex justify-between text-slate-300">
+                  <span>🌋 Central Geotérmica:</span>
+                  <span className="font-bold text-emerald-400">+{fmt(b.geo)}/h</span>
+                </div>
+              )}
+              {(b.orbital > 0) && (
+                <div className="flex justify-between text-slate-300">
+                  <span>🛰️ Red Orbital Energética:</span>
+                  <span className="font-bold text-emerald-400">+{fmt(b.orbital)}/h</span>
+                </div>
+              )}
+              {(b.fusion > 0) && (
+                <div className="flex justify-between text-slate-300">
+                  <span>⚛️ Reactor de Fusión:</span>
+                  <span className="font-bold text-emerald-400">+{fmt(b.fusion)}/h</span>
+                </div>
+              )}
+              {(b.quantum > 0) && (
+                <div className="flex justify-between text-slate-300">
+                  <span>⚡ Reactor Cuántico:</span>
+                  <span className="font-bold text-emerald-400">+{fmt(b.quantum)}/h</span>
+                </div>
+              )}
+              {(b.darkMatter > 0) && (
+                <div className="flex justify-between text-slate-300">
+                  <span>🪐 Planta Materia Oscura:</span>
+                  <span className="font-bold text-emerald-400">+{fmt(b.darkMatter)}/h</span>
+                </div>
+              )}
               {b.others > 0 && (
                 <div className="flex justify-between text-slate-300">
-                  <span>⚡ Centrales Geotérmicas y Especiales:</span>
+                  <span>🔋 Generación Auxiliar:</span>
                   <span className="font-bold text-emerald-400">+{fmt(b.others)}/h</span>
                 </div>
               )}

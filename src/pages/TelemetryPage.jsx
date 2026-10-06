@@ -22,6 +22,7 @@ const CATEGORIES = [
   { id: 'espionage', label: 'Espionaje', match: (e) => e.type?.startsWith('espionage') },
   { id: 'expedition', label: 'Expedición', match: (e) => e.type === 'expedition' },
   { id: 'diplomatic', label: 'Diplomáticas', match: (e) => e.kind === 'transmission' || e.kind === 'firstContact' },
+  { id: 'galactic', label: 'Galaxia Viva', match: (e) => e.isGalacticEvent || ['war', 'raid', 'coalition', 'rebellion', 'coup', 'boom', 'tech_breakthrough', 'crisis'].includes(e.type) },
   { id: 'narrative', label: 'Narrativas', match: (e) => e.kind === 'narrative' },
 ];
 
@@ -41,7 +42,23 @@ const formatStamp = (ts) => {
 
 export const TelemetryPage = ({ state, dispatch, currentPlanet, production, fmt, safeSetActiveTab }) => {
   const { navigateBack } = useNavigation();
-  const log = state?.tacticalEventLog || [];
+  
+  // Combinar el log táctico clásico con los eventos galácticos emergentes del universo vivo
+  const log = useMemo(() => {
+    const tactical = state?.tacticalEventLog || [];
+    const galactic = (state?.galacticEvents || []).slice(-40).map(e => ({
+      id: e.id || `gal_${e.tick}_${Math.random()}`,
+      type: e.type || 'combat',
+      isGalacticEvent: true,
+      title: e.title || 'Evento Galáctico',
+      text: e.desc || '',
+      receivedAt: e.timestamp || Date.now(),
+      priority: e.type === 'war' || e.type === 'rebellion' ? 'alta' : 'media',
+      read: true
+    }));
+    return [...tactical, ...galactic];
+  }, [state?.tacticalEventLog, state?.galacticEvents]);
+
   const [filter, setFilter] = useState('all');
   const [selectedId, setSelectedId] = useState(null);
 

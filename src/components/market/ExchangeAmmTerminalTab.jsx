@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { getOrderBook, getMarketView, ORDER_TYPES } from '../../utils/galacticSpotExchange.js';
 
 export const ExchangeAmmTerminalTab = ({
   planetRes: propPlanetRes,
@@ -37,6 +38,16 @@ export const ExchangeAmmTerminalTab = ({
 
   const planetRes = propPlanetRes || currentPlanet?.resources || { metal: 0, crystal: 0, deuterium: 0 };
   const currentBuildings = propCurrentBuildings || currentPlanet?.buildings || {};
+  const marketId = currentPlanet?.id || null;
+  const marketView = useMemo(
+    () => getMarketView(state?.spotExchange || {}, marketId),
+    [state?.spotExchange, marketId]
+  );
+  const book = useMemo(
+    () => getOrderBook(state?.spotExchange?.orders || [], selectedRes, marketId),
+    [state?.spotExchange?.orders, selectedRes, marketId]
+  );
+  const lastPrint = Number(marketView.lastPrices?.[selectedRes] || 0);
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Columna Izquierda: Cotizaciones y Bóvedas */}
@@ -46,16 +57,18 @@ export const ExchangeAmmTerminalTab = ({
         </h3>
         <div className="space-y-3">
           {[
-            { key: 'metal', name: 'Metal Bruto', icon: '⛏️', color: 'text-cyan-300', rate: '1.02 ₢' },
-            { key: 'crystal', name: 'Cristal Refinado', icon: '💎', color: 'text-emerald-300', rate: '1.68 ₢' },
-            { key: 'deuterium', name: 'Deuterio Cuántico', icon: '⚗️', color: 'text-amber-300', rate: '3.35 ₢' }
-          ].map(r => (
+            { key: 'metal', name: 'Metal Bruto', icon: '⛏️', color: 'text-cyan-300' },
+            { key: 'crystal', name: 'Cristal Refinado', icon: '💎', color: 'text-emerald-300' },
+            { key: 'deuterium', name: 'Deuterio Cuántico', icon: '⚗️', color: 'text-amber-300' }
+          ].map(r => {
+            const last = Number(marketView.lastPrices?.[r.key] || 0);
+            return (
             <div key={r.key} className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="text-lg">{r.icon}</span>
                 <div>
                   <div className="text-xs font-bold text-white">{r.name}</div>
-                  <div className="text-[10px] text-slate-500 font-mono">Cotización: {r.rate}</div>
+                  <div className="text-[10px] text-slate-500 font-mono">Cotización: {last > 0 ? `${last.toFixed(3)} ₢` : '---'}</div>
                 </div>
               </div>
               <div className="text-right">
@@ -65,7 +78,7 @@ export const ExchangeAmmTerminalTab = ({
                 <div className="text-[9px] text-slate-500 font-mono">En custodia</div>
               </div>
             </div>
-          ))}
+          );})}
         </div>
 
         <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-slate-400 space-y-2">
@@ -186,35 +199,24 @@ export const ExchangeAmmTerminalTab = ({
 
         <button
           onClick={() => {
-            if (executionMode === 'limit') {
-              dispatch({
-                type: 'CREATE_LIMIT_ORDER',
-                orderType: orderType === 'buy' ? 'buy_limit' : 'sell_limit',
-                resource: selectedRes,
-                amount: tradeAmount,
-                targetPrice: limitTargetPrice,
-                hasParkedShip: true,
-                destinationPlanetId: currentPlanet.id
-              });
-            } else if (orderType === 'buy') {
-              dispatch({
-                type: 'MARKET_TRADE',
-                planetId: currentPlanet.id,
-                sellResource: 'credits',
-                buyResource: selectedRes,
-                sellAmount: Math.floor(tradeAmount * (selectedRes === 'metal' ? 1.02 : selectedRes === 'crystal' ? 1.68 : 3.35)),
-                buyAmount: tradeAmount
-              });
-            } else {
-              dispatch({
-                type: 'MARKET_TRADE',
-                planetId: currentPlanet.id,
-                sellResource: selectedRes,
-                buyResource: 'credits',
-                sellAmount: tradeAmount,
-                buyAmount: Math.floor(tradeAmount * (selectedRes === 'metal' ? 0.98 : selectedRes === 'crystal' ? 1.60 : 3.20))
-              });
+            const marketPrice = orderType === 'buy'
+              ? (book.bestAsk || lastPrint)
+              : (book.bestBid || lastPrint);
+            if (executionMode !== 'limit' && !(marketPrice > 0)) {
+              if (window.playSfx) window.playSfx('uiError');
+              return;
             }
+            dispatch({
+              type: 'CREATE_LIMIT_ORDER',
+              orderType: orderType === 'buy' ? 'buy_limit' : 'sell_limit',
+              resource: selectedRes,
+              amount: tradeAmount,
+              targetPrice: executionMode === 'limit' ? limitTargetPrice : marketPrice,
+              spotOrderType: executionMode === 'limit' ? ORDER_TYPES.LIMIT : ORDER_TYPES.MARKET,
+              hasParkedShip: true,
+              destinationPlanetId: currentPlanet.id,
+              planetId: currentPlanet.id
+            });
           }}
           className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold uppercase tracking-wider text-xs shadow-lg hover:brightness-110 active:scale-95 transition-all"
         >

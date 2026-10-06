@@ -7,6 +7,10 @@ import {
   PLANETARY_COMMAND_CARDS,
   planetaryCommandStorageKey
 } from '../components/government/hub/planetaryCommandCardsConfig.jsx';
+import {
+  EXCHANGE_COMMAND_CARDS,
+  exchangeCommandStorageKey
+} from '../components/government/hub/exchangeCommandCardsConfig.jsx';
 
 /**
  * El tablero del imperio y el de cada mundo son dos cosas distintas.
@@ -47,5 +51,24 @@ describe('tableros de mando independientes', () => {
     expect(IMPERIAL_COMMAND_CARDS).toContain('imperial_senate');
     expect(PLANETARY_COMMAND_CARDS).not.toContain('imperial_council');
     expect(PLANETARY_COMMAND_CARDS).not.toContain('imperial_senate');
+  });
+
+  it('el Alto Mando de la Lonja tiene exactamente las 12 tarjetas requeridas en orden y sin volver al imperio', () => {
+    expect(EXCHANGE_COMMAND_CARDS).toEqual([
+      'ministries_of_planet',
+      'directorate',
+      'terminal',
+      'megaprojects',
+      'dao_fund',
+      'trade_routes',
+      'security_bastion',
+      'defensive_silos',
+      'merchant_shipyard',
+      'cargo_docks',
+      'orbital_beacon',
+      'scrap_depot'
+    ]);
+    expect(EXCHANGE_COMMAND_CARDS).not.toContain('back_to_empire');
+    expect(EXCHANGE_COMMAND_CARDS[0]).toBe('ministries_of_planet');
   });
 });

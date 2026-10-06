@@ -48,3 +48,9 @@ desktop.ini
 
 # Saves locales exportados desde el juego (no son codigo fuente)
 /ascension_*.json
+
+# Artefactos de Playwright (resultados de la ultima corrida, se regeneran solo)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

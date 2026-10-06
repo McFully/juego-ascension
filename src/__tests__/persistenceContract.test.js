@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync, statSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 /**
@@ -20,13 +20,25 @@ import { join } from 'path';
 
 const SRC = join(process.cwd(), 'src');
 
+/**
+ * `withFileTypes` evita un `statSync` por entrada: con 400+ archivos en src, esas
+ * llamadas al sistema dominaban el tiempo del escaneo.
+ */
 function walk(dir, out = []) {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.(js|jsx)$/.test(entry) && !/\.test\.jsx?$/.test(entry)) out.push(full);
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) walk(full, out);
+    else if (entry.isFile() && /\.(js|jsx)$/.test(entry.name) && !/\.test\.jsx?$/.test(entry.name)) out.push(full);
   }
   return out;
+}
+
+let cachedSrcFiles = null;
+
+/** El listado completo se recorre varias veces: se recorre una vez. */
+function allSourceFiles() {
+  if (!cachedSrcFiles) cachedSrcFiles = walk(SRC);
+  return cachedSrcFiles;
 }
 
 const repo = readFileSync(
@@ -151,7 +163,7 @@ describe('contrato de persistencia', () => {
     // El estado solo se cambia por dispatch. Si un componente hace
     // `state.algo = ...`, ese cambio no pasa por el router y no se persiste.
     const ofensores = [];
-    for (const file of walk(SRC)) {
+    for (const file of allSourceFiles()) {
       if (file.includes(`${'reducers'}\\`) || file.includes('/reducers/')) continue;
       const src = readFileSync(file, 'utf-8');
       for (const m of src.matchAll(/\bstate\.([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)/g)) {
@@ -159,7 +171,9 @@ describe('contrato de persistencia', () => {
       }
     }
     expect(ofensores.join('\n')).toBe('');
-  });
+    // Lee y regexea las ~400 fuentes del proyecto. El default de 5s se queda
+    // corto cuando las demas suites saturan la CPU y hacia el test intermitente.
+  }, 30000);
 });
 
 describe('seguridad del contrato de persistencia', () => {

@@ -6,6 +6,9 @@ import {
   GAME_SPEED
 } from '../../core.jsx';
 import { stampTimeMult } from '../tick/queues/queueTiming.js';
+import { checkPhysicalAccess } from '../../utils/galacticSpotExchange.js';
+import { estimateSpotArbitrage } from '../../utils/spotArbitrage.js';
+import { handleSendFleet } from '../fleet/fleetMissionActions.js';
 
 export const handleClaimDaoDividends = (state, action) => {
   const claimAmount = Number(action.amount || 0);
@@ -25,13 +28,40 @@ export const handleClaimDaoDividends = (state, action) => {
 };
 
 export const handleCreateLimitOrder = (state, action) => {
-  const { orderType, resource, amount, targetPrice, hasParkedShip, destinationPlanetId } = action;
+  const { orderType, resource, amount, targetPrice, hasParkedShip, destinationPlanetId, planetId,
+          stopPrice, limitPrice, spotOrderType, takeProfitPrice, expiresAt, clientOrderId } = action;
   if (!resource || amount <= 0 || targetPrice <= 0) return state;
+
+  const curSpot = state.spotExchange || { orders: [], trades: [], candles: {}, lastPrices: {}, stats: {} };
+  if (clientOrderId && (curSpot.orders || []).some(o => o.clientOrderId === clientOrderId)) {
+    return state;
+  }
 
   const currentCredits = state.credits || 0;
   let newCredits = currentCredits;
+  const targetPlanetId = destinationPlanetId || planetId || state.currentPlanetId;
+  const access = checkPhysicalAccess(state, targetPlanetId);
+  if (!access.hasAccess) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: `🚫 ${access.reason}`,
+        timestamp: Date.now()
+      }]
+    };
+  }
+  const currentPlanets = [...(state.planets || [])];
+  const planetIndex = currentPlanets.findIndex(p => p.id === targetPlanetId);
+  if (planetIndex < 0) return state;
+  const targetPlanet = currentPlanets[planetIndex];
+  if (!targetPlanet) return state;
 
-  if (orderType === 'buy_limit') {
+  let reservedCredits = 0;
+  let reservedResourceAmount = 0;
+
+  if (orderType === 'buy_limit' || orderType === 'buy') {
     const requiredCredits = Math.floor(amount * targetPrice);
     if (currentCredits < requiredCredits) {
       return {
@@ -39,34 +69,87 @@ export const handleCreateLimitOrder = (state, action) => {
         notifications: [...(state.notifications || []), {
           id: uid(),
           type: 'warning',
-          message: `⚠️ Fondos insuficientes para la orden Limit (${fmt(requiredCredits)} ₢ requeridos).`,
+          message: `⚠️ Fondos insuficientes para la orden (${fmt(requiredCredits)} ₢ requeridos).`,
           timestamp: Date.now()
         }]
       };
     }
     newCredits -= requiredCredits;
+    reservedCredits = requiredCredits;
+  } else {
+    // Orden de VENTA (Sell): Bloquea los recursos en custodia física
+    const currentRes = targetPlanet.resources?.[resource] || 0;
+    if (currentRes < amount) {
+      return {
+        ...state,
+        notifications: [...(state.notifications || []), {
+          id: uid(),
+          type: 'warning',
+          message: `⚠️ Recursos insuficientes en ${targetPlanet.name} para colocar orden de venta (${fmt(amount)} ${resource} requeridos).`,
+          timestamp: Date.now()
+        }]
+      };
+    }
+    // Deducir del inventario disponible y bloquear en custodia de orden
+    const updatedPlanet = {
+      ...targetPlanet,
+      resources: {
+        ...(targetPlanet.resources || {}),
+        [resource]: Math.max(0, currentRes - amount)
+      }
+    };
+    currentPlanets[planetIndex >= 0 ? planetIndex : 0] = updatedPlanet;
+    reservedResourceAmount = amount;
   }
+
+  // Determinar type de orden (limit, market, stop, stop_limit)
+  const resolvedType = spotOrderType || (
+    (orderType === 'buy' || orderType === 'sell') ? 'market' : 'limit'
+  );
 
   const newOrder = {
     id: uid(),
-    type: orderType,
+    ownerId: 'player',
+    instrument: resource,
+    side: (orderType === 'buy_limit' || orderType === 'buy') ? 'buy' : 'sell',
+    type: resolvedType,
     resource,
     amount,
+    price: targetPrice,
     targetPrice,
-    reservedCredits: orderType === 'buy_limit' ? Math.floor(amount * targetPrice) : 0,
+    stopPrice: stopPrice || null,
+    limitPrice: limitPrice || null,
+    takeProfitPrice: takeProfitPrice || stopPrice || null,
+    expiresAt: expiresAt || null,
+    clientOrderId: clientOrderId || null,
+    filledAmount: 0,
+    status: 'OPEN',
+    reservedCredits,
+    reservedResource: resource,
+    reservedResourceAmount,
     hasParkedShip: !!hasParkedShip,
-    destinationPlanetId: destinationPlanetId || state.currentPlanetId,
-    createdAt: Date.now()
+    planetId: targetPlanetId,
+    destinationPlanetId: targetPlanetId,
+    marketId: targetPlanetId,
+    createdAt: state.gameTick || 0,
+    tickCreated: state.gameTick || 0
   };
+
+  const updatedSpotOrders = [...(curSpot.orders || []), newOrder];
 
   return {
     ...state,
+    planets: currentPlanets,
     credits: newCredits,
     exchangeOrders: [...(state.exchangeOrders || []), newOrder],
+    spotExchange: {
+      ...curSpot,
+      orders: updatedSpotOrders
+    },
     notifications: [...(state.notifications || []), {
       id: uid(),
       type: 'info',
-      message: `📜 Orden Limit programada: ${orderType === 'buy_limit' ? 'Comprar' : 'Vender'} ${fmt(amount)} ${resource} a umbral de ${targetPrice} ₢.`,
+      message: `📜 Orden Registrada en Libro Spot: ${(orderType === 'buy_limit' || orderType === 'buy') ? 'Comprar' : 'Vender'} ${fmt(amount)} ${resource} @ ${targetPrice} ₢.`,
       timestamp: Date.now()
     }]
   };
@@ -74,20 +157,250 @@ export const handleCreateLimitOrder = (state, action) => {
 
 export const handleCancelLimitOrder = (state, action) => {
   const { orderId } = action;
-  const order = (state.exchangeOrders || []).find(o => o.id === orderId);
+  const order = (state.exchangeOrders || []).find(o => o.id === orderId) ||
+                (state.spotExchange?.orders || []).find(o => o.id === orderId);
   if (!order) return state;
 
+  if (order.status && order.status !== 'OPEN' && order.status !== 'PARTIALLY_FILLED') {
+    return state;
+  }
+
   const currentCredits = state.credits || 0;
-  const refund = order.reservedCredits || 0;
+  const remaining = Math.max(0, (order.amount || 0) - (order.filledAmount || 0));
+  const remainingCost = Math.floor((order.price || order.targetPrice || 0) * remaining);
+  const refundCredits = order.side === 'buy'
+    ? Math.min(order.reservedCredits ?? remainingCost, remainingCost)
+    : 0;
+  const refundRes = order.reservedResource || order.instrument;
+  const remainingResAmount = order.side === 'sell'
+    ? Math.max(0, (order.reservedResourceAmount != null
+      ? order.reservedResourceAmount
+      : remaining))
+    : 0;
+
+  let currentPlanets = [...(state.planets || [])];
+  if (refundRes && remainingResAmount > 0) {
+    const pIndex = currentPlanets.findIndex(p => p.id === (order.planetId || order.destinationPlanetId));
+    if (pIndex >= 0) {
+      const pl = currentPlanets[pIndex];
+      currentPlanets[pIndex] = {
+        ...pl,
+        resources: {
+          ...pl.resources,
+          [refundRes]: (pl.resources?.[refundRes] || 0) + remainingResAmount
+        }
+      };
+    }
+  }
+
+  const curSpot = state.spotExchange || { orders: [] };
+  const updatedSpotOrders = (curSpot.orders || []).map(o => o.id === orderId ? {
+    ...o,
+    status: 'CANCELLED',
+    cancelledAt: Date.now(),
+    cancelledBy: 'player',
+    cancelReason: action.reason || 'user_cancel'
+  } : o);
 
   return {
     ...state,
-    credits: currentCredits + refund,
+    planets: currentPlanets,
+    credits: currentCredits + refundCredits,
     exchangeOrders: (state.exchangeOrders || []).filter(o => o.id !== orderId),
+    spotExchange: {
+      ...curSpot,
+      orders: updatedSpotOrders
+    },
     notifications: [...(state.notifications || []), {
       id: uid(),
       type: 'info',
-      message: `🚫 Orden Limit cancelada. Saldo reembolsado (+${fmt(refund)} ₢).`,
+      message: `🚫 Orden Cancelada. Activos devueltos a bóveda (${refundCredits > 0 ? `+${fmt(refundCredits)} ₢` : `+${fmt(remainingResAmount)} ${refundRes}`}).`,
+      timestamp: Date.now()
+    }]
+  };
+};
+
+export const handleModifySpotOrder = (state, action) => {
+  const { orderId, newPrice, newAmount } = action;
+  const priceNum = Number(newPrice);
+  const amountNum = Number(newAmount);
+  if (!orderId || (priceNum <= 0 && amountNum <= 0)) return state;
+
+  const curSpot = state.spotExchange || { orders: [] };
+  const orderIndex = (curSpot.orders || []).findIndex(o => o.id === orderId && o.ownerId === 'player');
+  if (orderIndex < 0) return state;
+
+  const targetOrder = curSpot.orders[orderIndex];
+  if (targetOrder.status !== 'OPEN' && targetOrder.status !== 'PARTIALLY_FILLED') {
+    return state;
+  }
+
+  const finalPrice = priceNum > 0 ? priceNum : targetOrder.price;
+  const finalAmount = amountNum > 0 ? amountNum : targetOrder.amount;
+  if (finalAmount <= (targetOrder.filledAmount || 0)) {
+    return state;
+  }
+
+  let currentCredits = state.credits || 0;
+  let currentPlanets = [...(state.planets || [])];
+  let reservedCredits = targetOrder.reservedCredits || 0;
+  let reservedResourceAmount = targetOrder.reservedResourceAmount || 0;
+
+  if (targetOrder.side === 'buy') {
+    const remainingToBuy = finalAmount - (targetOrder.filledAmount || 0);
+    const newTotalRequiredCredits = Math.floor(remainingToBuy * finalPrice);
+    const creditDelta = newTotalRequiredCredits - reservedCredits;
+
+    if (creditDelta > 0) {
+      if (currentCredits < creditDelta) {
+        return {
+          ...state,
+          notifications: [...(state.notifications || []), {
+            id: uid(),
+            type: 'warning',
+            message: `⚠️ Fondos insuficientes para modificar orden (+${fmt(creditDelta)} ₢ adicionales requeridos).`,
+            timestamp: Date.now()
+          }]
+        };
+      }
+      currentCredits -= creditDelta;
+      reservedCredits += creditDelta;
+    } else if (creditDelta < 0) {
+      const refundCredits = Math.abs(creditDelta);
+      currentCredits += refundCredits;
+      reservedCredits -= refundCredits;
+    }
+  } else {
+    // Venta: reajustar recurso bloqueado en el planeta
+    const planetIdx = currentPlanets.findIndex(p => p.id === targetOrder.planetId);
+    if (planetIdx >= 0) {
+      const pl = { ...currentPlanets[planetIdx] };
+      pl.resources = { ...(pl.resources || {}) };
+      const remainingToSell = finalAmount - (targetOrder.filledAmount || 0);
+      const resDelta = remainingToSell - reservedResourceAmount;
+
+      if (resDelta > 0) {
+        const available = pl.resources[targetOrder.instrument] || 0;
+        if (available < resDelta) {
+          return {
+            ...state,
+            notifications: [...(state.notifications || []), {
+              id: uid(),
+              type: 'warning',
+              message: `⚠️ Recursos insuficientes en ${pl.name} (+${fmt(resDelta)} ${targetOrder.instrument} requeridos).`,
+              timestamp: Date.now()
+            }]
+          };
+        }
+        pl.resources[targetOrder.instrument] = available - resDelta;
+        reservedResourceAmount += resDelta;
+      } else if (resDelta < 0) {
+        const refundRes = Math.abs(resDelta);
+        pl.resources[targetOrder.instrument] = (pl.resources[targetOrder.instrument] || 0) + refundRes;
+        reservedResourceAmount -= refundRes;
+      }
+      currentPlanets[planetIdx] = pl;
+    }
+  }
+
+  // REGLA ESPEC §18: Toda modificación de precio o aumento de cantidad pierde prioridad y resetea createdAt
+  const updatedOrder = {
+    ...targetOrder,
+    price: finalPrice,
+    targetPrice: finalPrice,
+    amount: finalAmount,
+    reservedCredits,
+    reservedResourceAmount,
+    createdAt: state.gameTick || 0
+  };
+
+  const updatedSpotOrders = [...curSpot.orders];
+  updatedSpotOrders[orderIndex] = updatedOrder;
+
+  const updatedExchangeOrders = (state.exchangeOrders || []).map(o => o.id === orderId ? updatedOrder : o);
+
+  return {
+    ...state,
+    planets: currentPlanets,
+    credits: currentCredits,
+    exchangeOrders: updatedExchangeOrders,
+    spotExchange: {
+      ...curSpot,
+      orders: updatedSpotOrders
+    },
+    notifications: [...(state.notifications || []), {
+      id: uid(),
+      type: 'info',
+      message: `✏️ Orden Modificada: ${fmt(finalAmount)} ${targetOrder.instrument} @ ${finalPrice} ₢ (Prioridad temporal reiniciada).`,
+      timestamp: Date.now()
+    }]
+  };
+};
+
+export const handleDispatchSpotArbitrage = (state, action) => {
+  const originId = action.originId || action.planetId || state.currentPlanetId;
+  const destId = action.destId || action.destinationPlanetId;
+  const instrument = action.instrument || action.resource || 'metal';
+  const amount = Math.floor(Number(action.amount) || 0);
+  const originPlanet = (state.planets || []).find(p => p.id === originId);
+  const destPlanet = (state.planets || []).find(p => p.id === destId);
+  const estimate = estimateSpotArbitrage({
+    state,
+    originPlanet,
+    destPlanet,
+    instrument,
+    amount
+  });
+  if (!estimate.canDispatch) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: `🚫 Convoy de arbitraje rechazado: ${estimate.reason || 'Condiciones no cumplidas.'}`,
+        timestamp: Date.now()
+      }]
+    };
+  }
+  const cargo = { metal: 0, crystal: 0, deuterium: 0, [instrument]: amount };
+  const next = handleSendFleet(state, {
+    fromId: originPlanet.id,
+    to: {
+      id: destPlanet.id,
+      name: destPlanet.name,
+      galaxy: destPlanet.galaxy,
+      system: destPlanet.system,
+      position: destPlanet.position
+    },
+    fleet: estimate.fleet,
+    missionType: 'transport',
+    missionSpeed: 10,
+    resources: cargo,
+    missionMeta: {
+      spotArbitrage: true,
+      instrument,
+      arbitrageAmount: amount
+    }
+  });
+  if (next === state) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: '🚫 Convoy de arbitraje no despachado.',
+        timestamp: Date.now()
+      }]
+    };
+  }
+  const lastNote = (next.notifications || [])[next.notifications.length - 1];
+  if (lastNote && lastNote.type === 'warning') return next;
+  return {
+    ...next,
+    notifications: [...(next.notifications || []), {
+      id: uid(),
+      type: 'info',
+      message: `🚚 Arbitraje físico: ${fmt(amount)} ${instrument} de ${originPlanet.name} hacia ${destPlanet.name}. Combustible ${fmt(estimate.fuel)} ⚗️. El lote se vende en el libro destino al atracar.`,
       timestamp: Date.now()
     }]
   };

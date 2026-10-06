@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useReducer, useMemo, useCallback, useRef } from "react";
+import { useActionJournal } from "./hooks/useActionJournal.js";
 import NewGameScreen from "./components/NewGameScreen";
 import { MainMenuScreen } from "./components/app/MainMenuScreen";
 import { LoadGameScreen } from "./components/app/LoadGameScreen";
@@ -43,7 +44,8 @@ const {
 } = GameCore;
 
 function App() {
-  const [state, dispatch] = useReducer(gameReducer, { gameStarted: false });
+  const [state, rawDispatch] = useReducer(gameReducer, { gameStarted: false });
+  const { dispatch, journalRef } = useActionJournal(rawDispatch);
   const [activeCodexId, setActiveCodexId] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -105,6 +107,7 @@ function App() {
   } = useGameLifecycle({
     state,
     dispatch,
+    journalRef,
     production,
     TICK_MS,
     activeTab,
@@ -156,6 +159,12 @@ function App() {
   const visibleTabs = useMemo(() => GAME_TABS.filter(t => isTabUnlocked(t.id, currentPlanet, state)), [state.planets, state.currentPlanetId, state.research, state.aiPlanets, state.combatsWon, state.combatsLost, currentPlanet]);
 
   useEffect(() => {
+    // La pantalla vieja de investigación no es una pestaña. Se resuelve aquí,
+    // en el mismo efecto, sin setTimeout: un temporizador pisaba el clic siguiente.
+    if (activeTab === "research") {
+      setActiveTab("ministry_science_research");
+      return;
+    }
     const isGovVirtualTab = activeTab === "government_ministries" || (typeof activeTab === "string" && activeTab.startsWith("ministry_"));
     if (!isGovVirtualTab && !visibleTabs.some(t => t.id === activeTab)) {
       setActiveTab("overview");
@@ -163,9 +172,10 @@ function App() {
   }, [visibleTabs, activeTab]);
 
   const safeSetActiveTab = (id) => {
-    const isGovVirtualTab = id === "government_ministries" || (typeof id === "string" && id.startsWith("ministry_"));
-    if (isGovVirtualTab || visibleTabs.some(t => t.id === id)) {
-      setActiveTab(id);
+    const resolved = id === "research" ? "ministry_science_research" : id;
+    const isGovVirtualTab = resolved === "government_ministries" || (typeof resolved === "string" && resolved.startsWith("ministry_"));
+    if (isGovVirtualTab || visibleTabs.some(t => t.id === resolved)) {
+      setActiveTab(resolved);
     } else {
       setActiveTab("overview");
     }

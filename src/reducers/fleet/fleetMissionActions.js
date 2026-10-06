@@ -147,9 +147,10 @@ export const handleSendFleet = (state, action) => {
   }
 
   let newState = updatePlanet(state, fromId, p => ({ ...p, fleet: newFleet, resources: newResources }));
-  newState.fleetMissions = [...state.fleetMissions, {
+  newState.fleetMissions = [...(state.fleetMissions || []), {
     id: missionId, type: missionType, from, to, fleet, resources, fuel: totalFuel,
     departure: Date.now(), arrivalTime, returnTime, isAI: false, autoRetreat, formation,
+    ...(action.missionMeta || {})
   }];
   newState.notifications = [...newState.notifications, {
     id: uid(), type: 'info', message: `🚀 Flota enviada a [${to.galaxy}:${to.system}:${to.position}]${isWormhole ? ' a través de Agujero de Gusano' : ''}`, timestamp: Date.now(),

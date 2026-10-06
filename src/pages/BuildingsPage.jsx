@@ -88,6 +88,11 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
           dispatch={dispatch}
           currentPlanet={currentPlanet}
           fmt={fmt}
+          ministries={ministries}
+          ministryAssets={ministryAssets}
+          getMinistryStats={getMinistryStats}
+          hasActiveConstruction={hasActiveConstruction}
+          onSelectMinistry={onSelectMinistry}
         />
       ) : currentPlanet?.requiresConditioning && !currentPlanet?.terraformed ? (
         <PlanetTerraformingView

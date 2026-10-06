@@ -255,6 +255,17 @@ export const migrateLoadState = (payload = {}) => {
     // Inicialización del ecosistema financiero y Planeta Lonja
     credits: payload.credits !== undefined ? payload.credits : 10000,
     exchangeOrders: Array.isArray(payload.exchangeOrders) ? payload.exchangeOrders : [],
+    spotExchange: payload.spotExchange || {
+      orders: [],
+      trades: [],
+      candles: { metal: [], crystal: [], deuterium: [] },
+      lastPrices: { metal: 1.0, crystal: 1.65, deuterium: 3.3 },
+      stats: {
+        metal: { high: 1.05, low: 0.95, volume: 0, change24h: 0 },
+        crystal: { high: 1.70, low: 1.60, volume: 0, change24h: 0 },
+        deuterium: { high: 3.40, low: 3.20, volume: 0, change24h: 0 }
+      }
+    },
     daoShares: payload.daoShares || 1000,
     playerDaoShares: payload.playerDaoShares || 100,
     daoDividendPool: payload.daoDividendPool !== undefined ? payload.daoDividendPool : 250000,

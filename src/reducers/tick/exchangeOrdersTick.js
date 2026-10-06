@@ -1,98 +1,151 @@
 import { uid, fmt } from '../../utils/formulas.js';
-import { MARKET_BASE_VALUES } from '../../data/galacticMarketData.js';
+import {
+  executeMatchingEngine,
+  initExchangeState,
+  ORDER_STATUS,
+  activateConditionalOrders,
+  simulateFactionMarketActivity,
+  getMarketView,
+  resolveMarketId
+} from '../../utils/galacticSpotExchange.js';
 
 /**
- * processExchangeOrdersTick — Procesa las órdenes Limit activas y cobra tarifas de parking en el Planeta Lonja.
- * Se ejecuta en cada ciclo de tick.
+ * processExchangeOrdersTick — Matching real por tick.
+ * Facciones colocan órdenes; el motor liquida. Cobra parking en la Lonja.
  */
 export const processExchangeOrdersTick = (state) => {
   const exchangePlanet = (state.planets || []).find(p => p.isExchangePlanet);
-  if (!exchangePlanet) return state;
+  const currentTick = state.gameTick || 0;
 
-  const orders = state.exchangeOrders || [];
-  if (orders.length === 0) return state;
+  let spotState = initExchangeState(state.spotExchange);
 
-  let newState = { ...state };
-  let currentCredits = newState.credits || 0;
-  let remainingOrders = [];
-  let notifications = [...(newState.notifications || [])];
-  let dividendPoolDelta = 0;
-
-  // Precios de mercado actuales (con leve fluctuación pseudo-orgánica basada en el tick)
-  const tickFactor = 1 + (Math.sin((state.gameTick || 0) * 0.05) * 0.04);
-  const currentPrices = {
-    metal: Number(((MARKET_BASE_VALUES.metal || 1.0) * tickFactor).toFixed(2)),
-    crystal: Number(((MARKET_BASE_VALUES.crystal || 1.65) * tickFactor).toFixed(2)),
-    deuterium: Number(((MARKET_BASE_VALUES.deuterium || 3.3) * tickFactor).toFixed(2))
-  };
-
-  const docksLevel = exchangePlanet.buildings?.exchangeDocks || 1;
-  const parkingFeePerTick = Math.max(10, Math.floor(50 / docksLevel)); // Más nivel de docks = menor coste de parking
-
-  for (const order of orders) {
-    // 1. Cobro de tarifa de parking si tiene naves atracadas
-    if (order.hasParkedShip && currentCredits >= parkingFeePerTick) {
-      currentCredits -= parkingFeePerTick;
-      dividendPoolDelta += parkingFeePerTick; // Las tarifas de parking van al pozo del DAO
-    }
-
-    const marketPrice = currentPrices[order.resource] || 1;
-    let isTriggered = false;
-
-    // 2. Condición de disparo
-    if (order.type === 'buy_limit' && marketPrice <= order.targetPrice) {
-      // Se compra al precio objetivo o mejor
-      isTriggered = true;
-      const totalCost = Math.floor(order.amount * marketPrice);
-      // Los créditos ya fueron bloqueados o se pagan ahora
-      const targetPlanet = newState.planets.find(p => p.id === (order.destinationPlanetId || exchangePlanet.id)) || exchangePlanet;
-      
-      targetPlanet.resources = {
-        ...targetPlanet.resources,
-        [order.resource]: (targetPlanet.resources[order.resource] || 0) + order.amount
-      };
-
-      // Si sobró saldo respecto al precio reservado, se le devuelve al jugador
-      const refund = Math.max(0, (order.reservedCredits || totalCost) - totalCost);
-      currentCredits += refund;
-
-      // Comisión al DAO (2%)
-      const fee = Math.floor(totalCost * 0.02);
-      dividendPoolDelta += fee;
-
-      notifications.push({
-        id: uid(),
-        type: 'success',
-        message: `📈 Orden Limit Ejecutada: Se compraron ${fmt(order.amount)} de ${order.resource} a ${marketPrice} ₢ en la Lonja. Nave liberada de atraque.`,
-        timestamp: Date.now()
-      });
-    } else if (order.type === 'sell_limit' && marketPrice >= order.targetPrice) {
-      // Se vende al precio objetivo o mejor
-      isTriggered = true;
-      const grossCredits = Math.floor(order.amount * marketPrice);
-      const fee = Math.floor(grossCredits * 0.02);
-      const netCredits = grossCredits - fee;
-
-      currentCredits += netCredits;
-      dividendPoolDelta += fee;
-
-      notifications.push({
-        id: uid(),
-        type: 'success',
-        message: `📉 Orden Limit Ejecutada: Se vendieron ${fmt(order.amount)} de ${order.resource} a ${marketPrice} ₢ en la Lonja (+${fmt(netCredits)} ₢ netos).`,
-        timestamp: Date.now()
-      });
-    }
-
-    if (!isTriggered) {
-      remainingOrders.push(order);
+  if (state.exchangeOrders && state.exchangeOrders.length > 0) {
+    const existingIds = new Set((spotState.orders || []).map(o => o.id));
+    for (const legacyOrder of state.exchangeOrders) {
+      if (!existingIds.has(legacyOrder.id)) {
+        spotState.orders.push({
+          ...legacyOrder,
+          ownerId: legacyOrder.ownerId || 'player',
+          instrument: legacyOrder.instrument || legacyOrder.resource,
+          side: legacyOrder.side || (legacyOrder.type === 'buy_limit' ? 'buy' : 'sell'),
+          type: legacyOrder.type?.includes('limit') ? 'limit' : (legacyOrder.spotOrderType || legacyOrder.type || 'limit'),
+          price: legacyOrder.price || legacyOrder.targetPrice,
+          filledAmount: legacyOrder.filledAmount || 0,
+          status: legacyOrder.status || 'OPEN'
+        });
+      }
     }
   }
 
-  newState.credits = currentCredits;
-  newState.exchangeOrders = remainingOrders;
-  newState.notifications = notifications;
-  newState.daoDividendPool = (newState.daoDividendPool || 250000) + dividendPoolDelta;
+  const factionSim = simulateFactionMarketActivity(
+    spotState,
+    currentTick,
+    state.aiPlanets || [],
+    exchangePlanet?.id || null
+  );
+  spotState = factionSim.exchangeState;
+  let currentAiPlanets = factionSim.aiPlanets;
 
-  return newState;
+  let currentCredits = state.credits || 0;
+  let currentPlanets = state.planets ? [...state.planets] : [];
+  let dividendPoolDelta = 0;
+  if (exchangePlanet) {
+    const docksLevel = exchangePlanet.buildings?.exchangeDocks || 1;
+    const parkingFeePerTick = Math.max(10, Math.floor(50 / docksLevel));
+
+    for (const ord of spotState.orders) {
+      if (ord.ownerId === 'player' && ord.hasParkedShip && ord.status === 'OPEN' && currentCredits >= parkingFeePerTick) {
+        currentCredits -= parkingFeePerTick;
+        dividendPoolDelta += parkingFeePerTick;
+      }
+    }
+  }
+
+  spotState = {
+    ...spotState,
+    orders: activateConditionalOrders(spotState.orders, (ord) => {
+      const view = getMarketView(spotState, resolveMarketId(ord));
+      return view.lastPrices?.[ord.instrument] || 0;
+    })
+  };
+
+  const newNotifications = [...(state.notifications || [])];
+  spotState.orders = (spotState.orders || []).map(ord => {
+    if (ord.status !== ORDER_STATUS.OPEN && ord.status !== ORDER_STATUS.PARTIALLY_FILLED) return ord;
+    if (!ord.expiresAt) return ord;
+    if (currentTick < ord.expiresAt) return ord;
+
+    const remaining = (ord.amount || 0) - (ord.filledAmount || 0);
+    if (ord.ownerId === 'player') {
+      if (ord.side === 'buy') {
+        const refund = ord.reservedCredits != null
+          ? ord.reservedCredits
+          : Math.floor((ord.reservedCredits || 0) * (remaining / (ord.amount || 1)));
+        currentCredits += refund;
+        newNotifications.push({
+          id: uid(),
+          type: 'warning',
+          message: `⏰ Orden expirada: ${fmt(remaining)} de ${ord.instrument} (BUY). Reembolso: ${fmt(refund)} ₢.`,
+          timestamp: Date.now()
+        });
+      } else if (ord.side === 'sell' && remaining > 0) {
+        const srcPlanetIdx = currentPlanets.findIndex(p => p.id === ord.planetId);
+        if (srcPlanetIdx >= 0) {
+          const p = { ...currentPlanets[srcPlanetIdx] };
+          p.resources = { ...(p.resources || {}) };
+          p.resources[ord.instrument] = (p.resources[ord.instrument] || 0) + remaining;
+          currentPlanets[srcPlanetIdx] = p;
+        }
+        newNotifications.push({
+          id: uid(),
+          type: 'warning',
+          message: `⏰ Orden expirada: ${fmt(remaining)} de ${ord.instrument} (SELL) devueltos al planeta.`,
+          timestamp: Date.now()
+        });
+      }
+    }
+    return { ...ord, status: ORDER_STATUS.EXPIRED };
+  });
+
+  const matchResult = executeMatchingEngine(
+    spotState,
+    currentPlanets,
+    currentCredits,
+    currentTick,
+    currentAiPlanets
+  );
+
+  if (matchResult.tradesOccurred) {
+    const playerTrades = (matchResult.exchangeState.trades || []).filter(
+      t => t.tick === currentTick && (t.buyerId === 'player' || t.sellerId === 'player')
+    );
+
+    for (const trade of playerTrades) {
+      const isBuy = trade.buyerId === 'player';
+      newNotifications.push({
+        id: uid(),
+        type: 'success',
+        message: isBuy
+          ? `📈 Ejecución Spot: Comprados ${fmt(trade.amount)} de ${trade.instrument} @ ${trade.price} ₢ en la Lonja.`
+          : `📉 Ejecución Spot: Vendidos ${fmt(trade.amount)} de ${trade.instrument} @ ${trade.price} ₢ (+${fmt(trade.total - trade.fee)} ₢ netos).`,
+        timestamp: Date.now()
+      });
+      dividendPoolDelta += trade.fee;
+    }
+  }
+
+  const playerOpenOrders = (matchResult.exchangeState.orders || []).filter(
+    o => o.ownerId === 'player' && (o.status === 'OPEN' || o.status === 'PARTIALLY_FILLED')
+  );
+
+  return {
+    ...state,
+    planets: matchResult.planets,
+    aiPlanets: matchResult.aiPlanets && matchResult.aiPlanets.length > 0 ? matchResult.aiPlanets : currentAiPlanets,
+    credits: matchResult.credits,
+    exchangeOrders: playerOpenOrders,
+    spotExchange: matchResult.exchangeState,
+    notifications: newNotifications,
+    daoDividendPool: (state.daoDividendPool || 250000) + dividendPoolDelta
+  };
 };

@@ -114,4 +114,49 @@ describe('aiEmpireTick — 1.4 investigación con scoring', () => {
     for (let i = 0; i < 500; i++) s = processAIEmpireTick(s);
     expect(totalResearchLevels(s.aiPlanets[0])).toBe(0);
   });
+
+  test('los mundos IA generan recursos por producción minera activa en cada tick', () => {
+    let s = mkState({
+      aiPlanets: [mkAI({
+        buildings: { metalMine: 10, solarPlant: 10 },
+        resources: { metal: 100, crystal: 50, deuterium: 20 }
+      })]
+    });
+    const initialMetal = s.aiPlanets[0].resources.metal;
+    s = processAIEmpireTick(s);
+    expect(s.aiPlanets[0].resources.metal).toBeGreaterThan(initialMetal);
+  });
+
+  test('los imperios IA construyen y mejoran sus edificios cuando tienen recursos', () => {
+    let s = mkState({
+      gameTick: 15,
+      aiPlanets: [mkAI({
+        buildings: { solarPlant: 10, metalMine: 1 },
+        resources: { metal: 10000, crystal: 5000, deuterium: 2000 }
+      })]
+    });
+    const initialMine = s.aiPlanets[0].buildings.metalMine;
+    s = processAIEmpireTick(s);
+    // En tick 15 con recursos y solarPlant alta, debe haber mejorado una infraestructura productiva
+    const totalBuildings = Object.values(s.aiPlanets[0].buildings).reduce((a, b) => a + b, 0);
+    expect(totalBuildings).toBeGreaterThan(11);
+  });
+
+  test('los imperios IA colonizan mundos vírgenes y fundan nuevos planetas', () => {
+    let s = mkState({
+      gameTick: 60,
+      aiPlanets: [mkAI({
+        galaxy: 1,
+        system: 1,
+        position: 1,
+        fleet: { colonizer: 1 },
+        resources: { metal: 50000, crystal: 50000, deuterium: 20000 }
+      })]
+    });
+    expect(s.aiPlanets.length).toBe(1);
+    s = processAIEmpireTick(s);
+    expect(s.aiPlanets.length).toBe(2);
+    expect(s.aiPlanets[1].isAI).toBe(true);
+    expect(s.aiPlanets[1].galaxy).toBe(1);
+  });
 });

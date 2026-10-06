@@ -14,10 +14,10 @@ export const BUILDINGS = {
 
   // ===== ENERGÍA =====
   solarPlant: { name: 'Planta Solar', icon: '☀️', cost: { m: 75, c: 30, d: 0 }, factor: 1.23157, energyGen: 20, cat: 'energy' },
-  fusionReactor: { name: 'Reactor de Fusión', icon: '⚛️', cost: { m: 900, c: 360, d: 180 }, factor: 1.23157, energyGen: 1000, deutCons: 10, cat: 'energy', req: { solarPlant: 10 } },
-  geoPlant: { name: 'Central Geotérmica', icon: '🌋', cost: { m: 2000, c: 1500, d: 500 }, factor: 1.7, energyGen: 75, cat: 'energy', req: { fusionReactor: 5 } },
-  orbitalEnergy: { name: 'Red Orbital Energética', icon: '🛰️', cost: { m: 10000, c: 8000, d: 4000 }, factor: 1.9, energyGen: 100, cat: 'energy', req: { solarPlant: 10, researchLab: 5 } },
-  quantumReactor: { name: 'Reactor Cuántico', icon: '⚡', cost: { m: 50000, c: 30000, d: 20000 }, factor: 2.2, energyGen: 200, cat: 'energy', req: { fusionReactor: 5, researchLab: 8 } },
+  geoPlant: { name: 'Central Geotérmica', icon: '🌋', cost: { m: 2000, c: 1500, d: 500 }, factor: 1.7, energyGen: 100, cat: 'energy', req: { solarPlant: 5 } },
+  orbitalEnergy: { name: 'Red Orbital Energética', icon: '🛰️', cost: { m: 10000, c: 8000, d: 4000 }, factor: 1.9, energyGen: 500, cat: 'energy', req: { solarPlant: 10, researchLab: 5 } },
+  fusionReactor: { name: 'Reactor de Fusión', icon: '⚛️', cost: { m: 900, c: 360, d: 180 }, factor: 1.23157, energyGen: 1500, deutCons: 10, cat: 'energy', req: { solarPlant: 10 } },
+  quantumReactor: { name: 'Reactor Cuántico', icon: '⚡', cost: { m: 50000, c: 30000, d: 20000 }, factor: 2.2, energyGen: 10000, cat: 'energy', req: { fusionReactor: 5, researchLab: 8 } },
 
   // ===== INSTALACIONES =====
   robotFactory: { name: 'Fábrica de Robots', icon: '🤖', cost: { m: 400, c: 120, d: 200 }, factor: 2, energy: -25000, energyFactor: 1.07, cat: 'facility' },
@@ -58,7 +58,7 @@ export const BUILDINGS = {
   nanoCenter: { name: 'Centro de Nanotecnología', icon: '⚙️', cost: { m: 150000, c: 100000, d: 80000 }, factor: 2, energy: -40000, energyFactor: 1.08, cat: 'advanced', req: { naniteFactory: 5, researchLab: 10 } },
   expLab: { name: 'Laboratorio Experimental', icon: '🧪', cost: { m: 200000, c: 300000, d: 100000 }, factor: 2.2, energy: -40000, energyFactor: 1.08, cat: 'advanced', req: { advResearchCenter: 5, researchLab: 12 } },
   geneticLab: { name: 'Centro Ing. Genética', icon: '🧬', cost: { m: 250000, c: 200000, d: 150000 }, factor: 2.2, energy: -35000, energyFactor: 1.07, cat: 'advanced', req: { expLab: 3 } },
-  darkMatterPlant: { name: 'Planta Materia Oscura', icon: '🪐', cost: { m: 500000, c: 400000, d: 300000 }, factor: 2.5, energy: -90000, energyFactor: 1.12, bonusEnergyGen: 500, bonusEnergyGenFactor: 1.15, cat: 'advanced', req: { quantumReactor: 5, expLab: 5 } },
+  darkMatterPlant: { name: 'Planta Materia Oscura', icon: '🪐', cost: { m: 500000, c: 400000, d: 300000 }, factor: 2.5, energyGen: 80000, cat: 'advanced', req: { quantumReactor: 5, expLab: 5 } },
 
   // ===== CIVILES =====
   townHall: { name: 'Ayuntamiento', icon: '🏛️', cost: { m: 400, c: 200, d: 50 }, factor: 1.45, energy: -15000, energyFactor: 1.05, cat: 'civil', desc: 'Ayuntamiento colonial que impulsa el crecimiento continuo de la población.' },

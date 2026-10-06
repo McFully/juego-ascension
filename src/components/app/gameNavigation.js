@@ -54,6 +54,8 @@ export const GAME_TABS = [
   // 3.5-b — Bandeja de comunicaciones. Vive junto a la Red de Inteligencia
   // porque es donde el jugador va a leer lo que antes saltaba solo en pantalla.
   { id: "telemetry", label: "📥 Registro Táctico", quadrant: "galaxy", parent: "communications" },
+  // Simulación autónoma — auditoría de facciones y Director Estratégico
+  { id: "galactic_observatory", label: "🔭 Observatorio Galáctico", quadrant: "galaxy", parent: "galaxy" },
 ];
 
 export const isTabUnlocked = (id, currentPlanet, state) => {

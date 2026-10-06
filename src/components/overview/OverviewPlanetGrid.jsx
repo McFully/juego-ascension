@@ -126,11 +126,6 @@ export const OverviewPlanetGrid = ({
     if (dispatch) {
       dispatch({ type: "SET_PLANET", payload: planetId, planetId });
     }
-    try {
-      if (typeof window !== "undefined") {
-        window.sessionStorage.setItem("ascension_target_planet_id", planetId);
-      }
-    } catch (_) {}
     handleNavigate("government");
   };
 
@@ -345,6 +340,7 @@ export const OverviewPlanetGrid = ({
         <PlanetTableView
           filteredPlanets={filteredPlanets}
           currentPlanet={currentPlanet}
+          state={state}
           fmt={fmt}
           dispatch={dispatch}
           calcProduction={calcProduction}

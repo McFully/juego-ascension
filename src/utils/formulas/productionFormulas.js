@@ -82,7 +82,7 @@ export const calcProduction = (buildings, research, temp, speed = 1, factionKey 
   const r = research || {};
   
   // Generar firma compacta y determinista
-  const bSig = `${b.metalMine || 0}:${b.crystalMine || 0}:${b.deutSynth || 0}:${b.solarPlant || 0}:${b.fusionReactor || 0}:${b.geoPlant || 0}:${b.orbitalEnergy || 0}:${b.quantumReactor || 0}:${b.refinery || 0}:${b.chemPlant || 0}:${b.synthPlant || 0}:${b.enrichPlant || 0}:${b.slagDenseArmorForge || 0}:${b.slagPavingPlant || 0}:${b.slagSyntheticSynthesizer || 0}:${b.slagRecycler || 0}:${b.arcologyAlpha || 0}:${b.hyperloopNetwork || 0}:${b.civilPowerGrid || 0}:${b.healthCenter || 0}`;
+  const bSig = `${b.metalMine || 0}:${b.crystalMine || 0}:${b.deutSynth || 0}:${b.solarPlant || 0}:${b.geoPlant || 0}:${b.orbitalEnergy || 0}:${b.fusionReactor || 0}:${b.quantumReactor || 0}:${b.darkMatterPlant || 0}:${b.refinery || 0}:${b.chemPlant || 0}:${b.synthPlant || 0}:${b.enrichPlant || 0}:${b.slagDenseArmorForge || 0}:${b.slagPavingPlant || 0}:${b.slagSyntheticSynthesizer || 0}:${b.slagRecycler || 0}:${b.arcologyAlpha || 0}:${b.hyperloopNetwork || 0}:${b.civilPowerGrid || 0}:${b.healthCenter || 0}`;
   const rSig = `${r.plasma || 0}:${r.miningAuto || 0}:${r.aiProd || 0}:${r.energy || 0}:${r.advReactors || 0}:${r.quantumNetworks || 0}:${r.rtgGenerator || 0}:${r.quantumEnergy || 0}`;
   const traitSig = trait?.id || trait?.name || '';
   const coordsSig = coords ? `${coords.galaxy || 1}:${coords.system || 1}:${coords.position || 1}` : '';
@@ -354,17 +354,18 @@ const calcProductionRaw = (buildings, research, temp, speed = 1, factionKey = 'h
   const energyTechMult = (1 + (research.energy || 0) * 0.10 + (research.fusionMagnetic || 0) * 0.05 + (research.highTempSuperconduct || 0) * 0.06);
   const advReactorsMult = (1 + (research.advReactors || 0) * 0.15 + (research.plasmaResonance || 0) * 0.08);
 
-  const solarEnergyVal = Math.floor(rawBuildingEnergyGen('solarPlant', sl) * energyTechMult);
-  const fusionEnergyVal = Math.floor(rawBuildingEnergyGen('fusionReactor', fl) * energyTechMult * advReactorsMult);
-  const hydroGeoLvl = buildings.hydrothermalGeothermal || 0;
   const rtgLvl = research.rtgGenerator || 0;
   const rtgBonus = 1 + rtgLvl * 0.05;
-  const otherEnergyVal = rawBuildingEnergyGen('geoPlant', gel)
-    + rawBuildingEnergyGen('hydrothermalGeothermal', hydroGeoLvl)
-    + rawBuildingEnergyGen('orbitalEnergy', oel)
-    + rawBuildingEnergyGen('quantumReactor', qrl)
-    + rawBuildingEnergyGen('darkMatterPlant', dmp);
-  const energyProd = Math.floor((solarEnergyVal + fusionEnergyVal + otherEnergyVal) * energyBonus * civEnergyMult * rtgBonus);
+  const globalEnergyMult = energyBonus * civEnergyMult * rtgBonus;
+
+  const solarEnergyVal = Math.floor(rawBuildingEnergyGen('solarPlant', sl) * energyTechMult * globalEnergyMult);
+  const geoEnergyVal = Math.floor(rawBuildingEnergyGen('geoPlant', gel) * energyTechMult * globalEnergyMult);
+  const orbitalEnergyVal = Math.floor(rawBuildingEnergyGen('orbitalEnergy', oel) * energyTechMult * globalEnergyMult);
+  const fusionEnergyVal = Math.floor(rawBuildingEnergyGen('fusionReactor', fl) * energyTechMult * advReactorsMult * globalEnergyMult);
+  const quantumEnergyVal = Math.floor(rawBuildingEnergyGen('quantumReactor', qrl) * energyTechMult * globalEnergyMult);
+  const darkMatterEnergyVal = Math.floor(rawBuildingEnergyGen('darkMatterPlant', dmp) * energyTechMult * globalEnergyMult);
+
+  const energyProd = solarEnergyVal + geoEnergyVal + orbitalEnergyVal + fusionEnergyVal + quantumEnergyVal + darkMatterEnergyVal;
   const leisureEfficiency = Math.max(0.8, 1 - (buildings.leisureCenter || 0) * 0.01 - (buildings.holographicLeisure || 0) * 0.01);
   const adjustedEnergyCons = Math.floor(energyCons * leisureEfficiency);
   const ratio = adjustedEnergyCons > 0 ? Math.min(1, energyProd / adjustedEnergyCons) : 1;
@@ -514,8 +515,12 @@ const calcProductionRaw = (buildings, research, temp, speed = 1, factionKey = 'h
       },
       energy: {
         solar: solarEnergyVal,
+        geo: geoEnergyVal,
+        orbital: orbitalEnergyVal,
         fusion: fusionEnergyVal,
-        others: finalEnergyProd - (solarEnergyVal + fusionEnergyVal),
+        quantum: quantumEnergyVal,
+        darkMatter: darkMatterEnergyVal,
+        others: (finalEnergyProd - (solarEnergyVal + geoEnergyVal + orbitalEnergyVal + fusionEnergyVal + quantumEnergyVal + darkMatterEnergyVal)),
         totalProd: finalEnergyProd,
         totalCons: energyCons,
         ratio

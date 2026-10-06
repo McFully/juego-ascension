@@ -211,6 +211,45 @@ export const DiplomacyChat = ({
                         </div>
                       </div>
 
+                      {/* Directiva Estratégica e Historial hacia el Jugador (Intel Nv. 4+) */}
+                      {intelLvl >= 4 && (
+                        <div className="bg-slate-950/70 p-2 rounded-lg border border-cyan-500/20 font-mono text-[10px] space-y-1">
+                          <div className="flex justify-between items-center text-[9px]">
+                            <span className="text-slate-400 uppercase font-bold">🎯 Directiva Estratégica:</span>
+                            <span className="text-cyan-400 font-bold px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/40">
+                              {activeContact.strategicDirective?.directive || 'TRADE'}
+                            </span>
+                          </div>
+                          {activeContact.strategicDirective?.reasoning && (
+                            <p className="text-[9px] text-slate-400 italic">
+                              "{activeContact.strategicDirective.reasoning}"
+                            </p>
+                          )}
+                          {/* Historial con el jugador */}
+                          {(() => {
+                            const playerRival = (activeContact.memory?.rivals || []).find(r => r.factionId === 'player');
+                            const playerBetrayals = (activeContact.memory?.betrayals || []).filter(b => b.factionId === 'player');
+                            const playerAids = (activeContact.memory?.aidReceived || []).filter(a => a.factionId === 'player');
+
+                            if (!playerRival && playerBetrayals.length === 0 && playerAids.length === 0) return null;
+
+                            return (
+                              <div className="pt-1 border-t border-white/5 flex gap-2 flex-wrap text-[9px]">
+                                {playerRival && (
+                                  <span className="text-red-400">⚔️ Rencor acumulado: {playerRival.grudge || 0}</span>
+                                )}
+                                {playerBetrayals.length > 0 && (
+                                  <span className="text-amber-400">⚠️ {playerBetrayals.length} traición(es) recordada(s)</span>
+                                )}
+                                {playerAids.length > 0 && (
+                                  <span className="text-emerald-400">🤝 {playerAids.length} acto(s) de cooperación</span>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+
                       {/* Canales Bilaterales Directos (Comercio Físico y Compra de Flota) */}
                       <div className="grid grid-cols-2 gap-2 pt-1">
                         <button

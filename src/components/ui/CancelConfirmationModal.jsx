@@ -14,7 +14,7 @@ export const CancelConfirmationModal = ({
   itemLevel = null,
   type = "building" // "building" | "research"
 }) => {
-  const openTimeRef = useRef(0);
+  const pressStartedOnBackdropRef = useRef(false);
 
   const stableClose = useCallback(() => {
     onClose();
@@ -22,7 +22,6 @@ export const CancelConfirmationModal = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    openTimeRef.current = Date.now();
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         stableClose();
@@ -34,14 +33,20 @@ export const CancelConfirmationModal = ({
 
   if (!isOpen) return null;
 
-  const handleBackdropClick = () => {
-    // Evitar cierre accidental por click residual del gesto que abrió el modal
-    if (Date.now() - openTimeRef.current > 150) stableClose();
+  const handleBackdropPointerDown = (e) => {
+    pressStartedOnBackdropRef.current = e.target === e.currentTarget;
+  };
+  const handleBackdropClick = (e) => {
+    e.stopPropagation();
+    const startedHere = pressStartedOnBackdropRef.current;
+    pressStartedOnBackdropRef.current = false;
+    if (startedHere && e.target === e.currentTarget) stableClose();
   };
 
   return createPortal(
     <div
       className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 w-screen h-screen animate-in fade-in duration-200"
+      onPointerDown={handleBackdropPointerDown}
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
@@ -49,7 +54,6 @@ export const CancelConfirmationModal = ({
     >
       <div
         className="p-6 rounded-3xl bg-[#090d1f] border border-red-500/40 max-w-md w-full space-y-4 shadow-[0_0_50px_rgba(239,68,68,0.3)] relative my-auto animate-in zoom-in-95 duration-200 font-mono"
-        onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-3">

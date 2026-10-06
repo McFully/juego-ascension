@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
 import { BUILDINGS } from '../../data/game/buildingsData.js';
 import { ExchangeAmmTerminalTab } from './ExchangeAmmTerminalTab.jsx';
+import { GalacticSpotExchangeView } from './GalacticSpotExchangeView.jsx';
+import { SafeImg } from '../../assets.jsx';
 
 /**
  * ExchangeCommandHubView — Pantalla de Alto Mando del Planeta Lonja / Exchange.
@@ -11,9 +12,14 @@ export const ExchangeCommandHubView = ({
   dispatch,
   currentPlanet,
   fmt,
-  onNavigateTab
+  onNavigateTab,
+  ministries = [],
+  ministryAssets = {},
+  getMinistryStats,
+  hasActiveConstruction,
+  onSelectMinistry,
 }) => {
-  const [activeTab, setActiveTab] = useState('terminal'); // 'terminal' | 'infrastructure' | 'dao'
+  const [activeTab, setActiveTab] = useState('spot'); // 'spot' | 'terminal' | 'infrastructure' | 'dao' | 'ministries'
   const [selectedRes, setSelectedRes] = useState('metal');
   const [tradeAmount, setTradeAmount] = useState(100000);
   const [orderType, setOrderType] = useState('buy'); // 'buy' | 'sell'
@@ -95,6 +101,16 @@ export const ExchangeCommandHubView = ({
       {/* Selector de Modos de la Lonja */}
       <div className="flex flex-wrap gap-2 border-b border-white/10 pb-2">
         <button
+          onClick={() => setActiveTab('spot')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold font-mono transition-all ${
+            activeTab === 'spot'
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          📈 Exchange Spot Real (Libro de Órdenes)
+        </button>
+        <button
           onClick={() => setActiveTab('terminal')}
           className={`px-5 py-2.5 rounded-xl text-xs font-bold font-mono transition-all ${
             activeTab === 'terminal'
@@ -102,7 +118,7 @@ export const ExchangeCommandHubView = ({
               : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
           }`}
         >
-          📈 Terminal de Trading y Bóvedas
+          ⚡ Consola AMM y Bóvedas Físicas
         </button>
         <button
           onClick={() => setActiveTab('infrastructure')}
@@ -124,7 +140,27 @@ export const ExchangeCommandHubView = ({
         >
           🤝 Gobernanza y Dividendos DAO
         </button>
+        <button
+          onClick={() => setActiveTab('ministries')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold font-mono transition-all ${
+            activeTab === 'ministries'
+              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          🏛️ Ministerios
+        </button>
       </div>
+
+      {/* Pestaña 0: Exchange Spot Real */}
+      {activeTab === 'spot' && (
+        <GalacticSpotExchangeView
+          state={state}
+          dispatch={dispatch}
+          currentPlanet={currentPlanet}
+          fmt={fmt}
+        />
+      )}
 
       {/* Pestaña 1: Terminal de Trading */}
       {activeTab === 'terminal' && (
@@ -303,6 +339,62 @@ export const ExchangeCommandHubView = ({
           >
             Reclamar Dividendos al Balance Imperial
           </button>
+        </div>
+      )}
+
+      {/* Pestaña 4: Ministerios */}
+      {activeTab === 'ministries' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-2">
+              <span>🏛️</span>
+              <span>Ministerios de la Lonja</span>
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 w-full items-stretch pt-1 pb-4">
+            {ministries.map((m) => {
+              const stats = getMinistryStats ? getMinistryStats(m) : { totalLevels: 0, buildingCount: m.buildings?.length || 0, activeCount: 0 };
+              const isBuilding = hasActiveConstruction ? hasActiveConstruction(m) : false;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => onSelectMinistry && onSelectMinistry(m.id)}
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 select-none bg-[#090d1f]/90 border-white/10 hover:border-cyan-400 hover:bg-[#0e1633] hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(6,182,212,0.25)] active:scale-[0.98] cursor-pointer text-left focus:outline-none w-full h-full min-h-[200px]"
+                >
+                  <div className="relative w-full h-24 sm:h-28 overflow-hidden bg-[#05070f] border-b border-white/10">
+                    <SafeImg
+                      id={ministryAssets[m.id] || 'constructionCenter'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                    />
+                    {isBuilding && (
+                      <span className="absolute top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.6)] animate-pulse z-10">
+                        🔨 En curso
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-4 flex flex-col justify-between flex-1">
+                    <div>
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors truncate">
+                        {m.name.replace('Ministerio de ', '')}
+                      </h3>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-1">
+                        <span>{stats.activeCount}/{stats.buildingCount} activos</span>
+                        <span className="text-cyan-300 font-bold">{stats.totalLevels} Nvs.</span>
+                      </div>
+                    </div>
+                    <div className="w-full mt-3">
+                      <div className="w-full h-1.5 bg-[#05070f] rounded-full overflow-hidden border border-white/5">
+                        <div
+                          className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, stats.totalLevels * 2)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

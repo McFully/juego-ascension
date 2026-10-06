@@ -8,6 +8,7 @@ import { useOfflineProgress } from "./useOfflineProgress.js";
 export function useGameLifecycle({
   state,
   dispatch,
+  journalRef,
   production,
   TICK_MS,
   activeTab,
@@ -62,7 +63,7 @@ export function useGameLifecycle({
   }, []);
 
   // Sub-hook: Ciclo de Tick (Web Worker + Fallback síncrono)
-  useGameTick({ state, dispatch, production, TICK_MS, stateRef });
+  useGameTick({ state, dispatch, production, TICK_MS, stateRef, journalRef });
 
   // Sub-hook: Progreso Offline
   useOfflineProgress({ state, ready, dispatch, fmt, stateRef });

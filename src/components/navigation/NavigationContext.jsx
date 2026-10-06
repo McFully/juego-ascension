@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useCallback, useMemo, useReducer } from 'react';
+import { resolveNavParent } from '../../utils/governmentRoute.js';
 
 /**
  * NavigationContext — Sistema de navegación jerárquica de videojuego.
@@ -99,12 +100,18 @@ const PARENT_MAP = {
   ministry_culture: 'government',
 };
 
+function parentOf(viewId) {
+  return resolveNavParent(viewId, PARENT_MAP);
+}
+
 function buildPath(viewId) {
   if (viewId === 'overview') return ['overview'];
   const path = [viewId];
   let current = viewId;
-  while (PARENT_MAP[current]) {
-    current = PARENT_MAP[current];
+  const seen = new Set();
+  while (parentOf(current) && !seen.has(current)) {
+    seen.add(current);
+    current = parentOf(current);
     path.unshift(current);
   }
   if (path[0] !== 'overview') {
@@ -172,7 +179,7 @@ export function NavigationProvider({ children, onTabChange, activeTab = 'overvie
     if (activeTab && activeTab !== state.activeView) {
       dispatch({ type: 'NAVIGATE_TO', viewId: activeTab });
     }
-  }, [activeTab]);
+  }, [activeTab, state.activeView]);
 
   const navigateTo = useCallback((viewId) => {
     dispatch({ type: 'NAVIGATE_TO', viewId });
@@ -195,8 +202,8 @@ export function NavigationProvider({ children, onTabChange, activeTab = 'overvie
     } else if (state.previousView && state.previousView !== state.activeView) {
       targetView = state.previousView;
       dispatch({ type: 'NAVIGATE_TO', viewId: targetView });
-    } else if (PARENT_MAP[state.activeView]) {
-      targetView = PARENT_MAP[state.activeView];
+    } else if (parentOf(state.activeView)) {
+      targetView = parentOf(state.activeView);
       dispatch({ type: 'NAVIGATE_TO', viewId: targetView });
     }
     if (onTabChange) onTabChange(targetView);
@@ -234,7 +241,7 @@ export function NavigationProvider({ children, onTabChange, activeTab = 'overvie
   const canGoBack = Boolean(
     state.path.length > 1 ||
     (state.previousView && state.previousView !== state.activeView) ||
-    PARENT_MAP[state.activeView]
+    parentOf(state.activeView)
   );
 
   const breadcrumbs = useMemo(() => {

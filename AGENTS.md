@@ -108,8 +108,14 @@ Prioridad absoluta:
 4. Jerarquia visual.
 5. Sensacion premium de estrategia espacial.
 
-Estructura visual base:
-- Sidebar izquierda fija.
+Modos de navegacion (dos caminos excluyentes):
+- El modo lo decide el usuario al empezar el desarrollo. El asistente debe ayudar en el modo elegido.
+- MODO SIDEBAR: si se desarrolla con columna a la izquierda, usar sidebar izquierda fija con menus, header superior y recursos visibles.
+- MODO TARJETAS: si se desarrolla con cuadriculas de tarjetas, NO usar sidebar izquierda. Navegacion por card grids grandes segun el skill `ascension-card-grid-navigation`.
+- Prohibido mezclar los dos modos o cambiar de uno a otro sin orden explicita del usuario.
+- Si la peticion no dice modo, mantener el modo que ya tenga el desarrollo en curso.
+
+Estructura visual base (comun a ambos modos):
 - Header superior fijo.
 - Recursos siempre visibles.
 - Categorias siempre visibles.

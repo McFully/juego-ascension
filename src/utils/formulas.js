@@ -412,11 +412,28 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
       };
     }
     if (b.energyGen) {
+      const powerSim = (buildingLvl) => {
+        const targetBuildings = { ...(planet.buildings || {}), [id]: buildingLvl };
+        return calcProduction(
+          targetBuildings,
+          research,
+          temp,
+          speed,
+          planet.faction || 'human',
+          planet.biome,
+          planet.gravity,
+          planet.trait ? { effect: () => PLANET_TRAITS[planet.trait]?.effect || {} } : null,
+          planet.specialization,
+          planet.galaxy ? { galaxy: planet.galaxy, system: planet.system, position: planet.position } : null,
+          planet.taxRate || 0
+        );
+      };
+      const atLvl = l > 0 ? (powerSim(l).energyProd - powerSim(0).energyProd) : 0;
       return {
         type: 'power',
         resource: 'energy',
         resourceIcon: '⚡',
-        prod: l > 0 ? calcBuildingEnergyGen(id, l) : 0,
+        prod: l > 0 ? Math.round(atLvl) : 0,
         cons: l > 0 ? calcBuildingDeutCons(id, l) : 0,
         consType: b.deutCons ? 'deuterium' : null,
         consIcon: b.deutCons ? '⚗️' : null,

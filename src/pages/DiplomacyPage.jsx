@@ -4,7 +4,6 @@ import { MINISTRY_PROGRAMS } from "./GovernmentPage.jsx";
 import DiplomacyChat from "../components/diplomacy/DiplomacyChat.jsx";
 import GalacticCouncil from "../components/diplomacy/GalacticCouncil.jsx";
 import FederationsManager from "../components/diplomacy/FederationsManager.jsx";
-import MinistriesManager from "../components/diplomacy/MinistriesManager.jsx";
 import CrisesManager from "../components/diplomacy/CrisesManager.jsx";
 import TradeAgreementModal from "../components/diplomacy/TradeAgreementModal.jsx";
 import BuyAIShipsModal from "../components/diplomacy/BuyAIShipsModal.jsx";
@@ -46,7 +45,6 @@ const DiplomacyPage = ({ state, dispatch, currentPlanet: propPlanet, production,
   const [dialogueText, setDialogueText] = useState('');
   const [isGlitching, setIsGlitching] = useState(false);
   const [subTab, setSubTab] = useState(null); // null = Selector de Cámaras, 'relations' | 'council' | 'federations' | 'crises' = Cámara activa
-  const [selectedMinistry, setSelectedMinistry] = useState('economy');
   const activeContactRef = useRef(activeContact);
   activeContactRef.current = activeContact;
   const aiNearbyRef = useRef(aiNearby);
