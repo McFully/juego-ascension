@@ -6,15 +6,35 @@ const { ipcMain, app } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-function registerVisualAuditIpc(getMainWindow) {
-  // Directorio base de auditoría: ui-audit/ dentro de la raíz del proyecto
-  const projectRootDir = path.resolve(path.join(__dirname, '..', '..'));
-  const uiAuditDir = path.join(projectRootDir, 'ui-audit');
-  const auditsDir = path.join(uiAuditDir, 'audits');
+function getAuditDirs() {
+  let baseDir;
+  try {
+    if (app && app.isPackaged) {
+      baseDir = app.getPath('userData');
+    } else if (app) {
+      baseDir = path.resolve(path.join(__dirname, '..', '..'));
+    } else {
+      baseDir = process.env.APPDATA ? path.join(process.env.APPDATA, 'ascension') : process.cwd();
+    }
+  } catch (_) {
+    baseDir = process.cwd();
+  }
 
-  // Asegurar directorios
-  if (!fs.existsSync(uiAuditDir)) fs.mkdirSync(uiAuditDir, { recursive: true });
-  if (!fs.existsSync(auditsDir)) fs.mkdirSync(auditsDir, { recursive: true });
+  const uiAuditDir = path.join(baseDir, 'ui-audit');
+  const auditsDir = path.join(uiAuditDir, 'audits');
+  return { uiAuditDir, auditsDir };
+}
+
+function registerVisualAuditIpc(getMainWindow) {
+  const { uiAuditDir, auditsDir } = getAuditDirs();
+
+  // Asegurar directorios de forma segura y tolerante
+  try {
+    if (!fs.existsSync(uiAuditDir)) fs.mkdirSync(uiAuditDir, { recursive: true });
+    if (!fs.existsSync(auditsDir)) fs.mkdirSync(auditsDir, { recursive: true });
+  } catch (err) {
+    console.warn('[Ascensión Audit] No se pudo crear directorio de auditoría:', err.message);
+  }
 
   // 1. Capturar pantalla real de la ventana de juego
   ipcMain.handle('audit-capture-screenshot', async () => {
