@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "description": "Especificación de requisitos de renderizado visual esperado por pantalla para Juego Ascensión.",
+  "screens": {
+    "market": {
+      "requiredCards": [
+        "exchange-amm-terminal",
+        "exchange-order-book",
+        "exchange-active-orders"
+      ],
+      "requiredButtons": [
+        "btn-swap-execute",
+        "btn-add-liquidity"
+      ]
+    },
+    "buildings": {
+      "requiredCards": [
+        "card-modularFactory",
+        "card-refinery"
+      ]
+    },
+    "colony_network": {
+      "requiredCards": [
+        "colony-matrix-overview"
+      ]
+    }
+  }
+}

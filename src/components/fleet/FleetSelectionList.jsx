@@ -21,6 +21,7 @@ export const FleetSelectionList = ({
   S 
 }) => {
   const [search, setSearch] = useState('');
+  const [newPresetName, setNewPresetName] = useState('');
 
   const combatIds = ['lightFighter','heavyFighter','cruiser','battleship','bomber','destroyer','deathstar','planetDestroyer'];
   const sortedShips = [...availableShips].sort((a, b) => {
@@ -114,36 +115,68 @@ export const FleetSelectionList = ({
           )}
         </div>
 
-        {/* Fleet Presets */}
-        {(state.fleetPresets || []).length > 0 && (
-          <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="text-[10px] text-slate-500 uppercase font-mono mr-1">Presets:</span>
-            {(state.fleetPresets || []).map(p => (
-              <div key={p.name} className="flex items-center bg-[#05070f] rounded-lg border border-white/10 text-xs overflow-hidden">
-                <button
-                  onClick={() => {
-                    const preset = {};
-                    for (const [id, qty] of Object.entries(p.fleet)) {
-                      const maxQty = currentPlanet.fleet[id] || 0;
-                      if (maxQty > 0) preset[id] = Math.min(qty, maxQty);
-                    }
-                    setSelectedShips(preset);
-                  }}
-                  className="px-2.5 py-1 text-slate-300 hover:text-cyan-400 hover:bg-white/5 transition font-mono"
-                >
-                  📋 {p.name}
-                </button>
-                <button
-                  onClick={() => dispatch({ type: 'DELETE_FLEET_PRESET', name: p.name })}
-                  className="px-1.5 py-1 text-red-400/60 hover:text-red-300 hover:bg-red-500/10 border-l border-white/10"
-                  title="Eliminar preset"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Fleet Presets y Guardado */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {(state.fleetPresets || []).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <span className="text-[10px] text-slate-500 uppercase font-mono mr-1">Presets:</span>
+              {(state.fleetPresets || []).map(p => (
+                <div key={p.name} className="flex items-center bg-[#05070f] rounded-lg border border-white/10 text-xs overflow-hidden">
+                  <button
+                    onClick={() => {
+                      const preset = {};
+                      for (const [id, qty] of Object.entries(p.fleet)) {
+                        const maxQty = currentPlanet.fleet[id] || 0;
+                        if (maxQty > 0) preset[id] = Math.min(qty, maxQty);
+                      }
+                      setSelectedShips(preset);
+                    }}
+                    className="px-2.5 py-1 text-slate-300 hover:text-cyan-400 hover:bg-white/5 transition font-mono"
+                  >
+                    📋 {p.name}
+                  </button>
+                  <button
+                    onClick={() => dispatch({ type: 'DELETE_FLEET_PRESET', name: p.name })}
+                    className="px-1.5 py-1 text-red-400/60 hover:text-red-300 hover:bg-red-500/10 border-l border-white/10"
+                    title="Eliminar preset"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {totalSelectedCount > 0 && (
+            <div className="flex items-center gap-1.5 bg-[#05070f] p-1 rounded-xl border border-cyan-500/30">
+              <input
+                type="text"
+                placeholder="Nombre plantilla..."
+                value={newPresetName}
+                onChange={e => setNewPresetName(e.target.value)}
+                className="px-2 py-0.5 bg-transparent text-xs text-white placeholder:text-slate-600 focus:outline-none w-28 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!newPresetName.trim()) return;
+                  dispatch({
+                    type: 'SAVE_FLEET_PRESET',
+                    name: newPresetName.trim(),
+                    fleet: selectedShips
+                  });
+                  setNewPresetName('');
+                  if (window.playSfx) window.playSfx('tradeSuccess');
+                }}
+                disabled={!newPresetName.trim()}
+                className="px-2 py-0.5 rounded bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 text-white text-[10px] font-bold uppercase font-mono transition cursor-pointer"
+                title="Guardar selección actual como plantilla"
+              >
+                + Guardar
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Filtros de escuadrón */}

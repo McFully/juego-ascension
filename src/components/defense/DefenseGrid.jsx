@@ -286,6 +286,25 @@ export const DefenseGrid = ({
                     )}
                   </div>
 
+                  {count > 0 && (
+                    <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between font-mono text-[11px]">
+                      <span className="text-slate-400">Activas: <strong className="text-cyan-300">{count}</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`¿Desmantelar 1x ${d.name}? Recuperarás el 35% de sus recursos de construcción.`)) {
+                            dispatch({ type: 'SCRAP_DEFENSES', planetId: currentPlanet?.id, defenseId: id, quantity: 1 });
+                            if (window.playSfx) window.playSfx('click');
+                          }
+                        }}
+                        className="px-2 py-0.5 rounded bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 hover:text-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+                        title={`Desmantelar 1x ${d.name} (+35% reembolso)`}
+                      >
+                        <span>♻️ Reciclar (35%)</span>
+                      </button>
+                    </div>
+                  )}
+
                   {d.req && !meets && (
                     <div className="text-[10px] text-red-400 mt-2 p-1.5 rounded-lg bg-red-950/30 border border-red-500/20 leading-tight font-mono flex items-center gap-1.5">
                       <span>🔒</span>

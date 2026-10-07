@@ -22,6 +22,7 @@ const {
   getDailyQuotaStatus,
   recordApiCall,
 } = require("./database/geminiRepository.cjs");
+const { registerVisualAuditIpc } = require("./ipc/visualAuditIpc.cjs");
 
 // Permitir autoplay de audio/música sin requerir gesto previo del usuario
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
@@ -418,6 +419,7 @@ ipcMain.handle("gemini-record-call", async () => {
 
 // Registrar IPC de guardado y partidas
 registerSaveIpc(() => mainWindow);
+registerVisualAuditIpc(() => mainWindow);
 
 app.whenReady().then(() => {
   logToFile("APPLICATION STARTED");

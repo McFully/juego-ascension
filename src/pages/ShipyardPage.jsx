@@ -181,6 +181,8 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
       {/* Cola de Producción Activa (Componente Modular) */}
       <ShipyardQueueSection
         shipQueues={shipQueues}
+        customShipQueue={(state.customShipQueue || []).filter(item => item.planetId === currentPlanet.id)}
+        blueprints={state.blueprints || []}
         SHIPS={SHIPS}
         fmt={fmt}
         fmtTime={fmtTime}

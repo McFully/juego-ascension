@@ -28,6 +28,7 @@ export const SubsystemTopBanner = ({
       activeView === 'diplomacy' ||
       activeView === 'combat' ||
       activeView === 'stats' ||
+      activeView === 'wiki' ||
       activeView === 'shipDesign' ||
       activeView === 'colony_network' ||
       activeView === 'imperial_council' ||

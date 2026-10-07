@@ -55,6 +55,16 @@ export const handlePlanetToggleAutotrade = (state, action) => {
   return updatePlanet(state, planetId, p => ({ ...p, autoTrade: !p.autoTrade }));
 };
 
+export const handleSetPlanetTaxRate = (state, action) => {
+  const { planetId, taxRate } = action;
+  const targetId = planetId || state.currentPlanetId;
+  const rate = Math.max(0, Math.min(50, Number(taxRate) || 10));
+  return updatePlanet(state, targetId, p => ({
+    ...p,
+    taxRate: rate
+  }));
+};
+
 export const handleEqualizeColonyResources = (state) => {
   if (!state.planets || state.planets.length <= 1) return state;
   let totalMetal = 0, totalCrystal = 0, totalDeut = 0;

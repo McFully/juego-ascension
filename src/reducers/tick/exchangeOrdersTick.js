@@ -1,3 +1,5 @@
+import { processMarketMakerTick } from '../../utils/galacticLonjaMarketMaker.js';
+import { recordTreasuryLedger, assessLonjaHealth } from '../../utils/galacticLonjaAutonomousCore.js';
 import { uid, fmt } from '../../utils/formulas.js';
 import {
   executeMatchingEngine,
@@ -34,6 +36,20 @@ export const processExchangeOrdersTick = (state) => {
           status: legacyOrder.status || 'OPEN'
         });
       }
+    }
+  }
+
+  // 1. Market Maker Autónomo con respaldo real (Fase 07)
+  if (exchangePlanet && exchangePlanet.lonjaAutonomousState) {
+    const mmResult = processMarketMakerTick({
+      lonjaPlanet: exchangePlanet,
+      spotState,
+      tick: currentTick
+    });
+    spotState = mmResult.spotState;
+    const epIdx = (state.planets || []).findIndex(p => p.id === exchangePlanet.id);
+    if (epIdx !== -1 && state.planets) {
+      state.planets[epIdx] = mmResult.lonjaPlanet;
     }
   }
 
@@ -138,9 +154,39 @@ export const processExchangeOrdersTick = (state) => {
     o => o.ownerId === 'player' && (o.status === 'OPEN' || o.status === 'PARTIALLY_FILLED')
   );
 
+  // Actualizar tesorería, comisiones y salud de la entidad autónoma Lonja (Reglas 17, 19, 21 y 22)
+  const finalPlanets = (matchResult.planets || []).map(p => {
+    if (p.isExchangePlanet && p.lonjaAutonomousState) {
+      let t = p.lonjaAutonomousState.treasury;
+      if (dividendPoolDelta > 0) {
+        t = {
+          ...t,
+          credits: (t.credits || 0) + dividendPoolDelta,
+          distributableProfits: (t.distributableProfits || 0) + Math.floor(dividendPoolDelta * (t.dividendDistributionRate || 0.30))
+        };
+        t = recordTreasuryLedger(t, {
+          origin: 'spot_commissions',
+          destination: 'lonja_treasury',
+          concept: 'Comisiones de trading spot recaudadas en tick ' + currentTick,
+          amount: dividendPoolDelta
+        });
+      }
+      const newHealth = assessLonjaHealth(t);
+      return {
+        ...p,
+        lonjaAutonomousState: {
+          ...p.lonjaAutonomousState,
+          treasury: t,
+          healthState: newHealth
+        }
+      };
+    }
+    return p;
+  });
+
   return {
     ...state,
-    planets: matchResult.planets,
+    planets: finalPlanets,
     aiPlanets: matchResult.aiPlanets && matchResult.aiPlanets.length > 0 ? matchResult.aiPlanets : currentAiPlanets,
     credits: matchResult.credits,
     exchangeOrders: playerOpenOrders,

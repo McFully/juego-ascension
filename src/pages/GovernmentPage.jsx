@@ -10,7 +10,6 @@ import { playVoice, playMinistryMusic, stopMinistryMusic } from '../audio.js';
 
 import { PlanetaryCommandHub } from '../components/government/PlanetaryCommandHub';
 import { ExchangePlanetaryCommandHub } from '../components/government/ExchangePlanetaryCommandHub';
-import { ExchangeCommandHubView } from '../components/market/ExchangeCommandHubView';
 import { FederalDistrictView } from '../components/government/FederalDistrictView';
 import { MinistryBuildingInterior } from '../components/government/MinistryBuildingInterior';
 import { MinistryDeskView } from '../components/government/MinistryDeskView';

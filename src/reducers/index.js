@@ -77,6 +77,10 @@ const gameReducerInner = (state, action) => {
     case 'CONTRIBUTE_EXCHANGE_PROJECT':
     case 'CONTRIBUTE_ALL_EXCHANGE_PROJECT':
     case 'FINALIZE_EXCHANGE_PROJECT':
+    case 'VOTE_DAO_PROPOSAL':
+    case 'TRADE_LONJA_SHARES':
+    case 'DEPOSIT_TO_VAULT':
+    case 'CONTRACT_FREIGHT':
     case 'ESTABLISH_BILATERAL_ROUTE':
     case 'CANCEL_BILATERAL_ROUTE':
     // --- RED DE COLONIAS ---

@@ -7,7 +7,11 @@ import {
   handleContributeExchangeProject,
   handleContributeAllExchangeProject,
   handleFinalizeExchangeProject,
-  handleDispatchSpotArbitrage
+  handleDispatchSpotArbitrage,
+  handleVoteDaoProposal,
+  handleTradeLonjaShares,
+  handleDepositToVault,
+  handleContractFreight
 } from './economy/exchangeActions.js';
 import {
   handleMarketTrade,
@@ -22,6 +26,7 @@ import {
   handleRenamePlanet,
   handlePlanetSpecialize,
   handlePlanetToggleAutotrade,
+  handleSetPlanetTaxRate,
   handleEqualizeColonyResources,
   handleRelocateColonyFleet,
   handleStartPlanetTerraforming,
@@ -50,6 +55,14 @@ export const economyReducer = (state, action) => {
       return handleContributeAllExchangeProject(state, action);
     case 'FINALIZE_EXCHANGE_PROJECT':
       return handleFinalizeExchangeProject(state, action);
+    case 'VOTE_DAO_PROPOSAL':
+      return handleVoteDaoProposal(state, action);
+    case 'TRADE_LONJA_SHARES':
+      return handleTradeLonjaShares(state, action);
+    case 'DEPOSIT_TO_VAULT':
+      return handleDepositToVault(state, action);
+    case 'CONTRACT_FREIGHT':
+      return handleContractFreight(state, action);
 
     // === GESTIÓN DE PLANETAS Y COLONIAS ===
     case 'SET_PLANET':
@@ -60,6 +73,8 @@ export const economyReducer = (state, action) => {
       return handlePlanetSpecialize(state, action);
     case 'PLANET_TOGGLE_AUTOTRADE':
       return handlePlanetToggleAutotrade(state, action);
+    case 'SET_PLANET_TAX_RATE':
+      return handleSetPlanetTaxRate(state, action);
     case 'EQUALIZE_COLONY_RESOURCES':
       return handleEqualizeColonyResources(state, action);
     case 'RELOCATE_COLONY_FLEET':

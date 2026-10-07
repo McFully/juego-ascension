@@ -18,7 +18,7 @@ export const IMPERIAL_COMMAND_CARDS = [
   'colony_network',
   'combat',
   'shipDesign',
-  'stats'
+  'wiki'
 ];
 
 export const IMPERIAL_COMMAND_STORAGE_KEY = 'ascension_cmd_hub_imperial_v2';
@@ -143,6 +143,24 @@ export function buildImperialCommandCards({
         footerLabel="Mundos y Red Neural:"
         footerValue={`${(state?.planets || []).length} mundos (${(state?.researchNetwork?.linkedPlanetIds || []).length} en red)`}
         footerValueClasses="text-indigo-300"
+      />
+    ),
+    wiki: (
+      <HubCard
+        onClick={() => onNavigateTab && onNavigateTab('wiki')}
+        borderColor="border-cyan-500/40"
+        hoverBorderColor="hover:border-cyan-300"
+        hoverShadow="hover:shadow-[0_0_35px_rgba(6,182,212,0.35)]"
+        assetId="sectorGovPalace"
+        badgeText="MANUAL DE MANDO"
+        badgeClasses="bg-cyan-950/90 text-cyan-300 border border-cyan-400/60 shadow-[0_0_10px_rgba(6,182,212,0.4)]"
+        title="Enciclopedia Imperial"
+        icon="📚"
+        titleHoverColor="group-hover:text-cyan-300"
+        description="Codex Magnus, manuales tácticos, tablas de escalado paramétrico y guías operativas."
+        footerLabel="Codex y Fórmulas:"
+        footerValue="Compendio Completo"
+        footerValueClasses="text-cyan-300"
       />
     ),
     stats: (

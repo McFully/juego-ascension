@@ -24,7 +24,7 @@ describe('historial de navegación', () => {
     expect(parentOf('shipDesign')).toBe('shipyard');
     expect(parentOf('techTree')).toBe('ministry_science');
     expect(parentOf('missions')).toBe('overview');
-    expect(parentOf('stats')).toBe('overview');
+    expect(parentOf('stats')).toBe('wiki');
     expect(parentOf('colony_network')).toBe('overview');
     expect(parentOf('diplomacy')).toBeNull();
     expect(parentOf('imperial_council')).toBe('imperial_hub');

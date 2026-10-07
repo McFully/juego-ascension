@@ -147,6 +147,13 @@ export const MinistryBuildingsSection = ({
                 planetId: currentPlanet?.id,
                 targetId: id
               })}
+              buildingMode={currentPlanet?.buildingModes?.[id] || 'standard'}
+              onSelectBuildingMode={(modeId) => dispatch({
+                type: 'SET_BUILDING_MODE',
+                planetId: currentPlanet?.id,
+                buildingId: id,
+                modeId
+              })}
             />
           );
         })}

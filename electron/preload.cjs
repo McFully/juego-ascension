@@ -78,4 +78,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   geminiSetCache: (payload) => ipcRenderer.invoke('gemini-set-cache', payload),
   geminiGetQuota: (maxDaily) => ipcRenderer.invoke('gemini-get-quota', maxDaily),
   geminiRecordCall: () => ipcRenderer.invoke('gemini-record-call'),
+
+  // Auditoría Visual Persistente (Evidencia del DOM Real)
+  auditCaptureScreenshot: () => ipcRenderer.invoke('audit-capture-screenshot'),
+  auditSaveRun: (payload) => ipcRenderer.invoke('audit-save-run', payload),
+  auditGetLatest: () => ipcRenderer.invoke('audit-get-latest'),
+  auditExportZip: (auditId) => ipcRenderer.invoke('audit-export-zip', auditId),
+  auditCompare: (payload) => ipcRenderer.invoke('audit-compare', payload),
 });

@@ -23,6 +23,7 @@ import { fmt } from '../../utils/formulas.js';
 export const TacticalEventDetail = ({
   event,
   onNavigatePlanet = null,
+  onChoose = null,
   footer = null,
   autoPlayAudio = true,
 }) => {
@@ -313,7 +314,10 @@ export const TacticalEventDetail = ({
                 )}
                 <button
                   type="button"
-                  onClick={() => event.onChoose && event.onChoose(i, opt)}
+                  onClick={() => {
+                    if (onChoose) onChoose(i, opt);
+                    else if (event.onChoose) event.onChoose(i, opt);
+                  }}
                   className="w-full px-4 py-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/40 hover:bg-cyan-900/60 text-cyan-200 text-xs font-bold font-mono uppercase tracking-wider transition-all cursor-pointer"
                 >
                   Elegir

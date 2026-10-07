@@ -54,30 +54,56 @@ export const PlanetOverviewTab = ({
         </div>
 
         {!planet.isHome && (
-          <div className="w-full p-3 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between text-xs font-mono">
-            <div className="space-y-0.5">
-              <span className="text-slate-300 font-bold flex items-center gap-1.5">
-                <span>🚚</span> Auto-Comercio Colonial
-              </span>
-              <p className="text-[10px] text-slate-500">Envío automático si almacén &gt;75%</p>
+          <>
+            <div className="w-full p-3 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between text-xs font-mono">
+              <div className="space-y-0.5">
+                <span className="text-slate-300 font-bold flex items-center gap-1.5">
+                  <span>🚚</span> Auto-Comercio Colonial
+                </span>
+                <p className="text-[10px] text-slate-500">Envío automático si almacén &gt;75%</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (dispatch) {
+                    dispatch({ type: 'PLANET_TOGGLE_AUTOTRADE', planetId: planet.id });
+                    if (window.playSfx) window.playSfx('click');
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider text-[11px] border transition-all cursor-pointer ${
+                  planet.autoTrade
+                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.5)]'
+                    : 'bg-white/5 text-slate-400 border-white/10 hover:border-indigo-400 hover:text-white'
+                }`}
+              >
+                {planet.autoTrade ? '✓ Activado' : 'Desactivado'}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (dispatch) {
-                  dispatch({ type: 'PLANET_TOGGLE_AUTOTRADE', planetId: planet.id });
-                  if (window.playSfx) window.playSfx('click');
-                }
-              }}
-              className={`px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider text-[11px] border transition-all cursor-pointer ${
-                planet.autoTrade
-                  ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                  : 'bg-white/5 text-slate-400 border-white/10 hover:border-indigo-400 hover:text-white'
-              }`}
-            >
-              {planet.autoTrade ? '✓ Activado' : 'Desactivado'}
-            </button>
-          </div>
+
+            <div className="w-full p-3 rounded-2xl bg-rose-950/20 border border-rose-500/20 flex items-center justify-between text-xs font-mono">
+              <div className="space-y-0.5">
+                <span className="text-rose-300 font-bold flex items-center gap-1.5">
+                  <span>🚩</span> Desmantelar Asentamiento
+                </span>
+                <p className="text-[10px] text-slate-400">Repatria la flota al planeta natal</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`¿Estás completamente seguro de abandonar la colonia ${planet.name}? Esta acción desmantelará la base y transferirá la flota a tu planeta natal.`)) {
+                    if (dispatch) {
+                      dispatch({ type: 'ABANDON_PLANET', planetId: planet.id });
+                      if (window.playSfx) window.playSfx('click');
+                    }
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider text-[11px] bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 hover:text-white transition-all cursor-pointer shadow-sm"
+                title="Abandonar esta colonia planetaria"
+              >
+                Abandonar
+              </button>
+            </div>
+          </>
         )}
 
         {/* Censo y Demografía */}
@@ -94,7 +120,34 @@ export const PlanetOverviewTab = ({
           </div>
           <div className="flex justify-between items-center text-[11px] text-slate-400 pt-1">
             <span>Moral Colonial:</span>
-            <span className="text-cyan-300 font-bold">100% Óptima</span>
+            <span className={`${(planet.taxRate || 10) > 25 ? 'text-amber-400' : 'text-cyan-300'} font-bold`}>
+              {Math.max(40, 100 - ((planet.taxRate || 10) - 10) * 2)}% Óptima
+            </span>
+          </div>
+          <div className="pt-2 border-t border-white/5 space-y-1" data-ui-audit-id="planet-tax-control">
+            <div className="flex justify-between items-center text-[11px]">
+              <span className="text-slate-400">Presión Fiscal:</span>
+              <span className="text-amber-300 font-bold font-mono">{planet.taxRate || 10}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="50"
+              step="5"
+              value={planet.taxRate || 10}
+              onChange={(e) => {
+                const taxRate = parseInt(e.target.value, 10);
+                if (dispatch) {
+                  dispatch({
+                    type: 'SET_PLANET_TAX_RATE',
+                    planetId: planet.id,
+                    taxRate
+                  });
+                }
+              }}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
+              title="Ajuste de Impuestos Coloniales"
+            />
           </div>
         </div>
       </div>

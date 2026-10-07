@@ -37,7 +37,9 @@ export const ItemCard = React.memo(({
   isAutoRestricted = false,
   onToggleAutoRestriction,
   planetResources,
-  isQueueFull = false
+  isQueueFull = false,
+  buildingMode,
+  onSelectBuildingMode
 }) => {
   const [clicked, setClicked] = useState(false);
   const [selectedCancelItem, setSelectedCancelItem] = useState(null);
@@ -175,9 +177,50 @@ export const ItemCard = React.memo(({
           <button onClick={(e) => { e.stopPropagation(); onOpenInterior(id); }}
             className={`px-2.5 ${S.btn} bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 flex items-center justify-center transition focus-ring-game`}
             title="Abrir Consola Operativa del Edificio"
+            data-ui-audit-id={`btn-console-${id}`}
           >
             ⚙️
           </button>
+        )}
+        {level > 0 && onSelectBuildingMode && (
+          <div className="flex items-center gap-1 bg-black/60 p-0.5 rounded-lg border border-white/10" data-ui-audit-id={`building-mode-selector-${id}`}>
+            <button
+              type="button"
+              title="Modo Normal (100% Prod / 100% Energía)"
+              onClick={(e) => { e.stopPropagation(); onSelectBuildingMode('standard'); }}
+              className={`px-1.5 py-1 text-[10px] font-mono rounded font-bold transition-all ${
+                (!buildingMode || buildingMode === 'standard')
+                  ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              NORM
+            </button>
+            <button
+              type="button"
+              title="Modo Sobrecarga (+25% Prod / +50% Energía)"
+              onClick={(e) => { e.stopPropagation(); onSelectBuildingMode('overclock'); }}
+              className={`px-1.5 py-1 text-[10px] font-mono rounded font-bold transition-all ${
+                buildingMode === 'overclock'
+                  ? 'bg-amber-500/30 text-amber-300 border border-amber-400/50 shadow-[0_0_8px_rgba(245,158,11,0.4)]'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              ⚡OC
+            </button>
+            <button
+              type="button"
+              title="Modo Ahorro / Eco (-50% Prod / -50% Energía)"
+              onClick={(e) => { e.stopPropagation(); onSelectBuildingMode('eco'); }}
+              className={`px-1.5 py-1 text-[10px] font-mono rounded font-bold transition-all ${
+                buildingMode === 'eco'
+                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              ECO
+            </button>
+          </div>
         )}
       </div>
 

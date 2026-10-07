@@ -59,7 +59,44 @@ const StatsPage = ({ state, currentPlanet, production, ACHIEVEMENTS, SHIPS, DEFE
             { id: 'military', title: 'Registro Militar', icon: '⚔️', assetId: 'battleship', subtitle: 'Combates librados, ratio de victorias y naves fabricadas', tag: `${combatsWon} Victorias` },
             { id: 'resources', title: 'Balance de Recursos', icon: '⛏️', assetId: 'metalMine', subtitle: 'Extracción acumulada histórica de metal, cristal y deuterio', tag: 'Producción' },
             { id: 'colonies', title: 'Registro de Colonias', icon: '🌍', assetId: 'sectorGovPalace', subtitle: 'Censo planetario, instalaciones y naves apostadas', tag: `${state.planets?.length || 1} Mundos` },
+            { id: 'replay', title: 'Registro Histórico', icon: '📼', assetId: 'quantumTelecom', subtitle: 'Rebobina y reproduce los eventos cronológicos de la partida', tag: 'Replay' },
           ].map(sec => {
+            if (sec.id === 'replay') {
+              return (
+                <button
+                  key={sec.id}
+                  onClick={() => {
+                    if (navigateTo) navigateTo('replay');
+                    if (window.playSfx) window.playSfx('click');
+                  }}
+                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-cyan-500/40 bg-[#090d1f]/90 hover:border-cyan-400 hover:bg-[#0e1633] hover:scale-[1.01] hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all duration-300 select-none cursor-pointer text-left focus:outline-none w-full h-full min-h-[260px]"
+                >
+                  <div className="relative w-full h-36 md:h-40 overflow-hidden bg-[#05070f] border-b border-white/10">
+                    <SafeImg
+                      id={sec.assetId}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider backdrop-blur-md border bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.4)]">
+                      {sec.tag}
+                    </span>
+                  </div>
+                  <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h4 className="text-base font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
+                        {sec.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 font-mono mt-1.5 line-clamp-2 leading-relaxed">
+                        {sec.subtitle}
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono uppercase tracking-wider font-semibold text-cyan-300">
+                      <span>Abrir Reproductor</span>
+                      <span className="transition-transform duration-200 group-hover:translate-x-1">➔</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            }
             const isSelected = activeSection === sec.id;
             return (
               <button

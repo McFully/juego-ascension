@@ -7,9 +7,11 @@ import {
   exchangeCommandStorageKey,
   buildExchangeCommandCards
 } from './hub/exchangeCommandCardsConfig.jsx';
-import { ExchangeAmmTerminalTab } from '../market/ExchangeAmmTerminalTab.jsx';
+import { GalacticSpotExchangeView } from '../market/GalacticSpotExchangeView.jsx';
+import { ExchangeDaoSubview } from './hub/ExchangeDaoSubview.jsx';
 import { SafeImg } from '../../assets.jsx';
 import { COMMAND_CARD_TARGETS } from '../../utils/governmentRoute.js';
+import { initGalacticLonjaState } from '../../utils/galacticLonjaAutonomousCore.js';
 
 /**
  * ExchangePlanetaryCommandHub — Alto Mando especializado de la Lonja Galáctica.
@@ -25,6 +27,15 @@ export const ExchangePlanetaryCommandHub = React.memo(({
   onBackToEmpire
 }) => {
   if (!planet) return null;
+
+  // Garantizar autocuración defensiva si el save legacy no contenía lonjaAutonomousState
+  const effectivePlanet = useMemo(() => {
+    if (planet.lonjaAutonomousState) return planet;
+    return {
+      ...planet,
+      lonjaAutonomousState: initGalacticLonjaState('player', planet.name || 'Lonja Galáctica Central')
+    };
+  }, [planet]);
 
   // Sub-vista interior activa cuando se abre una tarjeta ('grid' muestra la cuadrícula principal)
   const [activeSubview, setActiveSubview] = useState('grid'); // 'grid' | 'terminal' | 'megaprojects' | 'dao' | 'info_modal'
@@ -172,15 +183,36 @@ export const ExchangePlanetaryCommandHub = React.memo(({
         />
       )}
 
-      {/* MODO 2: SUB-VISTA TERMINAL BURSÁTIL CUÁNTICO (AMM) */}
+      {/* MODO 2: SUB-VISTA TERMINAL BURSÁTIL CUÁNTICO (EXCHANGE SPOT REAL) */}
       {activeSubview === 'terminal' && (
         <div className="space-y-4 animate-in fade-in duration-150">
-          <ExchangeAmmTerminalTab
+          <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+            <button
+              type="button"
+              onClick={() => setActiveSubview('terminal')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-md cursor-pointer"
+            >
+              📈 Terminal Spot Real (Libro de Órdenes)
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubview('dao')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase text-slate-400 hover:text-white bg-white/5 border border-white/5 cursor-pointer transition-all"
+            >
+              🏛️ Directorio DAO y Acciones
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubview('megaprojects')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase text-slate-400 hover:text-white bg-white/5 border border-white/5 cursor-pointer transition-all"
+            >
+              🏗️ Megaproyectos
+            </button>
+          </div>
+          <GalacticSpotExchangeView
             state={state}
             dispatch={dispatch}
-            currentPlanet={planet}
-            planetRes={planetRes}
-            currentBuildings={currentBuildings}
+            currentPlanet={effectivePlanet}
             fmt={fmt}
           />
         </div>
@@ -189,6 +221,29 @@ export const ExchangePlanetaryCommandHub = React.memo(({
       {/* MODO 3: SUB-VISTA MEGAPROYECTOS DE CONSTRUCCIÓN */}
       {activeSubview === 'megaprojects' && (
         <div className="space-y-6 animate-in fade-in duration-150">
+          <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+            <button
+              type="button"
+              onClick={() => setActiveSubview('terminal')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase text-slate-400 hover:text-white bg-white/5 border border-white/5 cursor-pointer transition-all"
+            >
+              📈 Terminal AMM y Fletes
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubview('dao')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase text-slate-400 hover:text-white bg-white/5 border border-white/5 cursor-pointer transition-all"
+            >
+              🏛️ Directorio DAO y Acciones
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubview('megaprojects')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-400/50 shadow-md cursor-pointer"
+            >
+              🏗️ Megaproyectos
+            </button>
+          </div>
           {/* Selector de aportación rápida */}
           <div className="p-4 rounded-2xl bg-[#080d1e]/90 border border-purple-500/30 flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -401,64 +456,58 @@ export const ExchangePlanetaryCommandHub = React.memo(({
         </div>
       )}
 
-      {/* MODO 4: SUB-VISTA FONDO SOBERANO DAO */}
+      {/* MODO 4: SUB-VISTA FONDO SOBERANO DAO Y MERCADO SECUNDARIO */}
       {activeSubview === 'dao' && (
         <div className="space-y-4 animate-in fade-in duration-150">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-[#09121a] border border-emerald-500/30 space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>💎</span> Bóveda de Dividendos
-              </h3>
-              <p className="text-xs text-slate-400">
-                Participaciones acumuladas del fondo común de la Zona Franca.
-              </p>
-              <div className="p-4 rounded-xl bg-black/60 border border-white/10 space-y-2 font-mono text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Tus Acciones:</span>
-                  <span className="text-emerald-400 font-bold">{playerShares} ({playerPercent}%)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Total Pool DAO:</span>
-                  <span className="text-slate-200">{daoShares} Acciones</span>
-                </div>
-                <div className="flex justify-between border-t border-white/10 pt-2">
-                  <span className="text-slate-400">Dividendos Pendientes:</span>
-                  <span className="text-amber-300 font-bold text-sm">₢ {fmt(accumulatedDividends)}</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                disabled={accumulatedDividends <= 0}
-                onClick={handleClaimDividends}
-                className={`w-full py-2.5 rounded-xl font-bold uppercase text-xs font-mono transition-all cursor-pointer ${
-                  accumulatedDividends > 0
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]'
-                    : 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed'
-                }`}
-              >
-                Cobrar Dividendos ₢
-              </button>
-            </div>
-
-            <div className="md:col-span-2 p-6 rounded-2xl bg-[#09121a] border border-emerald-500/30 space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>🏛️</span> Estatuto y Gobernanza de Accionistas
-              </h3>
-              <p className="text-xs text-slate-400">
-                La posesión de acciones confiere derecho a voto sobre modificaciones de spread bancario y desgravaciones portuarias en la red neutral.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-                <div className="p-3 rounded-xl bg-black/40 border border-white/10">
-                  <span className="text-slate-400 block text-[10px]">Tasa de Descuento en AMM</span>
-                  <span className="text-emerald-400 font-bold text-sm">-1.5% Spread</span>
-                </div>
-                <div className="p-3 rounded-xl bg-black/40 border border-white/10">
-                  <span className="text-slate-400 block text-[10px]">Prioridad de Atraque</span>
-                  <span className="text-cyan-400 font-bold text-sm">Nivel Máximo (A-1)</span>
-                </div>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+            <button
+              type="button"
+              onClick={() => setActiveSubview('terminal')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase text-slate-400 hover:text-white bg-white/5 border border-white/5 cursor-pointer transition-all"
+            >
+              📈 Terminal AMM y Fletes
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubview('dao')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-400/50 shadow-md cursor-pointer"
+            >
+              🏛️ Directorio DAO y Acciones
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubview('megaprojects')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase text-slate-400 hover:text-white bg-white/5 border border-white/5 cursor-pointer transition-all"
+            >
+              🏗️ Megaproyectos
+            </button>
           </div>
+          <ExchangeDaoSubview
+            playerShares={playerShares}
+            playerPercent={playerPercent}
+            daoShares={daoShares}
+            accumulatedDividends={accumulatedDividends}
+            handleClaimDividends={handleClaimDividends}
+            fmt={fmt}
+            lonjaState={effectivePlanet?.lonjaAutonomousState}
+            onVoteProposal={(proposalId, voteChoice) => {
+              dispatch({
+                type: 'VOTE_DAO_PROPOSAL',
+                planetId: planet.id,
+                proposalId,
+                voteChoice
+              });
+            }}
+            onTradeShares={({ side, shares, price }) => {
+              dispatch({
+                type: 'TRADE_LONJA_SHARES',
+                planetId: planet.id,
+                side,
+                shares,
+                price
+              });
+            }}
+          />
         </div>
       )}
 

@@ -21,6 +21,62 @@ export const GalacticCouncil = ({
           </p>
         </div>
 
+        {/* Sesión Activa de Votación del Consejo */}
+        {council?.currentSession?.proposals && council.currentSession.proposals.length > 0 && (
+          <div className="p-3.5 bg-cyan-950/30 rounded-xl border border-cyan-500/40 space-y-3 font-mono">
+            <div className="flex items-center justify-between text-xs font-bold text-cyan-300 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                Votaciones en Curso en el Senado
+              </span>
+              <span className="text-[10px] text-slate-400 font-normal">Sesión Legislativa Activa</span>
+            </div>
+            <div className="space-y-2">
+              {council.currentSession.proposals.map((prop) => {
+                const myVote = council.currentSession.votes?.[prop.id]?.player;
+                return (
+                  <div key={prop.id} className="p-2.5 rounded-lg bg-black/60 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div>
+                      <span className="font-bold text-white text-xs block">{prop.title}</span>
+                      <span className="text-[10px] text-slate-400">Proponente: {prop.proposer === 'player' ? 'Tu Imperio' : prop.proposer}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (playDiploSound) playDiploSound('success');
+                          dispatch({ type: 'COUNCIL_VOTE', proposalId: prop.id, vote: 'yes' });
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
+                          myVote === 'yes'
+                            ? 'bg-emerald-500 text-black border border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                            : 'bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-emerald-300'
+                        }`}
+                      >
+                        👍 A Favor
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (playDiploSound) playDiploSound('click');
+                          dispatch({ type: 'COUNCIL_VOTE', proposalId: prop.id, vote: 'no' });
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
+                          myVote === 'no'
+                            ? 'bg-rose-500 text-white border border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.5)]'
+                            : 'bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300'
+                        }`}
+                      >
+                        👎 En Contra
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           {/* Paz Galáctica */}
           <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 space-y-2">

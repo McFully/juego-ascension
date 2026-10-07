@@ -231,6 +231,14 @@ export const TelemetryPage = ({ state, dispatch, currentPlanet, production, fmt,
                 dispatch({ type: 'SET_PLANET', planetId });
                 if (safeSetActiveTab) safeSetActiveTab('overview');
               }}
+              onChoose={(index, opt) => {
+                dispatch({
+                  type: 'RESOLVE_NARRATIVE_EVENT',
+                  eventId: selected.id,
+                  optionIdx: index
+                });
+                if (window.playSfx) window.playSfx('click');
+              }}
               footer={
                 <button
                   onClick={() => setSelectedId(null)}

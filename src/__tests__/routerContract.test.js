@@ -36,12 +36,12 @@ const NAVIGATION_LOCAL = new Set([
 const DATA_LIKE = new Set([
   'building', 'civil', 'colonize', 'combat', 'crisis', 'danger', 'defense',
   'discovery', 'energy', 'energy_boost', 'error', 'espionage',
-  'espionage_alert', 'expedition', 'facility', 'fleet_reinforcement',
+  'espionage_alert', 'FOUNDING_PARTNER', 'expedition', 'facility', 'fleet_reinforcement',
   'helium_belt', 'industry', 'info', 'INFRASTRUCTURE', 'intel_boost',
   'military', 'mine', 'module', 'PEACE', 'power', 'precursor_ruins',
   'recycle', 'research', 'RESEARCH_SUBSIDY', 'resource', 'resource_grant',
   'ship', 'start', 'storage', 'success', 'transport', 'VACUUM_DEFENSE',
-  'warning', 'wormhole', 'UNKNOWN', 'RESET',
+  'warning', 'wormhole', 'UNKNOWN', 'RESET', 'VIEWPORT_OVERFLOW', 'CARD_OVERFLOW'
 ]);
 
 function walk(dir, out = []) {

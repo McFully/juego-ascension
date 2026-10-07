@@ -22,9 +22,12 @@ export const GAME_TABS = [
   { id: "ministry_justice", label: "⚖️ Justicia y Orden Federal", quadrant: "gov", parent: "government" },
   { id: "ministry_culture", label: "🎭 Cultura y Propaganda", quadrant: "gov", parent: "government" },
   { id: "colony_network", label: "🪐 Red de Colonias", quadrant: "gov", parent: "overview" },
+  { id: "sectors", label: "🗺️ Sectores Coloniales", quadrant: "gov", parent: "colony_network" },
   { id: "market", label: "💼 Mercado Galáctico", quadrant: "gov", parent: "overview" },
   { id: "missions", label: "🎯 Misiones y Objetivos", quadrant: "gov", parent: "overview" },
-  { id: "stats", label: "📊 Estadísticas del Imperio", quadrant: "gov", parent: "overview" },
+  { id: "wiki", label: "📚 Enciclopedia Imperial", quadrant: "gov", parent: "overview" },
+  { id: "stats", label: "📊 Estadísticas del Imperio", quadrant: "gov", parent: "wiki" },
+  { id: "replay", label: "📼 Registro Histórico", quadrant: "gov", parent: "stats" },
 
   // === I.b. MANDO IMPERIAL ===
   // Órganos del imperio. Sin `parent`: no cuelgan del gabinete de un planeta

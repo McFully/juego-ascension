@@ -8,6 +8,7 @@ import { PlanetBuildingsTab } from './tabs/PlanetBuildingsTab.jsx';
 import { PlanetMilitaryTab } from './tabs/PlanetMilitaryTab.jsx';
 import { PlanetDefensesTab } from './tabs/PlanetDefensesTab.jsx';
 import { PlanetFleetsTab } from './tabs/PlanetFleetsTab.jsx';
+import { LivingPlanetPanel } from './LivingPlanetPanel.jsx';
 
 /**
  * PlanetFullDetailModal — Pantalla modal a pantalla completa con la ficha técnica
@@ -134,6 +135,7 @@ export const PlanetFullDetailModal = ({
       <nav className="flex items-center gap-2 px-6 py-2.5 border-b border-white/10 bg-[#050814]/80 shrink-0 overflow-x-auto">
         {[
           { id: 'overview', label: 'Resumen Táctico', icon: '📊' },
+          { id: 'ecosystem', label: 'Ecosistema y Vida', icon: '🌱' },
           { id: 'buildings', label: `Edificios (${totalBuildingLevels} Nvs)`, icon: '🏗️' },
           { id: 'military', label: 'Astillero e I+D', icon: '🔬' },
           { id: 'defenses', label: `Defensas (${fmt(totalDefensesCount)})`, icon: '🛡️' },
@@ -164,6 +166,15 @@ export const PlanetFullDetailModal = ({
             planet={planet}
             production={production}
             maxPop={maxPop}
+            dispatch={dispatch}
+            fmt={fmt}
+          />
+        )}
+
+        {/* ── PESTAÑA 1.B: ECOSISTEMA, SOPORTE VITAL Y GOBERNANZA VIVA ── */}
+        {activeTab === 'ecosystem' && (
+          <LivingPlanetPanel
+            planet={planet}
             dispatch={dispatch}
             fmt={fmt}
           />

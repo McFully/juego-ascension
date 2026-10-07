@@ -1,3 +1,5 @@
+import { depositToClientVault, scheduleFreightTransport } from '../../utils/galacticLonjaMarketMaker.js';
+import { calculateCapitalContribution, recordTreasuryLedger, castDaoVote, placeShareOrder } from '../../utils/galacticLonjaAutonomousCore.js';
 import {
   fmt,
   uid,
@@ -449,7 +451,23 @@ export const handleContributeExchangeProject = (state, action) => {
   const prevProjects = state.exchangeProjects || {};
   const currentBuildingTotal = (prevProjects[buildingId] || 0) + amount;
 
-  const sharesEarned = Math.max(1, Math.floor(amount / 25000));
+  // Cálculo de dilución matemática y capitalización robusta (Reglas 4, 6 y 7)
+  const exchangePlanet = updatedPlanets.find(p => p.id === targetPlanetId || p.isExchangePlanet);
+  let updatedCapitalization = exchangePlanet?.lonjaAutonomousState?.capitalization;
+  let sharesEarned = Math.max(1, Math.floor(amount / 25000));
+  
+  if (updatedCapitalization) {
+    const capResult = calculateCapitalContribution({
+      currentCapitalization: updatedCapitalization,
+      contributorId: 'player',
+      contributionValue: amount
+    });
+    updatedCapitalization = capResult;
+    const oldShares = exchangePlanet.lonjaAutonomousState.capitalization.shareholders?.['player']?.ordinaryShares || 100;
+    const newShares = capResult.shareholders?.['player']?.ordinaryShares || 100;
+    sharesEarned = Math.max(1, newShares - oldShares);
+  }
+
   const playerShares = (state.playerDaoShares || 100) + sharesEarned;
   const totalShares = (state.daoShares || 1000) + sharesEarned;
 
@@ -603,6 +621,240 @@ export const handleFinalizeExchangeProject = (state, action) => {
       id: uid(),
       type: 'success',
       message: `🏗️ ¡Financiación 100% alcanzada! Ensamblaje de ${b.name || buildingId} Nivel ${targetLvl} iniciado en la Lonja (${time}s).`,
+      timestamp: Date.now()
+    }]
+  };
+};
+
+
+export const handleVoteDaoProposal = (state, action) => {
+  const { proposalId, voteChoice, planetId } = action;
+  const targetPlanetId = planetId || state.currentPlanetId;
+  const planets = [...(state.planets || [])];
+  const pIdx = planets.findIndex(p => p.id === targetPlanetId || p.isExchangePlanet);
+  if (pIdx === -1) return state;
+
+  const targetPlanet = planets[pIdx];
+  if (!targetPlanet.lonjaAutonomousState) return state;
+
+  const updatedLonja = castDaoVote({
+    lonjaState: targetPlanet.lonjaAutonomousState,
+    proposalId,
+    voterId: 'player',
+    voteChoice
+  });
+
+  planets[pIdx] = {
+    ...targetPlanet,
+    lonjaAutonomousState: updatedLonja
+  };
+
+  return {
+    ...state,
+    planets,
+    notifications: [...(state.notifications || []), {
+      id: uid(),
+      type: 'info',
+      message: `🗳️ Voto emitido (${voteChoice}) en la propuesta ${proposalId}.`,
+      timestamp: Date.now()
+    }]
+  };
+};
+
+export const handleTradeLonjaShares = (state, action) => {
+  const { side, shares, price, planetId } = action;
+  const targetPlanetId = planetId || state.currentPlanetId;
+  const planets = [...(state.planets || [])];
+  const pIdx = planets.findIndex(p => p.id === targetPlanetId || p.isExchangePlanet);
+  if (pIdx === -1) return state;
+
+  const targetPlanet = planets[pIdx];
+  if (!targetPlanet.lonjaAutonomousState) return state;
+
+  const totalCost = shares * price;
+  const creditsAvail = state.credits || 0;
+
+  if (side === 'BUY' && creditsAvail < totalCost) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: '🚫 Créditos insuficientes para comprar acciones en el mercado secundario.',
+        timestamp: Date.now()
+      }]
+    };
+  }
+
+  const result = placeShareOrder({
+    lonjaState: targetPlanet.lonjaAutonomousState,
+    traderId: 'player',
+    side,
+    shares,
+    price,
+    creditsAvailable: creditsAvail
+  });
+
+  if (!result.success) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: `🚫 ${result.reason}`,
+        timestamp: Date.now()
+      }]
+    };
+  }
+
+  planets[pIdx] = {
+    ...targetPlanet,
+    lonjaAutonomousState: result.lonjaState
+  };
+
+  let newCredits = creditsAvail;
+  if (side === 'BUY') {
+    newCredits -= totalCost;
+  }
+
+  const playerOrdinary = result.lonjaState.capitalization?.shareholders?.['player']?.ordinaryShares || 100;
+
+  return {
+    ...state,
+    credits: newCredits,
+    planets,
+    playerDaoShares: playerOrdinary,
+    notifications: [...(state.notifications || []), {
+      id: uid(),
+      type: 'success',
+      message: `📈 Orden de ${side === 'BUY' ? 'compra' : 'venta'} de ${shares} acciones registrada a ₢ ${fmt(price)} c/u.`,
+      timestamp: Date.now()
+    }]
+  };
+};
+
+
+export const handleDepositToVault = (state, action) => {
+  const { resource, amount, planetId } = action;
+  const targetPlanetId = planetId || state.currentPlanetId;
+  const planets = [...(state.planets || [])];
+  const pIdx = planets.findIndex(p => p.id === targetPlanetId || p.isExchangePlanet);
+  if (pIdx === -1) return state;
+
+  const lonjaPlanet = planets[pIdx];
+  if (!lonjaPlanet.lonjaAutonomousState) return state;
+
+  const available = lonjaPlanet.resources?.[resource] || 0;
+  if (available < amount) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: `🚫 Recursos insuficientes en ${lonjaPlanet.name} para depositar en custodia.`,
+        timestamp: Date.now()
+      }]
+    };
+  }
+
+  const res = depositToClientVault({
+    lonjaState: lonjaPlanet.lonjaAutonomousState,
+    clientId: 'player',
+    resource,
+    amount
+  });
+
+  if (!res.success) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: `🚫 ${res.reason}`,
+        timestamp: Date.now()
+      }]
+    };
+  }
+
+  // Deducir del inventario del planeta
+  planets[pIdx] = {
+    ...lonjaPlanet,
+    resources: {
+      ...lonjaPlanet.resources,
+      [resource]: Math.max(0, available - amount)
+    },
+    lonjaAutonomousState: res.lonjaState
+  };
+
+  return {
+    ...state,
+    planets,
+    notifications: [...(state.notifications || []), {
+      id: uid(),
+      type: 'success',
+      message: `🏦 ${fmt(amount)} de ${resource} depositados bajo custodia en las Bóvedas Subterráneas.`,
+      timestamp: Date.now()
+    }]
+  };
+};
+
+export const handleContractFreight = (state, action) => {
+  const { resource, amount, destinationPlanetId, planetId } = action;
+  const planets = [...(state.planets || [])];
+  const lonjaIdx = planets.findIndex(p => p.id === (planetId || state.currentPlanetId) || p.isExchangePlanet);
+  const destPlanet = planets.find(p => p.id === destinationPlanetId);
+
+  if (lonjaIdx === -1 || !destPlanet) return state;
+  const lonjaPlanet = planets[lonjaIdx];
+  if (!lonjaPlanet.lonjaAutonomousState) return state;
+
+  const res = scheduleFreightTransport({
+    lonjaState: lonjaPlanet.lonjaAutonomousState,
+    clientId: 'player',
+    destinationPlanet: destPlanet,
+    resource,
+    amount,
+    distanceParsecs: 12
+  });
+
+  if (!res.success) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: `🚫 ${res.reason}`,
+        timestamp: Date.now()
+      }]
+    };
+  }
+
+  const creditsAvail = state.credits || 0;
+  if (creditsAvail < res.freightCost) {
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: `🚫 Créditos insuficientes para abonar el flete (₢ ${fmt(res.freightCost)}).`,
+        timestamp: Date.now()
+      }]
+    };
+  }
+
+  planets[lonjaIdx] = {
+    ...lonjaPlanet,
+    lonjaAutonomousState: res.lonjaState
+  };
+
+  return {
+    ...state,
+    credits: creditsAvail - res.freightCost,
+    planets,
+    notifications: [...(state.notifications || []), {
+      id: uid(),
+      type: 'success',
+      message: `🚚 Flete comercial despachado hacia ${destPlanet.name}: ${fmt(amount)} de ${resource} en tránsito.`,
       timestamp: Date.now()
     }]
   };

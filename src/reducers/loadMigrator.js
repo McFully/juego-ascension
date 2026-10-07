@@ -1,6 +1,7 @@
 import { BIOME_KEYS, uid } from '../core.jsx';
 import { migrateLegacyColonization } from '../utils/formulas.js';
 import { buildMinistriesState, buildPlanetMinistries, DECAY_MINISTRY_OVERRIDES } from '../data/ministryState.js';
+import { initGalacticLonjaState } from '../utils/galacticLonjaAutonomousCore.js';
 
 const PLANET_SIZES = [80, 100, 120, 150, 180, 200];
 
@@ -129,6 +130,8 @@ export const migrateLoadState = (payload = {}) => {
       retrofitTech: p.retrofitTech || {},
       biome: p.biome || 'temperate',
       planetSize: p.planetSize || 100,
+      isExchangePlanet: !!p.isExchangePlanet,
+      lonjaAutonomousState: p.isExchangePlanet ? (p.lonjaAutonomousState || initGalacticLonjaState(payload.playerFounderId || 'player', p.name)) : undefined,
       gravity: p.gravity !== undefined ? p.gravity : 2,
       trait: sanitizeTrait(p.trait),
       biosphere: p.biosphere || {

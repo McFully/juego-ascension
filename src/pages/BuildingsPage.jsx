@@ -6,7 +6,7 @@ import { GameCarousel } from '../components/ui/GameCarousel.jsx';
 import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
 import { PlanetTerraformingView } from '../components/planet/PlanetTerraformingView.jsx';
-import { ExchangeCommandHubView } from '../components/market/ExchangeCommandHubView.jsx';
+import { ExchangePlanetaryCommandHub } from '../components/government/ExchangePlanetaryCommandHub.jsx';
 
 /**
  * BuildingsPage — Hub de Complejo de Obras a Pantalla Completa y Ancho Máximo.
@@ -83,16 +83,21 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
 
       {/* Si es un Planeta Lonja / Exchange (Mega-Infraestructuras comerciales sin minas) */}
       {currentPlanet?.isExchangePlanet ? (
-        <ExchangeCommandHubView
+        <ExchangePlanetaryCommandHub
           state={state}
           dispatch={dispatch}
-          currentPlanet={currentPlanet}
+          planet={currentPlanet}
+          production={production}
           fmt={fmt}
-          ministries={ministries}
-          ministryAssets={ministryAssets}
-          getMinistryStats={getMinistryStats}
-          hasActiveConstruction={hasActiveConstruction}
-          onSelectMinistry={onSelectMinistry}
+          onNavigateTab={(tab) => {
+            const fn = safeSetActiveTab || setActiveTab;
+            if (fn) fn(tab);
+          }}
+          onBackToEmpire={() => {
+            const fn = safeSetActiveTab || setActiveTab;
+            if (fn) fn('overview');
+            if (window.playSfx) window.playSfx('click');
+          }}
         />
       ) : currentPlanet?.requiresConditioning && !currentPlanet?.terraformed ? (
         <PlanetTerraformingView
