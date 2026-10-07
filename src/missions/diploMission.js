@@ -1,6 +1,7 @@
 import { updatePlanet, getVirginPlanet } from '../core.jsx';
 import { SHIPS } from '../data/gameData.js';
 import { fmt, uid, getMaxPlanets, calcStorage, getEffectiveTech } from '../utils/formulas.js';
+import { simulateCombat } from '../combat.js';
 import { getPlanetHeritage } from '../data/planetaryHeritageData.js';
 import {
   getTargetEspDefense,
@@ -164,32 +165,73 @@ const resolveAiEspionageMission = (mission, state, targetPlanet) => {
   const playerDefense = getPlayerEspDefense(targetPlanet, state);
   const rawDiff = spyTech - playerDefense.defense;
 
-  // Patrulla orbital o de sistema: interceptar sondas es lo que el jugador
-  // compraba que hiciera y nunca lo hacia.
+  // Patrulla orbital o de sistema: interceptar sondas con su flota real
   const patrol = (state.patrols || []).find(p =>
     (p.status === 'active') &&
     ((p.planetId && p.planetId === targetPlanet.id) ||
       (p.galaxy === targetPlanet.galaxy && p.system === targetPlanet.system))
   );
+
   const patrolBonus = patrol ? PATROL_INTERCEPT_BONUS : 0;
+  const patrolFleetCount = patrol?.fleet ? Object.values(patrol.fleet).reduce((a, b) => a + b, 0) : 0;
 
   let detectionChance = computeEspionageDetection({
     techDiff: rawDiff,
     countermeasures: {},
     stealth: getFleetStealth(mission.fleet, state.blueprints || []),
   });
-  detectionChance = Math.max(0, Math.min(1, detectionChance * (1 - playerDefense.reduction) + patrolBonus));
+  detectionChance = Math.max(0, Math.min(1, (detectionChance * (1 - playerDefense.reduction)) + patrolBonus));
 
   const detected = Math.random() < detectionChance;
-  const newState = { ...state };
+  let newState = { ...state };
 
   if (detected) {
+    let combatLogMsg = '';
+    // Si hay una patrulla en la zona con naves de combate, se resuelve escaramuza espacial real
+    if (patrol && patrolFleetCount > 0) {
+      try {
+        const combatRes = simulateCombat(
+          mission.fleet || {},
+          patrol.fleet || {},
+          {}, // Sin defensas terrestres en combate de órbita
+          mission.from?.research || {},
+          getEffectiveTech(targetPlanet, state.research),
+          4,
+          state.blueprints || [],
+          mission.from?.faction || 'human',
+          targetPlanet.faction || 'human',
+          false,
+          'standard',
+          0.10
+        );
+
+        // Actualizar pérdidas en la patrulla defensora
+        const patrolSurvivors = combatRes.defShipSurvivors || {};
+        if (Object.keys(patrolSurvivors).length > 0) {
+          newState.patrols = (newState.patrols || []).map(p => p.id === patrol.id ? { ...p, fleet: patrolSurvivors } : p);
+        } else {
+          newState.patrols = (newState.patrols || []).filter(p => p.id !== patrol.id);
+        }
+
+        // Escombros
+        const currentDebris = newState.debrisField || { metal: 0, crystal: 0 };
+        newState.debrisField = {
+          metal: currentDebris.metal + (combatRes.debris?.metal || 0),
+          crystal: currentDebris.crystal + (combatRes.debris?.crystal || 0),
+        };
+        combatLogMsg = ` Tu patrulla interceptó y entabló combate espacial.`;
+      } catch (err) {
+        console.warn('[Ascensión] Error simulando combate de intercepción de sonda:', err);
+      }
+    }
+
     newState.notifications = [...(newState.notifications || []), {
       id: uid(),
       type: 'warning',
-      message: `🕵️ Espía neutralizado sobre ${targetPlanet.name}${patrol ? ` (interceptado por tu patrulla)` : ''}. Tu contraespionaje ha detectado la sonda antes de que transmitiera.`,
+      message: `🕵️ Espía neutralizado sobre ${targetPlanet.name}${patrol ? ` (interceptado por tu patrulla)` : ''}.${combatLogMsg}`,
       timestamp: Date.now()
     }];
+
     return {
       state: newState,
       type: 'warning',
@@ -200,7 +242,7 @@ const resolveAiEspionageMission = (mission, state, targetPlanet) => {
         type: 'espionage_alert',
         title: '¡Espía Enemigo Neutralizado!',
         subtitle: `Sonda interceptada sobre ${targetPlanet.name} [${targetPlanet.galaxy}:${targetPlanet.system}:${targetPlanet.position}]`,
-        description: `La contraespionaje de ${targetPlanet.name} detectó la sonda ${patrol ? 'y tu patrulla la interceptó' : 'antes de que pudiera transmitir'}. El espía ha perdido su enlace táctico.`,
+        description: `La contraespionaje de ${targetPlanet.name} detectó la sonda ${patrol ? 'y tu patrulla la interceptó en órbita' : 'antes de que pudiera transmitir'}. El espía enemigo ha sido destruido.${combatLogMsg}`,
         image: 'Centro de Espionaje.webp',
         targetPlanetId: targetPlanet.id,
         ministryId: 'intel',
@@ -310,21 +352,40 @@ export const handleEspionageMission = (mission, state) => {
         }];
       }
 
-      // Las sondas destruidas existen como filas `in_flight` en el Registro Naval
-      // (las asigno `assignShipsToMission` al lanzar). Sin esta llamada quedaban
-      // colgadas para siempre: `returnFleet` vacio solo las borra del estado del
-      // juego, no de la base de datos.
-      if (!mission.isAI && typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.dbResolveCombatShips === 'function') {
-        window.electronAPI.dbResolveCombatShips({
-          missionId: mission.id,
-          lossesByChassis: { ...(mission.fleet || {}) },
-          battleDetails: {
-            gameTick: state.gameTick || 0,
-            location: `${target.name} [${target.galaxy}:${target.system}:${target.position}]`,
-            winner: 'defender'
-          }
-        }).catch(e => console.warn('[Ascensión DB] Error al resolver destrucción de sondas:', e));
-      }
+      // Registrar informe bloqueado/interceptado en spyReports y planetIntel
+      const blockedReport = {
+        id: uid(), timestamp: Date.now(),
+        targetId: target.id,
+        targetName: target.name,
+        target: { name: target.name, galaxy: target.galaxy, system: target.system, position: target.position },
+        coords: { galaxy: target.galaxy, system: target.system, position: target.position },
+        intelLevel: 'blocked',
+        resources: { metal: '???', crystal: '???', deuterium: '???' },
+        buildings: null,
+        fleet: null,
+        defenses: null,
+        extendedInfo: null,
+      };
+      const curReports = [...(newState.spyReports || []), blockedReport];
+      newState.spyReports = curReports.length > 50 ? curReports.slice(-50) : curReports;
+
+      const intelLedger = { ...(newState.planetIntel || {}) };
+      const previo = intelLedger[target.id];
+      intelLedger[target.id] = {
+        id: target.id,
+        name: target.name,
+        coords: { galaxy: target.galaxy, system: target.system, position: target.position },
+        level: previo?.level || 'blocked',
+        at: blockedReport.timestamp,
+        reports: (previo?.reports || 0) + 1,
+        resources: previo?.resources || null,
+        buildings: previo?.buildings || null,
+        fleet: previo?.fleet || null,
+        defenses: previo?.defenses || null,
+        researchSnapshot: previo?.researchSnapshot || null,
+        behaviorPrediction: previo?.behaviorPrediction || null,
+      };
+      newState.planetIntel = intelLedger;
 
       return { 
         state: newState, 
@@ -424,8 +485,31 @@ export const handleEspionageMission = (mission, state) => {
     // Lo que el jugador SABE de cada mundo, acumulado. `spyReports` es un
     // historial que se descarta a los 50; esto responde a otra pregunta: qué se
     // sabe de este planeta concreto y qué sigue sin saberse.
+    // REGLA: Los datos exactos ya conocidos jamás son destruidos por '???' o 'parcial'.
     const intelLedger = { ...(newState.planetIntel || {}) };
     const previo = intelLedger[target.id];
+
+    const mergeResources = (prevRes, newRes) => {
+      if (!newRes) return prevRes ?? null;
+      if (!prevRes) return newRes;
+      if (typeof prevRes.metal === 'number') {
+        if (typeof newRes.metal === 'number') return newRes;
+        return prevRes;
+      }
+      return newRes;
+    };
+
+    const mergeStructures = (prevVal, newVal) => {
+      if (!newVal) return prevVal ?? null;
+      if (!prevVal) return newVal;
+      const isUnknown = Object.values(newVal).every(v => v === '???');
+      if (isUnknown) return prevVal;
+      const hasConcrete = Object.values(prevVal).some(v => typeof v === 'number');
+      const newHasConcrete = Object.values(newVal).some(v => typeof v === 'number');
+      if (hasConcrete && !newHasConcrete) return prevVal;
+      return newVal;
+    };
+
     intelLedger[target.id] = {
       id: target.id,
       name: target.name,
@@ -433,10 +517,10 @@ export const handleEspionageMission = (mission, state) => {
       level: bestIntelLevel(previo?.level, report.intelLevel),
       at: report.timestamp,
       reports: (previo?.reports || 0) + 1,
-      resources: report.resources ?? previo?.resources ?? null,
-      buildings: report.buildings ?? previo?.buildings ?? null,
-      fleet: report.fleet ?? previo?.fleet ?? null,
-      defenses: report.defenses ?? previo?.defenses ?? null,
+      resources: mergeResources(previo?.resources, report.resources),
+      buildings: mergeStructures(previo?.buildings, report.buildings),
+      fleet: mergeStructures(previo?.fleet, report.fleet),
+      defenses: mergeStructures(previo?.defenses, report.defenses),
       researchSnapshot: report.extendedInfo?.researchSnapshot ?? previo?.researchSnapshot ?? null,
       behaviorPrediction: report.extendedInfo?.behaviorPrediction ?? previo?.behaviorPrediction ?? null,
     };

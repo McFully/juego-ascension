@@ -186,13 +186,14 @@ export const processTick = (state) => {
                 ...(m.type === 'espionage' ? { phase: ESPIONAGE_PHASES.REGRESANDO } : {}),
               });
             }
-          } else if (m.type === 'trade_receive') {
+          } else if (m.isAI && (m.type === 'trade_receive' || m.type === 'espionage')) {
             const aiFaction = newState.aiPlanets.find(p => p.id === m.from.id)?.faction || 'human';
             const spd = fleetSpeed(returnFleet, m.from.research || {}, aiFaction);
             if (spd > 0) {
               const flightTime = calcFlightTime(dist, spd, 10, m.from.research || {});
               ongoingMissions.push({
                 ...m, fleet: returnFleet, returning: true, returnDeparture: now, returnTime: now + flightTime * 1000,
+                ...(m.type === 'espionage' ? { phase: ESPIONAGE_PHASES.REGRESANDO } : {}),
               });
             }
           }

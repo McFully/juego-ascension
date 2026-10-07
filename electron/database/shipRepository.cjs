@@ -265,6 +265,7 @@ function returnShipsToPlanet(missionId, destinationPlanetId, gameTick = 0, origi
 
 // Resolver consecuencias de combate sobre las naves con matrícula
 function resolveCombatOnShips(missionId, lossesByChassis = {}, battleDetails = {}) {
+  if (!missionId) return { success: false, reason: "no_mission_id" };
   const db = getDb();
   const { gameTick = 0, location = "Sector de Batalla", winner = "draw" } = battleDetails;
 

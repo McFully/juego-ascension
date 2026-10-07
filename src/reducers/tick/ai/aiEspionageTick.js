@@ -50,11 +50,15 @@ export const processAiEspionageTick = (state) => {
     if (candidatos.length === 0) continue;
 
     const objetivo = candidatos[Math.floor(Math.random() * candidatos.length)];
-    const dist = calcDistance(origen, objetivo);
+    const dist = calcDistance(
+      { galaxy: origen.galaxy || 1, system: origen.system || 1, position: origen.position || 1 },
+      { galaxy: objetivo.galaxy || 1, system: objetivo.system || 1, position: objetivo.position || 1 }
+    );
     const spd = fleetSpeed({ espionageProbe: 1 }, origen.research || {}, origen.faction || 'human');
-    if (!spd) continue;
+    if (!spd || isNaN(spd) || spd <= 0) continue;
 
-    const flightTime = Math.max(10, calcFlightTime(dist, spd, 10, origen.research || {}));
+    const rawFlightTime = calcFlightTime(dist, spd, 10, origen.research || {});
+    const flightTime = (!isNaN(rawFlightTime) && rawFlightTime > 0) ? Math.max(10, rawFlightTime) : 60;
     const departure = Date.now();
 
     nuevasMisiones.push({

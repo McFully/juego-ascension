@@ -191,7 +191,7 @@ export const migrateLoadState = (payload = {}) => {
       return {
         ...p,
         relation: p.relation !== undefined ? p.relation : 0,
-        discovered: p.discovered !== undefined ? p.discovered : true,
+        discovered: p.discovered !== undefined ? p.discovered : false,
         strategy: strategyKey,
         aiPersonality: personality,
         aggression: p.aggression !== undefined ? p.aggression : (0.3 + rng() * 0.5),

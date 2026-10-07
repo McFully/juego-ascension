@@ -217,8 +217,8 @@ export const handleSendFleet = (state, action) => {
   newState.fleetMissions = [...(state.fleetMissions || []), {
     id: missionId, type: missionType, from, to, fleet, resources, fuel: totalFuel,
     departure: Date.now(), arrivalTime, returnTime, isAI: false, autoRetreat, formation,
-    ...(missionType === 'espionage' ? { probes: espionageProbes, phase: ESPIONAGE_PHASES.EN_VUELO, espionageCost } : {}),
-    ...(action.missionMeta || {})
+    ...(action.missionMeta || {}),
+    ...(missionType === 'espionage' ? { probes: espionageProbes, phase: ESPIONAGE_PHASES.EN_VUELO, espionageCost } : {})
   }];
   newState.notifications = [...newState.notifications, {
     id: uid(), type: 'info', message: `🚀 Flota enviada a [${to.galaxy}:${to.system}:${to.position}]${isWormhole ? ' a través de Agujero de Gusano' : ''}`, timestamp: Date.now(),

@@ -114,9 +114,25 @@ const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget,
       targetPlanet = state.planets.find(p => p.galaxy === target.galaxy && p.system === target.system && p.position === target.position);
     }
 
-    const defFleet = targetAI ? targetAI.fleet : (targetPlanet?.fleet || {});
-    const defDefenses = targetAI ? targetAI.defenses : (targetPlanet?.defenses || {});
-    const defTech = targetAI ? (targetAI.research || {}) : getEffectiveTech(targetPlanet, state.research);
+    let defFleet = targetAI ? targetAI.fleet : (targetPlanet?.fleet || {});
+    let defDefenses = targetAI ? targetAI.defenses : (targetPlanet?.defenses || {});
+    let defTech = targetAI ? (targetAI.research || {}) : getEffectiveTech(targetPlanet, state.research);
+
+    // Niebla de guerra e inteligencia para la simulación táctica
+    if (targetAI) {
+      const intel = state.planetIntel?.[targetAI.id];
+      if (intel && (intel.level === 'high' || intel.level === 'full')) {
+        defFleet = intel.fleet || defFleet;
+        defDefenses = intel.defenses || defDefenses;
+      } else if (intel && intel.level === 'medium') {
+        defFleet = intel.fleet || defFleet;
+        defDefenses = intel.defenses || defDefenses;
+      } else {
+        // Sin inteligencia media/alta: estimación basada en firmas sensoriales básicas
+        defFleet = intel?.fleet?.estimated ? { lightFighter: Math.max(1, Math.floor((targetAI.aiLevel || 1) * 3)) } : {};
+        defDefenses = {};
+      }
+    }
 
     let result;
     try {

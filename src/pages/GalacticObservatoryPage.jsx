@@ -226,24 +226,38 @@ function FactionCard({ faction, galacticEvents, isSelected, onSelect }) {
             </div>
           )}
 
-          {/* Recursos actuales */}
+          {/* Recursos y Estado — Clasificación según Inteligencia */}
           <div>
-            <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-1.5">Estado Actual</div>
-            <div className="grid grid-cols-2 gap-1 text-[10px] font-mono">
-              {[
-                ['⛏ Metal',    Math.floor(faction.resources?.metal    || 0)],
-                ['💎 Cristal',  Math.floor(faction.resources?.crystal  || 0)],
-                ['🔵 Deuterio', Math.floor(faction.resources?.deuterium|| 0)],
-                ['🛸 Flota',    totalFleet],
-                ['🛡 Defensas', totalDef],
-                ['🌍 Planetas', faction.planetsConquered || 1],
-              ].map(([label, val]) => (
-                <div key={label} className="flex justify-between bg-slate-900/40 rounded px-2 py-1">
-                  <span className="text-slate-500">{label}</span>
-                  <span className="text-slate-200 font-bold">{val.toLocaleString()}</span>
+            <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-1.5">Estado y Recursos Estimados</div>
+            {(() => {
+              const intel = (state?.planetIntel || {})[faction.id];
+              const isHighOrFull = intel && (intel.level === 'high' || intel.level === 'full');
+              const isMedium = intel && intel.level === 'medium';
+
+              const metalStr = isHighOrFull ? Math.floor(faction.resources?.metal || 0).toLocaleString() : (isMedium ? `~${Math.floor((faction.resources?.metal || 0) * 0.85).toLocaleString()}` : '??? (Requiere Espionaje)');
+              const crystalStr = isHighOrFull ? Math.floor(faction.resources?.crystal || 0).toLocaleString() : (isMedium ? `~${Math.floor((faction.resources?.crystal || 0) * 0.85).toLocaleString()}` : '??? (Requiere Espionaje)');
+              const deutStr = isHighOrFull ? Math.floor(faction.resources?.deuterium || 0).toLocaleString() : (isMedium ? `~${Math.floor((faction.resources?.deuterium || 0) * 0.85).toLocaleString()}` : '??? (Requiere Espionaje)');
+              const fleetStr = isHighOrFull ? totalFleet.toLocaleString() : (isMedium ? `~${totalFleet}` : `~${Math.max(1, Math.floor((faction.aiLevel || 1) * 5))} (firmas)`);
+              const defStr = isHighOrFull ? totalDef.toLocaleString() : (isMedium ? `~${totalDef}` : '???');
+
+              return (
+                <div className="grid grid-cols-2 gap-1 text-[10px] font-mono">
+                  {[
+                    ['⛏ Metal', metalStr],
+                    ['💎 Cristal', crystalStr],
+                    ['🔵 Deuterio', deutStr],
+                    ['🛸 Flota', fleetStr],
+                    ['🛡 Defensas', defStr],
+                    ['🌍 Planetas', faction.planetsConquered || 1],
+                  ].map(([label, val]) => (
+                    <div key={label} className="flex justify-between bg-slate-900/40 rounded px-2 py-1">
+                      <span className="text-slate-500">{label}</span>
+                      <span className="text-slate-200 font-bold">{val}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
 
           {/* Últimos eventos galácticos */}

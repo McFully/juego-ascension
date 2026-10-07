@@ -63,22 +63,39 @@ export const handleCombatMission = (mission, state) => {
     intelBonus += spyLevel * 0.02;
     const relicSpyMult = (state.relics || []).reduce((acc, r) => r.effect?.spyBonus ? acc * r.effect.spyBonus : acc, 1);
     intelBonus *= relicSpyMult;
-    // El informe debe ser el MAS RECIENTE de ese objetivo. `find()` sobre el array
-    // (ordenado por insercion) devolvia el mas antiguo de la ventana de 50, de
-    // modo que un `high` de hace horas bonificaba como si fuera nuevo.
-    const reports = state.spyReports || [];
-    const recentSpy = reports[reports.length - 1];
+    // El informe y el bonus de combate corresponden EXCLUSIVAMENTE al planeta
+    // objetivo atacado (mediante planetIntel o el informe más reciente de ese objetivo).
+    // Jamás se toma el último informe global aleatorio.
     const targetId = targetAI?.id || targetPlanet?.id;
-    if (recentSpy && targetId) {
-      const coordsMatch = targetPlanet && recentSpy.coords &&
-        recentSpy.coords.galaxy === targetPlanet.galaxy &&
-        recentSpy.coords.system === targetPlanet.system &&
-        recentSpy.coords.position === targetPlanet.position;
-      if (recentSpy.targetId === targetId || coordsMatch) {
-        if (recentSpy.intelLevel === 'high') intelBonus += 0.08;
-        else if (recentSpy.intelLevel === 'full') intelBonus += 0.15;
+    const targetIntel = targetId ? state.planetIntel?.[targetId] : null;
+
+    // Búsqueda del informe más reciente específico para este objetivo
+    const reports = state.spyReports || [];
+    const targetReports = reports.filter(r => {
+      if (targetId && r.targetId === targetId) return true;
+      if (targetPlanet && r.coords &&
+          r.coords.galaxy === targetPlanet.galaxy &&
+          r.coords.system === targetPlanet.system &&
+          r.coords.position === targetPlanet.position) return true;
+      return false;
+    });
+    const recentSpy = targetReports[targetReports.length - 1];
+
+    // Validez temporal: 1 hora (3600000ms) de vigencia máxima para táctica en combate
+    const INTEL_VALIDITY_MS = 3600000;
+    const now = Date.now();
+    const effectiveIntelLevel = (() => {
+      if (recentSpy && (now - (recentSpy.timestamp || 0) <= INTEL_VALIDITY_MS)) {
+        return recentSpy.intelLevel;
       }
-    }
+      if (targetIntel && (now - (targetIntel.at || 0) <= INTEL_VALIDITY_MS)) {
+        return targetIntel.level;
+      }
+      return null;
+    })();
+
+    if (effectiveIntelLevel === 'high') intelBonus += 0.08;
+    else if (effectiveIntelLevel === 'full') intelBonus += 0.15;
   } else if (targetPlanet) {
     // Si la IA te espió y no la detectaste, ataca con mejor puntería. Es el
     // unico sitio donde el jugador nota el espionaje sin que se lo digamos.
@@ -322,18 +339,19 @@ export const handleCombatMission = (mission, state) => {
       }
     }
 
+    const curStats = newState.stats || {};
     if (result.winner === 'attacker') {
-      newState.stats = { ...newState.stats, combatsWon: newState.stats.combatsWon + 1 };
+      newState.stats = { ...curStats, combatsWon: (curStats.combatsWon || 0) + 1 };
       type = 'success';
       const lootStr = (loot.metal + loot.crystal + loot.deuterium > 0) ? ` Botín: ${fmt(loot.metal)}M/${fmt(loot.crystal)}C/${fmt(loot.deuterium)}D.` : '';
       message = `🏆 ¡Victoria en el asalto! Escombros: ${fmt(result.debris.metal)}M/${fmt(result.debris.crystal)}C.${lootStr}`;
       returnFleet = { ...result.atkSurvivors };
     } else if (result.winner === 'defender') {
-      newState.stats = { ...newState.stats, combatsLost: newState.stats.combatsLost + 1 };
+      newState.stats = { ...curStats, combatsLost: (curStats.combatsLost || 0) + 1 };
       type = 'error'; message = `💀 Ataque repelido. La flota atacante fue destruida o rechazada.`;
       returnFleet = { ...result.atkSurvivors };
     } else {
-      newState.stats = { ...newState.stats, combatsDraw: newState.stats.combatsDraw + 1 };
+      newState.stats = { ...curStats, combatsDraw: (curStats.combatsDraw || 0) + 1 };
       type = 'warning'; message = `🤝 Asalto en tablas tras el intercambio de fuego.`;
       returnFleet = { ...result.atkSurvivors };
     }

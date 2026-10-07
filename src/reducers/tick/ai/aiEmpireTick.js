@@ -434,6 +434,16 @@ export const processAIEmpireTick = (state) => {
         }
       }
 
+      // Producción y mantenimiento de sondas de espionaje para IA
+      const spyTech = p.research?.espionage || 0;
+      if (spyTech >= 2) {
+        const currentProbes = newFleet.espionageProbe || 0;
+        const probeTarget = Math.max(2, Math.min(10, Math.floor((p.aiLevel || 1) * 2)));
+        if (currentProbes < probeTarget) {
+          newFleet.espionageProbe = currentProbes + 1;
+        }
+      }
+
       if ((p.aiLevel || 1) >= 5) {
         const currentAIBlueprints = (newState.blueprints || []).filter(bp => bp.isAI);
         if (currentAIBlueprints.length > 0) {

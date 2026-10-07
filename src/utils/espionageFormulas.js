@@ -100,9 +100,14 @@ export function getFactionEspionageDiffBonus(factionMult = 1.0) {
  * `computeEspionageDetection`.
  */
 export function getEspionageCountermeasures(planet, state) {
-  const research = planet?.research || {};
-  const intelMinistry = state?.ministries?.intel || {};
-  const upgrades = intelMinistry.upgrades || {};
+  // La investigación vive en state.research o en el planeta
+  const research = (state && state.research) ? state.research : (planet?.research || {});
+  
+  // Las mejoras de ministerios viven en planet.ministryUpgrades.intel
+  // Se da soporte prioritario a la fuente real, manteniendo compatibilidad con state.ministries
+  const planetMinUpgrades = planet?.ministryUpgrades?.intel || {};
+  const stateMinUpgrades = state?.ministries?.intel?.upgrades || {};
+  const upgrades = { ...stateMinUpgrades, ...planetMinUpgrades };
 
   const cryptoLevel = research.galacticCrypto || 0;
   const cryptoReduction = Math.min(CRYPTO_MAX_REDUCTION, cryptoLevel * CRYPTO_STEP);
@@ -172,8 +177,12 @@ export function applyIntelCeiling(techDiff, ceilingBonus = 0) {
 }
 
 /** Bonus de techo que dan los programas del Ministerio de Inteligencia. */
-export function getIntelCeilingBonus(state) {
-  const upgrades = state?.ministries?.intel?.upgrades || {};
+export function getIntelCeilingBonus(state, planet = null) {
+  const stateUpgrades = state?.ministries?.intel?.upgrades || {};
+  const currentPlanet = planet || state?.planets?.find(p => p.id === state.currentPlanetId) || state?.planets?.[0];
+  const planetUpgrades = currentPlanet?.ministryUpgrades?.intel || {};
+  const upgrades = { ...stateUpgrades, ...planetUpgrades };
+
   const sleeperLevels = upgrades.sleeper_net || 0;
   return Math.min(SLEEPER_CEILING_MAX, sleeperLevels * SLEEPER_CEILING_STEP);
 }
@@ -259,14 +268,16 @@ export const STEALTH_SILOS_STEP = 0.08;
  * multiplica la probabilidad final.
  */
 export function getPlayerEspDefense(planet, state) {
-  const research = state?.research || {};
+  const research = (state && state.research) ? state.research : (planet?.research || {});
   const intelMinistry = state?.ministries?.intel || {};
-  const upgrades = intelMinistry.upgrades || {};
+  const stateUpgrades = intelMinistry.upgrades || {};
+  const planetUpgrades = planet?.ministryUpgrades?.intel || {};
+  const upgrades = { ...stateUpgrades, ...planetUpgrades };
   const buildings = planet?.buildings || {};
 
   const hawkLevels = upgrades.hawk_eye || 0;
-  const counterIntelLevel = intelMinistry.counterIntelLevel || 0;
-  const budget = intelMinistry.espionageBudget || 0;
+  const counterIntelLevel = planet?.ministries?.intel?.counterIntelLevel ?? intelMinistry.counterIntelLevel ?? 0;
+  const budget = planet?.ministries?.intel?.espionageBudget ?? intelMinistry.espionageBudget ?? 0;
   const quantumCrypto = research.quantumCrypto || 0;
   const stealthSilos = research.stealthSilos || 0;
   const sensors = (buildings.earlyWarningSat || 0) + (buildings.phalanxSensors || 0);

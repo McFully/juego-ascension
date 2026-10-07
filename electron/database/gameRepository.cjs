@@ -39,6 +39,7 @@ const GLOBAL_STATE_KEYS = [
   "credits", "exchangeOrders", "daoShares", "playerDaoShares",
   "daoDividendPool", "exchangeProjects", "debrisField", "relics",
   "bilateralTradeRoutes",
+  "spotExchange",
 
   // Militar
   "fleetPresets", "patrols", "blueprints", "combatLog", "spyReports",
@@ -293,7 +294,7 @@ function loadFullGameState(slug) {
     const dockedShips = db.prepare(`
       SELECT chassis_id, current_planet_id, COUNT(*) as qty
       FROM ships
-      WHERE (session_id = ? OR session_id IS NULL)
+      WHERE session_id = ?
         AND status = 'docked'
         AND current_planet_id IS NOT NULL
       GROUP BY current_planet_id, chassis_id

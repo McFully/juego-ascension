@@ -112,8 +112,8 @@ export const EspionageBriefPanel = ({ state, currentPlanet, target, selectedShip
           nota={!deuteriumOk || !cristalOk ? 'insuficiente' : undefined}
         />
         <Fila
-          etiqueta="Flota en vuelo"
-          valor={`${(resources.deuterium || 0).toLocaleString('es-ES')} deut disponibles`}
+          etiqueta="Deuterio en base"
+          valor={`${(recursos.deuterium || 0).toLocaleString('es-ES')} deut disponibles`}
           tono="text-slate-300"
         />
       </div>
@@ -122,7 +122,7 @@ export const EspionageBriefPanel = ({ state, currentPlanet, target, selectedShip
         <div>
           <Fila
             etiqueta="Riesgo de detección"
-            valor={`${Math.round(riesgo * 100)}%`}
+            valor={riesgo > 0.6 ? 'Muy Alto (~70-90%)' : riesgo > 0.35 ? 'Moderado (~40-60%)' : 'Bajo (<30%)'}
             tono={riesgo > 0.5 ? 'text-red-400' : riesgo > 0.2 ? 'text-amber-300' : 'text-emerald-400'}
           />
           <Fila
