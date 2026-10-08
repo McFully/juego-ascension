@@ -241,12 +241,9 @@ export const TacticalResourceRow = React.memo(({
       {/* Monedas / Créditos Estelares */}
       <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Créditos Estelares / Monedas Galácticas">
         <span className="text-xl">🪙</span>
-        <div className="flex items-baseline gap-1.5 leading-none">
+        <div className="flex items-baseline leading-none">
           <span className="font-black text-amber-300 text-base md:text-lg tabular-nums">
             {fmt(state?.credits ?? 0)}
-          </span>
-          <span className="text-[10px] text-amber-300/80 font-bold uppercase tracking-wider">
-            Créditos
           </span>
         </div>
         <div className="hidden group-hover/res:block z-[120]">

@@ -120,17 +120,6 @@ export const TransmissionChannelGrid = ({
             </button>
           );
         })}
-
-        {/* Tarjeta de Retorno */}
-        <ActionCardTile
-          type="back"
-          title="Volver Atrás"
-          subtitle="Regresar a la pantalla anterior"
-          icon="◀"
-          assetId="commandCenter"
-          badgeText="VOLVER"
-          onClick={onBack}
-        />
       </div>
     </div>
   );

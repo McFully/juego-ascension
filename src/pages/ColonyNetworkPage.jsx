@@ -69,7 +69,7 @@ export const ColonyNetworkPage = ({
       case 'demands': return 'Demandas y Abastecimiento';
       case 'sectors': return 'Prefecturas Coloniales y Virreinatos';
       case 'researchMatrix': return 'Matriz de Investigación';
-      default: return 'Red de Colonias y Logística';
+      default: return 'Logística';
     }
   };
 

@@ -18,17 +18,6 @@ const MoonPage = ({ state, dispatch, currentPlanet, production, MOON_BUILDINGS, 
         <p className="text-xs text-slate-400 leading-relaxed font-mono">
           Las lunas se forman con los escombros de batallas masivas en la órbita del planeta. Acumula restos espaciales para consolidar un satélite natural.
         </p>
-        <div className="pt-4">
-          <ActionCardTile
-            type="back"
-            title="Volver Atrás"
-            subtitle="Regresar a la pantalla anterior"
-            badgeText="VOLVER"
-            onClick={() => {
-              if (navigateBack) navigateBack();
-            }}
-          />
-        </div>
       </div>
     );
   }
@@ -274,19 +263,6 @@ const MoonPage = ({ state, dispatch, currentPlanet, production, MOON_BUILDINGS, 
             )}
           </div>
         </div>
-      </div>
-
-      {/* Tarjeta de Retorno a Pantalla Anterior */}
-      <div className="pt-2">
-        <ActionCardTile
-          type="back"
-          title="Volver Atrás"
-          subtitle="Regresar a la pantalla anterior"
-          badgeText="VOLVER"
-          onClick={() => {
-            if (navigateBack) navigateBack();
-          }}
-        />
       </div>
     </div>
   );

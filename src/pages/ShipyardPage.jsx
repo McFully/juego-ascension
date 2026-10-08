@@ -69,9 +69,17 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
         breadcrumbIcon="🚀"
         rightSlot={
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">
-              <span className="text-slate-400">Hangar:</span>
-              <span className="font-bold text-cyan-300">{fmt(fleetSummary.totalCount)} naves</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#05070f]/70 border border-white/10 text-xs font-mono">
+              <span className="text-cyan-400">Total Hangar:</span>
+              <span className="font-bold text-white">{fmt(fleetSummary.totalCount)}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs font-mono">
+              <span className="text-rose-400">Ataque:</span>
+              <span className="font-bold text-rose-300">{fmt(fleetSummary.totalAtk)}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs font-mono">
+              <span className="text-emerald-400">Defensa:</span>
+              <span className="font-bold text-emerald-300">{fmt(fleetSummary.totalDef)}</span>
             </div>
             {shipQueues.length > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-xs font-mono">
@@ -82,101 +90,6 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
           </div>
         }
       />
-      {/* Banner de Alto Mando del Astillero */}
-      <section className="bg-[#0b1021]/90 border border-cyan-500/25 rounded-2xl p-4 flex flex-wrap gap-4 items-center justify-between shadow-[0_0_30px_rgba(6,182,212,0.1)]">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">🚀</span>
-          <div>
-            <h2 className="text-xl font-black text-white uppercase tracking-tight">Astillero Naval Planetario</h2>
-            <p className="text-[10px] text-cyan-400 font-mono">Ensamblaje orbital y hangares de atraque</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 text-xs font-mono bg-[#05070f]/70 border border-white/8 px-4 py-2 rounded-xl">
-          <div className="flex items-center gap-2">
-            <span className="text-cyan-400">Total Hangar:</span>
-            <span className="font-bold text-white text-sm">{fmt(fleetSummary.totalCount)}</span>
-          </div>
-          <div className="h-4 w-px bg-white/10" />
-          <div className="flex items-center gap-2">
-            <span className="text-red-400">Ataque:</span>
-            <span className="font-bold text-red-300">{fmt(fleetSummary.totalAtk)}</span>
-          </div>
-          <div className="h-4 w-px bg-white/10" />
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-400">Defensa:</span>
-            <span className="font-bold text-emerald-300">{fmt(fleetSummary.totalDef)}</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Presets Rápidos de Doctrina Naval (Punto 6) */}
-      <section className="bg-black/50 border border-cyan-500/20 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
-        <div className="flex items-center gap-2 text-slate-300">
-          <span className="text-amber-400">⚡</span>
-          <span className="font-bold uppercase tracking-wider text-[11px] text-cyan-300">Doctrina Rápida:</span>
-          <span className="text-slate-500 hidden sm:inline">Packs estratégicos de ensamblaje masivo con un solo clic</span>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {/* Preset 1: Patrulla Ligera */}
-          <button
-            onClick={() => {
-              if (meetsReq(SHIPS.lightFighter?.req, { ...currentPlanet.buildings, ...state.research })) {
-                dispatch({ type: 'START_SHIP', shipId: 'lightFighter', quantity: 5 });
-                if (window.playSfx) window.playSfx('click');
-              }
-            }}
-            className="px-3 py-1.5 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-200 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-            title="Ensamblar 5 Cazas Ligeros de reconocimiento rápido"
-          >
-            <span>🛸 Escuadra Ligera (5x Caza)</span>
-          </button>
-
-          {/* Preset 2: Convoy de Carga y Minería */}
-          <button
-            onClick={() => {
-              if (meetsReq(SHIPS.smallCargo?.req, { ...currentPlanet.buildings, ...state.research })) {
-                dispatch({ type: 'START_SHIP', shipId: 'smallCargo', quantity: 3 });
-                if (window.playSfx) window.playSfx('click');
-              }
-            }}
-            className="px-3 py-1.5 rounded-xl bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/40 text-amber-200 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-            title="Ensamblar 3 Cargueros para transporte de recursos"
-          >
-            <span>📦 Convoy de Carga (3x Carguera)</span>
-          </button>
-
-          {/* Preset 3: Fuerza de Choque */}
-          <button
-            onClick={() => {
-              if (meetsReq(SHIPS.cruiser?.req, { ...currentPlanet.buildings, ...state.research })) {
-                dispatch({ type: 'START_SHIP', shipId: 'cruiser', quantity: 2 });
-                if (window.playSfx) window.playSfx('click');
-              } else if (meetsReq(SHIPS.heavyFighter?.req, { ...currentPlanet.buildings, ...state.research })) {
-                dispatch({ type: 'START_SHIP', shipId: 'heavyFighter', quantity: 4 });
-                if (window.playSfx) window.playSfx('click');
-              }
-            }}
-            className="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-200 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-            title="Ensamblar fuerza naval de asalto de choque"
-          >
-            <span>⚔️ Escuadrón de Choque</span>
-          </button>
-
-          {/* Enlace directo a la Lonja Naval */}
-          <button
-            onClick={() => {
-              if (navigateTo) navigateTo('market');
-              if (window.playSfx) window.playSfx('click');
-            }}
-            className="px-3 py-1.5 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-500/50 text-indigo-300 hover:text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer ml-auto"
-            title="Ir a la Lonja Naval para comprar naves usadas o vender excedentes"
-          >
-            <span>⚓ Lonja Naval (Venta y Ocasión)</span>
-          </button>
-        </div>
-      </section>
 
       {/* Cola de Producción Activa (Componente Modular) */}
       <ShipyardQueueSection
@@ -192,13 +105,6 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
 
       {/* Selector de Divisiones Navales en Grid Responsivo con Tarjeta Consola Central al Final */}
       <div className="w-full space-y-3 py-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-2">
-            <span>🚀</span>
-            <span>Divisiones del Astillero</span>
-          </h3>
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full items-stretch pt-2 pb-4">
           {categories.map(c => {
             const isSelected = shipCat === c.key;
@@ -254,19 +160,6 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
               </button>
             );
           })}
-
-          {/* Tarjeta de Retorno a Pantalla Anterior como la ÚLTIMA TARJETA del grid */}
-          <ActionCardTile
-            type="back"
-            title="Volver Atrás"
-            subtitle="Regresar a la pantalla anterior"
-            icon="◀"
-            assetId="commandCenter"
-            badgeText="VOLVER"
-            onClick={() => {
-              if (navigateBack) navigateBack();
-            }}
-          />
         </div>
       </div>
 
@@ -345,16 +238,6 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
               BUILDINGS={BUILDINGS}
             />
           ))}
-          {/* Tarjeta de Retorno a Alto Mando como última casilla del grid */}
-          <ActionCardTile
-            type="back"
-            title="Volver al Alto Mando"
-            subtitle="Regresar al Alto Mando"
-            badgeText="VOLVER"
-            onClick={() => {
-              if (navigateBack) navigateBack();
-            }}
-          />
         </div>
       );
     })()}

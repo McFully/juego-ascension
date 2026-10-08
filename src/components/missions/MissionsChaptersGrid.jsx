@@ -56,49 +56,62 @@ export const MissionsChaptersGrid = ({
                   }
                 }}
                 disabled={!unlocked}
-                className={`relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer select-none min-h-[110px] ${
-                  isSelected
-                    ? 'border-cyan-400 bg-cyan-950/50 shadow-[0_0_18px_rgba(6,182,212,0.3)] ring-1 ring-cyan-400'
-                    : unlocked
-                      ? 'border-white/10 bg-[#060a15]/80 hover:border-cyan-500/50 hover:bg-[#0c1426]'
-                      : 'border-white/5 bg-black/40 opacity-40 cursor-not-allowed'
+                className={`relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all duration-200 select-none min-h-[110px] ${
+                  !unlocked
+                    ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed'
+                    : isSelected
+                      ? 'border-cyan-400 bg-cyan-950/50 shadow-[0_0_18px_rgba(6,182,212,0.3)] ring-1 ring-cyan-400 cursor-pointer'
+                      : 'border-white/10 bg-[#060a15]/80 hover:border-cyan-500/50 hover:bg-[#0c1426] cursor-pointer'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-1.5 w-full mb-1.5">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-base shrink-0">{era.icon}</span>
-                      <span className="text-xs font-bold text-white uppercase tracking-tight truncate whitespace-nowrap">
+                      <span className={`text-base shrink-0 ${!unlocked ? 'opacity-40 filter grayscale' : ''}`}>{era.icon}</span>
+                      <span className={`text-xs font-bold uppercase tracking-tight truncate whitespace-nowrap ${
+                        !unlocked ? 'text-slate-400' : 'text-white'
+                      }`}>
                         {era.shortName}
                       </span>
                     </div>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1 ${
                       unlocked
                         ? progress === 100
                           ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40'
                           : 'bg-cyan-950/60 text-cyan-300 border border-cyan-500/30'
-                        : 'bg-black/80 text-slate-500 border border-white/5'
+                        : 'bg-rose-950/80 text-rose-300 border border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
                     }`}>
-                      {unlocked ? `${progress}%` : '🔒'}
+                      {unlocked ? `${progress}%` : (
+                        <>
+                          <span>🔒</span>
+                          <span>BLOQUEADO</span>
+                        </>
+                      )}
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-300/90 font-mono line-clamp-2 leading-snug">
-                    {era.desc}
-                  </p>
+                  {!unlocked ? (
+                    <div className="mt-1 p-1.5 rounded-lg bg-rose-950/40 border border-rose-500/30 text-[10px] font-mono leading-tight text-rose-300">
+                      <span className="font-bold block text-rose-400 flex items-center gap-1 mb-0.5">
+                        <span>⚠️</span> Requisito Previo:
+                      </span>
+                      <span>Completar Capítulo {era.chapters[0] - 1}.</span>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-300/90 font-mono line-clamp-2 leading-snug">
+                      {era.desc}
+                    </p>
+                  )}
                 </div>
 
-                <div className="text-[10px] text-cyan-400/90 font-mono mt-2 pt-1.5 border-t border-white/5 font-semibold">
-                  Capítulos del {era.chapters[0]} al {era.chapters[era.chapters.length - 1]}
-                </div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Grid de los 6 capítulos de la Era + Botón de Retorno */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 w-full items-stretch pb-4">
+      {/* Grid de los 6 capítulos de la Era (3 columnas fijas en md/xl para mostrar 3 arriba y 3 abajo) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full flex-1 items-stretch pb-2">
         {eraChapters.map(ch => {
           const unlocked = isChapterUnlocked(ch.id);
           const progress = getChapterProgress(ch.id);
@@ -114,65 +127,71 @@ export const MissionsChaptersGrid = ({
                 }
               }}
               disabled={!unlocked}
-              className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 select-none cursor-pointer text-left focus:outline-none w-full h-full min-h-[250px] ${
-                isSelected
-                  ? 'border-cyan-400 bg-cyan-950/40 shadow-[0_0_25px_rgba(6,182,212,0.3)] ring-1 ring-cyan-400'
-                  : unlocked
-                    ? 'border-cyan-900/40 bg-[#070b14]/80 hover:border-cyan-500/60 hover:bg-[#0c1424]'
-                    : 'border-slate-800/50 bg-[#04060a]/60 opacity-50 cursor-not-allowed'
+              className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 select-none text-left focus:outline-none w-full h-full min-h-[290px] xl:min-h-[310px] ${
+                !unlocked
+                  ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed'
+                  : isSelected
+                    ? 'border-cyan-400 bg-cyan-950/40 shadow-[0_0_25px_rgba(6,182,212,0.3)] ring-1 ring-cyan-400 cursor-pointer'
+                    : 'border-cyan-900/40 bg-[#070b14]/80 hover:border-cyan-500/60 hover:bg-[#0c1424] cursor-pointer'
               }`}
             >
-              <div className="relative w-full h-36 overflow-hidden bg-[#05070f] border-b border-white/10">
+              <div className="relative w-full h-44 xl:h-48 overflow-hidden bg-[#05070f] border-b border-white/10 shrink-0">
                 <SafeImg
                   id={ch.assetId}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className={`w-full h-full object-cover transition-transform duration-500 ${
+                    !unlocked ? 'opacity-40 filter grayscale' : 'group-hover:scale-105'
+                  }`}
                 />
-                <span className={`absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider backdrop-blur-md border ${
+
+                {/* Pestillo / candado en el centro de la foto cuando está bloqueado */}
+                {!unlocked && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                    <span className="text-4xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
+                  </div>
+                )}
+
+                {/* Etiqueta arriba a la derecha */}
+                <span className={`absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider backdrop-blur-md border flex items-center gap-1 ${
                   unlocked
                     ? progress === 100
                       ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
                       : 'bg-cyan-950/80 text-cyan-300 border-cyan-500/40'
-                    : 'bg-black/80 text-slate-500 border-slate-700/50'
+                    : 'bg-rose-950/80 text-rose-300 border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
                 }`}>
-                  {unlocked ? `Progreso ${progress}%` : 'Bloqueado'}
-                </span>
-                <span className="absolute bottom-2 left-2.5 text-lg drop-shadow">
-                  {ch.icon}
+                  {unlocked ? `Progreso ${progress}%` : (
+                    <>
+                      <span>🔒</span>
+                      <span>BLOQUEADO</span>
+                    </>
+                  )}
                 </span>
               </div>
 
               <div className="p-4 flex flex-col justify-between flex-1">
                 <div>
-                  <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors line-clamp-1">
+                  <h4 className={`text-sm font-bold uppercase tracking-wide truncate ${
+                    !unlocked ? 'text-slate-400' : 'text-white group-hover:text-cyan-300 transition-colors'
+                  }`}>
                     {ch.name}
                   </h4>
-                  <p className="text-xs text-slate-400 font-mono mt-1.5 line-clamp-2 leading-relaxed">
-                    {ch.intro}
-                  </p>
-                </div>
 
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono uppercase tracking-wider font-semibold">
-                  <span className={isSelected ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}>
-                    {unlocked ? 'Entrar a Misiones' : `🔒 Requiere Cap. ${ch.id - 1}`}
-                  </span>
-                  <span className="text-cyan-400/70 group-hover:translate-x-1 transition-transform duration-200">
-                    ➔
-                  </span>
+                  {!unlocked ? (
+                    <div className="mt-2.5 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-tight text-rose-300">
+                      <span className="font-bold block text-rose-400 flex items-center gap-1 mb-1">
+                        <span>⚠️</span> Requisito Previo:
+                      </span>
+                      <span>Requiere completar Capítulo {ch.id - 1}.</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 font-mono mt-1.5 line-clamp-3 leading-relaxed">
+                      {ch.intro}
+                    </p>
+                  )}
                 </div>
               </div>
             </button>
           );
         })}
-
-        <ActionCardTile
-          type="back"
-          title="Volver Atrás"
-          subtitle="Regresar a la pantalla anterior"
-          icon="◀"
-          assetId="commandCenter"
-          badgeText="VOLVER"
-          onClick={onNavigateBack}
-        />
       </div>
     </div>
   );

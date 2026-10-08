@@ -7,39 +7,24 @@ export const MinistryCard = ({
   mState,
   currentPlanet,
   onEnterMinistry,
-  setLockedMinistryModal
+  setLockedMinistryModal,
+  dispatch
 }) => {
   const hasMinister = !!mState?.minister;
   const isAuto = hasMinister && (mState?.automationEnabled || mState?.autoManage);
 
   const ministryReqs = {
-    science: { id: 'researchLab', name: 'Laboratorio de Investigación', location: 'Infraestructuras', locationId: 'infra' },
-    war: { id: 'shipyard', name: 'Astillero Orbital', location: 'Infraestructuras', locationId: 'infra' },
-    cybernetics: { id: 'researchLab', name: 'Laboratorio de Investigación', location: 'Infraestructuras', locationId: 'infra' },
-    innovation: { id: 'naniteFactory', name: 'Fábrica de Nanitas', location: 'Infraestructuras', locationId: 'infra' },
-    industry: { id: 'robotFactory', name: 'Fábrica de Robots', location: 'Infraestructuras', locationId: 'infra' },
-    transport: { id: 'spacePort', name: 'Puerto Espacial', location: 'Logística', locationId: 'logistics' },
+    science: { id: 'researchLab', name: 'Laboratorio de investigación nivel 1', location: 'Infraestructuras', locationId: 'infra' },
+    war: { id: 'shipyard', name: 'Astillero orbital nivel 1', location: 'Infraestructuras', locationId: 'infra' },
+    cybernetics: { id: 'researchLab', name: 'Laboratorio de investigación nivel 1', location: 'Infraestructuras', locationId: 'infra' },
+    innovation: { id: 'naniteFactory', name: 'Fábrica de nanobits nivel 1', location: 'Infraestructuras', locationId: 'infra' },
+    industry: { id: 'robotFactory', name: 'Fábrica de robots nivel 1', location: 'Infraestructuras', locationId: 'infra' },
+    transport: { id: 'spacePort', name: 'Puerto espacial nivel 1', location: 'Logística', locationId: 'logistics' },
   };
 
   const req = ministryReqs[id];
   const pBuildings = currentPlanet?.buildings || {};
   const isUnlocked = !req || ((pBuildings[req.id] || 0) >= 1);
-
-  let badgeText = 'VACANTE';
-  let badgeClasses = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
-
-  if (!isUnlocked) {
-    badgeText = '🔒 BLOQUEADO';
-    badgeClasses = 'bg-rose-950/80 text-rose-300 border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]';
-  } else if (hasMinister) {
-    if (isAuto) {
-      badgeText = 'AUTÓNOMO';
-      badgeClasses = 'bg-emerald-950/80 text-emerald-300 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse';
-    } else {
-      badgeText = 'ASIGNADO';
-      badgeClasses = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
-    }
-  }
 
   const handleClick = () => {
     if (!isUnlocked) {
@@ -54,6 +39,17 @@ export const MinistryCard = ({
       return;
     }
     onEnterMinistry(id);
+  };
+
+  const handleToggleMinisterAuto = (e) => {
+    e.stopPropagation();
+    if (!hasMinister || !dispatch || !currentPlanet) return;
+    dispatch({
+      type: 'TOGGLE_MINISTRY_AUTOMATION',
+      planetId: currentPlanet.id,
+      ministryId: id
+    });
+    if (window.playSfx) window.playSfx('click');
   };
 
   return (
@@ -73,44 +69,67 @@ export const MinistryCard = ({
       <div className="relative w-full h-24 md:h-28 overflow-hidden bg-[#05070f] border-b border-white/10">
         <SafeImg
           id={meta.assetId || 'sectorGovPalace'}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
+          className={`w-full h-full object-cover transition-transform duration-500 ${
+            !isUnlocked ? 'opacity-40 filter grayscale' : 'opacity-90 group-hover:opacity-100 group-hover:scale-105'
+          }`}
         />
 
         {!isUnlocked && (
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="text-3xl filter drop-shadow-[0_0_10px_rgba(244,63,94,0.6)]">🔒</span>
+            <span className="text-3xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
           </div>
         )}
 
-        <span className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-wider border backdrop-blur-sm flex items-center gap-1.5 ${badgeClasses}`}>
-          {isAuto && isUnlocked && (
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-            </span>
-          )}
-          {badgeText}
-        </span>
+        {!isUnlocked && (
+          <span className="absolute top-2 right-2 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/80 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+            <span>🔒</span>
+            <span>BLOQUEADO</span>
+          </span>
+        )}
       </div>
 
       <div className="p-2.5 md:p-3 flex flex-col justify-between flex-1">
         <div>
-          <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center justify-between gap-1.5">
             <h4 className={`text-xs md:text-sm font-bold uppercase tracking-wide truncate ${isUnlocked ? 'text-white group-hover:text-cyan-300' : 'text-slate-400'}`}>
               {meta.name.replace(/^Ministerio\s+(de\s+)?/i, '')}
             </h4>
+
+            {isUnlocked && (
+              hasMinister ? (
+                <div
+                  onClick={handleToggleMinisterAuto}
+                  className={`shrink-0 -translate-y-1 py-0.5 px-1.5 rounded-full font-mono text-[8.5px] font-bold uppercase tracking-wider border backdrop-blur-md transition-all cursor-pointer flex items-center gap-1 shadow-sm hover:scale-105 active:scale-95 ${
+                    isAuto
+                      ? 'bg-emerald-950/90 border-emerald-400/80 text-emerald-300 hover:bg-emerald-900 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                      : 'bg-black/80 border-amber-500/50 text-amber-300 hover:border-cyan-400 hover:text-cyan-200'
+                  }`}
+                  title={isAuto ? "Ministro Autónomo (ON). Clic para cambiar a Manual" : "Ministro Manual (OFF). Clic para activar Autónomo"}
+                >
+                  <span className="relative flex h-1.5 w-1.5 shrink-0">
+                    {isAuto && (
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400"></span>
+                    )}
+                    <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isAuto ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                  </span>
+                  <span>{isAuto ? 'Autónomo' : 'Manual'}</span>
+                </div>
+              ) : (
+                <span className="shrink-0 -translate-y-1 px-1.5 py-0.5 rounded-full text-[8.5px] font-mono font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  Vacante
+                </span>
+              )
+            )}
           </div>
 
           {isUnlocked ? (
-            <p className="text-[10px] md:text-[11px] text-slate-400 font-mono mt-0.5 line-clamp-2 leading-tight">
+            <p className="text-[10px] md:text-[11px] text-slate-400 font-mono mt-1.5 line-clamp-2 leading-tight">
               {meta.desc}
             </p>
           ) : (
-            <div className="mt-1.5 p-1.5 rounded-lg bg-rose-950/40 border border-rose-500/30 text-[10px] font-mono leading-tight text-rose-300">
-              <span className="font-bold block text-rose-400 flex items-center gap-1 mb-0.5">
-                <span>⚠️</span> Requiere Sede:
-              </span>
-              <span>Construir <strong>{req.name}</strong> en {req.location}.</span>
+            <div className="mt-1 px-2 py-1 rounded-lg bg-rose-950/40 border border-rose-500/30 text-[10px] md:text-[11px] font-mono leading-tight text-rose-300 flex items-center gap-1.5 truncate">
+              <span className="text-rose-400 shrink-0">⚠️</span>
+              <span className="truncate">Requisito: <strong className="text-rose-200">{req?.name}</strong></span>
             </div>
           )}
         </div>

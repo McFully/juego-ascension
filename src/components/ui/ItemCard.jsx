@@ -38,8 +38,7 @@ export const ItemCard = React.memo(({
   onToggleAutoRestriction,
   planetResources,
   isQueueFull = false,
-  buildingMode,
-  onSelectBuildingMode
+  lockReason = null
 }) => {
   const [clicked, setClicked] = useState(false);
   const [selectedCancelItem, setSelectedCancelItem] = useState(null);
@@ -109,9 +108,10 @@ export const ItemCard = React.memo(({
             />
           )}
 
-          {badge && !hasQueue && (
-            <div className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider border shadow-md ${badge.bg} z-10 backdrop-blur-sm`}>
-              {badge.text}
+          {!meetsRequirements && !hasQueue && (
+            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider border shadow-md bg-rose-950/80 text-rose-300 border-rose-500/40 z-10 backdrop-blur-sm flex items-center gap-1">
+              <span>🔒</span>
+              <span>Bloqueado</span>
             </div>
           )}
 
@@ -124,8 +124,8 @@ export const ItemCard = React.memo(({
           )}
         </CardBanner>
 
-        {/* Header: Name + Level */}
-        <div className="flex items-start justify-between mb-2">
+        {/* Header: Name + Level con Consola Operativa alineada a la derecha */}
+        <div className="flex items-start justify-between mb-2 gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-bold text-white text-base drop-shadow-[0_0_2px_rgba(255,255,255,0.3)] truncate">{name}</span>
@@ -137,12 +137,56 @@ export const ItemCard = React.memo(({
               {maxLevel && <span className="text-[10px] text-slate-600 font-mono">/ {maxLevel}</span>}
             </div>
           </div>
+
+          {onOpenInterior && level > 0 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onOpenInterior(id); }}
+              className="p-2 self-center rounded-xl bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-md focus-ring-game shrink-0"
+              title="Abrir Consola Operativa del Edificio"
+              aria-label="Abrir Consola Operativa del Edificio"
+              data-ui-audit-id={`btn-console-${id}`}
+            >
+              <span className="text-base">⚙️</span>
+            </button>
+          )}
         </div>
 
         {/* Info de Producción Submodularizada */}
         <ItemCardProductionInfo prodInfo={prodInfo} level={level} />
 
-        {extra && <div className="text-xs text-slate-400 mb-2">{extra}</div>}
+        {/* Cajón Rojo de Requisitos (Idéntico a Consejo Imperial) */}
+        {(lockReason || (!meetsRequirements && extra) || (lackOfPop && extra)) && (
+          <div className="mt-2 mb-2 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-relaxed text-rose-300">
+            <span className="font-bold text-rose-400 inline-flex items-center gap-1 mr-1.5">
+              <span>⚠️</span> Requisito:
+            </span>
+            <span>{lockReason || extra}</span>
+          </div>
+        )}
+
+        {/* Recuadro Verde de Población / Requisitos Satisfechos y Líneas Extra */}
+        {extra && (lockReason ? Boolean(extra) : (meetsRequirements && !lackOfPop)) && (() => {
+          const lines = String(extra).split(' | ');
+          const popLine = lines.find(l => l.includes('Población:'));
+          const otherLines = lines.filter(l => !l.includes('Población:'));
+
+          return (
+            <div className="flex flex-col gap-1.5 mb-2">
+              {popLine && (
+                <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono leading-tight text-emerald-300 flex items-center justify-between">
+                  <span className="font-bold flex items-center gap-1 text-emerald-400">
+                    <span>👥</span> Población:
+                  </span>
+                  <span className="text-emerald-200 font-semibold">{popLine.replace(/👥\s*Población:\s*/, '')}</span>
+                </div>
+              )}
+              {otherLines.length > 0 && (
+                <div className="text-xs text-slate-400">{otherLines.join(' | ')}</div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Sección de Costes Submodularizada */}
         <ItemCardCostSection cost={cost} time={time} canAfford={canAfford} planetResources={planetResources} prodInfo={prodInfo} />
@@ -172,55 +216,6 @@ export const ItemCard = React.memo(({
           >
             <span>📋</span>
           </button>
-        )}
-        {onOpenInterior && level > 0 && (
-          <button onClick={(e) => { e.stopPropagation(); onOpenInterior(id); }}
-            className={`px-2.5 ${S.btn} bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 flex items-center justify-center transition focus-ring-game`}
-            title="Abrir Consola Operativa del Edificio"
-            data-ui-audit-id={`btn-console-${id}`}
-          >
-            ⚙️
-          </button>
-        )}
-        {level > 0 && onSelectBuildingMode && (
-          <div className="flex items-center gap-1 bg-black/60 p-0.5 rounded-lg border border-white/10" data-ui-audit-id={`building-mode-selector-${id}`}>
-            <button
-              type="button"
-              title="Modo Normal (100% Prod / 100% Energía)"
-              onClick={(e) => { e.stopPropagation(); onSelectBuildingMode('standard'); }}
-              className={`px-1.5 py-1 text-[10px] font-mono rounded font-bold transition-all ${
-                (!buildingMode || buildingMode === 'standard')
-                  ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              NORM
-            </button>
-            <button
-              type="button"
-              title="Modo Sobrecarga (+25% Prod / +50% Energía)"
-              onClick={(e) => { e.stopPropagation(); onSelectBuildingMode('overclock'); }}
-              className={`px-1.5 py-1 text-[10px] font-mono rounded font-bold transition-all ${
-                buildingMode === 'overclock'
-                  ? 'bg-amber-500/30 text-amber-300 border border-amber-400/50 shadow-[0_0_8px_rgba(245,158,11,0.4)]'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              ⚡OC
-            </button>
-            <button
-              type="button"
-              title="Modo Ahorro / Eco (-50% Prod / -50% Energía)"
-              onClick={(e) => { e.stopPropagation(); onSelectBuildingMode('eco'); }}
-              className={`px-1.5 py-1 text-[10px] font-mono rounded font-bold transition-all ${
-                buildingMode === 'eco'
-                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              ECO
-            </button>
-          </div>
         )}
       </div>
 

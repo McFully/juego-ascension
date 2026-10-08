@@ -165,25 +165,6 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
               </button>
             );
           })}
-
-          {/* Tarjeta de Retorno */}
-          <ActionCardTile
-            type="back"
-            title="Volver"
-            subtitle="Regresar a la pantalla anterior"
-            icon="◀"
-            assetId="commandCenter"
-            badgeText="VOLVER"
-            onClick={() => {
-              if (window.playSfx) window.playSfx('click');
-              if (navigateBack) {
-                navigateBack();
-              } else {
-                const fn = safeSetActiveTab || setActiveTab;
-                if (fn) fn('overview');
-              }
-            }}
-          />
         </div>
       </div>
       )}

@@ -7,14 +7,13 @@ import {
 } from '../utils/governmentRoute.js';
 
 describe('ruta de gobierno determinista', () => {
-  it('Banca y las investigaciones de Finanzas son destinos distintos', () => {
-    const bank = parseGovernmentRoute(COMMAND_CARD_TARGETS.planetaryBank);
+  it('Banca Galáctica y las investigaciones de Finanzas son destinos distintos e independientes', () => {
+    expect(COMMAND_CARD_TARGETS.planetaryBank).toBe('galactic_bank');
     const research = parseGovernmentRoute(COMMAND_CARD_TARGETS.financeResearch);
 
-    expect(bank).toMatchObject({ level: 3, ministryId: 'finance', subview: 'buildings' });
+    expect(COMMAND_CARD_TARGETS.planetaryBank).not.toBe(COMMAND_CARD_TARGETS.financeResearch);
+    expect(COMMAND_CARD_TARGETS.planetaryBank).not.toBe('ministry_finance_buildings');
     expect(research).toMatchObject({ level: 3, ministryId: 'finance', subview: 'research' });
-    expect(bank.tab).not.toBe(research.tab);
-    expect(bank.subview).not.toBe(research.subview);
   });
 
   it('Ministerios de la Lonja abre el distrito de ese mundo, no el Alto Mando ni Finanzas', () => {

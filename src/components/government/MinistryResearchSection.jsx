@@ -111,8 +111,9 @@ export const MinistryResearchSection = ({
           const prodInfo = researchEffectInfo ? researchEffectInfo(id, targetLvl) : '';
 
           const extraLines = [];
+          const reqLines = [];
           if (r.req && !meets) {
-            extraLines.push(`🔒 Requiere: ${Object.entries(r.req).map(([k, v]) => `${RESEARCH?.[k]?.name || BUILDINGS?.[k]?.name || k} Nv.${v}`).join(', ')}`);
+            reqLines.push(Object.entries(r.req).map(([k, v]) => `${RESEARCH?.[k]?.name || BUILDINGS?.[k]?.name || k} nivel ${v}`).join(', '));
           }
           if (queuedCount > 0) {
             extraLines.push(`⏳ En cola: +${queuedCount} nivel(es)`);
@@ -132,6 +133,7 @@ export const MinistryResearchSection = ({
                   planetResources={currentPlanet?.resources}
                   isQueueFull={(state?.researchQueue || []).length >= getMaxResearchQueueSlots(state)}
                   meetsRequirements={meets}
+                  lockReason={reqLines.length > 0 ? reqLines.join(' · ') : null}
                   prodInfo={prodInfo}
                   onAction={() => {
                     dispatch({ type: 'START_RESEARCH', researchId: id, planetId: currentPlanet.id });
@@ -159,18 +161,6 @@ export const MinistryResearchSection = ({
             </div>
           );
         })}
-
-        {/* Tarjeta de Retorno al Atrio */}
-        {onBack && (
-          <ActionCardTile
-            type="back"
-            title={`Volver a ${mapping.name || 'Sede'}`}
-            subtitle="Atrio principal del ministerio"
-            icon="◀"
-            badgeText="SEDE"
-            onClick={onBack}
-          />
-        )}
       </div>
     </section>
   );

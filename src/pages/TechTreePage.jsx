@@ -185,24 +185,6 @@ const TechTreePage = ({ state, currentPlanet, production, fmt, RESEARCH, S, meet
           </div>
         );
       })()}
-
-      {/* Tarjeta de Retorno a Pantalla Anterior */}
-      <div className="pt-2">
-        <ActionCardTile
-          type="back"
-          title="Volver Atrás"
-          subtitle="Regresar a la pantalla anterior"
-          icon="◀"
-          assetId="researchLab"
-          badgeText="VOLVER"
-          onClick={() => {
-            if (navigateBack) navigateBack();
-            else if (safeSetActiveTab) safeSetActiveTab('overview');
-            else if (setActiveTab) setActiveTab('overview');
-            else if (navigateTo) navigateTo('overview');
-          }}
-        />
-      </div>
     </div>
   );
 };

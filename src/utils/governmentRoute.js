@@ -7,11 +7,11 @@
 // `parseGovernmentRoute` lo resuelva como cualquier otro despacho: la ruta
 // `ministry_intel_espionage` se genera sola y el breadcrumb cuelga del
 // ministerio sin tocar nada más.
-export const DESK_SUBVIEWS = ['buildings', 'research', 'programs', 'directives', 'espionage'];
+export const DESK_SUBVIEWS = ['buildings', 'research', 'programs', 'directives', 'espionage', 'candidates'];
 
 export const COMMAND_CARD_TARGETS = {
   exchangeMinistries: 'government_ministries',
-  planetaryBank: 'ministry_finance_buildings',
+  planetaryBank: 'galactic_bank',
   financeResearch: 'ministry_finance_research',
 };
 

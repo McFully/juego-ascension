@@ -1,6 +1,7 @@
 import React from 'react';
 import { HubCard } from './HubCard.jsx';
 import { sharedCommandCards } from './sharedCommandCards.jsx';
+import { COMMAND_CARD_TARGETS } from '../../../utils/governmentRoute.js';
 
 /**
  * Catálogo del Mando Imperial.
@@ -18,10 +19,11 @@ export const IMPERIAL_COMMAND_CARDS = [
   'colony_network',
   'combat',
   'shipDesign',
+  'bank',
   'wiki'
 ];
 
-export const IMPERIAL_COMMAND_STORAGE_KEY = 'ascension_cmd_hub_imperial_v2';
+export const IMPERIAL_COMMAND_STORAGE_KEY = 'ascension_cmd_hub_imperial_v3';
 
 export function buildImperialCommandCards({
   onNavigateTab,
@@ -46,9 +48,6 @@ export function buildImperialCommandCards({
         icon="🧠"
         titleHoverColor="group-hover:text-cyan-300"
         description="Enlace neuronal cuántico con el Núcleo Gemini: auditoría estratégica del imperio, asesoría bélica y telemetría avanzada."
-        footerLabel="Estado de enlace:"
-        footerValue="Operativo / 500 llamadas"
-        footerValueClasses="text-cyan-300"
       />
     ),
     missions: (
@@ -64,9 +63,6 @@ export function buildImperialCommandCards({
         icon="📜"
         titleHoverColor="group-hover:text-amber-300"
         description="Órdenes supremas de colonización, expansión militar y desarrollo tecnológico con recompensas sustanciales."
-        footerLabel="Progreso de campaña:"
-        footerValue={`${claimedCount}/${missions.length} completadas`}
-        footerValueClasses="text-amber-300"
       />
     ),
     diplomacy: (
@@ -82,16 +78,13 @@ export function buildImperialCommandCards({
         icon="🤝"
         titleHoverColor="group-hover:text-purple-300"
         description="Relaciones interestelares, tratados de paz, pactos comerciales de cooperación y diplomacia exterior."
-        footerLabel="Influencia Política:"
-        footerValue={`${fmt ? fmt(state?.influence || 0) : (state?.influence || 0)} Ptos`}
-        footerValueClasses="text-purple-300"
       />
     ),
     imperial_council: (
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('imperial_council')}
         isLocked={(state?.planets || []).length < 10 && !state?.imperialCouncilUnlocked}
-        lockReason="Requiere administrar un Imperio de al menos 10 mundos para convocar el Consejo de Ministros Supremos."
+        lockReason="Tener al menos 10 planetas."
         borderColor="border-amber-500/30"
         hoverBorderColor="hover:border-amber-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(245,158,11,0.3)]"
@@ -102,16 +95,13 @@ export function buildImperialCommandCards({
         icon="👑"
         titleHoverColor="group-hover:text-amber-300"
         description="Gabinete federal supremo: ministros globales cuyas directivas y bonificaciones aplican a todos los mundos simultáneamente."
-        footerLabel="Estado del Consejo:"
-        footerValue={`${Object.keys(state?.imperialCouncil?.ministers || {}).length}/5 Ministros Supremos`}
-        footerValueClasses="text-amber-300"
       />
     ),
     imperial_senate: (
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('imperial_senate')}
         isLocked={(state?.planets || []).length < 10 && !state?.imperialCouncilUnlocked}
-        lockReason="Requiere administrar un Imperio de al menos 10 mundos para constituir la Cámara Alta Federal del Senado."
+        lockReason="Tener al menos 10 planetas."
         borderColor="border-purple-500/30"
         hoverBorderColor="hover:border-purple-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(168,85,247,0.3)]"
@@ -122,9 +112,6 @@ export function buildImperialCommandCards({
         icon="🏛️"
         titleHoverColor="group-hover:text-purple-300"
         description="Cámara alta de delegados planetarios: debate leyes federales y utiliza Influencia política para orientar la votación."
-        footerLabel="Leyes en Vigor:"
-        footerValue={`${(state?.imperialCouncil?.passedBills || []).length} promulgadas`}
-        footerValueClasses="text-purple-300"
       />
     ),
     colony_network: (
@@ -133,16 +120,28 @@ export function buildImperialCommandCards({
         borderColor="border-indigo-500/30"
         hoverBorderColor="hover:border-indigo-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(99,102,241,0.3)]"
-        assetId="terraformer"
+        assetId="logisticaHub"
         badgeText="LOGÍSTICA"
         badgeClasses="bg-indigo-950/80 text-indigo-300 border border-indigo-500/50"
-        title="Red de Colonias"
+        title="Logística"
         icon="🪐"
         titleHoverColor="group-hover:text-indigo-300"
         description="Gestión logística y científica: rutas de transporte, matriz neural de investigación compartida y despliegue de flotas."
-        footerLabel="Mundos y Red Neural:"
-        footerValue={`${(state?.planets || []).length} mundos (${(state?.researchNetwork?.linkedPlanetIds || []).length} en red)`}
-        footerValueClasses="text-indigo-300"
+      />
+    ),
+    bank: (
+      <HubCard
+        onClick={() => onNavigateTab && onNavigateTab(COMMAND_CARD_TARGETS.planetaryBank)}
+        borderColor="border-yellow-500/30"
+        hoverBorderColor="hover:border-yellow-400"
+        hoverShadow="hover:shadow-[0_0_35px_rgba(234,179,8,0.3)]"
+        assetId="futuresExchange"
+        badgeText="FINANZAS"
+        badgeClasses="bg-yellow-950/80 text-yellow-300 border border-yellow-500/50"
+        title="Banca Central"
+        icon="🏦"
+        titleHoverColor="group-hover:text-yellow-300"
+        description="Servicios bancarios y de crédito estelar: custodia de activos, colocación de depósitos e intereses en el mercado interplanetario."
       />
     ),
     wiki: (
@@ -158,9 +157,6 @@ export function buildImperialCommandCards({
         icon="📚"
         titleHoverColor="group-hover:text-cyan-300"
         description="Codex Magnus, manuales tácticos, tablas de escalado paramétrico y guías operativas."
-        footerLabel="Codex y Fórmulas:"
-        footerValue="Compendio Completo"
-        footerValueClasses="text-cyan-300"
       />
     ),
     stats: (
@@ -168,7 +164,7 @@ export function buildImperialCommandCards({
         onClick={() => onNavigateTab && onNavigateTab('stats')}
         borderColor="border-emerald-600/30"
         hoverBorderColor="hover:border-emerald-300"
-        hoverShadow="hover:shadow-[0_0_35px_rgba(16,185,129,0.3)]"
+        hoverShadow="hover:shadow-[0_0_35px_rgba(168,85,247,0.3)]"
         assetId="sectorGovPalace"
         badgeText="STATS"
         badgeClasses="bg-emerald-950/80 text-emerald-300 border border-emerald-500/50"
@@ -176,27 +172,6 @@ export function buildImperialCommandCards({
         icon="📊"
         titleHoverColor="group-hover:text-emerald-300"
         description="Registro histórico de combates, balance global de producción de recursos y censo colonial detallado."
-        footerLabel="Logros imperiales:"
-        footerValue={`${(state?.achievements || []).length} desbloqueados`}
-        footerValueClasses="text-emerald-300"
-      />
-    ),
-    back_to_empire: (
-      <HubCard
-        onClick={onBackToEmpire}
-        borderColor="border-cyan-500/20"
-        hoverBorderColor="hover:border-cyan-400/60"
-        hoverShadow="hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]"
-        assetId="deepColonizationPsych"
-        badgeText="MUNDOS"
-        badgeClasses="bg-cyan-950/80 text-cyan-300 border border-cyan-500/40"
-        title="Volver a Mundos del Imperio"
-        icon="🪐"
-        titleHoverColor="group-hover:text-cyan-300"
-        description="Regresa a la cuadrícula de planetas del Imperio para inspeccionar colonias, defensas generales y censos poblacionales."
-        footerLabel="Vista destino:"
-        footerValue="Catálogo de Mundos"
-        footerValueClasses="text-cyan-300"
       />
     ),
     ...sharedCommandCards({ onNavigateTab, fmt, state })

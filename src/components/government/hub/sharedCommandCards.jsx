@@ -23,9 +23,6 @@ export const sharedCommandCards = ({ onNavigateTab, fmt, state }) => ({
       icon="🔧"
       titleHoverColor="group-hover:text-teal-300"
       description="Taller naval de ingeniería: crea planos personalizados combinando armamento, escudos y motores avanzados."
-      footerLabel="Planos guardados:"
-      footerValue={`${(state?.blueprints || []).length} configurados`}
-      footerValueClasses="text-teal-300"
     />
   ),
   combat: (
@@ -34,16 +31,13 @@ export const sharedCommandCards = ({ onNavigateTab, fmt, state }) => ({
       borderColor="border-red-500/30"
       hoverBorderColor="hover:border-red-400"
       hoverShadow="hover:shadow-[0_0_35px_rgba(239,68,68,0.3)]"
-      assetId="plasmaTurret"
+      assetId="centroGuerra"
       badgeText="TÁCTICA"
       badgeClasses="bg-red-950/80 text-red-300 border border-red-500/50"
-      title="Simulador de Batalla"
+      title="Centro de Guerra"
       icon="⚔️"
       titleHoverColor="group-hover:text-red-300"
       description="Predicción balística de combate espacial: simula enfrentamientos, porcentaje de bajas y botín estimado."
-      footerLabel="Historial bélico:"
-      footerValue={`${state?.combatsWon || 0}V / ${state?.combatsLost || 0}D`}
-      footerValueClasses="text-red-300"
     />
   ),
 });

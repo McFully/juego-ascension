@@ -37,7 +37,7 @@ const CombatPage = ({ state, currentPlanet, production, SHIPS, DEFENSES, S, Prog
         currentPlanet={currentPlanet}
         production={production}
         fmt={fmt}
-        breadcrumbTitle="Simulador y Centro de Guerra"
+        breadcrumbTitle="Centro de Guerra"
         breadcrumbIcon="⚔️"
         parentHub="imperial_hub"
         backButtonLabelTop="VOLVER A"
@@ -61,17 +61,7 @@ const CombatPage = ({ state, currentPlanet, production, SHIPS, DEFENSES, S, Prog
       />
       {/* Selector de Teatros Operacionales */}
       <div className="w-full space-y-3 py-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm md:text-base font-black text-red-400 font-mono tracking-wider uppercase flex items-center gap-2">
-            <span>⚔️</span>
-            <span>Teatros de Operaciones y Mando de Batalla</span>
-          </h3>
-          <span className="text-[11px] font-mono text-slate-400">
-            {theaters.length} Teatros Estratégicos
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full items-stretch pt-2 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full items-stretch pt-2 pb-4">
           {theaters.map(theater => {
             const isSelected = combatFilter === theater.id;
             return (
@@ -107,26 +97,10 @@ const CombatPage = ({ state, currentPlanet, production, SHIPS, DEFENSES, S, Prog
                       {theater.subtitle}
                     </p>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-xs font-mono">
-                    <span className={isSelected ? 'text-red-400 font-bold' : 'text-slate-500'}>
-                      {isSelected ? '● Teatro Activo' : 'Inspeccionar'}
-                    </span>
-                    <span className="text-red-400 font-bold">➔</span>
-                  </div>
                 </div>
               </button>
             );
           })}
-
-          <ActionCardTile
-            type="back"
-            title="Volver"
-            subtitle="Regresar a la pantalla anterior"
-            badgeText="VOLVER"
-            onClick={() => {
-              if (navigateBack) navigateBack();
-            }}
-          />
         </div>
       </div>
 
@@ -137,19 +111,6 @@ const CombatPage = ({ state, currentPlanet, production, SHIPS, DEFENSES, S, Prog
             <span>📜</span>
             <span>Historial Táctico de Encuentros</span>
           </h4>
-          <div className="flex gap-2">
-            {['all', 'attack', 'defense'].map(f => (
-              <button
-                key={f}
-                onClick={() => setCombatFilter(f)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-mono uppercase transition-all cursor-pointer border ${
-                  combatFilter === f ? 'bg-cyan-500/20 border-cyan-500/50 text-white font-bold' : 'border-white/5 text-slate-400 hover:bg-white/5'
-                }`}
-              >
-                {f === 'all' ? 'Todos' : f === 'attack' ? 'Ataques' : 'Defensas'}
-              </button>
-            ))}
-          </div>
         </div>
 
         <CombatLogList

@@ -49,16 +49,18 @@ export const SafeImg = ({ id, category, className = "w-full h-auto", fallback = 
   return fallback || <div className={`${className} bg-[#05070f] rounded`} />;
 };
 
-export const CardBanner = ({ id, category, children }) => {
+export const CardBanner = ({ id, category, children, isLocked = false, className = '' }) => {
   const src = getCardImage(id, category);
   const [hasError, setHasError] = useState(false);
   return (
-    <div className="relative overflow-hidden w-full aspect-video rounded-xl mb-3 border border-white/10 glass-deep fresnel">
+    <div className={`relative overflow-hidden w-full aspect-video rounded-xl mb-3 border border-white/10 glass-deep fresnel ${className}`}>
       {src && !hasError ? (
         <img
           src={src}
           alt=""
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover transition-transform duration-500 ${
+            isLocked ? 'opacity-40 filter grayscale' : ''
+          }`}
           onError={() => setHasError(true)}
           loading="eager"
           decoding="sync"

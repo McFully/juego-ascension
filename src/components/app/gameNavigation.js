@@ -24,6 +24,7 @@ export const GAME_TABS = [
   { id: "colony_network", label: "🪐 Red de Colonias", quadrant: "gov", parent: "overview" },
   { id: "sectors", label: "🗺️ Sectores Coloniales", quadrant: "gov", parent: "colony_network" },
   { id: "market", label: "💼 Mercado Galáctico", quadrant: "gov", parent: "overview" },
+  { id: "galactic_bank", label: "🏦 Banca Central", quadrant: "gov", parent: "overview" },
   { id: "missions", label: "🎯 Misiones y Objetivos", quadrant: "gov", parent: "overview" },
   { id: "wiki", label: "📚 Enciclopedia Imperial", quadrant: "gov", parent: "overview" },
   { id: "stats", label: "📊 Estadísticas del Imperio", quadrant: "gov", parent: "wiki" },

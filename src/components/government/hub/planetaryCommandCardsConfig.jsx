@@ -17,17 +17,17 @@ export const PLANETARY_COMMAND_CARDS = [
   'planetary_senate',
   'galaxy',
   'market',
+  'bank',
   'defense',
   'missiles',
   'shipyard',
   'fleet',
-  'bank',
   'moon',
   'debris'
 ];
 
 export const planetaryCommandStorageKey = (planetId) =>
-  `ascension_cmd_hub_planet_${planetId || 'unknown'}_v1`;
+  `ascension_cmd_hub_planet_${planetId || 'unknown'}_v2`;
 
 export function buildPlanetaryCommandCards({
   onEnterMinistries,
@@ -65,10 +65,10 @@ export function buildPlanetaryCommandCards({
         title="Ministerios"
         icon="🏛️"
         description={`Gobierno central: nombramiento de ministros, complejos de obras, programas y decretos en las ${ministryCount} carteras.`}
-        footerLabel="Estado de carteras:"
-        footerValue={`${activeMinistersCount}/${ministryCount} con ministro (${autoMinistriesCount} autónomos)`}
+        footerLabel={`${activeMinistersCount}/${ministryCount} mundos con ministro`}
+        footerValue={`${autoMinistriesCount} autónomos`}
         footerValueClasses="text-emerald-400"
-        footerAction={
+        headerAction={
           <button
             type="button"
             onClick={(e) => {
@@ -79,14 +79,19 @@ export function buildPlanetaryCommandCards({
               }
             }}
             title={planet?.autoGovernance ? "Gobernador IA activo. Clic para cambiar a Manual" : "Gobernador Manual. Clic para activar Gobernador IA con todos los ministros"}
-            className={`w-full py-1.5 px-3 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`shrink-0 -translate-y-1 py-0.5 px-2 rounded-full font-mono text-[10px] font-black uppercase tracking-wider border backdrop-blur-md transition-all cursor-pointer flex items-center gap-1.5 shadow-sm ${
               planet?.autoGovernance
-                ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900/90 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                : 'bg-[#080d1e] border-white/20 text-slate-300 hover:border-cyan-400 hover:text-cyan-200'
+                ? 'bg-emerald-950/90 border-emerald-400/80 text-emerald-300 hover:bg-emerald-900 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                : 'bg-black/80 border-white/30 text-slate-400 hover:border-cyan-400 hover:text-cyan-200'
             }`}
           >
-            <span>{planet?.autoGovernance ? '🤖' : '👤'}</span>
-            <span>{planet?.autoGovernance ? 'Gobernador IA: Activo' : 'Activar Gobernador IA'}</span>
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
+              {planet?.autoGovernance && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400"></span>
+              )}
+              <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${planet?.autoGovernance ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+            </span>
+            <span>{planet?.autoGovernance ? 'Activo' : 'Inactivo'}</span>
           </button>
         }
       />
@@ -103,7 +108,7 @@ export function buildPlanetaryCommandCards({
         title="Senado Planetario"
         icon="🏛️"
         titleHoverColor="group-hover:text-cyan-300"
-        description={`Asamblea local de ${planet?.name || 'este mundo'}: pacto tributario, moral ciudadana y delegación de procuradores.`}
+        description={`Asamblea local de ${planet?.name || 'este mundo'}: pacto tributario, moral ciudadana, leyes coloniales y delegación de procuradores.`}
         footerLabel="Procuradores al Trono:"
         footerValue={`${Math.max(1, Math.floor(((planet?.population || 1000) / 10000)) + 1)} Escaños`}
         footerValueClasses="text-cyan-300"
@@ -149,14 +154,14 @@ export function buildPlanetaryCommandCards({
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('defense')}
         isLocked={shipyardLevel < 1 && siloLevel < 1}
-        lockReason="Requiere construir un Astillero o Silo de Misiles en el Complejo de Obras para activar el bastión."
+        lockReason="Astillero nivel 1."
         borderColor="border-rose-500/30"
         hoverBorderColor="hover:border-rose-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(244,63,94,0.3)]"
         assetId="largeShieldDome"
         badgeText="DEFENSA"
         badgeClasses="bg-rose-950/80 text-rose-300 border border-rose-500/50"
-        title="Defensa y Bastión"
+        title="Defensas Planetarias"
         icon="🛡️"
         titleHoverColor="group-hover:text-rose-300"
         description="Baterías láser, torretas de plasma, cúpulas de escudo planetario y sistemas de intercepción orbital."
@@ -169,7 +174,7 @@ export function buildPlanetaryCommandCards({
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('missiles')}
         isLocked={siloLevel < 1}
-        lockReason="Requiere construir un Silo de Misiles en el Complejo de Obras para fabricar y lanzar proyectiles."
+        lockReason="Silo de misiles nivel 1."
         borderColor="border-orange-500/30"
         hoverBorderColor="hover:border-orange-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(249,115,22,0.3)]"
@@ -189,7 +194,7 @@ export function buildPlanetaryCommandCards({
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('shipyard')}
         isLocked={shipyardLevel < 1}
-        lockReason="Requiere construir un Astillero en el Complejo de Obras para iniciar la manufactura de naves."
+        lockReason="Astillero nivel 1."
         borderColor="border-blue-500/30"
         hoverBorderColor="hover:border-blue-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(59,130,246,0.3)]"
@@ -227,14 +232,14 @@ export function buildPlanetaryCommandCards({
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab(COMMAND_CARD_TARGETS.planetaryBank)}
         isLocked={bankLevel < 1}
-        lockReason="Requiere construir la Banca Galáctica Central (Nv. 1) en el Ministerio de Finanzas para desbloquear los servicios bancarios."
+        lockReason="Banca galáctica central nivel 1."
         borderColor="border-yellow-500/30"
         hoverBorderColor="hover:border-yellow-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(234,179,8,0.3)]"
         assetId="futuresExchange"
         badgeText="FINANZAS"
         badgeClasses="bg-yellow-950/80 text-yellow-300 border border-yellow-500/50"
-        title="Banca Galáctica"
+        title="Banca Central"
         icon="🏦"
         titleHoverColor="group-hover:text-yellow-300"
         description="Servicios bancarios y de crédito estelar: custodia de activos, colocación de depósitos e intereses en el mercado interplanetario."
@@ -247,7 +252,7 @@ export function buildPlanetaryCommandCards({
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('moon')}
         isLocked={!hasMoon}
-        lockReason="Requiere formar un satélite lunar mediante restos de batallas orbitales masivas en el planeta."
+        lockReason="formar un satélite lunar mediante restos de batallas orbitales masivas en el planeta."
         borderColor="border-slate-500/30"
         hoverBorderColor="hover:border-slate-300"
         hoverShadow="hover:shadow-[0_0_35px_rgba(148,163,184,0.3)]"
@@ -267,7 +272,7 @@ export function buildPlanetaryCommandCards({
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab('fleet')}
         isLocked={totalDebrisTons <= 0}
-        lockReason="No hay escombros detectados en órbita. Los restos se generan tras batallas espaciales."
+        lockReason="detectar escombros generados tras batallas espaciales en órbita."
         borderColor="border-amber-600/30"
         hoverBorderColor="hover:border-amber-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(217,119,6,0.3)]"

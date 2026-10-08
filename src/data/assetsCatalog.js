@@ -31,6 +31,8 @@ export const getFallbackImage = (category, imagesMap = REAL_IMAGES) => {
 };
 
 export const REAL_IMAGES = {
+  logisticaHub: asset('logistica_hub.jpg'),
+  centroGuerra: asset('centro_guerra.jpg'),
   townHall: asset('Ayuntamiento.webp'),
   healthCenter: asset('Centro de Salud.webp'),
   leisureCenter: asset('Centro de Ocio.webp'),

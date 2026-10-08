@@ -17,6 +17,7 @@ export const MainMenuScreen = ({ onContinue, onNewGame, onLoadGame, onImport, on
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 w-full pointer-events-auto items-stretch">
           
           {/* Tarjeta 1: Continuar */}
+          {/* Tarjeta 1: Continuar */}
           <button
             onClick={onContinue}
             disabled={!hasSaves}
@@ -32,13 +33,6 @@ export const MainMenuScreen = ({ onContinue, onNewGame, onLoadGame, onImport, on
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#081024]/80 via-transparent to-transparent pointer-events-none" />
-              <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-cyan-500/30 text-cyan-200 border border-cyan-400/50 backdrop-blur-md">
-                {hasSaves ? 'DISPONIBLE' : 'VACÍO'}
-              </span>
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 text-cyan-300">
-                <span className="text-xl">▶️</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-widest">REANUDAR</span>
-              </div>
             </div>
             <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
               <div>
@@ -65,13 +59,6 @@ export const MainMenuScreen = ({ onContinue, onNewGame, onLoadGame, onImport, on
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0d1b38]/80 via-transparent to-transparent pointer-events-none" />
-              <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-cyan-400 text-black shadow-[0_0_15px_rgba(6,182,212,0.8)]">
-                OPERACIÓN
-              </span>
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 text-cyan-300">
-                <span className="text-xl">🚀</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-widest">INICIAR</span>
-              </div>
             </div>
             <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
               <div>
@@ -96,10 +83,6 @@ export const MainMenuScreen = ({ onContinue, onNewGame, onLoadGame, onImport, on
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#090d1f]/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 text-slate-300">
-                <span className="text-xl">💾</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-widest">REGISTROS</span>
-              </div>
             </div>
             <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
               <div>
@@ -124,10 +107,6 @@ export const MainMenuScreen = ({ onContinue, onNewGame, onLoadGame, onImport, on
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#090d1f]/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 text-slate-300">
-                <span className="text-xl">📥</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-widest">ARCHIVO</span>
-              </div>
             </div>
             <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
               <div>
@@ -157,10 +136,6 @@ export const MainMenuScreen = ({ onContinue, onNewGame, onLoadGame, onImport, on
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#090d1f]/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 text-slate-300">
-                <span className="text-xl">📤</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-widest">RESPALDO</span>
-              </div>
             </div>
             <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
               <div>
@@ -185,13 +160,6 @@ export const MainMenuScreen = ({ onContinue, onNewGame, onLoadGame, onImport, on
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#081824]/80 via-transparent to-transparent pointer-events-none" />
-              <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-500/30 text-emerald-200 border border-emerald-500/40 backdrop-blur-md">
-                GUARDAR
-              </span>
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 text-emerald-400">
-                <span className="text-xl">💾</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-widest">GUARDAR PARTIDA</span>
-              </div>
             </div>
             <div className="p-4 md:p-5 flex flex-col justify-between flex-1">
               <div>
@@ -209,14 +177,7 @@ export const MainMenuScreen = ({ onContinue, onNewGame, onLoadGame, onImport, on
 
       {/* Footer minimalista, botón de telemetría y créditos oficiales */}
       <div className="relative z-10 w-full flex flex-col items-center justify-center gap-2.5 pt-3 pb-4">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <div className="text-[10px] font-mono text-cyan-400/60 uppercase tracking-[0.3em] flex items-center gap-3">
-            <span>● Terminal Conectada</span>
-            <span>·</span>
-            <span>100% Local y Offline</span>
-            <span>·</span>
-            <span className="text-emerald-400">Base de Datos: SQLite</span>
-          </div>
+        <div className="flex items-center justify-center">
           {onExportLogs && (
             <button
               onClick={onExportLogs}

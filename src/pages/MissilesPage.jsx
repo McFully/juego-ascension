@@ -19,18 +19,6 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
         <p className="text-xs text-slate-400 leading-relaxed font-mono">
           Construye un Silo de Misiles en el Complejo de Obras para fabricar munición balística e interceptora suborbital.
         </p>
-        <div className="pt-2">
-          <ActionCardTile
-            type="back"
-            title="Volver al Alto Mando"
-            subtitle="Regresar al Alto Mando"
-            icon="◀"
-            badgeText="VOLVER"
-            onClick={() => {
-              if (navigateBack) navigateBack();
-            }}
-          />
-        </div>
       </div>
     );
   }

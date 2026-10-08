@@ -40,6 +40,7 @@ const GLOBAL_STATE_KEYS = [
   "daoDividendPool", "exchangeProjects", "debrisField", "relics",
   "bilateralTradeRoutes",
   "spotExchange",
+  "galacticBank",
 
   // Militar
   "fleetPresets", "patrols", "blueprints", "combatLog", "spyReports",

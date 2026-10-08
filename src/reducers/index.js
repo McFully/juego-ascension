@@ -81,6 +81,10 @@ const gameReducerInner = (state, action) => {
     case 'TRADE_LONJA_SHARES':
     case 'DEPOSIT_TO_VAULT':
     case 'CONTRACT_FREIGHT':
+    case 'BANK_DEPOSIT':
+    case 'BANK_WITHDRAW':
+    case 'BANK_SET_INTEREST_RATE':
+    case 'BANK_PROCESS_LIQUIDATION':
     case 'ESTABLISH_BILATERAL_ROUTE':
     case 'CANCEL_BILATERAL_ROUTE':
     // --- RED DE COLONIAS ---

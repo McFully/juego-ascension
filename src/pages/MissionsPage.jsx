@@ -125,6 +125,36 @@ const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, 
     }
   };
 
+  const currentEraInfo = ERAS_INFO.find(e => (e.chapters || []).includes(selectedChap)) || ERAS_INFO.find(e => e.id === selectedEra) || ERAS_INFO[0];
+
+  const missionBreadcrumbs = viewMode === 'chapter_detail'
+    ? [
+        {
+          label: 'Misiones',
+          icon: '🎯',
+          onClick: () => {
+            setViewMode('chapters');
+          }
+        },
+        {
+          label: currentEraInfo.shortName || `Era ${currentEraInfo.id}`,
+          icon: currentEraInfo.icon || '🌌',
+          badge: true
+        },
+        {
+          label: `Capítulo ${selectedChap}`,
+          icon: currentChapInfo.icon || '📖',
+          active: true
+        }
+      ]
+    : [
+        {
+          label: 'Misiones',
+          icon: '🎯',
+          active: true
+        }
+      ];
+
   return (
     <div className="space-y-4 view-enter w-full">
       {/* Barra superior estándar con Recursos, Breadcrumb y Botón Volver Atrás */}
@@ -133,8 +163,7 @@ const MissionsPage = ({ state, dispatch, currentPlanet, setActiveTab, MISSIONS, 
         currentPlanet={currentPlanet}
         production={production}
         fmt={fmt}
-        breadcrumbTitle={viewMode === 'chapter_detail' ? `Capítulo ${selectedChap}` : "Misiones"}
-        breadcrumbIcon="🎯"
+        breadcrumbs={missionBreadcrumbs}
         parentHub="imperial_hub"
         showBackToAltoMando={true}
         onBackToAltoMando={handleTopBack}

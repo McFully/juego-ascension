@@ -246,7 +246,7 @@ export const MinistryDeskView = ({
 
       {/* Subview 1: Programs (Tarjetas interactivas con imagen y selector de niveles) */}
       {subview === 'programs' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3.5 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 w-full items-stretch">
           {(programs || []).map((prog) => {
             const currentLevel = minUpgrades[prog.id] || 0;
             return (
@@ -262,24 +262,12 @@ export const MinistryDeskView = ({
               />
             );
           })}
-
-          {/* Tarjeta de Retorno a la Sede Ministerial */}
-          <ActionCardTile
-            type="back"
-            title={`Volver a ${meta?.name || 'Sede'}`}
-            subtitle="Atrio central del departamento"
-            icon="◀"
-            badgeText="SEDE"
-            onClick={() => {
-              if (onBack) onBack();
-            }}
-          />
         </div>
       )}
 
       {/* Subview 2: Directives */}
       {subview === 'directives' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full items-stretch">
           {(directives || []).map((dir) => {
             const isActive = minState.directives?.[dir.id];
             const dirImage = REAL_IMAGES[dir.id] || getFallbackImage(ministryId) || REAL_IMAGES.aiCore;
@@ -287,15 +275,15 @@ export const MinistryDeskView = ({
             return (
               <div
                 key={dir.id}
-                className={`border rounded-2xl overflow-hidden flex flex-col justify-between backdrop-blur-md transition-all shadow-xl min-h-[340px] group ${
+                className={`border rounded-2xl overflow-hidden flex flex-col justify-between backdrop-blur-md transition-all shadow-xl min-h-[380px] md:min-h-[410px] group ${
                   isActive 
                     ? 'bg-amber-950/30 border-amber-500/60 shadow-amber-950/30' 
                     : 'bg-[#050814]/90 border-white/10 hover:border-amber-500/40'
                 }`}
               >
-                <div>
-                  {/* Banner de Imagen para Decretos */}
-                  <div className="relative w-full h-32 bg-black/80 overflow-hidden border-b border-white/10">
+                <div className="flex flex-col flex-1">
+                  {/* Banner de Imagen para Decretos con mayor protagonismo */}
+                  <div className="relative w-full flex-1 min-h-[170px] md:min-h-[190px] bg-black/80 overflow-hidden border-b border-white/10">
                     <img
                       src={dirImage}
                       alt={dir.name}
@@ -316,24 +304,20 @@ export const MinistryDeskView = ({
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-2.5">
+                  <div className="p-3.5 space-y-1.5 shrink-0">
                     <h4 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
                       {dir.name}
                     </h4>
-                    <p className="text-xs text-slate-300 leading-relaxed">{dir.desc}</p>
-                    
-                    <div className="bg-amber-950/30 border border-amber-500/30 rounded-xl px-3 py-1.5 inline-block">
-                      <span className="text-[11px] font-mono text-amber-400 font-bold">{dir.bonusText}</span>
-                    </div>
+                    {dir.desc && (
+                      <p className="text-xs text-slate-300 leading-relaxed">{dir.desc}</p>
+                    )}
+                    <p className="text-xs font-mono text-amber-300 font-semibold leading-snug pt-0.5">
+                      {dir.bonusText}
+                    </p>
                   </div>
                 </div>
 
-                <div className="p-4 pt-0 border-t border-white/10 mt-2">
-                  <div className="text-[10px] font-mono text-slate-400 my-2.5 flex items-center gap-1">
-                    <span>Mantenimiento: </span>
-                    <span className="text-purple-300 font-bold">{dir.upkeep} Inf / ciclo</span>
-                  </div>
-
+                <div className="p-3.5 pt-2.5 border-t border-white/10 shrink-0">
                   <button
                     onClick={() => onToggleDirective(dir.id)}
                     className={`w-full py-2.5 rounded-xl font-bold font-mono text-xs uppercase tracking-wider transition-all cursor-pointer ${
@@ -348,17 +332,6 @@ export const MinistryDeskView = ({
               </div>
             );
           })}
-
-          <ActionCardTile
-            type="back"
-            title={`Volver a ${meta?.name || 'Sede'}`}
-            subtitle="Atrio central del departamento"
-            icon="◀"
-            badgeText="SEDE"
-            onClick={() => {
-              if (onBack) onBack();
-            }}
-          />
         </div>
       )}
     </div>

@@ -24,6 +24,7 @@ import { processExchangeOrdersTick } from './exchangeOrdersTick.js';
 import { processPirateRaidTick } from './pirateRaidTick.js';
 import { processWorldAlertsTick } from './worldAlertTick.js';
 import { createFleetReturnEvent, appendFleetReturnTacticalEvent } from './fleetReturnEvents.js';
+import { processBankLiquidation } from '../../utils/galacticBankCore.js';
 
 export const processTick = (state) => {
   const now = Date.now();
@@ -309,6 +310,23 @@ export const processTick = (state) => {
   if (Array.isArray(newState.bilateralTradeRoutes) && newState.bilateralTradeRoutes.length > 0) {
     const totalRouteDividends = newState.bilateralTradeRoutes.reduce((acc, r) => acc + (r.rewardCredits || 150), 0);
     newState.credits = (newState.credits || 0) + totalRouteDividends;
+  }
+
+  // 12.8. Liquidación diaria de intereses de la Banca Galáctica
+  if (newState.galacticBank) {
+    const nextLiq = newState.galacticBank.nextLiquidation || 0;
+    if (now >= nextLiq && nextLiq > 0) {
+      const { bankState: updatedBank, liquidationsCount, totalYield } = processBankLiquidation(newState.galacticBank, now);
+      if (liquidationsCount > 0) {
+        newState.galacticBank = updatedBank;
+        newState.notifications = [...(newState.notifications || []), {
+          id: uid(),
+          type: 'info',
+          message: `🏦 BANCA GALÁCTICA: Cierre de ciclo diario completado (${liquidationsCount} liquidación/es procesada/s).`,
+          timestamp: now,
+        }];
+      }
+    }
   }
 
   // 13. Diálogos y transmisiones proactivas

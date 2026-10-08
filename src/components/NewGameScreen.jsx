@@ -130,184 +130,434 @@ export const NewGameScreen = ({ onConfirm, onBack, availableSaves = [] }) => {
       <StarField />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.06)_0%,transparent_70%)] pointer-events-none" />
 
-      {/* Contenido Principal a Pantalla Completa Centrado en Altura */}
+      {/* Contenido Principal a Pantalla Completa Centrado en Altura con Grid Unificado 4x2 */}
       <div className="relative z-10 w-full max-w-7xl mx-auto py-4 flex-1 flex flex-col justify-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full my-auto">
-          
-          {/* Panel Izquierdo: Identidad y Cancelar Expedición (Columna 4) */}
-          <div className="lg:col-span-4 flex flex-col justify-center gap-5">
-            {/* Formulario de Mando */}
-            <div className="bg-[#090d1f]/95 rounded-3xl p-6 border border-white/10 space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.25em] font-mono">
-                  Identificación de Comandante
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="NOMBRE CLAVE"
-                  maxLength={20}
-                  className="w-full bg-black/60 border border-cyan-500/40 rounded-2xl px-4 py-3.5 text-xl font-black italic tracking-wider uppercase focus:border-cyan-300 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all outline-none text-white font-mono"
-                  autoFocus
+        <div className="w-full my-auto space-y-4">
+
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 xl:gap-6 w-full items-stretch">
+            
+            {/* Casilla 1: Identificación de Comandante (Mismas dimensiones y estilo de tarjeta) */}
+            <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-cyan-500/40 bg-gradient-to-b from-[#101c38]/95 via-[#091226]/90 to-[#05070f] shadow-[0_0_25px_rgba(6,182,212,0.25)] select-none text-left min-h-[290px]">
+              <div className="relative w-full h-32 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
+                <SafeImg
+                  id="councilChamber"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-              </div>
-              
-              <div className="p-4 bg-cyan-950/20 border border-cyan-500/20 rounded-2xl space-y-2">
-                <div className="flex items-center gap-2 text-cyan-300">
-                  <span className="text-base">🛡️</span>
-                  <span className="text-[10px] font-black uppercase font-mono tracking-wider">Directiva Colonial</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed font-mono">
-                  Tu nombre quedará registrado en los archivos del Consejo Galáctico y en los cuadros de mando de todas las estaciones y flotas.
-                </p>
-                {maxStandardPlanets > 0 && (
-                  <p className="text-[11px] text-cyan-400/90 font-mono pt-1 border-t border-cyan-500/20">
-                    Récord en Ascensión Estándar: <span className="font-bold text-white">{maxStandardPlanets}</span> planetas
-                  </p>
-                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#091226]/80 via-transparent to-transparent pointer-events-none" />
               </div>
 
-              <button
-                onClick={handleSubmit}
-                disabled={!isValid || !gameModes.find(m => m.id === mode)?.unlocked}
-                className="w-full h-14 rounded-2xl bg-cyan-500 text-black font-black text-base uppercase tracking-wider hover:bg-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(6,182,212,0.35)] cursor-pointer"
-              >
-                <span>Comenzar Simulación</span>
-                <span>➔</span>
-              </button>
+              <div className="p-3.5 flex flex-col justify-between flex-1 gap-2.5">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-cyan-400 uppercase tracking-wider font-mono block">
+                    Identificación de Comandante
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="NOMBRE CLAVE"
+                    maxLength={20}
+                    className="w-full bg-black/70 border border-cyan-500/40 rounded-xl px-3 py-2 text-sm font-black italic tracking-wider uppercase focus:border-cyan-300 focus:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all outline-none text-white font-mono"
+                    autoFocus
+                  />
+                  <p className="text-[11px] text-slate-400 font-mono leading-tight">
+                    Registrado en los archivos del Consejo Galáctico y flotas imperiales.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={!isValid || !gameModes.find(m => m.id === mode)?.unlocked}
+                  className="w-full h-10 rounded-xl bg-cyan-500 text-black font-black text-xs uppercase tracking-wider hover:bg-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.3)] cursor-pointer shrink-0"
+                >
+                  Iniciar Expedición
+                </button>
+              </div>
             </div>
 
-            {/* Tarjeta de Retorno: Cancelar Expedición con Imagen Temática */}
+            {/* Casilla 2: Modo 1 - Ascensión Estándar */}
+            {(() => {
+              const m = gameModes[0];
+              const isSelected = mode === m.id;
+              const isUnlocked = m.unlocked;
+              return (
+                <button
+                  key={m.id}
+                  disabled={!isUnlocked}
+                  onClick={() => isUnlocked && setMode(m.id)}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none text-left cursor-pointer min-h-[290px] ${
+                    isSelected
+                      ? 'border-cyan-300 bg-gradient-to-b from-[#16274a]/95 via-[#0d1b38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.4)] scale-[1.01]'
+                      : 'border-white/10 bg-[#090d1f]/80 hover:border-white/25 hover:bg-[#0e1633]'
+                  }`}
+                >
+                  <div className="relative w-full h-32 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
+                    <SafeImg
+                      id={m.assetId}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#090d1f]/80 via-transparent to-transparent pointer-events-none" />
+                    {isSelected && (
+                      <div className="absolute top-2.5 left-2.5 w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_10px_rgba(6,182,212,0.8)]">
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3.5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h4 className={`text-sm font-bold uppercase tracking-wide truncate ${isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                        {m.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 font-mono mt-1 line-clamp-4 leading-relaxed">
+                        {m.desc}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })()}
+
+            {/* Casilla 3: Modo 2 - Superviviente Solitario */}
+            {(() => {
+              const m = gameModes[1];
+              const isSelected = mode === m.id;
+              const isUnlocked = m.unlocked;
+              return (
+                <button
+                  key={m.id}
+                  disabled={!isUnlocked}
+                  onClick={() => isUnlocked && setMode(m.id)}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none text-left min-h-[290px] ${
+                    !isUnlocked
+                      ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed'
+                      : isSelected
+                        ? 'border-cyan-300 bg-gradient-to-b from-[#16274a]/95 via-[#0d1b38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.4)] scale-[1.01] cursor-pointer'
+                        : 'border-white/10 bg-[#090d1f]/80 hover:border-white/25 hover:bg-[#0e1633] cursor-pointer'
+                  }`}
+                >
+                  <div className="relative w-full h-32 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
+                    <SafeImg
+                      id={m.assetId}
+                      className={`w-full h-full object-cover transition-transform duration-700 ${!isUnlocked ? 'opacity-40 filter grayscale' : 'opacity-90 group-hover:scale-105'}`}
+                    />
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                        <span className="text-3xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
+                      </div>
+                    )}
+                    {!isUnlocked && (
+                      <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/80 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                        <span>🔒</span>
+                        <span>BLOQUEADO</span>
+                      </span>
+                    )}
+                    {isSelected && isUnlocked && (
+                      <div className="absolute top-2.5 left-2.5 w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_10px_rgba(6,182,212,0.8)]">
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3.5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h4 className={`text-sm font-bold uppercase tracking-wide truncate ${!isUnlocked ? 'text-slate-400' : isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                        {m.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 font-mono mt-1 line-clamp-3 leading-relaxed">
+                        {m.desc}
+                      </p>
+                    </div>
+                    {!isUnlocked && (
+                      <div className="mt-2.5 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-tight text-rose-300">
+                        <span className="font-bold block text-rose-400 flex items-center gap-1 mb-1">
+                          <span>⚠️</span> Requisito:
+                        </span>
+                        <span>Requiere {m.reqPlanets} planetas en Ascensión Estándar ({maxStandardPlanets}/{m.reqPlanets}).</span>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })()}
+
+            {/* Casilla 4: Modo 3 - Imperio en Decadencia */}
+            {(() => {
+              const m = gameModes[2];
+              const isSelected = mode === m.id;
+              const isUnlocked = m.unlocked;
+              return (
+                <button
+                  key={m.id}
+                  disabled={!isUnlocked}
+                  onClick={() => isUnlocked && setMode(m.id)}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none text-left min-h-[290px] ${
+                    !isUnlocked
+                      ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed'
+                      : isSelected
+                        ? 'border-cyan-300 bg-gradient-to-b from-[#16274a]/95 via-[#0d1b38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.4)] scale-[1.01] cursor-pointer'
+                        : 'border-white/10 bg-[#090d1f]/80 hover:border-white/25 hover:bg-[#0e1633] cursor-pointer'
+                  }`}
+                >
+                  <div className="relative w-full h-32 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
+                    <SafeImg
+                      id={m.assetId}
+                      className={`w-full h-full object-cover transition-transform duration-700 ${!isUnlocked ? 'opacity-40 filter grayscale' : 'opacity-90 group-hover:scale-105'}`}
+                    />
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                        <span className="text-3xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
+                      </div>
+                    )}
+                    {!isUnlocked && (
+                      <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/80 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                        <span>🔒</span>
+                        <span>BLOQUEADO</span>
+                      </span>
+                    )}
+                    {isSelected && isUnlocked && (
+                      <div className="absolute top-2.5 left-2.5 w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_10px_rgba(6,182,212,0.8)]">
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3.5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h4 className={`text-sm font-bold uppercase tracking-wide truncate ${!isUnlocked ? 'text-slate-400' : isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                        {m.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 font-mono mt-1 line-clamp-3 leading-relaxed">
+                        {m.desc}
+                      </p>
+                    </div>
+                    {!isUnlocked && (
+                      <div className="mt-2.5 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-tight text-rose-300">
+                        <span className="font-bold block text-rose-400 flex items-center gap-1 mb-1">
+                          <span>⚠️</span> Requisito:
+                        </span>
+                        <span>Requiere {m.reqPlanets} planetas en Ascensión Estándar ({maxStandardPlanets}/{m.reqPlanets}).</span>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })()}
+
+            {/* Casilla 5: Volver atrás (Mismas dimensiones y estilo alineada en fila 2) */}
             <button
               onClick={onBack}
-              className="group relative flex flex-col overflow-hidden rounded-3xl border border-cyan-500/40 bg-gradient-to-b from-[#0c1830]/95 via-[#081024]/90 to-[#05070f] hover:border-cyan-300 hover:shadow-[0_0_35px_rgba(6,182,212,0.35)] hover:scale-[1.02] transition-all select-none text-left cursor-pointer min-h-[160px]"
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-cyan-500/40 bg-gradient-to-b from-[#0c1830]/95 via-[#081024]/90 to-[#05070f] hover:border-cyan-300 hover:shadow-[0_0_35px_rgba(6,182,212,0.35)] hover:scale-[1.01] transition-all select-none text-left cursor-pointer min-h-[290px]"
             >
-              <div className="relative w-full h-24 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
+              <div className="relative w-full h-32 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
                 <SafeImg
                   id="modeCancel"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#081024]/80 via-transparent to-transparent pointer-events-none" />
-                <span className="absolute top-2.5 right-3 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-cyan-500/30 text-cyan-200 border border-cyan-400/50 backdrop-blur-md">
-                  RETORNO
-                </span>
-                <div className="absolute bottom-2.5 left-3 flex items-center gap-2 text-cyan-300">
-                  <span className="text-lg">◀</span>
-                  <span className="text-xs font-mono font-bold uppercase tracking-widest">VOLVER</span>
+              </div>
+              <div className="p-3.5 flex flex-col justify-between flex-1">
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
+                    Volver atrás
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
+                    Retornar al panel principal y operaciones del mando.
+                  </p>
                 </div>
               </div>
-              <div className="p-3.5">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
-                  Cancelar Expedición
-                </h3>
-                <p className="text-xs text-slate-400 font-mono mt-0.5">
-                  Regresar a la selección de opciones del menú principal
-                </p>
-              </div>
             </button>
-          </div>
 
-          {/* Panel Derecho: Selección de Modo en Pantalla Completa (Columna 8) */}
-          <div className="lg:col-span-8 flex flex-col justify-center gap-3">
-            <div className="flex justify-between items-center px-1">
-              <span className="text-xs font-bold text-cyan-300 uppercase tracking-widest font-mono">
-                Selecciona la Doctrina de Expedición
-              </span>
-              <span className="text-[10px] font-mono text-slate-400 uppercase">
-                6 Modos Tácticos Disponibles
-              </span>
-            </div>
-            
-            {/* Grid de Modos con Banners de Imagen */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 flex-1">
-              {gameModes.map(m => {
-                const isSelected = mode === m.id;
-                const isUnlocked = m.unlocked;
-
-                return (
-                  <button
-                    key={m.id}
-                    disabled={!isUnlocked}
-                    onClick={() => isUnlocked && setMode(m.id)}
-                    className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none text-left ${
-                      !isUnlocked 
-                        ? 'opacity-60 cursor-not-allowed border-white/5 bg-[#070b16]/70 grayscale-[35%]' 
-                        : isSelected 
-                          ? 'border-cyan-300 bg-gradient-to-b from-[#16274a]/95 via-[#0d1b38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.4)] scale-[1.02] cursor-pointer' 
-                          : 'border-white/10 bg-[#090d1f]/80 hover:border-white/25 hover:bg-[#0e1633] cursor-pointer'
-                    } min-h-[220px]`}
-                  >
-                    {/* Banner de Imagen Superior */}
-                    <div className="relative w-full h-28 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
-                      <SafeImg
-                        id={m.assetId}
-                        className={`w-full h-full object-cover transition-transform duration-700 ${
-                          isUnlocked ? 'group-hover:scale-105' : 'opacity-40'
-                        }`}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#090d1f]/80 via-transparent to-transparent pointer-events-none" />
-                      
-                      <span className={`absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider border backdrop-blur-md ${m.badgeColor}`}>
-                        {m.badge}
+            {/* Casilla 6: Modo 4 - Hegemonía Corporativa */}
+            {(() => {
+              const m = gameModes[3];
+              const isSelected = mode === m.id;
+              const isUnlocked = m.unlocked;
+              return (
+                <button
+                  key={m.id}
+                  disabled={!isUnlocked}
+                  onClick={() => isUnlocked && setMode(m.id)}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none text-left min-h-[290px] ${
+                    !isUnlocked
+                      ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed'
+                      : isSelected
+                        ? 'border-cyan-300 bg-gradient-to-b from-[#16274a]/95 via-[#0d1b38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.4)] scale-[1.01] cursor-pointer'
+                        : 'border-white/10 bg-[#090d1f]/80 hover:border-white/25 hover:bg-[#0e1633] cursor-pointer'
+                  }`}
+                >
+                  <div className="relative w-full h-32 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
+                    <SafeImg
+                      id={m.assetId}
+                      className={`w-full h-full object-cover transition-transform duration-700 ${!isUnlocked ? 'opacity-40 filter grayscale' : 'opacity-90 group-hover:scale-105'}`}
+                    />
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                        <span className="text-3xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
+                      </div>
+                    )}
+                    {!isUnlocked && (
+                      <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/80 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                        <span>🔒</span>
+                        <span>BLOQUEADO</span>
                       </span>
-
-                      {isSelected && isUnlocked && (
-                        <div className="absolute top-2.5 left-2.5 w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_10px_rgba(6,182,212,0.8)]">
-                          ✓
-                        </div>
-                      )}
-
-                      {!isUnlocked && (
-                        <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-black/80 border border-amber-500/50 rounded-lg flex items-center gap-1 text-[9px] font-mono font-bold text-amber-300">
-                          <span>🔒</span>
-                          <span>BLOQUEADO</span>
-                        </div>
-                      )}
-
-                      <div className="absolute bottom-2 left-3 flex items-center gap-1.5 text-white">
-                        <span className="text-base">{m.icon}</span>
+                    )}
+                    {isSelected && isUnlocked && (
+                      <div className="absolute top-2.5 left-2.5 w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_10px_rgba(6,182,212,0.8)]">
+                        ✓
                       </div>
+                    )}
+                  </div>
+                  <div className="p-3.5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h4 className={`text-sm font-bold uppercase tracking-wide truncate ${!isUnlocked ? 'text-slate-400' : isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                        {m.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 font-mono mt-1 line-clamp-3 leading-relaxed">
+                        {m.desc}
+                      </p>
                     </div>
-
-                    {/* Contenido */}
-                    <div className="p-3.5 flex flex-col justify-between flex-1">
-                      <div>
-                        <h4 className={`text-sm font-bold uppercase tracking-wide truncate ${
-                          !isUnlocked ? 'text-slate-400' : isSelected ? 'text-cyan-300' : 'text-white'
-                        }`}>
-                          {m.title}
-                        </h4>
-                        <p className="text-xs text-slate-400 font-mono mt-1 line-clamp-3 leading-relaxed">
-                          {m.desc}
-                        </p>
+                    {!isUnlocked && (
+                      <div className="mt-2.5 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-tight text-rose-300">
+                        <span className="font-bold block text-rose-400 flex items-center gap-1 mb-1">
+                          <span>⚠️</span> Requisito:
+                        </span>
+                        <span>Requiere {m.reqPlanets} planetas en Ascensión Estándar ({maxStandardPlanets}/{m.reqPlanets}).</span>
                       </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })()}
 
-                      {/* Mensaje de desbloqueo o estado */}
-                      {!isUnlocked && (
-                        <div className="mt-3 pt-2 border-t border-white/5 flex items-center gap-1.5 text-[10px] font-mono text-amber-400/90">
-                          {m.isUpcoming ? (
-                            <span>⏳ Modo en desarrollo activo</span>
-                          ) : (
-                            <span>🔒 Requiere {m.reqPlanets} planetas en Ascensión Estándar ({maxStandardPlanets}/{m.reqPlanets})</span>
-                          )}
-                        </div>
-                      )}
+            {/* Casilla 7: Modo 5 - Nébula de Guerra */}
+            {(() => {
+              const m = gameModes[4];
+              const isSelected = mode === m.id;
+              const isUnlocked = m.unlocked;
+              return (
+                <button
+                  key={m.id}
+                  disabled={!isUnlocked}
+                  onClick={() => isUnlocked && setMode(m.id)}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none text-left min-h-[290px] ${
+                    !isUnlocked
+                      ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed'
+                      : isSelected
+                        ? 'border-cyan-300 bg-gradient-to-b from-[#16274a]/95 via-[#0d1b38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.4)] scale-[1.01] cursor-pointer'
+                        : 'border-white/10 bg-[#090d1f]/80 hover:border-white/25 hover:bg-[#0e1633] cursor-pointer'
+                  }`}
+                >
+                  <div className="relative w-full h-32 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
+                    <SafeImg
+                      id={m.assetId}
+                      className={`w-full h-full object-cover transition-transform duration-700 ${!isUnlocked ? 'opacity-40 filter grayscale' : 'opacity-90 group-hover:scale-105'}`}
+                    />
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                        <span className="text-3xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
+                      </div>
+                    )}
+                    {!isUnlocked && (
+                      <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/80 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                        <span>🔒</span>
+                        <span>BLOQUEADO</span>
+                      </span>
+                    )}
+                    {isSelected && isUnlocked && (
+                      <div className="absolute top-2.5 left-2.5 w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_10px_rgba(6,182,212,0.8)]">
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3.5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h4 className={`text-sm font-bold uppercase tracking-wide truncate ${!isUnlocked ? 'text-slate-400' : isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                        {m.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 font-mono mt-1 line-clamp-3 leading-relaxed">
+                        {m.desc}
+                      </p>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
+                    {!isUnlocked && (
+                      <div className="mt-2.5 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-tight text-rose-300">
+                        <span className="font-bold block text-rose-400 flex items-center gap-1 mb-1">
+                          <span>⚠️</span> Requisito:
+                        </span>
+                        <span>Requiere {m.reqPlanets} planetas en Ascensión Estándar ({maxStandardPlanets}/{m.reqPlanets}).</span>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })()}
+
+            {/* Casilla 8: Modo 6 - Multijugador Galáctico */}
+            {(() => {
+              const m = gameModes[5];
+              const isSelected = mode === m.id;
+              const isUnlocked = m.unlocked;
+              return (
+                <button
+                  key={m.id}
+                  disabled={!isUnlocked}
+                  onClick={() => isUnlocked && setMode(m.id)}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-300 select-none text-left min-h-[290px] ${
+                    !isUnlocked
+                      ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed'
+                      : isSelected
+                        ? 'border-cyan-300 bg-gradient-to-b from-[#16274a]/95 via-[#0d1b38]/90 to-[#05070f] shadow-[0_0_35px_rgba(6,182,212,0.4)] scale-[1.01] cursor-pointer'
+                        : 'border-white/10 bg-[#090d1f]/80 hover:border-white/25 hover:bg-[#0e1633] cursor-pointer'
+                  }`}
+                >
+                  <div className="relative w-full h-32 bg-[#05070f] border-b border-white/10 flex items-center justify-center overflow-hidden">
+                    <SafeImg
+                      id={m.assetId}
+                      className={`w-full h-full object-cover transition-transform duration-700 ${!isUnlocked ? 'opacity-40 filter grayscale' : 'opacity-90 group-hover:scale-105'}`}
+                    />
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                        <span className="text-3xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
+                      </div>
+                    )}
+                    {!isUnlocked && (
+                      <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/80 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                        <span>🔒</span>
+                        <span>BLOQUEADO</span>
+                      </span>
+                    )}
+                    {isSelected && isUnlocked && (
+                      <div className="absolute top-2.5 left-2.5 w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_10px_rgba(6,182,212,0.8)]">
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3.5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h4 className={`text-sm font-bold uppercase tracking-wide truncate ${!isUnlocked ? 'text-slate-400' : isSelected ? 'text-cyan-300' : 'text-white'}`}>
+                        {m.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 font-mono mt-1 line-clamp-3 leading-relaxed">
+                        {m.desc}
+                      </p>
+                    </div>
+                    {!isUnlocked && (
+                      <div className="mt-2.5 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-tight text-rose-300">
+                        <span className="font-bold block text-rose-400 flex items-center gap-1 mb-1">
+                          <span>⚠️</span> Requisito:
+                        </span>
+                        <span>Modo en desarrollo activo. Próximamente disponible.</span>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })()}
+
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="relative z-10 w-full flex items-center justify-center py-2">
-        <div className="text-[10px] font-mono text-cyan-400/50 uppercase tracking-[0.3em]">
-          Protocolo de Expedición Galáctica Activo
-        </div>
-      </div>
+
     </div>
   );
 };

@@ -11,7 +11,7 @@ import { playVoice, playMinistryMusic, stopMinistryMusic } from '../audio.js';
 import { PlanetaryCommandHub } from '../components/government/PlanetaryCommandHub';
 import { ExchangePlanetaryCommandHub } from '../components/government/ExchangePlanetaryCommandHub';
 import { FederalDistrictView } from '../components/government/FederalDistrictView';
-import { MinistryBuildingInterior } from '../components/government/MinistryBuildingInterior';
+import { MinistryBuildingInterior, CandidateCardsView } from '../components/government/MinistryBuildingInterior';
 import { MinistryDeskView } from '../components/government/MinistryDeskView';
 import { IntelDossierView } from '../components/government/IntelDossierView';
 import { MinistryBuildingsSection } from '../components/government/MinistryBuildingsSection';
@@ -256,7 +256,7 @@ if (window.playSfx) window.playSfx('success');
   const currentMinUpgrades = upgrades[activeMinistry] || {};
 
   return (
-    <div className="space-y-4 view-enter pb-20">
+    <div className={`space-y-4 view-enter ${navLevel === 2 ? 'pb-2' : 'pb-20'}`}>
       {/* Breadcrumbs de Navegación Jerárquica del Gobierno (solo en niveles interiores) */}
       {navLevel > 1 && (
         <GovernmentBreadcrumbs
@@ -276,13 +276,6 @@ if (window.playSfx) window.playSfx('success');
           minState={currentMinState}
           minister={currentMinState?.minister}
           planetId={currentPlanet?.id}
-          onOpenCandidates={() => {
-            setCandidateModal({
-              ministryId: activeMinistry,
-              candidates: CANDIDATES_POOL[activeMinistry] || []
-            });
-            if (window.playSfx) window.playSfx('click');
-          }}
           dispatch={dispatch}
         />
       )}
@@ -356,7 +349,8 @@ if (window.playSfx) window.playSfx('success');
             minState={currentMinState}
             minUpgrades={currentMinUpgrades}
             onOpenDesk={handleOpenDesk}
-            onOpenCandidates={() => setCandidateModal({ ministryId: activeMinistry, candidates: CANDIDATES_POOL[activeMinistry] })}
+            candidates={CANDIDATES_POOL[activeMinistry] || []}
+            onAppointMinister={handleAppointMinister}
             onBack={() => handleNavigate(1)}
             dispatch={dispatch}
             currentPlanet={currentPlanet}
@@ -414,7 +408,15 @@ if (window.playSfx) window.playSfx('success');
         />
       )}
 
-      {navLevel === 3 && activeSubview !== 'buildings' && activeSubview !== 'research' && activeSubview !== 'espionage' && (
+      {navLevel === 3 && activeSubview === 'candidates' && (
+        <CandidateCardsView
+          candidates={CANDIDATES_POOL[activeMinistry] || []}
+          minister={currentMinState?.minister}
+          handleAppoint={handleAppointMinister}
+        />
+      )}
+
+      {navLevel === 3 && activeSubview !== 'buildings' && activeSubview !== 'research' && activeSubview !== 'espionage' && activeSubview !== 'candidates' && (
         <MinistryDeskView
           ministryId={activeMinistry}
           subview={activeSubview}
@@ -430,17 +432,6 @@ if (window.playSfx) window.playSfx('success');
           planetResources={planetResources}
           playerInfluence={playerInfluence}
           fmt={fmt}
-        />
-      )}
-
-{/* Candidate Modal */}
-      {candidateModal && (
-        <MinisterCandidateModal
-          candidates={candidateModal.candidates}
-          ministryId={candidateModal.ministryId}
-          onAppoint={handleAppointMinister}
-          onClose={() => setCandidateModal(null)}
-          playerInfluence={playerInfluence}
         />
       )}
 

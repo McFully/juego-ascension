@@ -51,6 +51,7 @@ const LABELS = {
   replay: '📼 Replay',
   colony_network: '🪐 Red de Colonias',
   market: '💼 Mercado Galáctico',
+  galactic_bank: '🏦 Banca Central',
 };
 
 // Jerarquía de navegación — define qué padre tiene cada vista
@@ -67,6 +68,7 @@ const PARENT_MAP = {
 
   // Nivel superior del imperio
   market: 'overview',
+  galactic_bank: 'overview',
 
   // Nivel militar planetario
   missiles: 'defense',

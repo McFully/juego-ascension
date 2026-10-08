@@ -100,7 +100,7 @@ export const PlanetaryCommandHub = React.memo(({
   const order = useCardOrder(planetaryCommandStorageKey(planet.id), PLANETARY_COMMAND_CARDS);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-3.5 animate-in fade-in duration-200">
       {showTopBar && (
         <HubTopBar
           currentPlanet={planet}
@@ -121,7 +121,7 @@ export const PlanetaryCommandHub = React.memo(({
         cardsMap={cardsMap}
         cardOrder={order.cardOrder}
         lockedCardId={null}
-        columnsClass="lg:grid-cols-4 xl:grid-cols-6"
+        columnsClass="lg:grid-cols-4 xl:grid-cols-5"
         {...order}
       />
     </div>

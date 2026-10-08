@@ -192,16 +192,6 @@ const ShipDesignPage = ({
                   </div>
                 );
               })}
-
-              <ActionCardTile
-                type="back"
-                title="Volver"
-                subtitle="Regresar a la pantalla anterior"
-                badgeText="VOLVER"
-                onClick={() => {
-                  if (navigateBack) navigateBack();
-                }}
-              />
             </div>
           </div>
         </div>

@@ -96,17 +96,18 @@ export const MinistryBuildingsSection = ({
           ) : null;
 
           const extraLines = [];
+          const reqLines = [];
           if (b.req && !meets && RESEARCH) {
-            extraLines.push(
-              `🔒 Requiere: ${Object.entries(b.req)
-                .map(([k, v]) => `${RESEARCH[k]?.name || BUILDINGS[k]?.name || k} ${v}`)
-                .join(', ')}`
+            reqLines.push(
+              Object.entries(b.req)
+                .map(([k, v]) => `${RESEARCH[k]?.name || BUILDINGS[k]?.name || k} nivel ${v}`)
+                .join(', ')
             );
           }
           if (!hasPop) {
-            extraLines.push(`⚠️ Colonos insuficientes (requiere ${requiredPopulation}, colonia tiene ${currentPopulation})`);
+            reqLines.push(`Colonos insuficientes (requiere ${requiredPopulation.toLocaleString()}, colonia tiene ${currentPopulation.toLocaleString()})`);
           } else {
-            extraLines.push(`👥 Población: ${currentPopulation}/${requiredPopulation}`);
+            extraLines.push(`👥 Población: ${currentPopulation.toLocaleString()}/${requiredPopulation.toLocaleString()}`);
           }
           if (queuedCount > 0) extraLines.push(`⏳ En cola: +${queuedCount} nivel(es)`);
 
@@ -128,6 +129,7 @@ export const MinistryBuildingsSection = ({
               isQueueFull={totalPlanetBuildQueue.length >= 8}
               meetsRequirements={meets}
               lackOfPop={!hasPop}
+              lockReason={reqLines.length > 0 ? reqLines.join(' · ') : null}
               prodInfo={prodInfo}
               onAction={() => {
                 dispatch({ type: 'START_BUILDING', buildingId: id, planetId: currentPlanet?.id });
@@ -147,28 +149,9 @@ export const MinistryBuildingsSection = ({
                 planetId: currentPlanet?.id,
                 targetId: id
               })}
-              buildingMode={currentPlanet?.buildingModes?.[id] || 'standard'}
-              onSelectBuildingMode={(modeId) => dispatch({
-                type: 'SET_BUILDING_MODE',
-                planetId: currentPlanet?.id,
-                buildingId: id,
-                modeId
-              })}
             />
           );
         })}
-
-        {/* Tarjeta de Retorno a la Sede al final del grid (oculta en el Ministerio de Energía) */}
-        {onBack && !isEnergyMinistry && (
-          <ActionCardTile
-            type="back"
-            title={`Volver a ${mapping.name || 'Sede'}`}
-            subtitle="Atrio principal del ministerio"
-            icon="◀"
-            badgeText="SEDE"
-            onClick={onBack}
-          />
-        )}
       </div>
 
       {/* Modal Operativo Interactivo del Edificio */}

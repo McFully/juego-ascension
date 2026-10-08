@@ -24,6 +24,7 @@ const ColonyNetworkPage = lazy(() => import("../../pages/ColonyNetworkPage.jsx")
 const GalacticObservatoryPage = lazy(() => import("../../pages/GalacticObservatoryPage.jsx").then(m => ({ default: m.GalacticObservatoryPage })));
 const ImperialWikiPage = lazy(() => import("../../pages/ImperialWikiPage.jsx"));
 const SectorManagementView = lazy(() => import("../sectors/SectorManagementView.jsx").then(m => ({ default: m.SectorManagementView })));
+const GalacticBankPage = lazy(() => import("../../pages/GalacticBankPage.jsx").then(m => ({ default: m.GalacticBankPage })));
 
 export const GameViewports = ({
   activeTab,
@@ -120,6 +121,16 @@ export const GameViewports = ({
       {activeTab === "colony_network" && <ColonyNetworkPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
       {activeTab === "sectors" && <SectorManagementView state={state} dispatch={dispatch} currentPlanet={currentPlanet} fmt={fmt} />}
       {activeTab === "galactic_observatory" && <GalacticObservatoryPage state={state} fmt={fmt} />}
+      {activeTab === "galactic_bank" && (
+        <GalacticBankPage
+          state={state}
+          dispatch={dispatch}
+          currentPlanet={currentPlanet}
+          production={production}
+          fmt={fmt}
+          setActiveTab={safeSetActiveTab}
+        />
+      )}
       {(activeTab === "imperial_hub" || activeTab === "tactical_advisor" || activeTab === "imperial_council" || activeTab === "imperial_senate") && (
         <ImperialCommandPage
           state={state}

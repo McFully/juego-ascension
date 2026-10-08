@@ -55,17 +55,6 @@ export const DiplomacyChamberSelector = ({ onSelectChamber, playDiploSound, onBa
             </div>
           </button>
         ))}
-
-        {/* Tarjeta de Retorno a Pantalla Anterior */}
-        <ActionCardTile
-          type="back"
-          title="Volver Atrás"
-          subtitle="Regresar a la pantalla anterior"
-          icon="◀"
-          assetId="commandCenter"
-          badgeText="VOLVER"
-          onClick={onBack}
-        />
       </div>
     </div>
   );

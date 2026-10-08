@@ -16,6 +16,8 @@ export const HubCard = React.memo(({
   footerValue,
   footerValueClasses,
   footerAction = null,
+  headerAction = null,
+  imageOverlay = null,
   titleHoverColor = 'group-hover:text-cyan-300',
   isLocked = false,
   lockReason = '',
@@ -36,7 +38,7 @@ export const HubCard = React.memo(({
         if (window.playSfx) window.playSfx('click');
         if (onClick) onClick(e);
       }}
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-200 select-none text-left focus:outline-none w-full h-full min-h-[280px] ${
+      className={`group relative flex flex-col overflow-hidden rounded-3xl border transition-all duration-200 select-none text-left focus:outline-none w-full h-full ${
         isDragging
           ? 'ring-2 ring-cyan-400 shadow-[0_0_35px_rgba(6,182,212,0.6)] z-50 opacity-95 scale-[1.03]'
           : isLocked
@@ -46,7 +48,7 @@ export const HubCard = React.memo(({
     >
       <div
         {...(imageCoverProps || {})}
-        className={`relative w-full h-36 overflow-hidden bg-[#05070f] border-b border-white/10 ${
+        className={`relative w-full h-52 xl:h-56 overflow-hidden bg-[#05070f] border-b border-white/10 ${
           imageCoverProps ? 'cursor-grab active:cursor-grabbing' : ''
         }`}
       >
@@ -76,16 +78,18 @@ export const HubCard = React.memo(({
           </div>
         )}
         
-        {isLocked ? (
+        {isLocked && (
           <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/80 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
             <span>🔒</span>
             <span>BLOQUEADO</span>
           </span>
-        ) : badgeText ? (
-          <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-lg ${badgeClasses || 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/50'}`}>
-            {badgeText}
-          </span>
-        ) : null}
+        )}
+
+        {imageOverlay && (
+          <div className="absolute top-2.5 right-2.5 z-40">
+            {imageOverlay}
+          </div>
+        )}
 
         {/* Barra superior de controles rápidos cuando el modo reordenar está activo */}
         {isReordering && (
@@ -126,26 +130,30 @@ export const HubCard = React.memo(({
         )}
       </div>
 
-      <div className="p-4 flex flex-col justify-between flex-1">
+      <div className="p-3 flex flex-col justify-start flex-1 min-h-[84px]">
         <div>
-          <h3 className={`text-base font-black uppercase tracking-wide transition-colors flex items-center justify-between ${
-            isLocked ? 'text-slate-400' : `text-white ${titleHoverColor}`
-          }`}>
-            <span className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className={`text-xs xl:text-sm font-black uppercase tracking-wide transition-colors truncate ${
+              isLocked ? 'text-slate-400' : `text-white ${titleHoverColor}`
+            }`}>
               <span>{title}</span>
-            </span>
-            <span className="text-xl">{icon}</span>
-          </h3>
+            </h3>
+            {headerAction && (
+              <div className="shrink-0">
+                {headerAction}
+              </div>
+            )}
+          </div>
 
           {isLocked ? (
-            <div className="mt-2.5 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-tight text-rose-300">
-              <span className="font-bold block text-rose-400 flex items-center gap-1 mb-1">
-                <span>⚠️</span> Requisito Previo:
+            <div className="mt-1.5 p-1.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[10px] xl:text-[11px] font-mono leading-relaxed text-rose-300">
+              <span className="font-bold text-rose-400 inline-flex items-center gap-1 mr-1.5">
+                <span>⚠️</span> Requisito:
               </span>
               <span>{lockReason || 'Instalación o requisito no disponible.'}</span>
             </div>
           ) : (
-            <p className="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
+            <p className="text-[11px] xl:text-xs text-slate-400 font-mono mt-1 leading-relaxed">
               {description}
             </p>
           )}

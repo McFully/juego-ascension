@@ -16,8 +16,6 @@ import {
 } from '../../audio.js';
 import { AudioMixerSettings } from '../settings/AudioMixerSettings.jsx';
 import { SaveLoadSettings } from '../settings/SaveLoadSettings.jsx';
-import { ProfileSettingsTab } from '../settings/ProfileSettingsTab.jsx';
-import { VisualAuditSettingsTab } from '../settings/VisualAuditSettingsTab.jsx';
 
 const APP_VERSION = (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev');
 const GAME_CREDITS = 'Aritz Bahamonde Larxé';
@@ -250,36 +248,7 @@ export const GameSettingsModal = ({ onClose, onSave, onLoad, onImport, onExport,
               onVoiceChange={handleVoiceChange}
               onOperationsChange={handleOperationsChange}
             />
-
-            <ProfileSettingsTab
-              state={state}
-              dispatch={dispatch}
-            />
-
-            {/* Acceso a Auditoría Visual de Interfaz (QA / Diagnóstico) */}
-            <div className="pt-2 border-t border-white/10">
-              <button
-                type="button"
-                onClick={() => setTab('audit')}
-                className="w-full py-2.5 px-4 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold flex items-center justify-between transition shadow-sm"
-                data-ui-audit-id="btn-open-visual-audit"
-              >
-                <div className="flex items-center gap-2">
-                  <span>🔬</span>
-                  <span>Herramientas de Diagnóstico y Auditoría Visual del DOM</span>
-                </div>
-                <span>→</span>
-              </button>
-            </div>
           </div>
-        )}
-
-        {tab === 'audit' && (
-          <VisualAuditSettingsTab
-            state={state}
-            currentPlanet={state?.planets?.find(p => p.id === state.currentPlanetId) || state?.planets?.[0]}
-            appVersion={APP_VERSION}
-          />
         )}
 
         {(tab === 'save' || tab === 'load') && (

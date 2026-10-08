@@ -218,6 +218,7 @@ ipcMain.handle("log-error", async (_event, payload) => {
 // Exportar logs y telemetría completa a disco
 ipcMain.handle("export-logs", async (_event, additionalTelemetry) => {
   try {
+    if (!mainWindow || mainWindow.isDestroyed()) return { success: false, canceled: true };
     const desktop = app.getPath("desktop");
     const defaultFileName = `ascension_telemetry_logs_${Date.now()}.json`;
     const result = await dialog.showSaveDialog(mainWindow, {

@@ -32,16 +32,6 @@ export const DefenseGrid = ({
 }) => {
   return (
     <div className="w-full space-y-3 py-2">
-      <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-2">
-          <span>🛡️</span>
-          <span>Baterías y Escudos de Superficie Planetaria</span>
-        </h3>
-        <span className="text-[11px] font-mono text-slate-400">
-          {Object.entries(DEFENSES).length} Sistemas Defensivos
-        </span>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full items-stretch pt-2 pb-4">
         {Object.entries(DEFENSES).map(([id, d]) => {
           const cost = defenseCost(id, 1, currentPlanet.buildings?.constructionCenter || 0);
@@ -64,7 +54,7 @@ export const DefenseGrid = ({
             <div key={id} className="w-full h-full">
               <div className={`relative flex flex-col justify-between h-full rounded-2xl border transition-all duration-300 overflow-hidden ${
                 !meets 
-                  ? 'border-red-500/20 bg-[#070b16]/70 opacity-60' 
+                  ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed shadow-[0_0_20px_rgba(244,63,94,0.06)]' 
                   : maxReached 
                     ? 'border-amber-500/30 bg-[#090d1d]/85 shadow-[0_0_20px_rgba(245,158,11,0.08)]' 
                     : !affordable1 
@@ -74,8 +64,21 @@ export const DefenseGrid = ({
                 <div>
                   {/* Banner visual con overlay de estado y candado de automatización */}
                   <div className="relative group overflow-hidden">
-                    <CardBanner id={id} />
+                    <CardBanner id={id} isLocked={!meets} />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#070c18] via-transparent to-black/30 pointer-events-none" />
+
+                    {!meets && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-10 pointer-events-none">
+                        <span className="text-4xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
+                      </div>
+                    )}
+
+                    {!meets && (
+                      <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/90 text-rose-300 border border-rose-500/50 flex items-center gap-1.5 z-20">
+                        <span>🔒</span>
+                        <span>BLOQUEADO</span>
+                      </span>
+                    )}
                     
                     {/* Badge de cantidad apostada flotante sobre el banner */}
                     <div className="absolute bottom-2 left-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/80 border border-white/10 backdrop-blur-md">
@@ -92,7 +95,7 @@ export const DefenseGrid = ({
                       </div>
                     )}
 
-                    <div className="absolute top-2 right-2 z-10">
+                    <div className="absolute top-2 left-2 z-10">
                       <AutomationRestrictionToggle
                         isRestricted={Boolean(currentPlanet?.automatedExclusions?.[id])}
                         onToggle={() => dispatch({
@@ -308,7 +311,7 @@ export const DefenseGrid = ({
                   {d.req && !meets && (
                     <div className="text-[10px] text-red-400 mt-2 p-1.5 rounded-lg bg-red-950/30 border border-red-500/20 leading-tight font-mono flex items-center gap-1.5">
                       <span>🔒</span>
-                      <span>Req: {Object.entries(d.req).map(([k, v]) => `${RESEARCH[k]?.name || k} Nv.${v}`).join(', ')}</span>
+                      <span>Requisito: {Object.entries(d.req).map(([k, v]) => `${RESEARCH[k]?.name || k} Nv.${v}`).join(', ')}</span>
                     </div>
                   )}
                   {maxReached && (
@@ -321,16 +324,6 @@ export const DefenseGrid = ({
             </div>
           );
         })}
-        {/* Tarjeta de Retorno a Alto Mando Militar como última casilla del grid */}
-        <ActionCardTile
-          type="back"
-          title="Volver"
-          subtitle="Regresar a la pantalla anterior"
-          badgeText="VOLVER"
-          onClick={() => {
-            if (navigateBack) navigateBack();
-          }}
-        />
       </div>
     </div>
   );

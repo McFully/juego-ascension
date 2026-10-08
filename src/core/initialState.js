@@ -1,5 +1,6 @@
 import { generatePlanetName, generateGalaxy } from "./galaxyGenerator.js";
 import { buildMinistriesState, DECAY_MINISTRY_OVERRIDES } from "../data/ministryState.js";
+import { initGalacticBankState } from "../utils/galacticBankCore.js";
 
 export const createInitial = (playerName, homeFaction = 'human', mode = 'standard') => {
   const homeId = Math.random().toString(36).slice(2, 11);
@@ -131,6 +132,7 @@ export const createInitial = (playerName, homeFaction = 'human', mode = 'standar
     leaders: [],
     activeEvents: [],
     relics: [],
+    galacticBank: initGalacticBankState(),
     governmentPolicies: {
       socialOrder: isDecay ? 30 : 100,
       corruption: isDecay ? 80 : 0,

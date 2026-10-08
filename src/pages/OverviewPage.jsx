@@ -22,6 +22,7 @@ import { useActiveImperialQueues } from "../hooks/useActiveImperialQueues.js";
 import { EmperorDelegationModal } from "../components/government/GovernorDelegationModal.jsx";
 import { ImperialCommandHub } from "../components/government/ImperialCommandHub.jsx";
 import { useImperialTotals } from "../hooks/useImperialTotals.js";
+import { IndependentReturnCard } from "../components/navigation/IndependentReturnCard.jsx";
 
 /**
  * OverviewPage — Consola Central de Operaciones 100% Pantalla Completa.
@@ -138,22 +139,35 @@ const OverviewPage = ({
 
   return (
     <div className="space-y-5 view-enter w-full">
-      {/* === DOM SUPERIOR ESTANDARIZADO DE 2 FILAS (Componente Modular) === */}
-      <OverviewHudBar
-        hudVisible={hudVisible}
-        imperialTotals={imperialTotals}
-        totalFleetMilitaryPower={totalFleetMilitaryPower}
-        state={state}
-        fmt={fmt}
-        allPlanetsAuto={allPlanetsAuto}
-        somePlanetsAuto={somePlanetsAuto}
-        setEmperorModalOpen={setEmperorModalOpen}
-        dispatch={dispatch}
-        handleOpenMenu={handleOpenMenu}
-        handleLogout={onLogout || onReturnToMenu}
-        onOpenSettings={onOpenSettings}
-        safeSetActiveTab={safeSetActiveTab}
-      />
+      {/* === DOM SUPERIOR Y TARJETA INDEPENDIENTE DE VOLVER A MENÚ === */}
+      <div className="flex flex-col xl:flex-row items-stretch gap-3">
+        <div className="flex-1 min-w-0">
+          <OverviewHudBar
+            hudVisible={hudVisible}
+            imperialTotals={imperialTotals}
+            totalFleetMilitaryPower={totalFleetMilitaryPower}
+            state={state}
+            fmt={fmt}
+            allPlanetsAuto={allPlanetsAuto}
+            somePlanetsAuto={somePlanetsAuto}
+            setEmperorModalOpen={setEmperorModalOpen}
+            dispatch={dispatch}
+            onOpenSettings={onOpenSettings}
+            safeSetActiveTab={safeSetActiveTab}
+          />
+        </div>
+
+        <div className="shrink-0 w-full xl:w-48 flex items-stretch">
+          <IndependentReturnCard
+            onClick={handleOpenMenu}
+            labelTop="VOLVER A"
+            labelBottom="Menú Principal"
+            icon="🏠"
+            imgId="menuContinue"
+            accentColor="cyan"
+          />
+        </div>
+      </div>
 
       {/* === BARRA DE MENÚ DE SECCIONES IMPERIALES (IMAGE BUTTONS GRANDES) === */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-2 bg-[#080d22]/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
@@ -188,13 +202,6 @@ const OverviewPage = ({
               activeSection === 'command_hub' ? 'text-purple-300' : 'text-white group-hover:text-purple-200'
             }`}>
               Mando Imperial
-            </span>
-            <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-black border shadow-lg backdrop-blur-md ${
-              activeSection === 'command_hub'
-                ? 'bg-purple-500/50 text-purple-100 border-purple-400'
-                : 'bg-black/75 text-slate-200 border-white/30'
-            }`}>
-              CENTRAL
             </span>
           </div>
         </button>

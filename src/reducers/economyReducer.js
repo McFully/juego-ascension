@@ -14,6 +14,12 @@ import {
   handleContractFreight
 } from './economy/exchangeActions.js';
 import {
+  handleBankDeposit,
+  handleBankWithdraw,
+  handleBankSetRate,
+  handleBankProcessLiquidation
+} from './economy/bankActions.js';
+import {
   handleMarketTrade,
   handleMarketBuyUsedShips,
   handleMarketScrapShips,
@@ -63,6 +69,16 @@ export const economyReducer = (state, action) => {
       return handleDepositToVault(state, action);
     case 'CONTRACT_FREIGHT':
       return handleContractFreight(state, action);
+
+    // === BANCA GALÁCTICA (X-WARS MODEL) ===
+    case 'BANK_DEPOSIT':
+      return handleBankDeposit(state, action);
+    case 'BANK_WITHDRAW':
+      return handleBankWithdraw(state, action);
+    case 'BANK_SET_INTEREST_RATE':
+      return handleBankSetRate(state, action);
+    case 'BANK_PROCESS_LIQUIDATION':
+      return handleBankProcessLiquidation(state, action);
 
     // === GESTIÓN DE PLANETAS Y COLONIAS ===
     case 'SET_PLANET':

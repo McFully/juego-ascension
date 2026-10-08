@@ -144,6 +144,20 @@ export const Planet3DCard = React.memo(function Planet3DCard({
             <span className="text-slate-400">Defensas: </span>
             <strong className="text-emerald-400 font-black">{pDefenses}</strong>
           </div>
+
+          {(() => {
+            const heritage = getPlanetHeritage(planet);
+            if (!heritage) return null;
+            return (
+              <div
+                title={heritage.desc + ' | ' + heritage.bonusDesc}
+                className="bg-[#050814]/80 border border-cyan-500/40 rounded-lg px-2.5 py-1 text-[11px] text-cyan-200 flex items-center gap-1.5 shadow-[0_0_10px_rgba(6,182,212,0.15)] truncate"
+              >
+                <span className="shrink-0">{heritage.icon}</span>
+                <span className="truncate font-mono font-bold tracking-tight">{heritage.name}</span>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Columna Centro: Esfera Planetaria 3D Grande (Centrado en altura de la tarjeta) */}
@@ -201,26 +215,6 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                   {planet.name}
                 </h4>
 
-                {planet.isExchangePlanet && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.35)]">
-                    🏛️ Lonja Galáctica
-                  </span>
-                )}
-
-                {(() => {
-                  const heritage = getPlanetHeritage(planet);
-                  if (!heritage) return null;
-                  return (
-                    <span
-                      title={heritage.desc + ' | ' + heritage.bonusDesc}
-                      className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-tight bg-cyan-950/80 text-cyan-200 border border-cyan-500/40 flex items-center gap-1 shadow-[0_0_10px_rgba(6,182,212,0.25)]"
-                    >
-                      <span>{heritage.icon}</span>
-                      <span className="truncate max-w-[130px]">{heritage.name}</span>
-                    </span>
-                  );
-                })()}
-
                 <button
                   type="button"
                   onClick={(e) => handleStartRename(e, planet)}
@@ -233,6 +227,12 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                   </svg>
                   <span>Renombrar</span>
                 </button>
+
+                {planet.isExchangePlanet && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.35)]">
+                    🏛️ Lonja Galáctica
+                  </span>
+                )}
               </div>
 
               {/* Botón Ficha Completa anclado abajo del todo, justo por encima del separador */}

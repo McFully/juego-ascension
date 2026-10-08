@@ -78,17 +78,7 @@ export const ColonyStationCardGrid = ({
 
   return (
     <div className="w-full space-y-4 py-2">
-      <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm md:text-base font-black text-indigo-300 font-mono tracking-wider uppercase flex items-center gap-2">
-          <span>🪐</span>
-          <span>Estaciones del Directorio Colonial</span>
-        </h3>
-        <span className="text-[11px] font-mono text-slate-400">
-          6 Complejos Logísticos
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full items-stretch pt-1 pb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full items-stretch pt-1 pb-3">
         {stations.map(st => {
           const isSelected = activeSubTab === st.id;
 
@@ -133,9 +123,6 @@ export const ColonyStationCardGrid = ({
                 <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono uppercase tracking-wider font-semibold">
                   <span className={isSelected ? 'text-indigo-300' : 'text-slate-400 group-hover:text-indigo-400'}>
                     {isSelected ? '● Operativo' : st.stats}
-                  </span>
-                  <span className={`transition-transform duration-200 ${isSelected ? 'text-indigo-300 translate-x-1' : 'text-indigo-400/70 group-hover:translate-x-1'}`}>
-                    ➔
                   </span>
                 </div>
               </div>

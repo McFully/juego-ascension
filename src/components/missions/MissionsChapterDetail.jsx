@@ -140,13 +140,6 @@ export const MissionsChapterDetail = ({
       <div className="bg-[#0a0d1a]/90 border border-cyan-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-md">
         <div className="border-b border-white/10 pb-4 mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToChapters}
-              className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 hover:text-white transition-all cursor-pointer text-sm font-bold"
-              title="Volver a los Capítulos"
-            >
-              ◀ Volver a Capítulos
-            </button>
             <span className="text-3xl">{currentChapInfo.icon}</span>
             <div>
               <h3 className="text-lg md:text-xl font-black text-white uppercase tracking-tight">

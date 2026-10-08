@@ -1,6 +1,5 @@
 import React from 'react';
 import { SafeImg } from '../../../assets.jsx';
-import { ActionCardTile } from '../../ui/ActionCardTile.jsx';
 
 export const FleetHubCardGrid = ({
   currentPlanet,
@@ -15,17 +14,7 @@ export const FleetHubCardGrid = ({
 }) => {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-base md:text-lg font-black text-white font-mono tracking-wider uppercase flex items-center gap-2">
-          <span>🛸</span>
-          <span>Comando del Hangar de la Flota</span>
-        </h2>
-        <span className="text-xs font-mono text-cyan-400">
-          {currentPlanet?.name || "Tierra"} — Dársenas Operativas
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-stretch">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
         {/* TARJETA 1: Inventario de la Flota en Tierra */}
         <button
           onClick={() => {
@@ -36,9 +25,6 @@ export const FleetHubCardGrid = ({
         >
           <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
             <SafeImg id="battleship" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-cyan-950/80 text-cyan-300 border border-cyan-500/50">
-              DÁRSENAS
-            </span>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div>
@@ -51,7 +37,6 @@ export const FleetHubCardGrid = ({
             </div>
             <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-cyan-300">
               <span>{fmt(totalShipsInHangar)} naves</span>
-              <span>➔</span>
             </div>
           </div>
         </button>
@@ -66,9 +51,6 @@ export const FleetHubCardGrid = ({
         >
           <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
             <SafeImg id="cruiser" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-blue-950/80 text-blue-300 border border-blue-500/50">
-              TRÁNSITO
-            </span>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div>
@@ -81,7 +63,6 @@ export const FleetHubCardGrid = ({
             </div>
             <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-blue-300">
               <span>{playerActiveMissions.length} misiones</span>
-              <span>➔</span>
             </div>
           </div>
         </button>
@@ -96,9 +77,6 @@ export const FleetHubCardGrid = ({
         >
           <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
             <SafeImg id="largeCargo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-amber-950/80 text-amber-300 border border-amber-500/50">
-              LOGÍSTICA
-            </span>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div>
@@ -111,7 +89,6 @@ export const FleetHubCardGrid = ({
             </div>
             <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-amber-300">
               <span>{(state.tradeRoutes || []).length} rutas</span>
-              <span>➔</span>
             </div>
           </div>
         </button>
@@ -126,9 +103,6 @@ export const FleetHubCardGrid = ({
         >
           <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
             <SafeImg id="destroyer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-emerald-950/80 text-emerald-300 border border-emerald-500/50">
-              MISIÓN
-            </span>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div>
@@ -141,7 +115,6 @@ export const FleetHubCardGrid = ({
             </div>
             <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-emerald-300">
               <span>{target ? "Destino Fijado" : "Configurar"}</span>
-              <span>➔</span>
             </div>
           </div>
         </button>
@@ -156,9 +129,6 @@ export const FleetHubCardGrid = ({
         >
           <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
             <SafeImg id="spyProbe" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-purple-950/80 text-purple-300 border border-purple-500/50">
-              INTELIGENCIA
-            </span>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div>
@@ -171,7 +141,6 @@ export const FleetHubCardGrid = ({
             </div>
             <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-purple-300">
               <span>{(state.spyReports || []).length} informes</span>
-              <span>➔</span>
             </div>
           </div>
         </button>
@@ -186,9 +155,6 @@ export const FleetHubCardGrid = ({
         >
           <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10">
             <SafeImg id="patrol_orbital" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-cyan-950/90 text-cyan-300 border border-cyan-400/60 shadow-lg">
-              DEFENSA
-            </span>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div>
@@ -201,7 +167,6 @@ export const FleetHubCardGrid = ({
             </div>
             <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-cyan-300">
               <span>{(state.patrols || []).length} escuadrones</span>
-              <span>➔</span>
             </div>
           </div>
         </button>
@@ -216,9 +181,6 @@ export const FleetHubCardGrid = ({
         >
           <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10 flex items-center justify-center">
             <span className="text-6xl group-hover:scale-110 transition-transform duration-500">🎖️</span>
-            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-amber-950/90 text-amber-300 border border-amber-400/60 shadow-lg">
-              REGISTRO
-            </span>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div>
@@ -231,7 +193,6 @@ export const FleetHubCardGrid = ({
             </div>
             <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-amber-300">
               <span>Auditoría de Cascos</span>
-              <span>➔</span>
             </div>
           </div>
         </button>
@@ -246,9 +207,6 @@ export const FleetHubCardGrid = ({
         >
           <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10 flex items-center justify-center">
             <SafeImg id="carrier" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-indigo-950/90 text-indigo-300 border border-indigo-400/60 shadow-lg">
-              TRASLADO
-            </span>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div>
@@ -261,21 +219,9 @@ export const FleetHubCardGrid = ({
             </div>
             <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono font-bold text-indigo-300">
               <span>{state.planets?.length || 1} mundos</span>
-              <span>➔</span>
             </div>
           </div>
         </button>
-
-        {/* TARJETA 9: Volver Atrás */}
-        <ActionCardTile
-          type="back"
-          title="Volver Atrás"
-          subtitle="Regresar a la pantalla anterior"
-          badgeText="VOLVER"
-          onClick={() => {
-            if (navigateBack) navigateBack();
-          }}
-        />
       </div>
     </div>
   );

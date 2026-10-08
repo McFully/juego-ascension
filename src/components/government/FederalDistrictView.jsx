@@ -80,6 +80,7 @@ export const FederalDistrictView = ({
               currentPlanet={currentPlanet}
               onEnterMinistry={onEnterMinistry}
               setLockedMinistryModal={setLockedMinistryModal}
+              dispatch={dispatch}
             />
           ))}
         </div>

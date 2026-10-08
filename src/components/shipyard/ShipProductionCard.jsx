@@ -38,10 +38,28 @@ export const ShipProductionCard = ({
 
   return (
     <div className="w-full h-full">
-      <div className={`${S.card} relative flex flex-col justify-between h-full`}>
+      <div className={`relative flex flex-col justify-between h-full rounded-2xl border transition-all duration-300 overflow-hidden p-4 ${
+        !meets
+          ? 'border-rose-900/40 bg-[#08040a]/70 hover:border-rose-500/50 hover:bg-[#120714] cursor-not-allowed shadow-[0_0_20px_rgba(244,63,94,0.06)]'
+          : `${S.card}`
+      }`}>
         <div>
-          <div className="relative">
-            <CardBanner id={id} />
+          <div className="relative overflow-hidden rounded-xl mb-3">
+            <CardBanner id={id} isLocked={!meets} />
+            
+            {!meets && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-10 pointer-events-none">
+                <span className="text-4xl filter drop-shadow-[0_0_12px_rgba(244,63,94,0.7)]">🔒</span>
+              </div>
+            )}
+
+            {!meets && (
+              <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-[0_0_10px_rgba(244,63,94,0.3)] bg-rose-950/90 text-rose-300 border border-rose-500/50 flex items-center gap-1.5 z-20">
+                <span>🔒</span>
+                <span>BLOQUEADO</span>
+              </span>
+            )}
+
             <AutomationRestrictionToggle
               isRestricted={Boolean(currentPlanet?.automatedExclusions?.[id])}
               onToggle={() => dispatch({
@@ -192,8 +210,9 @@ export const ShipProductionCard = ({
             )}
           </div>
           {s.req && !meets && (
-            <div className="text-[9px] text-red-400 mt-1.5 leading-tight font-mono">
-              🔒 Requiere: {Object.entries(s.req).map(([k, v]) => `${RESEARCH[k]?.name || BUILDINGS[k]?.name || k} Nv. ${v}`).join(', ')}
+            <div className="text-[10px] text-red-400 mt-2 p-1.5 rounded-lg bg-red-950/30 border border-red-500/20 leading-tight font-mono flex items-center gap-1.5">
+              <span>🔒</span>
+              <span>Requisito: {Object.entries(s.req).map(([k, v]) => `${RESEARCH[k]?.name || BUILDINGS[k]?.name || k} Nv.${v}`).join(', ')}</span>
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@ import { BIOME_KEYS, uid } from '../core.jsx';
 import { migrateLegacyColonization } from '../utils/formulas.js';
 import { buildMinistriesState, buildPlanetMinistries, DECAY_MINISTRY_OVERRIDES } from '../data/ministryState.js';
 import { initGalacticLonjaState } from '../utils/galacticLonjaAutonomousCore.js';
+import { initGalacticBankState, processBankLiquidation } from '../utils/galacticBankCore.js';
 
 const PLANET_SIZES = [80, 100, 120, 150, 180, 200];
 
@@ -279,6 +280,7 @@ export const migrateLoadState = (payload = {}) => {
       baseSlots: 2,
       linkedPlanetIds: payload.planets?.[0]?.id ? [payload.planets[0].id] : []
     },
+    galacticBank: processBankLiquidation(initGalacticBankState(payload.galacticBank)).bankState,
   };
 
 // Amnistía Imperial: asegurar compatibilidad con expansiones previas

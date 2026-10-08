@@ -1,7 +1,6 @@
 import React from 'react';
 import { ActionCardTile } from '../components/ui/ActionCardTile.jsx';
 import { useNavigation } from '../components/navigation/NavigationContext.jsx';
-import { DefenseStatsBanner } from '../components/defense/DefenseStatsBanner.jsx';
 import { DefenseQueueSection } from '../components/defense/DefenseQueueSection.jsx';
 import { DefenseGrid } from '../components/defense/DefenseGrid.jsx';
 import { SubsystemTopBanner } from '../components/navigation/SubsystemTopBanner.jsx';
@@ -41,18 +40,6 @@ const DefensePage = ({
         <div className="text-6xl mb-2">🛡️</div>
         <h3 className="text-xl font-bold">Instalaciones Defensivas Requeridas</h3>
         <p className="text-slate-400 text-sm">Construye un Astillero (o Bastión de Seguridad en la Lonja) para activar el bastión defensivo de superficie.</p>
-        <div className="pt-2">
-          <ActionCardTile
-            type="back"
-            title="Volver"
-            subtitle="Regresar a la pantalla anterior"
-            icon="◀"
-            badgeText="VOLVER"
-            onClick={() => {
-              if (navigateBack) navigateBack();
-            }}
-          />
-        </div>
       </div>
     );
   }
@@ -79,7 +66,7 @@ const DefensePage = ({
         currentPlanet={currentPlanet}
         production={production}
         fmt={fmt}
-        breadcrumbTitle="Bastión Defensivo"
+        breadcrumbTitle="Defensas Planetarias"
         breadcrumbIcon="🛡️"
         rightSlot={
           <div className="flex items-center gap-3">
@@ -99,7 +86,6 @@ const DefensePage = ({
         }
       />
 
-      <DefenseStatsBanner defenseSummary={defenseSummary} fmt={fmt} />
       <DefenseQueueSection defQueues={defQueues} DEFENSES={DEFENSES} fmt={fmt} fmtTime={fmtTime} ProgressBar={ProgressBar} dispatch={dispatch} />
       <DefenseGrid
         DEFENSES={DEFENSES}

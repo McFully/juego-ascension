@@ -149,17 +149,6 @@ const StatsPage = ({ state, currentPlanet, production, ACHIEVEMENTS, SHIPS, DEFE
               </button>
             );
           })}
-
-          <ActionCardTile
-            type="back"
-            title="Volver Atrás"
-            subtitle="Regresar a la pantalla anterior"
-            badgeText="VOLVER"
-            className="w-full h-full min-h-[260px]"
-            onClick={() => {
-              if (navigateBack) navigateBack();
-            }}
-          />
         </div>
       </div>
 
