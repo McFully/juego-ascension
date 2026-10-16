@@ -46,8 +46,8 @@ export const REAL_IMAGES = {
   slagPavingPlant: asset('slagPavingPlant.webp'),
   slagSyntheticSynthesizer: asset('slagSyntheticSynthesizer.webp'),
 
-  logisticaHub: asset('logistica_hub.jpg'),
-  centroGuerra: asset('centro_guerra.jpg'),
+  logisticaHub: asset('logistica_hub.webp'),
+  centroGuerra: asset('centro_guerra.webp'),
   townHall: asset('Ayuntamiento.webp'),
   healthCenter: asset('Centro de Salud.webp'),
   leisureCenter: asset('Centro de Ocio.webp'),
@@ -104,7 +104,7 @@ export const REAL_IMAGES = {
   smallCargo: asset('Carguera Pequeña.webp'),
   largeCargo: asset('Gran Carguero.webp'),
   heavyFreighter: asset('solarPropulsionFreight.webp'),
-  cargoTitan: asset('cargo_titan_colossus.jpg'),
+  cargoTitan: asset('cargo_titan_colossus.webp'),
   espionageProbe: asset('Sonda Espionaje.webp'),
   spyProbe: asset('Sonda Espionaje.webp'),
   colonizer: asset('Colonizador.webp'),
@@ -172,7 +172,7 @@ export const REAL_IMAGES = {
   cyberIntegration: asset('Integracion Cibernetica.webp'),
   naniteFactory: asset('Fabrica Nanobots.webp'),
   deepScanner: asset('deepScanner.webp'),
-  cartografiaEstelar: asset('cartografiaEstelar.jpg'),
+  cartografiaEstelar: asset('cartografiaEstelar.webp'),
   advColonization: asset('Colonizacion Avanzada.webp'),
   quantumSupercomputer: asset('quantumSupercomputer.webp'),
   particleAccelerator: asset('particleAccelerator.webp'),
@@ -731,8 +731,8 @@ export const REAL_IMAGES = {
   carrier: asset('carrier.webp'),
 
   // Lonja Naval e Intercambio de Naves
-  lonjaNaval: asset('lonja_naval_espacial.jpg'),
-  astilleroChatarra: asset('astillero_chatarra.jpg')
+  lonjaNaval: asset('lonja_naval_espacial.webp'),
+  astilleroChatarra: asset('astillero_chatarra.webp')
 };
 
 

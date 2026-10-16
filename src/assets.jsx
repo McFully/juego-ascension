@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { REAL_IMAGES, getFallbackImage } from './data/assetsCatalog.js';
+import { CARD_THUMBNAILS_BY_ID } from './data/cardThumbnailsById.js';
 
 // Caché en memoria RAM de imágenes ya creadas/decodificadas para evitar tirones y parpadeos
 const imageMemoryCache = new Set();
@@ -14,12 +15,10 @@ const preloadImage = (src) => {
   }
 };
 
-// Precargar gradualmente en segundo plano cuando la CPU/GPU esté inactiva sin colapsar el arranque
+// Precargar gradualmente miniaturas en segundo plano cuando la CPU/GPU esté inactiva sin colapsar el arranque
 if (typeof window !== 'undefined') {
   const scheduleIdlePreload = () => {
-    const urls = Object.values(REAL_IMAGES || {})
-      .filter(Boolean)
-      .map(url => getCardThumbnail(url));
+    const urls = Object.values(CARD_THUMBNAILS_BY_ID || {}).filter(Boolean);
     let index = 0;
     const batchSize = 6;
     function processBatch(deadline) {
@@ -59,22 +58,7 @@ const cardImageCache = new Map();
 
 export const getCardThumbnail = (fullSrc) => {
   if (!fullSrc || typeof fullSrc !== 'string') return fullSrc;
-  if (cardImageCache.has(fullSrc)) return cardImageCache.get(fullSrc);
-
-  let thumbSrc = fullSrc;
-  try {
-    const parsed = new URL(fullSrc, window?.location?.href || 'http://localhost');
-    const pathname = decodeURIComponent(parsed.pathname);
-    const filename = pathname.split('/').pop();
-    if (filename && filename.toLowerCase().endsWith('.webp')) {
-      thumbSrc = cardAsset(filename);
-    }
-  } catch {
-    thumbSrc = fullSrc;
-  }
-
-  cardImageCache.set(fullSrc, thumbSrc);
-  return thumbSrc;
+  return fullSrc;
 };
 
 // Obtener imagen en alta definición completa (para modales de detalles o zoom)
@@ -89,13 +73,17 @@ export const getFullImage = (id, category) => {
   return fallback;
 };
 
-// Obtener miniatura optimizada para la tarjeta (ultra fluidez en navegación)
+// Obtener miniatura optimizada para la tarjeta (ultra fluidez en navegación y 100% compatible con Vite/Electron)
 const getCardImage = (id, category) => {
+  if (id && CARD_THUMBNAILS_BY_ID[id]) {
+    const thumb = CARD_THUMBNAILS_BY_ID[id];
+    preloadImage(thumb);
+    return thumb;
+  }
   const fullSrc = REAL_IMAGES[id] || getFallbackImage(category, REAL_IMAGES);
   if (!fullSrc) return null;
-  const thumbSrc = getCardThumbnail(fullSrc);
-  preloadImage(thumbSrc);
-  return thumbSrc;
+  preloadImage(fullSrc);
+  return fullSrc;
 };
 
 export const CardImage = ({ id, category, className = "w-full h-auto object-cover", loading = "lazy", fullRes = false }) => {
