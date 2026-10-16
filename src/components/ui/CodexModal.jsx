@@ -236,7 +236,7 @@ export const CodexModal = React.memo(({
       >
         {/* CABECERA PRINCIPAL CON BANNER Y DATOS */}
         <div className="relative h-44 sm:h-52 bg-[#030611] flex items-center justify-between overflow-hidden border-b border-cyan-500/20 shrink-0">
-          <CardBanner id={id} className="w-full h-full object-cover scale-105 opacity-40 mix-blend-luminosity" />
+          <CardBanner id={id} fullRes={true} className="w-full h-full object-cover scale-105 opacity-40 mix-blend-luminosity" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#070b18] via-[#070b18]/70 to-transparent pointer-events-none" />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.3)_50%),linear-gradient(90deg,rgba(0,255,255,0.03),rgba(0,0,0,0.01),rgba(0,255,255,0.03))] bg-[size:100%_4px,3px_100%] pointer-events-none" />
 

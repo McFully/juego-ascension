@@ -17,3 +17,13 @@ El estilo visual de **Ascensión** se basa en un diseño espacial oscuro y tecno
 - **Elevación y Sombras:** `shadow-lg`, `shadow-cyan-950/40` para resaltar elementos flotantes.
 - **Hover Táctico:** `hover:border-cyan-400`, `hover:bg-slate-800/80`, `hover:scale-[1.01]` con transiciones de 150ms a 200ms.
 - **Glow Espacial:** Resplandor cian tenue en botones primarios y tarjetas de construcción activas.
+
+## 4. PIPELINE Y ARQUITECTURA DE ASSETS DUAL (CARD THUMBNAILS Y FULL-RES)
+- **Imágenes Maestras (`Assets/`):** 470 ilustraciones WebP en resolución completa (1080p+, ~800 KB a 1.5 MB), preservadas sin pérdidas ni alteraciones destructivas.
+- **Miniaturas Tácticas (`Assets/cards/`):** Redimensionadas a 560px de ancho con factor de compresión WebP q82 (~35 KB por asset, 96.3% de reducción de peso).
+- **Mapeo Automático (`src/assets.jsx`):**
+  - `getCardImage(id, category)`: Entrega miniaturas ultraligeras para el 100% de la navegación de menús y tarjetas (`CardBanner`, `CardImage`, `SafeImg`).
+  - `getFullImage(id, category)`: Entrega la imagen maestra en alta definición para vistas ampliadas y modales de inspección (`CodexModal` con `fullRes={true}`).
+  - **Fallback de Seguridad:** Si un archivo no tiene miniatura generada, el resolver conmuta automáticamente a la versión maestra original sin pantallas en blanco.
+- **Generador Batch Incremental:** `scripts/generateCardThumbnails.cjs` (procesamiento local con `sharp`).
+

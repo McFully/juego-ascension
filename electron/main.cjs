@@ -27,12 +27,8 @@ const { registerVisualAuditIpc } = require("./ipc/visualAuditIpc.cjs");
 // Permitir autoplay de audio/música sin requerir gesto previo del usuario
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
-// Optimización de rendimiento para PCs modestos (4 GB RAM / GPU integrada)
-// Rasterización por GPU directa y zero-copy sin duplicar texturas en RAM del sistema
+// Aceleración por hardware segura y balanceada para Windows
 app.commandLine.appendSwitch("enable-gpu-rasterization");
-app.commandLine.appendSwitch("enable-zero-copy");
-app.commandLine.appendSwitch("ignore-gpu-blocklist");
-app.commandLine.appendSwitch("disable-software-rasterizer");
 
 // Registrar el esquema como privilegiado para permitir fetch y recursos seguros
 protocol.registerSchemesAsPrivileged([
@@ -188,13 +184,17 @@ function createWindow() {
 
   Menu.setApplicationMenu(null);
   
+  // Registrar únicamente errores reales (level >= 3) para evitar saturar el disco y congelar el hilo principal
   mainWindow.webContents.on("console-message", (event, level, message, line, sourceId) => {
-    logToFile(`[Renderer Console] [Level ${level}] [Line ${line} of ${sourceId}]`, message);
+    if (level >= 3) {
+      logToFile(`[Renderer Error] [Line ${line} of ${sourceId}]`, message);
+    }
   });
 
   mainWindow.loadURL("ascension-asset://index.html");
 
   mainWindow.once("ready-to-show", () => {
+    mainWindow.maximize();
     mainWindow.show();
   });
 

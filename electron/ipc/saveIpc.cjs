@@ -70,6 +70,19 @@ function logToFile(message, stack = "") {
       fs.mkdirSync(logsDir, { recursive: true });
     }
     const logPath = path.join(logsDir, "error.log");
+    
+    // Rotación preventiva: si el archivo supera los 2 MB, rotarlo para que no bloquee I/O
+    try {
+      if (fs.existsSync(logPath)) {
+        const stat = fs.statSync(logPath);
+        if (stat.size > 2 * 1024 * 1024) {
+          const bakPath = path.join(logsDir, "error.log.old");
+          if (fs.existsSync(bakPath)) fs.unlinkSync(bakPath);
+          fs.renameSync(logPath, bakPath);
+        }
+      }
+    } catch (_) {}
+
     const timestamp = new Date().toISOString();
     const line = `[${timestamp}] ${message}\n${stack ? stack + "\n" : ""}---\n`;
     fs.appendFileSync(logPath, line, "utf-8");

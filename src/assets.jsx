@@ -17,7 +17,9 @@ const preloadImage = (src) => {
 // Precargar gradualmente en segundo plano cuando la CPU/GPU esté inactiva sin colapsar el arranque
 if (typeof window !== 'undefined') {
   const scheduleIdlePreload = () => {
-    const urls = Object.values(REAL_IMAGES || {}).filter(Boolean);
+    const urls = Object.values(REAL_IMAGES || {})
+      .filter(Boolean)
+      .map(url => getCardThumbnail(url));
     let index = 0;
     const batchSize = 6;
     function processBatch(deadline) {
@@ -49,9 +51,34 @@ if (typeof window !== 'undefined') {
   }
 }
 
+const cardAsset = (filename) => new URL(`../Assets/cards/${filename}`, import.meta.url).href;
 const asset = (filename) => new URL(`../Assets/${filename}`, import.meta.url).href;
 
-const getCardImage = (id, category) => {
+// Cache de mapeo de miniaturas seguras con fallback al original
+const cardImageCache = new Map();
+
+export const getCardThumbnail = (fullSrc) => {
+  if (!fullSrc || typeof fullSrc !== 'string') return fullSrc;
+  if (cardImageCache.has(fullSrc)) return cardImageCache.get(fullSrc);
+
+  let thumbSrc = fullSrc;
+  try {
+    const parsed = new URL(fullSrc, window?.location?.href || 'http://localhost');
+    const pathname = decodeURIComponent(parsed.pathname);
+    const filename = pathname.split('/').pop();
+    if (filename && filename.toLowerCase().endsWith('.webp')) {
+      thumbSrc = cardAsset(filename);
+    }
+  } catch {
+    thumbSrc = fullSrc;
+  }
+
+  cardImageCache.set(fullSrc, thumbSrc);
+  return thumbSrc;
+};
+
+// Obtener imagen en alta definición completa (para modales de detalles o zoom)
+export const getFullImage = (id, category) => {
   const src = REAL_IMAGES[id];
   if (src) {
     preloadImage(src);
@@ -62,8 +89,17 @@ const getCardImage = (id, category) => {
   return fallback;
 };
 
-export const CardImage = ({ id, category, className = "w-full h-auto object-cover", loading = "lazy" }) => {
-  const src = getCardImage(id, category);
+// Obtener miniatura optimizada para la tarjeta (ultra fluidez en navegación)
+const getCardImage = (id, category) => {
+  const fullSrc = REAL_IMAGES[id] || getFallbackImage(category, REAL_IMAGES);
+  if (!fullSrc) return null;
+  const thumbSrc = getCardThumbnail(fullSrc);
+  preloadImage(thumbSrc);
+  return thumbSrc;
+};
+
+export const CardImage = ({ id, category, className = "w-full h-auto object-cover", loading = "lazy", fullRes = false }) => {
+  const src = fullRes ? getFullImage(id, category) : getCardImage(id, category);
   const [hasError, setHasError] = useState(false);
   if (src && !hasError) {
     return (
@@ -82,8 +118,8 @@ export const CardImage = ({ id, category, className = "w-full h-auto object-cove
   return <div className={`${className} bg-cyan-950/10`} />;
 };
 
-export const SafeImg = ({ id, category, className = "w-full h-auto", fallback = null, loading = "lazy" }) => {
-  const src = getCardImage(id, category);
+export const SafeImg = ({ id, category, className = "w-full h-auto", fallback = null, loading = "lazy", fullRes = false }) => {
+  const src = fullRes ? getFullImage(id, category) : getCardImage(id, category);
   const [hasError, setHasError] = useState(false);
   if (src && !hasError) {
     return (
@@ -102,8 +138,8 @@ export const SafeImg = ({ id, category, className = "w-full h-auto", fallback = 
   return fallback || <div className={`${className} bg-cyan-950/10 rounded`} />;
 };
 
-export const CardBanner = ({ id, category, children, isLocked = false, className = '', loading = "lazy" }) => {
-  const src = getCardImage(id, category);
+export const CardBanner = ({ id, category, children, isLocked = false, className = '', loading = "lazy", fullRes = false }) => {
+  const src = fullRes ? getFullImage(id, category) : getCardImage(id, category);
   const [hasError, setHasError] = useState(false);
   return (
     <div className={`relative overflow-hidden w-full aspect-video rounded-xl mb-3 border border-white/10 glass-deep fresnel bg-cyan-950/10 ${className}`}>
@@ -126,4 +162,4 @@ export const CardBanner = ({ id, category, children, isLocked = false, className
   );
 };
 
-export { asset, getCardImage, REAL_IMAGES, getFallbackImage };
+export { asset, cardAsset, getCardImage, REAL_IMAGES, getFallbackImage };
