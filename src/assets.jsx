@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { REAL_IMAGES, getFallbackImage } from './data/assetsCatalog.js';
 import { CARD_THUMBNAILS_BY_ID } from './data/cardThumbnailsById.js';
 
-// Caché en memoria RAM de imágenes ya creadas/decodificadas para evitar tirones y parpadeos
+// Caché en memoria RAM de imágenes ya solicitadas
 const imageMemoryCache = new Set();
 
 const preloadImage = (src) => {
@@ -10,45 +10,7 @@ const preloadImage = (src) => {
   imageMemoryCache.add(src);
   const img = new Image();
   img.src = src;
-  if (img.decode) {
-    img.decode().catch(() => {});
-  }
 };
-
-// Precargar gradualmente miniaturas en segundo plano cuando la CPU/GPU esté inactiva sin colapsar el arranque
-if (typeof window !== 'undefined') {
-  const scheduleIdlePreload = () => {
-    const urls = Object.values(CARD_THUMBNAILS_BY_ID || {}).filter(Boolean);
-    let index = 0;
-    const batchSize = 6;
-    function processBatch(deadline) {
-      while (index < urls.length && (deadline ? deadline.timeRemaining() > 5 : true)) {
-        for (let i = 0; i < batchSize && index < urls.length; i++) {
-          preloadImage(urls[index++]);
-        }
-        if (!deadline) break;
-      }
-      if (index < urls.length) {
-        if ('requestIdleCallback' in window) {
-          window.requestIdleCallback(processBatch, { timeout: 2000 });
-        } else {
-          setTimeout(processBatch, 250);
-        }
-      }
-    }
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(processBatch, { timeout: 3000 });
-    } else {
-      setTimeout(processBatch, 1000);
-    }
-  };
-
-  if (document.readyState === 'complete') {
-    setTimeout(scheduleIdlePreload, 2000);
-  } else {
-    window.addEventListener('load', () => setTimeout(scheduleIdlePreload, 2000));
-  }
-}
 
 const cardAsset = (filename) => new URL(`../Assets/cards/${filename}`, import.meta.url).href;
 const asset = (filename) => new URL(`../Assets/${filename}`, import.meta.url).href;
@@ -64,26 +26,16 @@ export const getCardThumbnail = (fullSrc) => {
 // Obtener imagen en alta definición completa (para modales de detalles o zoom)
 export const getFullImage = (id, category) => {
   const src = REAL_IMAGES[id];
-  if (src) {
-    preloadImage(src);
-    return src;
-  }
-  const fallback = getFallbackImage(category, REAL_IMAGES);
-  if (fallback) preloadImage(fallback);
-  return fallback;
+  if (src) return src;
+  return getFallbackImage(category, REAL_IMAGES);
 };
 
 // Obtener miniatura optimizada para la tarjeta (ultra fluidez en navegación y 100% compatible con Vite/Electron)
 const getCardImage = (id, category) => {
   if (id && CARD_THUMBNAILS_BY_ID[id]) {
-    const thumb = CARD_THUMBNAILS_BY_ID[id];
-    preloadImage(thumb);
-    return thumb;
+    return CARD_THUMBNAILS_BY_ID[id];
   }
-  const fullSrc = REAL_IMAGES[id] || getFallbackImage(category, REAL_IMAGES);
-  if (!fullSrc) return null;
-  preloadImage(fullSrc);
-  return fullSrc;
+  return REAL_IMAGES[id] || getFallbackImage(category, REAL_IMAGES) || null;
 };
 
 export const CardImage = ({ id, category, className = "w-full h-auto object-cover", loading = "lazy", fullRes = false }) => {

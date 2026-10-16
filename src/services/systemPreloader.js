@@ -22,23 +22,23 @@ export async function runSystemPreload(onProgress) {
     }
   };
 
-  // 1. Catálogo Gráfico (Imágenes maestras)
-  const imageUrls = Object.values(REAL_IMAGES || {}).filter(Boolean);
-  totalTasks += imageUrls.length;
+  // 1. Assets críticos del arranque (Menú principal y primeros iconos esenciales)
+  const initialCriticalAssets = [
+    REAL_IMAGES.menuContinue,
+    REAL_IMAGES.menuNewGame,
+    REAL_IMAGES.menuLoadGame,
+    REAL_IMAGES.sectorGovPalace,
+    REAL_IMAGES.biomeDomeSimulation
+  ].filter(Boolean);
+  totalTasks += initialCriticalAssets.length;
 
-  // 2. Chunks de Pistas Secundarias (Vite dynamic imports)
+  // 2. Chunks de Pistas Secundarias (Vite dynamic imports en segundo plano sin bloquear)
   const chunkLoaders = [
     () => import('../pages/GalaxyPage.jsx'),
     () => import('../pages/CombatPage.jsx'),
     () => import('../pages/FleetPage.jsx'),
     () => import('../pages/TechTreePage.jsx'),
-    () => import('../pages/DiplomacyPage.jsx'),
-    () => import('../pages/CommunicationsPage.jsx'),
-    () => import('../pages/GalacticMarketPage.jsx'),
-    () => import('../pages/GalacticBankPage.jsx'),
-    () => import('../pages/PlanetaryBankPage.jsx'),
-    () => import('../components/sectors/SectorManagementView.jsx'),
-    () => import('../components/3d/PlanetViewer3D.jsx')
+    () => import('../pages/DiplomacyPage.jsx')
   ];
   totalTasks += chunkLoaders.length;
 
@@ -75,17 +75,8 @@ export async function runSystemPreload(onProgress) {
   completedTasks++;
   notify();
 
-  // Ejecución 4: Chunks en segundo plano
-  const chunkPromises = chunkLoaders.map(async (loader) => {
-    try {
-      await loader();
-    } catch (_) {}
-    completedTasks++;
-    notify();
-  });
-
-  // Ejecución 5: Imágenes en paralelo en GPU
-  const imagePromises = imageUrls.map(async (src) => {
+  // Ejecución 4: Precarga ligera de los assets iniciales esenciales
+  const criticalAssetPromises = initialCriticalAssets.map(async (src) => {
     return new Promise((resolve) => {
       try {
         const img = new Image();
@@ -109,6 +100,15 @@ export async function runSystemPreload(onProgress) {
     });
   });
 
-  await Promise.all([...chunkPromises, ...imagePromises]);
+  // Ejecución 5: Chunks principales en paralelo
+  const chunkPromises = chunkLoaders.map(async (loader) => {
+    try {
+      await loader();
+    } catch (_) {}
+    completedTasks++;
+    notify();
+  });
+
+  await Promise.all([...criticalAssetPromises, ...chunkPromises]);
   notify();
 }

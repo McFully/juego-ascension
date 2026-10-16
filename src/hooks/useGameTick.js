@@ -58,9 +58,16 @@ export function useGameTick({ state, dispatch, production, TICK_MS, stateRef, jo
           try {
             if (action === 'TICK_SUCCESS' && payload?.newState) {
               dispatch({ type: 'APPLY_TICK_STATE', payload: payload.newState, replay });
-              try { processColonyGovernor(payload.newState, dispatch); } catch (gErr) { console.error('[Ascensión] Governor error:', gErr); }
-              try { auditGameState(payload.newState, productionRef.current); } catch (aErr) { console.error('[Ascensión] Audit error:', aErr); }
-              maybeConsultStrategicDirector(payload.newState);
+              // Desacoplar procesos pesados no visuales para que no bloqueen los eventos de ratón
+              const scheduleBgTask = (typeof window !== 'undefined' && window.requestIdleCallback)
+                ? (cb) => window.requestIdleCallback(cb, { timeout: 800 })
+                : (cb) => setTimeout(cb, 10);
+
+              scheduleBgTask(() => {
+                try { processColonyGovernor(payload.newState, dispatch); } catch (gErr) { console.error('[Ascensión] Governor error:', gErr); }
+                try { auditGameState(payload.newState, productionRef.current); } catch (aErr) { console.error('[Ascensión] Audit error:', aErr); }
+                maybeConsultStrategicDirector(payload.newState);
+              });
             } else if (action === 'TICK_ERROR') {
               console.warn('[Ascensión] Worker TICK error, procesando fallback síncrono:', payload?.error);
               dispatch({ type: 'TICK' });

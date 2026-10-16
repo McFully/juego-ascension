@@ -90,19 +90,19 @@ export const GameViewports = ({
 }) => {
   return (
     <Suspense fallback={<div className="text-center text-slate-500 py-12">Cargando módulo...</div>}>
-      {/* Vistas primarias preservadas en memoria para cambio instantáneo sin cortina */}
-      <div className={activeTab === "overview" ? "block" : "hidden"}>
+      {/* Renderizado condicional limpio: solo el viewport activo existe en el DOM */}
+      {activeTab === "overview" && (
         <OverviewPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} storage={storage} MISSIONS={MISSIONS} BUILDINGS={BUILDINGS} RESEARCH={RESEARCH} SHIPS={SHIPS} DEFENSES={DEFENSES} S={S} QueueDisplay={QueueDisplay} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} isOutdated={isOutdated} onOpenCodex={onOpenCodex} safeSetActiveTab={safeSetActiveTab} onOpenSettings={onOpenSettings} onReturnToMenu={onReturnToMenu} />
-      </div>
-      <div className={activeTab === "buildings" ? "block" : "hidden"}>
+      )}
+      {activeTab === "buildings" && (
         <BuildingsPage dispatch={dispatch} setActiveTab={safeSetActiveTab} safeSetActiveTab={safeSetActiveTab} currentPlanet={currentPlanet} state={state} production={production} fmt={fmt} />
-      </div>
-      <div className={activeTab === "shipyard" ? "block" : "hidden"}>
+      )}
+      {activeTab === "shipyard" && (
         <ShipyardPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} SHIPS={SHIPS} RESEARCH={RESEARCH} BUILDINGS={BUILDINGS} S={S} SafeImg={SafeImg} CardBanner={CardBanner} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} shipCost={shipCost} calcShipTime={calcShipTime} meetsReq={meetsReq} getShipStats={getShipStats} canAfford={canAfford} constructionDiscount={constructionDiscount} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />
-      </div>
-      <div className={activeTab === "defense" ? "block" : "hidden"}>
+      )}
+      {activeTab === "defense" && (
         <DefensePage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} DEFENSES={DEFENSES} MISSILES={MISSILES} RESEARCH={RESEARCH} S={S} SafeImg={SafeImg} CardBanner={CardBanner} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} defenseCost={defenseCost} calcDefenseTime={calcDefenseTime} meetsReq={meetsReq} getDefenseStats={getDefenseStats} getEffectiveTech={getEffectiveTech} canAfford={canAfford} constructionDiscount={constructionDiscount} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />
-      </div>
+      )}
 
       {activeTab === "missions" && <MissionsPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} setActiveTab={safeSetActiveTab} MISSIONS={MISSIONS} S={S} onOpenCodex={onOpenCodex} production={production} fmt={fmt} />}
       {(activeTab === "research" || activeTab === "techTree") && (

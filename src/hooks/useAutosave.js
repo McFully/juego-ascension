@@ -8,23 +8,30 @@ export function useAutosave({ state, saveRef, resettingRef, setLastSave }) {
 
     const interval = setInterval(() => {
       if (resettingRef.current) return;
-      const snap = withSessionIdentity(saveRef.current);
-      const missions = (snap.fleetMissions || []).length;
-      const qLens = `b${(snap.buildQueue||[]).length}s${(snap.shipQueue||[]).length}r${(snap.researchQueue||[]).length}`;
-      console.log(`[Ascensión] Auto-save start | missions=${missions} queues=${qLens}`);
-      window.electronAPI.saveGameNamed(snap).then(r => {
-        if (r.success) {
-          if (r.sessionId) setSessionId(r.sessionId);
-          setLastSave(Date.now());
-          console.log("[Ascensión] Auto-save ok");
-        } else if (window.electronAPI.logError) {
-          window.electronAPI.logError(`Auto-save failed: ${r.error || "unknown"}`, "", `missions=${missions}`);
-        }
-      }).catch(e => {
-        console.error("Auto-save error:", e);
-        if (window.electronAPI && window.electronAPI.logError) {
-          window.electronAPI.logError(`Auto-save exception: ${e?.message || e}`, e?.stack || "", `missions=${missions}`);
-        }
+      const scheduleSave = (typeof window !== 'undefined' && window.requestIdleCallback)
+        ? (cb) => window.requestIdleCallback(cb, { timeout: 3000 })
+        : (cb) => setTimeout(cb, 10);
+
+      scheduleSave(() => {
+        if (resettingRef.current) return;
+        const snap = withSessionIdentity(saveRef.current);
+        const missions = (snap.fleetMissions || []).length;
+        const qLens = `b${(snap.buildQueue||[]).length}s${(snap.shipQueue||[]).length}r${(snap.researchQueue||[]).length}`;
+        console.log(`[Ascensión] Auto-save start | missions=${missions} queues=${qLens}`);
+        window.electronAPI.saveGameNamed(snap).then(r => {
+          if (r.success) {
+            if (r.sessionId) setSessionId(r.sessionId);
+            setLastSave(Date.now());
+            console.log("[Ascensión] Auto-save ok");
+          } else if (window.electronAPI.logError) {
+            window.electronAPI.logError(`Auto-save failed: ${r.error || "unknown"}`, "", `missions=${missions}`);
+          }
+        }).catch(e => {
+          console.error("Auto-save error:", e);
+          if (window.electronAPI && window.electronAPI.logError) {
+            window.electronAPI.logError(`Auto-save exception: ${e?.message || e}`, e?.stack || "", `missions=${missions}`);
+          }
+        });
       });
     }, 30000);
 

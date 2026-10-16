@@ -664,4 +664,11 @@ button:focus-visible,
   text-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
 }
 
+/* Optimización de hardware GPU y contención de layout para tarjetas masivas */
+.virtualized-card {
+  contain: layout paint;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
 

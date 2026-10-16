@@ -16,12 +16,14 @@ export const useUIDiagnostics = (activeTab, currentPlanet) => {
 
     const auditUI = () => {
       const now = Date.now();
-      if (now - lastCheckRef.current < 2000) return;
+      if (now - lastCheckRef.current < 4000) return;
       lastCheckRef.current = now;
 
-      // Detección de horizontal overflow en el documento principal
-      const docWidth = document.documentElement.clientWidth;
-      const scrollWidth = document.documentElement.scrollWidth;
+      const scheduleAudit = window.requestIdleCallback || ((cb) => setTimeout(cb, 50));
+      scheduleAudit(() => {
+        // Detección de horizontal overflow en el documento principal
+        const docWidth = document.documentElement.clientWidth;
+        const scrollWidth = document.documentElement.scrollWidth;
 
       if (scrollWidth > docWidth + 2) {
         logTelemetry('WARN', 'Desbordamiento horizontal detectado en UI', {
@@ -47,6 +49,7 @@ export const useUIDiagnostics = (activeTab, currentPlanet) => {
           });
         }
       }
+      });
     };
 
     auditUI();

@@ -1,4 +1,5 @@
 import { muted, voiceVol, BASE_VOICE_MAX } from './audioCore.js';
+import { duckAudioForVoice } from './audioMusic.js';
 
 let currentVoiceAudio = null;
 
@@ -18,6 +19,13 @@ export function playVoice(voiceKey) {
     audio.volume = targetVol;
     audio.muted = muted;
     currentVoiceAudio = audio;
+
+    duckAudioForVoice(true);
+    audio.onended = () => {
+      duckAudioForVoice(false);
+      currentVoiceAudio = null;
+    };
+
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(err => {
@@ -25,15 +33,23 @@ export function playVoice(voiceKey) {
         fallbackAudio.volume = targetVol;
         fallbackAudio.muted = muted;
         currentVoiceAudio = fallbackAudio;
-        fallbackAudio.play().catch(() => {});
+        fallbackAudio.onended = () => {
+          duckAudioForVoice(false);
+          currentVoiceAudio = null;
+        };
+        fallbackAudio.play().catch(() => {
+          duckAudioForVoice(false);
+        });
       });
     }
   } catch (err) {
+    duckAudioForVoice(false);
     console.warn('[Audio HD] No se pudo reproducir voz offline:', voiceKey, err);
   }
 }
 
 export function stopVoice() {
+  duckAudioForVoice(false);
   if (currentVoiceAudio) {
     try {
       currentVoiceAudio.pause();

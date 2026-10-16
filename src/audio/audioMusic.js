@@ -288,3 +288,21 @@ export function transitionToCosmicSilence(isCosmic = true) {
   targetBg.volume = finalVol;
 }
 
+/**
+ * Audio Ducking: Atenúa automáticamente la música cuando una voz imperial habla.
+ */
+let duckTimeout = null;
+export function duckAudioForVoice(duck = true) {
+  const targetBg = currentSystemMusic || currentMinistryMusic || currentBgMusic;
+  if (!targetBg) return;
+  const baseTarget = muted ? 0 : (musicVol * BASE_MUSIC_MAX);
+  if (duck) {
+    if (duckTimeout) clearTimeout(duckTimeout);
+    targetBg.volume = baseTarget * 0.35;
+  } else {
+    duckTimeout = setTimeout(() => {
+      targetBg.volume = baseTarget;
+    }, 150);
+  }
+}
+

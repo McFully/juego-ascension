@@ -1,6 +1,19 @@
 import { getCtx, getMasterGain, getSfxGain, getWarGain, getOperationsGain, muted } from './audioCore.js';
 
+// Limitador de concurrencia y debounce para evitar audio clipping y saturación
+const lastSoundTimes = new Map();
+const MIN_SOUND_INTERVAL_MS = 38;
+
+function shouldThrottleSound(key) {
+  const now = performance.now();
+  const last = lastSoundTimes.get(key) || 0;
+  if (now - last < MIN_SOUND_INTERVAL_MS) return true;
+  lastSoundTimes.set(key, now);
+  return false;
+}
+
 function tone(freq, dur, type = 'sine', vol = 0.12, pan = 0, channel = 'ui') {
+  if (shouldThrottleSound(`tone_${channel}_${freq}`)) return;
   try {
     const c = getCtx();
     const osc = c.createOscillator();
@@ -25,6 +38,7 @@ function tone(freq, dur, type = 'sine', vol = 0.12, pan = 0, channel = 'ui') {
 }
 
 function noise(dur, vol = 0.06, pan = 0, channel = 'ui') {
+  if (shouldThrottleSound(`noise_${channel}`)) return;
   try {
     const c = getCtx();
     const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
