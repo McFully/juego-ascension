@@ -44,6 +44,7 @@ export {
   calcFlightTime, calcFuel, shipSpeed, fleetSpeed, getDefenseStats, getShipStats,
   buildingCost, researchCost, shipCost, defenseCost, constructionDiscount, aiResearchDiscount,
   calcRequiredPopulation,
+  calcBuildingOperatingExpenses, calcResearchOperatingExpenses, calcShipOperatingExpenses, calcDefenseOperatingExpenses,
   fmt, fmtTime, uid, getGalacticAlignment, getPOIAtCoordinates,
   canAfford, deduct, calcResourceValueForAI, clampResources, meetsReq, meetsResearchReq,
   unmetReqList, reqLabel, resolveReqKey, calcProduction,

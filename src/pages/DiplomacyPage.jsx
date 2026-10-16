@@ -11,6 +11,7 @@ import { playVoice } from "../audio.js";
 import { LeaderAvatar, playDiploSound, getDiploCtx } from "../components/diplomacy/LeaderAvatar.jsx";
 import { FACTION_DIALOGUES } from "../data/diplomacyDialogues.js";
 import { getActionReply } from "../components/diplomacy/diplomaticActionReplies.js";
+import { queryGemini, getGeminiApiKey } from "../services/geminiService.js";
 import { GameCarousel } from "../components/ui/GameCarousel.jsx";
 import { ActionCardTile } from "../components/ui/ActionCardTile.jsx";
 import { DiplomacyChamberSelector } from "../components/diplomacy/DiplomacyChamberSelector.jsx";
@@ -118,23 +119,46 @@ const DiplomacyPage = ({ state, dispatch, currentPlanet: propPlanet, production,
     return cost;
   }, [state.reputation]);
 
-  const handleDiplomaticAction = (actionType) => {
+  const handleDiplomaticAction = async (actionType) => {
     if (!activeContact) return;
     dispatch({ type: 'DIPLOMACY_APPLY_ACTION', planetId: activeContact.id, actionType });
     playDiploSound('success');
     const personality = activeContact.aiPersonality || 'pacífico';
-    const { playerMsg, reply } = getActionReply(actionType, personality);
+    const { playerMsg, reply: staticReply } = getActionReply(actionType, personality);
     dispatch({ type: 'ADD_CHAT_MESSAGE', aiId: activeContact.id, sender: 'player', text: playerMsg });
+
+    let finalReply = staticReply;
+    if (getGeminiApiKey()) {
+      try {
+        const prompt = `
+[DIPLOMACIA GALÁCTICA EN ASCENSIÓN]
+Facción alienígena: "${activeContact.faction || 'Imperio Rival'}"
+Líder/Personalidad: "${personality}"
+Relación actual: ${activeContact.relation || 0} (-100 a +100)
+El jugador humano ha ejecutado la acción diplomática: "${actionType}".
+Responde con un mensaje breve (1 o 2 oraciones máximo), inmersivo, militar o diplomático, en español, sin usar el símbolo ampersand (&).
+`.trim();
+        const aiRes = await queryGemini(prompt, {
+          category: 'diplomacy_dialogue',
+          temperature: 0.65,
+          useCache: true
+        });
+        if (aiRes.success && aiRes.text && aiRes.text.length > 5) {
+          finalReply = aiRes.text.trim();
+        }
+      } catch (_) {}
+    }
+
     setTimeout(() => {
-      dispatch({ type: 'ADD_CHAT_MESSAGE', aiId: activeContact.id, sender: 'ai', text: reply });
+      dispatch({ type: 'ADD_CHAT_MESSAGE', aiId: activeContact.id, sender: 'ai', text: finalReply });
     }, 1000);
 
     let index = 0;
     setDialogueText('');
     const interval = setInterval(() => {
-      setDialogueText(reply.slice(0, index + 1));
+      setDialogueText(finalReply.slice(0, index + 1));
       index++;
-      if (index >= reply.length) {
+      if (index >= finalReply.length) {
         clearInterval(interval);
       }
     }, 12);

@@ -42,6 +42,13 @@ export {
   calcDefenseTime
 } from './formulas/costFormulas.js';
 
+export {
+  calcBuildingOperatingExpenses,
+  calcResearchOperatingExpenses,
+  calcShipOperatingExpenses,
+  calcDefenseOperatingExpenses
+} from './formulas/operatingExpensesFormulas.js';
+
 export { calcEffectiveBuildTime } from './formulas/buildTiming.js';
 export { calcPlanetResearchTime, researchTimeMultFor, getPlanetEffectiveLab, getMaxResearchQueueSlots } from './formulas/researchTiming.js';
 export { calcRemainingSeconds, calcTotalSeconds } from './formulas/timingHelpers.js';
@@ -451,7 +458,7 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
         consIcon: b.energy ? '⚡' : null,
       };
     }
-    if (b.cat === 'civil' || b.cat === 'government' || b.cat === 'special' || b.cat === 'facility') {
+    if (b.cat === 'civil' || b.cat === 'government' || b.cat === 'special' || b.cat === 'facility' || b.cat === 'exchange' || b.cat === 'defense' || b.cat === 'advanced') {
       const cons = l > 0 && b.energy ? calcBuildingEnergyDemand(id, l) : 0;
       
       // Cálculo dinámico de beneficio cuantificable por nivel
@@ -487,8 +494,33 @@ export const buildingProdInfo = (id, lvl, research = {}, temp = 20, speed = GAME
       else if (id === 'slagSyntheticSynthesizer') { statLabel = 'Cristal y Deuterio Extra'; statValue = l * 6200; statUnit = '/h'; statIcon = '⚗️'; }
       else if (id === 'financeMinistry') { statLabel = 'Recaudación de Créditos'; statValue = l * 2500; statUnit = ' cr/h'; statIcon = '💵'; }
       else if (id === 'futuresExchange') { statLabel = 'Rendimiento Bursátil'; statValue = Number((l * 3.5).toFixed(1)); statUnit = '%'; statIcon = '📈'; }
-      else if (id === 'exchangeBank') { statLabel = 'Banca y Emisión de Crédito'; statValue = l * 15000; statUnit = ' cr/h'; statIcon = '💎'; }
+      else if (id === 'exchangeBank') { statLabel = 'Cupo Federal y Emisión'; statValue = l * 20000; statUnit = ' cr'; statIcon = '💎'; }
       else if (id === 'exchangeVaults') { statLabel = 'Bóveda de Custodia Blindada'; statValue = l * 500000; statUnit = ' res.'; statIcon = '🏦'; }
+      else if (id === 'exchangeDocks') { statLabel = 'Muelles de Atraque'; statValue = l * 4; statUnit = ' slots'; statIcon = '🛸'; }
+      else if (id === 'exchangeEngine') { statLabel = 'Eficiencia AMM y Spread'; statValue = Number((l * 2.5).toFixed(1)); statUnit = '%'; statIcon = '📈'; }
+      else if (id === 'exchangeBastion') { statLabel = 'Defensa de Superficie'; statValue = l * 15000; statUnit = ' pts'; statIcon = '🛡️'; }
+      else if (id === 'exchangeBunkers') { statLabel = 'Reserva Sellada Protegida'; statValue = Number(Math.min(70, l * 10).toFixed(0)); statUnit = '%'; statIcon = '🔒'; }
+      else if (id === 'exchangePatrols') { statLabel = 'Patrullas DAO de Escolta'; statValue = l * 6; statUnit = ' escuadras'; statIcon = '🚀'; }
+      else if (id === 'exchangeBeacon') { statLabel = 'Tráfico Mercante Global'; statValue = Number((l * 5).toFixed(0)); statUnit = '%'; statIcon = '📡'; }
+      else if (id === 'militaryAcademy') { statLabel = 'Instrucción Militar'; statValue = Number((l * 5).toFixed(0)); statUnit = '%'; statIcon = '🎓'; }
+      else if (id === 'logiCenter') { statLabel = 'Eficiencia de Carga'; statValue = Number((l * 8).toFixed(0)); statUnit = '%'; statIcon = '📦'; }
+      else if (id === 'spyCenter') { statLabel = 'Alcance de Inteligencia'; statValue = Number((l * 10).toFixed(0)); statUnit = '%'; statIcon = '🕵️'; }
+      else if (id === 'advResearchCenter') { statLabel = 'Aceleración Científica'; statValue = Number((l * 8).toFixed(0)); statUnit = '%'; statIcon = '🔬'; }
+      else if (id === 'industrialComplex') { statLabel = 'Producción Pesada'; statValue = Number((l * 6).toFixed(0)); statUnit = '%'; statIcon = '🏗️'; }
+      else if (id === 'assemblyCenter') { statLabel = 'Línea de Ensamblaje'; statValue = Number((l * 7).toFixed(0)); statUnit = '%'; statIcon = '🔧'; }
+      else if (id === 'constructionCenter') { statLabel = 'Descuento Coste Obras'; statValue = Number((l * 15).toFixed(0)); statUnit = '%'; statIcon = '🏗️'; }
+      else if (id === 'spacePort') { statLabel = 'Capacidad Portuaria'; statValue = Number((l * 10).toFixed(0)); statUnit = '%'; statIcon = '🚀'; }
+      else if (id === 'diploCenter') { statLabel = 'Poder Diplomático'; statValue = Number((l * 12).toFixed(0)); statUnit = '%'; statIcon = '🤝'; }
+      else if (id === 'galacticMarket') { statLabel = 'Comisiones de Mercado'; statValue = Number((l * 5).toFixed(0)); statUnit = '%'; statIcon = '💰'; }
+      else if (id === 'tradeNetwork') { statLabel = 'Rutas Comerciales'; statValue = l * 2; statUnit = ' rutas'; statIcon = '📡'; }
+      else if (id === 'terraformer') { statLabel = 'Campos Planetarios Libres'; statValue = l * 5; statUnit = ' campos'; statIcon = '🌍'; }
+      else if (id === 'missileSilo') { statLabel = 'Capacidad Balística'; statValue = l * 10; statUnit = ' misiles'; statIcon = '🎯'; }
+      else {
+        statLabel = 'Operatividad y Rendimiento';
+        statValue = Number((l * 5).toFixed(0));
+        statUnit = '%';
+        statIcon = '⚙️';
+      }
 
       return {
         type: b.cat,

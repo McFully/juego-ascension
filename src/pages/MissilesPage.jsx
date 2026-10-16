@@ -91,8 +91,26 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 mb-4">{m.desc || 'No disponible'}</p>
-                <div className="flex flex-wrap gap-2 text-[10px] font-mono mb-4 bg-[#05070f] p-2.5 rounded-xl border border-white/5">
+                <p className="text-xs text-slate-400 mb-3">{m.desc || 'No disponible'}</p>
+
+                {/* Bloque 2: Censo, Mantenimiento y Salarios */}
+                <div className="mb-3 p-2.5 rounded-xl bg-[#05070f] border border-red-500/20 font-mono text-[10px] space-y-1.5">
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">👥 Técnicos de Silo:</span>
+                    <span className="font-bold text-red-200">{fmt(have * 4)} esp.</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">🛠️ Mant. Munición:</span>
+                    <span className="font-bold text-amber-300">{fmt(have * 8)} cr/h <span className="text-slate-500 font-normal">({fmt(have * 8 * 24)}/día)</span></span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">💳 Salarios Artillería:</span>
+                    <span className="font-bold text-cyan-300">{fmt(have * 10)} cr/h <span className="text-slate-500 font-normal">({fmt(have * 10 * 24)}/día)</span></span>
+                  </div>
+                </div>
+
+                {/* Bloque 3: Coste de Fabricación y Requisitos */}
+                <div className="flex flex-wrap gap-2 text-[10px] font-mono mb-3 bg-[#05070f] p-2.5 rounded-xl border border-white/5">
                   <span className={`font-medium ${(currentPlanet?.resources?.metal ?? 0) >= cost.metal ? 'text-emerald-400' : 'text-rose-400'}`}>⛏️ {fmt(cost.metal)}</span>
                   <span className={`font-medium ${(currentPlanet?.resources?.crystal ?? 0) >= cost.crystal ? 'text-emerald-400' : 'text-rose-400'}`}>💎 {fmt(cost.crystal)}</span>
                   {cost.deuterium > 0 && (
@@ -159,8 +177,26 @@ const MissilesPage = ({ state, dispatch, currentPlanet, production, MISSILES, S,
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 mb-4">{m.desc || 'No disponible'}</p>
-                <div className="flex flex-wrap gap-2 text-[10px] font-mono mb-4 bg-[#05070f] p-2.5 rounded-xl border border-white/5">
+                <p className="text-xs text-slate-400 mb-3">{m.desc || 'No disponible'}</p>
+
+                {/* Bloque 2: Censo, Mantenimiento y Salarios */}
+                <div className="mb-3 p-2.5 rounded-xl bg-[#05070f] border border-red-500/20 font-mono text-[10px] space-y-1.5">
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">👥 Técnicos Interceptores:</span>
+                    <span className="font-bold text-red-200">{fmt(have * 2)} esp.</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">🛠️ Mant. Munición:</span>
+                    <span className="font-bold text-amber-300">{fmt(have * 4)} cr/h <span className="text-slate-500 font-normal">({fmt(have * 4 * 24)}/día)</span></span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">💳 Salarios Batería:</span>
+                    <span className="font-bold text-cyan-300">{fmt(have * 6)} cr/h <span className="text-slate-500 font-normal">({fmt(have * 6 * 24)}/día)</span></span>
+                  </div>
+                </div>
+
+                {/* Bloque 3: Coste de Fabricación y Requisitos */}
+                <div className="flex flex-wrap gap-2 text-[10px] font-mono mb-3 bg-[#05070f] p-2.5 rounded-xl border border-white/5">
                   <span className={`font-medium ${(currentPlanet?.resources?.metal ?? 0) >= cost.metal ? 'text-emerald-400' : 'text-rose-400'}`}>⛏️ {fmt(cost.metal)}</span>
                   <span className={`font-medium ${(currentPlanet?.resources?.crystal ?? 0) >= cost.crystal ? 'text-emerald-400' : 'text-rose-400'}`}>💎 {fmt(cost.crystal)}</span>
                   {cost.deuterium > 0 && (

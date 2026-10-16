@@ -12,6 +12,8 @@ import { ExchangeDaoSubview } from './hub/ExchangeDaoSubview.jsx';
 import { SafeImg } from '../../assets.jsx';
 import { COMMAND_CARD_TARGETS } from '../../utils/governmentRoute.js';
 import { initGalacticLonjaState } from '../../utils/galacticLonjaAutonomousCore.js';
+import { BUILDINGS } from '../../data/catalog/index.js';
+import { buildingProdInfo, calcBuildingOperatingExpenses } from '../../utils/formulas.js';
 
 /**
  * ExchangePlanetaryCommandHub — Alto Mando especializado de la Lonja Galáctica.
@@ -311,8 +313,13 @@ export const ExchangePlanetaryCommandHub = React.memo(({
               const isCompleted = currentContribM >= metalReq && currentContribC >= crystalReq && currentContribD >= deutReq;
               const canContributeThis = (planetRes[contributeRes] || 0) > 0 && (contributions[contributeRes] || 0) < totalCost[contributeRes];
 
+              const bData = BUILDINGS[bKey] || {};
+              const buildingName = bData.name || bKey.replace('exchange', 'Módulo ');
+              const prodInfo = buildingProdInfo ? buildingProdInfo(bKey, currentLvl, state?.research, planet?.temperature, 1, planet) : null;
+              const expenses = calcBuildingOperatingExpenses(bKey, nextLvl);
+
               return (
-                <div key={bKey} className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#070b16] border border-purple-500/30 hover:border-purple-400 shadow-xl transition-all duration-300 min-h-[360px]">
+                <div key={bKey} className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#070b16] border border-purple-500/30 hover:border-purple-400 shadow-xl transition-all duration-300 min-h-[460px]">
                   {/* Banner / Imagen de Cabecera Estandarizada */}
                   <div className="relative w-full h-32 overflow-hidden bg-[#05070f] border-b border-white/10 shrink-0">
                     <SafeImg id={bKey} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85" />
@@ -325,19 +332,68 @@ export const ExchangePlanetaryCommandHub = React.memo(({
                     </span>
                   </div>
 
-                  {/* Cuerpo Informativo */}
-                  <div className="p-4 flex flex-col justify-between flex-1 space-y-3">
+                  {/* Cuerpo Informativo con los 3 Bloques Estandarizados */}
+                  <div className="p-4 flex flex-col justify-between flex-1 space-y-2.5">
                     <div>
                       <h4 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-purple-300 transition-colors">
-                        {bKey.replace('exchange', 'Módulo ')}
+                        {buildingName}
                       </h4>
-                      <p className="text-[11px] text-slate-400 font-mono mt-1 line-clamp-2">
-                        Infraestructura comercial de la Lonja. Aportaciones comunitarias con reparto de dividendos DAO.
+                      <p className="text-[11px] text-slate-400 font-mono mt-0.5 line-clamp-2">
+                        {bData.desc || 'Infraestructura comercial de la Lonja. Aportaciones comunitarias con reparto de dividendos DAO.'}
                       </p>
                     </div>
 
-                    {/* Barras de Recursos Faltantes */}
-                    <div className="space-y-1.5 pt-2 border-t border-white/10 text-[11px] font-mono">
+                    {/* BLOQUE 1: Rendimiento / Situación Actual y Próximo Nivel */}
+                    <div className="p-2 rounded-xl bg-[#05070f]/80 border border-white/5 text-[10px] font-mono space-y-1">
+                      <div className="flex items-center justify-between text-slate-300">
+                        <span className="text-[9px] uppercase tracking-wider text-slate-400">
+                          {prodInfo?.next?.statLabel || 'Rendimiento'}:
+                        </span>
+                        <span className="font-bold text-cyan-300">
+                          Nv.{currentLvl} ({prodInfo?.current?.statValue != null ? `${fmt(prodInfo.current.statValue)}${prodInfo.statUnit}` : '0'})
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-white/5 pt-1 text-emerald-300 font-bold">
+                        <span className="text-[9px] uppercase tracking-wider text-cyan-400">
+                          Nv.{nextLvl}:
+                        </span>
+                        <span>
+                          {prodInfo?.next?.statValue != null ? `${fmt(prodInfo.next.statValue)}${prodInfo.statUnit}` : `+${nextLvl * 10}%`}
+                          {prodInfo?.deltaStat ? ` (+${fmt(prodInfo.deltaStat)}${prodInfo.statUnit})` : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* BLOQUE 2: Censo, Mantenimiento y Salarios */}
+                    <div className="p-2 rounded-xl bg-[#030611]/80 border border-purple-500/20 text-[10px] font-mono space-y-1">
+                      <div className="flex items-center justify-between text-slate-300">
+                        <span className="flex items-center gap-1 text-[9px] text-slate-400 uppercase">
+                          <span>👥</span> Personal Requerido:
+                        </span>
+                        <span className="text-emerald-300 font-bold">
+                          {expenses.requiredStaff > 0 ? `${fmt(expenses.requiredStaff)} operarios` : 'Comunitario'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-400 border-t border-white/5 pt-1">
+                        <span className="flex items-center gap-1 text-[9px] text-amber-300/80 uppercase">
+                          <span>🏛️</span> Mantenimiento:
+                        </span>
+                        <span className="text-amber-200 font-bold">
+                          {fmt(expenses.maintenanceCreditsHour)} cr/h <span className="text-slate-500 text-[8px]">({fmt(expenses.maintenanceCreditsDay)}/d)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-400 border-t border-white/5 pt-0.5">
+                        <span className="flex items-center gap-1 text-[9px] text-cyan-300/80 uppercase">
+                          <span>💼</span> Salarios:
+                        </span>
+                        <span className="text-cyan-200 font-bold">
+                          {fmt(expenses.salariesCreditsHour)} cr/h <span className="text-slate-500 text-[8px]">({fmt(expenses.salariesCreditsDay)}/d)</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* BLOQUE 3: Financiación de Recursos y Obras */}
+                    <div className="space-y-1.5 pt-1 border-t border-white/10 text-[11px] font-mono">
                       <div>
                         <div className="flex justify-between text-slate-400">
                           <span>Metal:</span>

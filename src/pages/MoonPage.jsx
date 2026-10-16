@@ -129,6 +129,24 @@ const MoonPage = ({ state, dispatch, currentPlanet, production, MOON_BUILDINGS, 
                   )}
                 </div>
                 <p className="text-[11px] text-slate-400 mb-3">{b.desc || 'No disponible'}</p>
+
+                {/* Bloque 2: Censo, Mantenimiento y Salarios */}
+                <div className="mb-3 p-2 rounded-xl bg-[#05070f] border border-cyan-500/20 font-mono text-[10px] space-y-1">
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">👥 Técnicos Lunares:</span>
+                    <span className="font-bold text-cyan-200">{fmt(lvl * 12)} pers.</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">🛠️ Mant. Satélite:</span>
+                    <span className="font-bold text-amber-300">{fmt(Math.round(20 * Math.pow(1.3, lvl || 1)))} cr/h <span className="text-slate-500 font-normal">({fmt(Math.round(20 * Math.pow(1.3, lvl || 1) * 24))}/día)</span></span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span className="flex items-center gap-1">💳 Salarios Cúpula:</span>
+                    <span className="font-bold text-cyan-300">{fmt(Math.round(28 * Math.pow(1.28, lvl || 1)))} cr/h <span className="text-slate-500 font-normal">({fmt(Math.round(28 * Math.pow(1.28, lvl || 1) * 24))}/día)</span></span>
+                  </div>
+                </div>
+
+                {/* Bloque 3: Coste de Ampliación y Requisitos */}
                 <div className="flex flex-wrap gap-2 text-[10px] font-mono mb-4 bg-[#05070f] p-2 rounded-xl border border-white/5">
                   <span className={`font-medium ${(currentPlanet?.resources?.metal ?? 0) >= cost.metal ? 'text-emerald-400' : 'text-rose-400'}`}>⛏️ {fmt(cost.metal)}</span>
                   <span className={`font-medium ${(currentPlanet?.resources?.crystal ?? 0) >= cost.crystal ? 'text-emerald-400' : 'text-rose-400'}`}>💎 {fmt(cost.crystal)}</span>

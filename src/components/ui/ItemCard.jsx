@@ -6,6 +6,7 @@ import { CancelConfirmationModal } from './CancelConfirmationModal.jsx';
 import { ItemCardActiveOverlay } from './ItemCard/ItemCardActiveOverlay.jsx';
 import { ItemCardCostSection } from './ItemCard/ItemCardCostSection.jsx';
 import { ItemCardProductionInfo } from './ItemCard/ItemCardProductionInfo.jsx';
+import { ItemCardWorkforceSection } from './ItemCard/ItemCardWorkforceSection.jsx';
 import { AutomationRestrictionToggle } from './AutomationRestrictionToggle.jsx';
 
 /**
@@ -165,34 +166,14 @@ export const ItemCard = React.memo(({
           </div>
         )}
 
-        {/* BLOQUE 2: Demografía y Censo (Módulo permanente estandarizado) */}
-        {(() => {
-          const lines = extra ? String(extra).split(' | ') : [];
-          const popLine = lines.find(l => l.includes('Población:'));
-          const otherLines = lines.filter(l => !l.includes('Población:'));
-          const popText = popLine ? popLine.replace(/👥\s*Población:\s*/, '') : null;
-
-          return (
-            <div className="flex flex-col gap-1 mb-2">
-              <div className={`p-2 rounded-xl border text-[11px] font-mono leading-tight flex items-center justify-between ${
-                lackOfPop
-                  ? 'bg-rose-950/40 border-rose-500/30 text-rose-300'
-                  : 'bg-[#05070f]/60 border-white/5 text-slate-300'
-              }`}>
-                <span className="font-bold flex items-center gap-1.5 text-slate-400">
-                  <span>👥</span>
-                  <span className="text-[10px] uppercase tracking-wider">Censo Requerido:</span>
-                </span>
-                <span className={`font-bold ${lackOfPop ? 'text-rose-300' : 'text-emerald-300'}`}>
-                  {popText || (lackOfPop ? 'Insuficiente' : 'Cubierto')}
-                </span>
-              </div>
-              {otherLines.length > 0 && (
-                <div className="text-[10px] font-mono text-slate-400 px-1">{otherLines.join(' | ')}</div>
-              )}
-            </div>
-          );
-        })()}
+        {/* BLOQUE 2: Censo, Mantenimiento y Salarios (Estandarizado) */}
+        <ItemCardWorkforceSection
+          id={id}
+          level={level}
+          isResearch={category === 'science' || prodInfo?.kind === 'research'}
+          lackOfPop={lackOfPop}
+          extra={extra}
+        />
 
         {/* BLOQUE 3: Coste de Mejora y Tiempo de Ensamblaje */}
         <ItemCardCostSection cost={cost} time={time} canAfford={canAfford} planetResources={planetResources} prodInfo={prodInfo} />

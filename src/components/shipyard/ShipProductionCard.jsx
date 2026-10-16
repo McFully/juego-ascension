@@ -1,6 +1,7 @@
 import React from 'react';
 import { AutomationRestrictionToggle } from '../ui/AutomationRestrictionToggle.jsx';
 import { extractShipTechSnapshot, calculateTechGeneration } from '../../utils/formulas/retrofitFormulas.js';
+import { calcShipOperatingExpenses } from '../../utils/formulas/operatingExpensesFormulas.js';
 
 export const ShipProductionCard = ({
   id,
@@ -127,16 +128,41 @@ export const ShipProductionCard = ({
             </div>
           </div>
 
-          {/* BLOQUE 2: Censo y Tripulación Requerida */}
-          <div className="p-2 rounded-xl bg-[#05070f]/60 border border-white/5 font-mono text-[10px] mb-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <span>👨‍🚀</span>
-              <span className="text-[9px] uppercase tracking-wider">Tripulación requerida:</span>
-            </span>
-            <span className="text-cyan-300 font-bold">
-              {fmt(s.crew || 0)} tripulantes / nave
-            </span>
-          </div>
+          {/* BLOQUE 2: Censo, Mantenimiento y Salarios */}
+          {(() => {
+            const shipExpenses = calcShipOperatingExpenses(id, 1);
+            return (
+              <div className="flex flex-col gap-1 mb-2 text-[10px] font-mono">
+                <div className="p-1.5 px-2 rounded-xl bg-[#05070f]/60 border border-white/5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-slate-400">
+                    <span>👨‍🚀</span>
+                    <span className="text-[9px] uppercase tracking-wider">Tripulación requerida:</span>
+                  </span>
+                  <span className="text-cyan-300 font-bold">
+                    {fmt(shipExpenses.crew)} tripulantes / ud
+                  </span>
+                </div>
+                <div className="p-1.5 px-2 rounded-xl bg-[#030611]/70 border border-amber-500/15 space-y-0.5">
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="flex items-center gap-1 text-[9px] text-amber-300/80 uppercase">
+                      <span>🛸</span> Mantenimiento Hangar:
+                    </span>
+                    <span className="text-amber-200 font-bold">
+                      {fmt(shipExpenses.maintenanceCreditsHour)} cr/h <span className="text-slate-500 text-[8px]">({fmt(shipExpenses.maintenanceCreditsDay)}/d)</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-400 border-t border-white/5 pt-0.5">
+                    <span className="flex items-center gap-1 text-[9px] text-cyan-300/80 uppercase">
+                      <span>💼</span> Nómina Tripulación:
+                    </span>
+                    <span className="text-cyan-200 font-bold">
+                      {fmt(shipExpenses.salariesCreditsHour)} cr/h <span className="text-slate-500 text-[8px]">({fmt(shipExpenses.salariesCreditsDay)}/d)</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* BLOQUE 3: Coste de Fabricación y Tiempo */}
           <div className="space-y-0.5 text-[10px] font-mono p-2 rounded-xl bg-[#05070f]/40 border border-white/5 mb-3">
