@@ -71,7 +71,7 @@ Partida en Curso: ${state?.playerName || 'Comandante'}
   };
 
   return (
-    <div className="space-y-4 view-enter w-full flex flex-col flex-1 h-[calc(100vh-140px)] min-h-[650px]">
+    <div className="space-y-4 view-enter w-full max-w-full min-w-0 flex flex-col flex-1 h-[calc(100vh-140px)] min-h-[650px] overflow-hidden">
       <SubsystemTopBanner
         state={state}
         currentPlanet={currentPlanet}

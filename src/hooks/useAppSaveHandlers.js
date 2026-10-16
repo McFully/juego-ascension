@@ -161,10 +161,13 @@ export function useAppSaveHandlers({
     if (window.electronAPI) {
       try {
         if (saveRef.current && saveRef.current.gameStarted && saveRef.current.playerName) {
+          const snap = withSessionIdentity(saveRef.current);
           if (window.electronAPI.saveGameNamedSync) {
-            window.electronAPI.saveGameNamedSync(saveRef.current);
+            const r = window.electronAPI.saveGameNamedSync(snap);
+            if (r && r.success && r.sessionId) setSessionId(r.sessionId);
           } else if (window.electronAPI.saveGameNamed) {
-            await window.electronAPI.saveGameNamed(saveRef.current);
+            const r = await window.electronAPI.saveGameNamed(snap);
+            if (r && r.success && r.sessionId) setSessionId(r.sessionId);
           }
         }
         if (window.electronAPI.listSaves) {

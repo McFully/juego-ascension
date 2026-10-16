@@ -93,9 +93,22 @@ export const BIOME_PALETTES = {
   },
 };
 
+const MAX_CACHED_TEXTURES = 40;
 const textureCache = new Map();
 const normalTextureCache = new Map();
 const cloudTextureCache = new Map();
+
+function setBoundedTexture(cache, key, texture) {
+  if (cache.size >= MAX_CACHED_TEXTURES && !cache.has(key)) {
+    const oldestKey = cache.keys().next().value;
+    const oldTex = cache.get(oldestKey);
+    cache.delete(oldestKey);
+    if (oldTex && typeof oldTex.dispose === 'function') {
+      try { oldTex.dispose(); } catch (_) {}
+    }
+  }
+  cache.set(key, texture);
+}
 
 /**
  * Genera textura procedural de superficie con armónicos fractales y luces nocturnas.
@@ -205,7 +218,7 @@ export function createPlanetTexture(palette, biome = 'temperate', seed = 1, popu
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
-  textureCache.set(cacheKey, texture);
+  setBoundedTexture(textureCache, cacheKey, texture);
   return texture;
 }
 
@@ -239,7 +252,7 @@ export function createPlanetNormalTexture(seed = 1) {
       const ny = lat;
 
       let n = Math.sin(nx * 3.5 + s) * Math.cos(ny * 4.2 + s * 0.7) * 0.50
-            + Math.sin(nz * 7.1 + s * 1.3) * Math.cos(nx * 6.8 + ny * 5.5) * 0.25
+            + Math.sin(nz * 7.1 + s * 1.3) * Math.cos(nx * 6.8 + ny * 6.0) * 0.25
             + Math.sin(nx * 14.3 + nz * 12.1 + s * 2.1) * 0.15;
 
       const elev = (n + 1) * 0.5;
@@ -263,7 +276,7 @@ export function createPlanetNormalTexture(seed = 1) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
-  normalTextureCache.set(cacheKey, texture);
+  setBoundedTexture(normalTextureCache, cacheKey, texture);
   return texture;
 }
 
@@ -325,6 +338,6 @@ export function createCloudTexture(cloudColor, seed = 1) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
-  cloudTextureCache.set(cacheKey, texture);
+  setBoundedTexture(cloudTextureCache, cacheKey, texture);
   return texture;
 }

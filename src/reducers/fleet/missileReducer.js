@@ -119,3 +119,94 @@ export const handleLaunchMissile = (state, action) => {
   newState.notifications = [...(newState.notifications || []), { id: uid(), type: 'success', message: msg, timestamp: Date.now() }];
   return newState;
 };
+
+export const ORDNANCE_BATCHES = {
+  heavyMissiles: {
+    id: 'heavyMissiles',
+    name: 'Cohetes Pesados',
+    icon: '🚀',
+    batchSize: 50,
+    cost: { metal: 2500, crystal: 500, deuterium: 250 },
+    creditsCost: 50,
+    usedBy: 'Lanzamisiles, Cruceros y Bombarderos'
+  },
+  kineticShells: {
+    id: 'kineticShells',
+    name: 'Obuses Cinéticos Gauss',
+    icon: '🎯',
+    batchSize: 100,
+    cost: { metal: 4000, crystal: 1000, deuterium: 200 },
+    creditsCost: 80,
+    usedBy: 'Cañones Gauss y Acorazados'
+  },
+  plasmaCells: {
+    id: 'plasmaCells',
+    name: 'Células de Plasma',
+    icon: '🟣',
+    batchSize: 50,
+    cost: { metal: 2000, crystal: 3000, deuterium: 1500 },
+    creditsCost: 120,
+    usedBy: 'Torres de Plasma y Destructores'
+  }
+};
+
+export const handleBuildOrdnance = (state, action) => {
+  const { ammoType, batches = 1 } = action;
+  const planet = state.planets.find(p => p.id === (action.planetId || state.currentPlanetId)) || state.planets[0];
+  if (!planet) return state;
+
+  const spec = ORDNANCE_BATCHES[ammoType];
+  if (!spec) return state;
+
+  const qtyBatches = Math.max(1, Math.floor(Number(batches) || 1));
+  const disc = constructionDiscount(planet.buildings?.constructionCenter || 0);
+  const totalCost = {
+    metal: Math.floor(spec.cost.metal * qtyBatches * disc),
+    crystal: Math.floor(spec.cost.crystal * qtyBatches * disc),
+    deuterium: Math.floor(spec.cost.deuterium * qtyBatches * disc),
+  };
+  const totalCredits = Math.floor((spec.creditsCost || 0) * qtyBatches);
+
+  if (!canAfford(planet.resources, totalCost) || (state.credits ?? 0) < totalCredits) {
+    return {
+      ...state,
+      notifications: [
+        ...(state.notifications || []),
+        {
+          id: uid(),
+          type: 'warning',
+          message: (state.credits ?? 0) < totalCredits
+            ? `💸 Créditos insuficientes para fabricar ${spec.name} (Requiere ${totalCredits} Cr).`
+            : `⚠️ Recursos insuficientes en ${planet.name} para fabricar ${spec.name}.`,
+          timestamp: Date.now()
+        }
+      ]
+    };
+  }
+
+  const totalUnitsAdded = spec.batchSize * qtyBatches;
+  const newRes = deduct(planet.resources, totalCost);
+  const currentArsenal = planet.arsenal || { heavyMissiles: 100, kineticShells: 500, plasmaCells: 250 };
+
+  let newState = updatePlanet(state, planet.id, p => ({
+    ...p,
+    resources: newRes,
+    arsenal: {
+      ...currentArsenal,
+      [ammoType]: (currentArsenal[ammoType] ?? 0) + totalUnitsAdded
+    }
+  }));
+
+  newState.credits = Math.max(0, (state.credits ?? 0) - totalCredits);
+  newState.notifications = [
+    ...(newState.notifications || []),
+    {
+      id: uid(),
+      type: 'success',
+      message: `${spec.icon} Polvorín abastecido: +${totalUnitsAdded} ${spec.name} en ${planet.name}.`,
+      timestamp: Date.now()
+    }
+  ];
+  return newState;
+};
+

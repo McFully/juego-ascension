@@ -39,9 +39,10 @@ export const handleAllyTradeMission = (mission, state) => {
     newState = updatePlanet(newState, target.id, p => ({
       ...p,
       resources: {
-        metal: p.resources.metal + gift.metal,
-        crystal: p.resources.crystal + gift.crystal,
-        deuterium: p.resources.deuterium + gift.deuterium,
+        ...(p.resources || {}),
+        metal: (p.resources?.metal || 0) + gift.metal,
+        crystal: (p.resources?.crystal || 0) + gift.crystal,
+        deuterium: (p.resources?.deuterium || 0) + gift.deuterium,
       },
     }));
     return { state: newState, type: 'success', message: `🤝 Flota comercial aliada llegó a ${target.name} trayendo regalos: +${fmt(gift.metal)}M, +${fmt(gift.crystal)}C, +${fmt(gift.deuterium)}D`, returnFleet: {} };
@@ -467,16 +468,26 @@ export const handleTransportMission = (mission, state) => {
     const deliveredMetal = Math.min(mission.resources?.metal || 0, Math.max(0, maxMetal - currentM));
     const deliveredCrystal = Math.min(mission.resources?.crystal || 0, Math.max(0, maxCrystal - currentC));
     const deliveredDeut = Math.min(mission.resources?.deuterium || 0, Math.max(0, maxDeut - currentD));
+    const sentOrdnance = mission.resources?.ordnance || {};
 
-    newState = updatePlanet(newState, target.id, p => ({
-      ...p,
-      resources: {
-        ...p.resources,
-        metal: (p.resources?.metal || 0) + deliveredMetal,
-        crystal: (p.resources?.crystal || 0) + deliveredCrystal,
-        deuterium: (p.resources?.deuterium || 0) + deliveredDeut,
-      },
-    }));
+    newState = updatePlanet(newState, target.id, p => {
+      const prevArsenal = p.arsenal || { heavyMissiles: 100, kineticShells: 500, plasmaCells: 250 };
+      return {
+        ...p,
+        resources: {
+          ...p.resources,
+          metal: (p.resources?.metal || 0) + deliveredMetal,
+          crystal: (p.resources?.crystal || 0) + deliveredCrystal,
+          deuterium: (p.resources?.deuterium || 0) + deliveredDeut,
+        },
+        arsenal: {
+          ...prevArsenal,
+          heavyMissiles: (prevArsenal.heavyMissiles ?? 0) + (sentOrdnance.heavyMissiles || 0),
+          kineticShells: (prevArsenal.kineticShells ?? 0) + (sentOrdnance.kineticShells || 0),
+          plasmaCells: (prevArsenal.plasmaCells ?? 0) + (sentOrdnance.plasmaCells || 0),
+        }
+      };
+    });
     return { 
       state: newState, 
       type: 'success', 
@@ -536,9 +547,10 @@ export const handleTradeReceiveMission = (mission, state) => {
     newState = updatePlanet(newState, target.id, p => ({
       ...p,
       resources: {
-        metal: p.resources.metal + (mission.resources?.metal || 0),
-        crystal: p.resources.crystal + (mission.resources?.crystal || 0),
-        deuterium: p.resources.deuterium + (mission.resources?.deuterium || 0),
+        ...(p.resources || {}),
+        metal: (p.resources?.metal || 0) + (mission.resources?.metal || 0),
+        crystal: (p.resources?.crystal || 0) + (mission.resources?.crystal || 0),
+        deuterium: (p.resources?.deuterium || 0) + (mission.resources?.deuterium || 0),
       }
     }));
     return { state: newState, type: 'success', message: `📦 Los cargueros de ${mission.from.name} entregaron recursos en tu planeta ${target.name}.`, returnFleet: mission.fleet };
@@ -559,9 +571,10 @@ export const handleRecycleMission = (mission, state) => {
   let newState = updatePlanet(state, mission.from.id, p => ({
     ...p,
     resources: {
-      metal: p.resources.metal + collected.metal,
-      crystal: p.resources.crystal + collected.crystal,
-      deuterium: p.resources.deuterium,
+      ...(p.resources || {}),
+      metal: (p.resources?.metal || 0) + collected.metal,
+      crystal: (p.resources?.crystal || 0) + collected.crystal,
+      deuterium: (p.resources?.deuterium || 0),
     },
   }));
   newState.debrisField = {

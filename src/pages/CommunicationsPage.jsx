@@ -98,7 +98,7 @@ export const CommunicationsPage = ({ state, dispatch, currentPlanet, production,
     { id: 'all', label: 'Bandeja Global', icon: '📡', assetId: 'quantumTelecom', subtitle: 'Todas las transmisiones y alertas del cuadrante' },
     { id: 'diplomacy', label: 'Diplomacia', icon: '🤝', assetId: 'permanentEmbassy', subtitle: 'Pactos federativos, acuerdos de paz y visitas' },
     { id: 'commerce', label: 'Comercio', icon: '💰', assetId: 'financeMinistry', subtitle: 'Manifiestos mercantiles e intercambios de recursos' },
-    { id: 'intelligence', label: 'Inteligencia', icon: '🕵️', assetId: 'deepScanner', subtitle: 'Informes de sondas de espionaje y alertas de contraespionaje' },
+    { id: 'intelligence', label: 'Inteligencia', icon: '🕵️', assetId: 'tacticalListeningNetwork', subtitle: 'Informes de sondas de espionaje y alertas de contraespionaje' },
     { id: 'defense', label: 'Defensa Militar', icon: '⚔️', assetId: 'internalSecurityMinistry', subtitle: 'Alertas de incursión, combates navales y estado bélico' },
   ];
 
@@ -145,6 +145,7 @@ export const CommunicationsPage = ({ state, dispatch, currentPlanet, production,
         production={production}
         fmt={fmt}
         breadcrumbTitle="Red de Inteligencia y Enlace"
+        parentHub="imperial_hub"
         breadcrumbIcon="📡"
         rightSlot={
           <div className="flex items-center gap-3">

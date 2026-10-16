@@ -168,75 +168,8 @@ export const MinistryBuildingInterior = ({
 
   return (
     <div className="w-full">
-      {/* Main Action Chambers: Instalaciones, Investigaciones, Programas, Decretos e Investidura en 3x2 */}
+      {/* Main Action Chambers: Instalaciones, Investigaciones, Programas, Gabinete Ministerial y Decretos en 3x2 */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full items-stretch">
-        {/* Door 0: Gabinete Ministerial / Investidura */}
-        <button 
-          onClick={() => {
-            if (minister?.voiceId) {
-              playVoice(minister.voiceId);
-            }
-            onOpenDesk('candidates');
-          }}
-          className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 select-none text-left focus:outline-none w-full h-[355px] md:h-[365px] hover:scale-[1.01] active:scale-[0.98] cursor-pointer ${
-            minState?.isAuto
-              ? 'border-emerald-500/30 hover:border-emerald-400 bg-[#051c14]/85 hover:bg-[#072a1e] hover:shadow-[0_0_25px_rgba(16,185,129,0.25)]'
-              : minister
-                ? 'border-amber-500/30 hover:border-amber-400 bg-[#181105]/85 hover:bg-[#281c08] hover:shadow-[0_0_25px_rgba(245,158,11,0.25)]'
-                : 'border-rose-500/30 hover:border-rose-400 bg-[#1c080b]/85 hover:bg-[#2c0d12] hover:shadow-[0_0_25px_rgba(244,63,94,0.25)]'
-          }`}
-        >
-          <div className="relative w-full flex-1 overflow-hidden bg-[#05070f] border-b border-white/10">
-            <SafeImg
-              id="councilChamber"
-              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
-            />
-          </div>
-
-          <div className="p-3 md:p-3.5 flex flex-col justify-start shrink-0">
-            <div className="flex items-center justify-between gap-2">
-              <h4 className={`text-base md:text-lg font-bold uppercase tracking-wide transition-colors truncate ${
-                minState?.isAuto ? 'text-white group-hover:text-emerald-300' : minister ? 'text-white group-hover:text-amber-300' : 'text-white group-hover:text-rose-300'
-              }`}>
-                Gabinete Ministerial
-              </h4>
-
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!minister || !dispatch || !currentPlanet) return;
-                  dispatch({
-                    type: 'TOGGLE_MINISTRY_AUTOMATION',
-                    planetId: currentPlanet.id,
-                    ministryId
-                  });
-                  if (window.playSfx) window.playSfx('click');
-                }}
-                className={`shrink-0 -translate-y-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-sm border flex items-center gap-1.5 transition-all ${
-                  !minister
-                    ? 'bg-rose-950/80 text-rose-300 border-rose-500/40 cursor-default'
-                    : minState?.isAuto
-                      ? 'bg-emerald-950/90 text-emerald-300 border-emerald-400 hover:bg-emerald-900 shadow-[0_0_10px_rgba(16,185,129,0.3)] cursor-pointer'
-                      : 'bg-black/80 text-amber-300 border-amber-500/50 hover:border-cyan-400 hover:text-cyan-200 cursor-pointer'
-                }`}
-                title={!minister ? "Cartera vacante" : minState?.isAuto ? "Ministro Autónomo (ON). Clic para cambiar a Manual" : "Ministro Manual (OFF). Clic para activar Autónomo"}
-              >
-                <span className="relative flex h-1.5 w-1.5 shrink-0">
-                  {minState?.isAuto && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400"></span>
-                  )}
-                  <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
-                    minState?.isAuto ? 'bg-emerald-400' : minister ? 'bg-amber-400' : 'bg-rose-500'
-                  }`}></span>
-                </span>
-                <span>{minState?.isAuto ? 'Autónomo' : minister ? 'Manual' : 'Vacante'}</span>
-              </div>
-            </div>
-            <p className="text-xs md:text-sm text-slate-400 font-mono mt-1 line-clamp-2 leading-snug">
-              Investidura, evaluación de candidatos y relevo de la cartera ministerial.
-            </p>
-          </div>
-        </button>
         {/* Door 1: Instalaciones (Edificaciones de Construcción) */}
         {hasBuildings && (
           <button 
@@ -367,6 +300,74 @@ export const MinistryBuildingInterior = ({
             </h4>
             <p className="text-xs md:text-sm text-slate-400 font-mono mt-1 line-clamp-2 leading-snug">
               Supervisa y financia los programas estratégicos de desarrollo ministerial.
+            </p>
+          </div>
+        </button>
+
+        {/* Door 0: Gabinete Ministerial / Investidura */}
+        <button 
+          onClick={() => {
+            if (minister?.voiceId) {
+              playVoice(minister.voiceId);
+            }
+            onOpenDesk('candidates');
+          }}
+          className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 select-none text-left focus:outline-none w-full h-[355px] md:h-[365px] hover:scale-[1.01] active:scale-[0.98] cursor-pointer ${
+            minState?.isAuto
+              ? 'border-emerald-500/30 hover:border-emerald-400 bg-[#051c14]/85 hover:bg-[#072a1e] hover:shadow-[0_0_25px_rgba(16,185,129,0.25)]'
+              : minister
+                ? 'border-amber-500/30 hover:border-amber-400 bg-[#181105]/85 hover:bg-[#281c08] hover:shadow-[0_0_25px_rgba(245,158,11,0.25)]'
+                : 'border-rose-500/30 hover:border-rose-400 bg-[#1c080b]/85 hover:bg-[#2c0d12] hover:shadow-[0_0_25px_rgba(244,63,94,0.25)]'
+          }`}
+        >
+          <div className="relative w-full flex-1 overflow-hidden bg-[#05070f] border-b border-white/10">
+            <SafeImg
+              id="councilChamber"
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
+            />
+          </div>
+
+          <div className="p-3 md:p-3.5 flex flex-col justify-start shrink-0">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className={`text-base md:text-lg font-bold uppercase tracking-wide transition-colors truncate ${
+                minState?.isAuto ? 'text-white group-hover:text-emerald-300' : minister ? 'text-white group-hover:text-amber-300' : 'text-white group-hover:text-rose-300'
+              }`}>
+                Gabinete Ministerial
+              </h4>
+
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!minister || !dispatch || !currentPlanet) return;
+                  dispatch({
+                    type: 'TOGGLE_MINISTRY_AUTOMATION',
+                    planetId: currentPlanet.id,
+                    ministryId
+                  });
+                  if (window.playSfx) window.playSfx('click');
+                }}
+                className={`shrink-0 -translate-y-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider backdrop-blur-md shadow-sm border flex items-center gap-1.5 transition-all ${
+                  !minister
+                    ? 'bg-rose-950/80 text-rose-300 border-rose-500/40 cursor-default'
+                    : minState?.isAuto
+                      ? 'bg-emerald-950/90 text-emerald-300 border-emerald-400 hover:bg-emerald-900 shadow-[0_0_10px_rgba(16,185,129,0.3)] cursor-pointer'
+                      : 'bg-black/80 text-amber-300 border-amber-500/50 hover:border-cyan-400 hover:text-cyan-200 cursor-pointer'
+                }`}
+                title={!minister ? "Cartera vacante" : minState?.isAuto ? "Ministro Autónomo (ON). Clic para cambiar a Manual" : "Ministro Manual (OFF). Clic para activar Autónomo"}
+              >
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  {minState?.isAuto && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400"></span>
+                  )}
+                  <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                    minState?.isAuto ? 'bg-emerald-400' : minister ? 'bg-amber-400' : 'bg-rose-500'
+                  }`}></span>
+                </span>
+                <span>{minState?.isAuto ? 'Autónomo' : minister ? 'Manual' : 'Vacante'}</span>
+              </div>
+            </div>
+            <p className="text-xs md:text-sm text-slate-400 font-mono mt-1 line-clamp-2 leading-snug">
+              Investidura, evaluación de candidatos y relevo de la cartera ministerial.
             </p>
           </div>
         </button>

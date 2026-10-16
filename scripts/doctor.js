@@ -52,8 +52,9 @@ try {
 
   for (const full of srcFiles) {
     const content = fs.readFileSync(full, 'utf-8');
-    // Chequear llamadas o protocolos externos no autorizados
-    if (/\bfetch\s*\(/.test(content) || /WebSocket\b/.test(content) || /(http:\/\/|https:\/\/)/.test(content)) {
+    // Chequear llamadas o protocolos externos no autorizados (excepto conector oficial Gemini IA)
+    const isGeminiConnector = full.replace(/\\/g, '/').endsWith('src/services/geminiService.js');
+    if (!isGeminiConnector && (/\bfetch\s*\(/.test(content) || /WebSocket\b/.test(content) || /(http:\/\/|https:\/\/)/.test(content))) {
       if (!content.includes('ascension-asset://') && !content.includes('http://www.w3.org/2000/svg')) {
         networkLeakFound = true;
         console.error(`⚠️ Advertencia de red en: ${path.relative(rootDir, full)}`);

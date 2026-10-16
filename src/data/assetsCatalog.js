@@ -31,6 +31,21 @@ export const getFallbackImage = (category, imagesMap = REAL_IMAGES) => {
 };
 
 export const REAL_IMAGES = {
+  // Nuevas imágenes dedicadas de Gobiernos, Hubs y Edificios
+  tacticalListeningNetwork: asset('tacticalListeningNetwork.webp'),
+  imperialMissionsHub: asset('imperialMissionsHub.webp'),
+  imperialSenateChamber: asset('imperialSenateChamber.webp'),
+  shipDesignWorkshop: asset('shipDesignWorkshop.webp'),
+  planetaryBankVault: asset('planetaryBankVault.webp'),
+  ministryEconomyChamber: asset('ministryEconomyChamber.webp'),
+  imperialCodexArchive: asset('imperialCodexArchive.webp'),
+  imperialStatisticsCore: asset('imperialStatisticsCore.webp'),
+  planetarySenateHall: asset('planetarySenateHall.webp'),
+  galacticGrandBazaar: asset('galacticGrandBazaar.webp'),
+  slagDenseArmorForge: asset('slagDenseArmorForge.webp'),
+  slagPavingPlant: asset('slagPavingPlant.webp'),
+  slagSyntheticSynthesizer: asset('slagSyntheticSynthesizer.webp'),
+
   logisticaHub: asset('logistica_hub.jpg'),
   centroGuerra: asset('centro_guerra.jpg'),
   townHall: asset('Ayuntamiento.webp'),
@@ -157,6 +172,7 @@ export const REAL_IMAGES = {
   cyberIntegration: asset('Integracion Cibernetica.webp'),
   naniteFactory: asset('Fabrica Nanobots.webp'),
   deepScanner: asset('deepScanner.webp'),
+  cartografiaEstelar: asset('cartografiaEstelar.jpg'),
   advColonization: asset('Colonizacion Avanzada.webp'),
   quantumSupercomputer: asset('quantumSupercomputer.webp'),
   particleAccelerator: asset('particleAccelerator.webp'),

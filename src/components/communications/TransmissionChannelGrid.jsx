@@ -14,14 +14,7 @@ export const TransmissionChannelGrid = ({
 }) => {
   return (
     <div className="w-full space-y-3 py-2">
-      <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm md:text-base font-black text-cyan-300 font-mono tracking-wider uppercase flex items-center gap-2">
-          <span>📡</span>
-          <span>Canales de Transmisión</span>
-        </h3>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 w-full items-stretch pt-2 pb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3 w-full items-stretch pt-2 pb-4">
         {/*
           3.4-a — La tarjeta "SEÑAL EN VIVO" que ofrecía "Aceptar Transmisión"
           ya no tiene a qué aceptar: el overlay no se monta. Ahora la transmisión

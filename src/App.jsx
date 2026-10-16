@@ -20,6 +20,7 @@ import { AppOverlays } from "./components/app/AppOverlays.jsx";
 import { GameViewports } from "./components/app/GameViewports.jsx";
 import { GAME_TABS, isTabUnlocked } from "./components/app/gameNavigation.js";
 import { NavigationProvider } from "./components/navigation/NavigationContext.jsx";
+import { clearSessionId } from "./utils/sessionIdentity.js";
 
 const APP_VERSION = (typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev");
 
@@ -201,6 +202,7 @@ function App() {
 
   const startWelcomeTimeoutRef = useRef(null);
   const handleStart = (name, mode = "standard") => {
+    clearSessionId();
     const initial = createInitial(name, "human", mode);
     dispatch({ type: "LOAD", payload: initial });
 
@@ -331,8 +333,8 @@ function App() {
 
       <NavigationProvider onTabChange={safeSetActiveTab} activeTab={activeTab}>
         {/* Viewport Principal de Juego — 100% Pantalla Completa y Ancho Máximo */}
-        <main id="main-game-viewport" className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden p-2 md:p-6">
-          <div className="flex-1 w-full">
+        <main id="main-game-viewport" className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden p-2 md:p-6 [scrollbar-gutter:stable]">
+          <div className="flex-1 w-full min-w-0">
             <GameViewports
                 activeTab={activeTab}
             state={state}

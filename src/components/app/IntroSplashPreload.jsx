@@ -4,30 +4,15 @@ import { asset } from '../../assets.jsx';
 
 import { REAL_IMAGES } from '../../data/assetsCatalog.js';
 
-const APP_VERSION = (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev');
+import { runSystemPreload } from '../../services/systemPreloader.js';
 
-// Caché en memoria para evitar re-decodificar durante la misma sesión
-let preloadedVRAMDone = false;
-function preloadAllAssetsToVRAM() {
-  if (preloadedVRAMDone || typeof window === 'undefined') return;
-  preloadedVRAMDone = true;
-  const urls = Object.values(REAL_IMAGES || {}).filter(Boolean);
-  urls.forEach(src => {
-    try {
-      const img = new Image();
-      img.src = src;
-      if (img.decode) {
-        img.decode().catch(() => {});
-      }
-    } catch (_) {}
-  });
-}
+const APP_VERSION = (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev');
 
 const BOOT_STEPS = [
   { progress: 18, text: 'INICIALIZANDO SUBSISTEMAS CUÁNTICOS...' },
   { progress: 42, text: 'SINCRONIZANDO NÚCLEOS HIPERESPACIALES...' },
   { progress: 68, text: 'ESTABLECIENDO PROTOCOLOS IMPERIALES...' },
-  { progress: 89, text: 'CARGANDO REGISTRO NAVAL Y UNIVERSO LOCAL...' },
+  { progress: 89, text: 'CALENTANDO GRÁFICOS 3D Y AUDIO TÁCTICO...' },
   { progress: 100, text: 'TERMINAL TÁCTICA LISTA · ACCESO AUTORIZADO' }
 ];
 
@@ -36,10 +21,6 @@ export const IntroSplashPreload = ({ ready = true, onForceReady, onComplete }) =
   const [stepIndex, setStepIndex] = useState(0);
   const [fadingOut, setFadingOut] = useState(false);
   const [stuck, setStuck] = useState(false);
-
-  useEffect(() => {
-    preloadAllAssetsToVRAM();
-  }, []);
 
   // Watchdog de 10s según regla maestra de estabilidad del ejecutable
   useEffect(() => {
@@ -51,27 +32,34 @@ export const IntroSplashPreload = ({ ready = true, onForceReady, onComplete }) =
     return () => clearTimeout(watchdog);
   }, [ready]);
 
+  // Ejecución integral del pipeline de precarga y calentamiento
   useEffect(() => {
-    let step = 0;
-    const interval = setInterval(() => {
-      step++;
-      if (step < BOOT_STEPS.length) {
-        setStepIndex(step);
-        setProgress(BOOT_STEPS[step].progress);
-      } else {
-        clearInterval(interval);
-        // Cuando llega a 100%, si el motor está ready, transición suave hacia el menú
-        setProgress(100);
-        setTimeout(() => {
-          setFadingOut(true);
-          setTimeout(() => {
-            if (onComplete) onComplete();
-          }, 550);
-        }, 350);
-      }
-    }, 380);
+    let isCancelled = false;
 
-    return () => clearInterval(interval);
+    runSystemPreload((pct) => {
+      if (isCancelled) return;
+      setProgress(pct);
+      if (pct < 25) setStepIndex(0);
+      else if (pct < 50) setStepIndex(1);
+      else if (pct < 75) setStepIndex(2);
+      else if (pct < 100) setStepIndex(3);
+      else setStepIndex(4);
+    }).then(() => {
+      if (isCancelled) return;
+      setProgress(100);
+      setStepIndex(4);
+      setTimeout(() => {
+        if (isCancelled) return;
+        setFadingOut(true);
+        setTimeout(() => {
+          if (!isCancelled && onComplete) onComplete();
+        }, 550);
+      }, 400);
+    }).catch(() => {
+      if (!isCancelled && onComplete) onComplete();
+    });
+
+    return () => { isCancelled = true; };
   }, [onComplete]);
 
   const currentStatus = BOOT_STEPS[stepIndex] || BOOT_STEPS[0];

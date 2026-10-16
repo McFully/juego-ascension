@@ -4,7 +4,7 @@ import { fmt, calcPlanetMaxPop, POPULATION_CONSUMPTION_RATES } from '../../core.
 /**
  * ResourceBadge — Celda táctica de recurso estilo HUD espacial militar.
  */
-export const ResourceBadge = React.memo(({ icon, label, value, rate, color = 'cyan', onClick, size = 'md' }) => {
+export const ResourceBadge = React.memo(({ icon, label, value, rate, color = 'cyan', onClick, size = 'md', title }) => {
   const iconMap = {
     metal: { sym: '⛏️', textCol: 'text-amber-400', border: 'border-amber-500/25', bg: 'from-amber-950/20' },
     crystal: { sym: '💎', textCol: 'text-cyan-400', border: 'border-cyan-500/25', bg: 'from-cyan-950/20' },
@@ -23,6 +23,7 @@ export const ResourceBadge = React.memo(({ icon, label, value, rate, color = 'cy
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
+      title={title}
       className={`${
         isLarge
           ? 'h-16 md:h-20 px-4 md:px-5 rounded-2xl gap-3 flex-1 min-w-[130px] md:min-w-[150px]'
@@ -88,14 +89,37 @@ export const ResourceBar = React.memo(({ planet, research, reputation, taxRate =
   const maxPop = calcPlanetMaxPop(planet);
   const netSlag = prod.slagNet !== undefined ? prod.slagNet : (prod.slag || 0);
 
+  const pollution = Math.round(planet.biosphere?.pollutionLevel ?? 5);
+  const morale = Math.round(planet.demographics?.morale ?? 85);
+  const pollutionColor = pollution > 60 ? 'text-red-400' : pollution > 30 ? 'text-amber-400' : 'text-emerald-400';
+  const moraleColor = morale < 40 ? 'text-red-400' : morale < 70 ? 'text-amber-400' : 'text-cyan-300';
+
+  const demo = planet.demographics || {};
+  const labor = demo.primaryLabor || Math.floor(pop * 0.5);
+  const techs = demo.technicians || Math.floor(pop * 0.35);
+  const freePop = Math.max(0, pop - labor - techs);
+
+  const popTooltip = `👥 Censo Demográfico Táctico:\n• Mano de Obra (Minas/Fábricas): ${labor.toLocaleString()}\n• Técnicos y Ciencia: ${techs.toLocaleString()}\n• Población Libre/Tripulación: ${freePop.toLocaleString()}\n• Capacidad Residencial Máxima: ${maxPop.toLocaleString()}`;
+  const energyTooltip = `⚡ Red Eléctrica Planetaria:\n• Generación Total: +${fmt(prod.energyProd || 0)}\n• Consumo Operativo: -${fmt(prod.energyCons || 0)}\n• Balance Neto: ${energyPrefix}${fmt(prod.energyBalance || 0)}\n• Eficiencia de Red: ${Math.round((prod.ratio || 1) * 100)}%`;
+
   return (
     <div className="h-full flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-0.5">
       <ResourceBadge icon="metal" label="Metal" value={planet?.resources?.metal || 0} rate={netMetal} />
       <ResourceBadge icon="crystal" label="Cristal" value={planet?.resources?.crystal || 0} rate={netCrystal} />
       <ResourceBadge icon="deuterium" label="Deuterio" value={planet?.resources?.deuterium || 0} rate={netDeut} />
-      <ResourceBadge icon="energy" label="Energía" value={`${energyPrefix}${fmt(prod.energyBalance)}`} />
+      <ResourceBadge icon="energy" label="Energía" value={`${energyPrefix}${fmt(prod.energyBalance)}`} title={energyTooltip} />
       <ResourceBadge icon="slag" label="Escoria" value={planet?.resources?.slag || 0} rate={netSlag} />
-      <ResourceBadge icon="population" label="Censo" value={`${fmt(pop)}/${fmt(maxPop)}`} />
+      <ResourceBadge icon="population" label="Censo" value={`${fmt(pop)}/${fmt(maxPop)}`} title={popTooltip} />
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/40 border border-white/10 text-[11px] font-mono shrink-0 cursor-help" title={`🌿 Pureza Ecológica: ${100 - pollution}%\n• Polución Atmosférica: ${pollution}%\n• Estado: ${pollution > 50 ? '⚠️ Alerta Sanitaria' : 'Atmósfera Óptima'}`}>
+        <span className="text-xs">🌿</span>
+        <span className="text-slate-400 text-[10px]">Bio</span>
+        <span className={`font-bold ${pollutionColor}`}>{100 - pollution}%</span>
+      </div>
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/40 border border-white/10 text-[11px] font-mono shrink-0 cursor-help" title={`😊 Cohesión y Moral: ${morale}%\n• Estado Civil: ${morale < 50 ? '⚠️ Malestar Social Activo' : 'Población Estable'}`}>
+        <span className="text-xs">😊</span>
+        <span className="text-slate-400 text-[10px]">Moral</span>
+        <span className={`font-bold ${moraleColor}`}>{morale}%</span>
+      </div>
       <ResourceBadge icon="reputation" label="Reputación" value={`${repPrefix}${displayRep}`} />
     </div>
   );

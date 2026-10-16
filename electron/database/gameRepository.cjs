@@ -45,7 +45,7 @@ const GLOBAL_STATE_KEYS = [
   // Militar
   "fleetPresets", "patrols", "blueprints", "combatLog", "spyReports",
   "aiIntel", "planetIntel",
-  "tradeRoutes", "federalFleet", "diplomaticHistory",
+  "tradeRoutes", "federalFleet", "diplomaticHistory", "foreignEmbassiesInCapital",
 
   // Eventos y avisos
   "events", "notifications", "eventLog", "tacticalEvents", "tacticalEventLog",
@@ -54,7 +54,8 @@ const GLOBAL_STATE_KEYS = [
   "imperialCouncil", "imperialCouncilUnlocked", "finalCrisis",
   "activeUltimatum", "worldAlertLog", "triggeredNarrativeEvents",
   "ministryNoopWarnings", "adventureLogs", "totalAICount",
-  "emperorAutoGovernance", "emperorDirectiveMode",
+  "emperorAutoGovernance", "emperorDirectiveMode", "activeSenateBuffs", "supplyRoutes",
+  "financialBalance",
 ];
 
 // Claves de colas de producción que se guardan en production_queues

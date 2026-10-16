@@ -133,68 +133,78 @@ export const GalacticBankPage = ({
   const nextLiquidationCountdown = formatCountdown(bankState?.nextLiquidation || 0, now);
 
   return (
-    <div className="flex flex-col w-full min-h-screen text-slate-100 space-y-3">
-      {/* Banner superior HUD y navegación */}
-      <SubsystemTopBanner
-        state={state}
-        currentPlanet={currentPlanet}
-        production={production}
-        fmt={fmt}
-        breadcrumbIcon="🏦"
-        breadcrumbTitle="Banca Central"
-        backButtonLabelTop="VOLVER A"
-        backButtonLabelBottom="Mando Imperial"
-        backButtonIcon="👑"
-        onBackToAltoMando={() => {
-          if (setActiveTab) setActiveTab('overview');
-          else if (navigateTo) navigateTo('overview');
-        }}
-      />
+    <div className="bank-institution-theme flex flex-col w-full min-h-screen text-slate-100 space-y-3 relative">
+      {/* Telón arquitectónico que anula y cubre por completo el fondo estelar */}
+      <div className="bank-institution-bg" aria-hidden="true" />
 
-      {/* HEADER HERO DE LA INSTITUCIÓN */}
-      <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/80 p-3.5 shadow-2xl -mt-3">
-        <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none text-8xl">
-          🏛️
-        </div>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">🏦</span>
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-200 to-indigo-300">
-                BANCA CENTRAL
-              </h1>
-            </div>
-            <p className="text-xs text-slate-400 mt-0.5 max-w-2xl leading-relaxed">
-              Cámara de compensación interplanetaria y custodia blindada. Tus activos depositados generan dividendos diarios calculados en cada cierre de ciclo estelar y permanecen protegidos frente a asaltos convencionales.
-            </p>
+      {/* Contenido en plano superior */}
+      <div className="relative z-10 flex flex-col w-full space-y-3">
+        {/* Banner superior HUD y navegación */}
+        <SubsystemTopBanner
+          state={state}
+          currentPlanet={currentPlanet}
+          production={production}
+          fmt={fmt}
+          breadcrumbIcon="💎"
+          breadcrumbTitle="Banca Galáctica Central"
+          backButtonLabelTop="VOLVER A"
+          backButtonLabelBottom="Mando Imperial"
+          backButtonIcon="👑"
+          onBackToAltoMando={() => {
+            if (setActiveTab) setActiveTab('imperial_hub');
+            else if (navigateTo) navigateTo('imperial_hub');
+          }}
+        />
+
+        {/* HEADER HERO DE LA INSTITUCIÓN - SEDE CENTRAL ARQUITECTÓNICA */}
+        <div className="relative overflow-hidden rounded-2xl bank-marble-panel p-4 shadow-2xl -mt-3 border border-slate-400/30">
+          {/* Malla arquitectónica y motivos de columnas de edificio */}
+          <div className="absolute right-0 top-0 bottom-0 w-96 opacity-10 pointer-events-none bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-200 via-transparent to-transparent" />
+          <div className="absolute -right-6 -bottom-8 opacity-15 pointer-events-none text-9xl">
+            🏛️
           </div>
-
-          <div className="flex flex-wrap items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-3 py-2 backdrop-blur-sm self-start md:self-auto">
-            <div className="text-right">
-              <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono">Cierre de Ciclo Diario</span>
-              <span className="text-sm sm:text-base font-mono font-bold text-amber-400">{nextLiquidationCountdown}</span>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl drop-shadow-[0_2px_8px_rgba(255,255,255,0.4)]">🏛️</span>
+                <h1 className="text-xl sm:text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 drop-shadow-sm font-sans">
+                  BANCA GALÁCTICA CENTRAL
+                </h1>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono tracking-widest font-bold bg-slate-800 border border-slate-500/50 text-slate-200 uppercase">
+                  Sede Central
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed font-sans">
+                Edificio Institucional del Tesoro Soberano. Custodia federal compartida con bóvedas de hormigón reforzado y titanio blindado. Fondos protegidos ante fluctuaciones galácticas.
+              </p>
             </div>
-            {now >= (bankState?.nextLiquidation || 0) && (
-              <button
-                onClick={handleForceLiquidation}
-                className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold tracking-wide transition-all shadow-lg active:scale-95"
-              >
-                Liquidar Ahora
-              </button>
-            )}
+
+            <div className="flex flex-wrap items-center gap-3 bg-black/60 border border-slate-500/40 rounded-xl px-3.5 py-2 backdrop-blur-md self-start md:self-auto shadow-inner">
+              <div className="text-right">
+                <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono">Cierre de Ciclo Diario</span>
+                <span className="text-sm sm:text-base font-mono font-black text-amber-300">{nextLiquidationCountdown}</span>
+              </div>
+              {now >= (bankState?.nextLiquidation || 0) && (
+                <button
+                  onClick={handleForceLiquidation}
+                  className="px-3.5 py-1.5 rounded-lg bank-btn-chrome text-xs font-bold tracking-wide transition-all shadow-lg active:scale-95"
+                >
+                  Liquidar Ahora
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 8 TARJETAS EN UNA SOLA LÍNEA */}
+      {/* 8 TARJETAS EN UNA SOLA LÍNEA CON ESTILO BÓVEDA / TITANIO / CROMO */}
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2.5">
         {/* 1. Volumen en Custodia */}
-        <div className="bg-slate-900/70 border border-white/10 rounded-xl p-3 shadow-lg backdrop-blur-md flex flex-col justify-between">
+        <div className="bank-vault-card rounded-xl p-3 shadow-lg flex flex-col justify-between">
           <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-            <span className="font-mono uppercase truncate">En Custodia</span>
-            <span className="text-cyan-400 text-xs">📦</span>
+            <span className="font-mono uppercase tracking-wider truncate">En Custodia</span>
+            <span className="text-slate-300 text-xs">📦</span>
           </div>
-          <div className="text-base lg:text-lg font-black text-cyan-300 font-mono truncate">
+          <div className="text-base lg:text-lg font-black text-white font-mono truncate">
             {fmt(totalDepositedVolume)}
           </div>
           <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between truncate">
@@ -204,27 +214,27 @@ export const GalacticBankPage = ({
         </div>
 
         {/* 2. Ocupación de Bóveda */}
-        <div className="bg-slate-900/70 border border-white/10 rounded-xl p-3 shadow-lg backdrop-blur-md flex flex-col justify-between">
+        <div className="bank-vault-card rounded-xl p-3 shadow-lg flex flex-col justify-between">
           <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-            <span className="font-mono uppercase truncate">Ocupación</span>
-            <span className="text-sky-400 text-xs">🏢</span>
+            <span className="font-mono uppercase tracking-wider truncate">Ocupación</span>
+            <span className="text-slate-300 text-xs">🏛️</span>
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="text-base lg:text-lg font-black text-white font-mono">{globalCapacityPct.toFixed(1)}%</span>
+            <span className="text-base lg:text-lg font-black text-slate-100 font-mono">{globalCapacityPct.toFixed(1)}%</span>
             <span className="text-[10px] text-slate-400 font-mono truncate">/{fmt(totalCapacityVolume)}</span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1 mt-1.5 overflow-hidden border border-white/5">
+          <div className="w-full bg-slate-950 rounded-full h-1 mt-1.5 overflow-hidden border border-slate-700/50">
             <div
-              className={`h-full transition-all duration-500 ${globalCapacityPct > 90 ? 'bg-red-500' : globalCapacityPct > 70 ? 'bg-amber-400' : 'bg-cyan-500'}`}
+              className={`h-full transition-all duration-500 ${globalCapacityPct > 90 ? 'bg-red-400' : globalCapacityPct > 70 ? 'bg-amber-400' : 'bg-gradient-to-r from-slate-200 to-slate-400'}`}
               style={{ width: `${globalCapacityPct}%` }}
             />
           </div>
         </div>
 
         {/* 3. Dividendos Históricos */}
-        <div className="bg-slate-900/70 border border-white/10 rounded-xl p-3 shadow-lg backdrop-blur-md flex flex-col justify-between">
+        <div className="bank-vault-card rounded-xl p-3 shadow-lg flex flex-col justify-between">
           <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-            <span className="font-mono uppercase truncate">Dividendos</span>
+            <span className="font-mono uppercase tracking-wider truncate">Dividendos</span>
             <span className="text-emerald-400 text-xs">📈</span>
           </div>
           <div className="text-base lg:text-lg font-black text-emerald-400 font-mono truncate">
@@ -237,12 +247,12 @@ export const GalacticBankPage = ({
         </div>
 
         {/* 4. Interés Activo */}
-        <div className="bg-slate-900/70 border border-white/10 rounded-xl p-3 shadow-lg backdrop-blur-md flex flex-col justify-between">
+        <div className="bank-vault-card rounded-xl p-3 shadow-lg flex flex-col justify-between">
           <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-            <span className="font-mono uppercase truncate">Interés Base</span>
-            <span className="text-indigo-400 text-xs">⚡</span>
+            <span className="font-mono uppercase tracking-wider truncate">Interés Base</span>
+            <span className="text-slate-300 text-xs">⚖️</span>
           </div>
-          <div className="text-base lg:text-lg font-black text-indigo-300 font-mono truncate">
+          <div className="text-base lg:text-lg font-black text-slate-200 font-mono truncate">
             +{(interestRates.metal * 100).toFixed(2)}%
           </div>
           <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between truncate">
@@ -272,8 +282,8 @@ export const GalacticBankPage = ({
               }}
               className={`text-left p-3 rounded-xl border transition-all relative overflow-hidden group flex flex-col justify-between ${
                 isSelected
-                  ? 'bg-gradient-to-b from-cyan-950/90 to-slate-900 border-cyan-400 shadow-lg shadow-cyan-950/50 ring-1 ring-cyan-400/50'
-                  : 'bg-slate-900/60 border-white/10 hover:border-white/20 hover:bg-slate-900'
+                  ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-white shadow-xl shadow-black/80 ring-1 ring-white/60'
+                  : 'bank-vault-card hover:border-slate-400/50'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
@@ -310,20 +320,20 @@ export const GalacticBankPage = ({
       {/* ÁREA PRINCIPAL DE OPERACIONES: 3 TARJETAS EN LA MISMA LÍNEA (1/3 CADA UNA) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
         {/* TARJETA 1 (1/3): TERMINAL OPERATIVA */}
-        <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col justify-between">
+        <div className="bank-marble-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between border border-slate-500/30">
           <div>
             {/* Cabecera y Selector de Modo */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-500/20 gap-2">
               <div>
-                <span className="text-[11px] font-mono uppercase text-cyan-400 tracking-wider">Terminal Operativa</span>
+                <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider font-semibold">Terminal Financiera</span>
                 <h2 className="text-lg font-black text-white flex items-center gap-2">
                   <span>{RESOURCE_INFO[selectedResource]?.icon}</span>
-                  <span>{RESOURCE_INFO[selectedResource]?.name}</span>
+                  <span className="text-slate-100">{RESOURCE_INFO[selectedResource]?.name}</span>
                 </h2>
               </div>
 
               {/* Botones de alternancia Depositar / Retirar */}
-              <div className="flex bg-black/60 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
+              <div className="flex bg-black/60 p-1 rounded-xl border border-slate-600/40 self-start sm:self-auto shadow-inner">
                 <button
                   onClick={() => {
                     if (window.playSfx) window.playSfx('click');
@@ -333,7 +343,7 @@ export const GalacticBankPage = ({
                   }}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                     opMode === 'deposit'
-                      ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-md'
+                      ? 'bank-btn-chrome shadow-md'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -348,7 +358,7 @@ export const GalacticBankPage = ({
                   }}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                     opMode === 'withdraw'
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                      ? 'bg-gradient-to-r from-slate-600 to-slate-500 text-white border border-slate-400/50 shadow-md'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -359,18 +369,18 @@ export const GalacticBankPage = ({
 
             {/* Comparativa Cara a Cara de Fondos */}
             <div className="grid grid-cols-2 gap-2 my-3">
-              <div className="bg-black/30 border border-white/5 rounded-xl p-2.5">
+              <div className="bg-black/50 border border-slate-700/50 rounded-xl p-2.5">
                 <span className="text-[10px] uppercase font-mono text-slate-400 block truncate">
                   {selectedResource === 'credits' ? 'Créditos (Imperio)' : `En ${currentPlanet?.name || 'Planeta'}`}
                 </span>
-                <div className="text-base font-mono font-bold text-sky-300 mt-0.5 truncate">
+                <div className="text-base font-mono font-bold text-slate-200 mt-0.5 truncate">
                   {fmt(availableInPlanetOrEmpire)} <span className="text-[10px] text-slate-500 font-normal">{RESOURCE_INFO[selectedResource]?.unit}</span>
                 </div>
               </div>
 
-              <div className="bg-black/30 border border-white/5 rounded-xl p-2.5">
-                <span className="text-[10px] uppercase font-mono text-slate-400 block truncate">En Bóveda</span>
-                <div className="text-base font-mono font-bold text-cyan-300 mt-0.5 truncate">
+              <div className="bg-black/50 border border-slate-700/50 rounded-xl p-2.5">
+                <span className="text-[10px] uppercase font-mono text-slate-400 block truncate">En Bóveda Blindada</span>
+                <div className="text-base font-mono font-bold text-white mt-0.5 truncate">
                   {fmt(depositedInBank)} <span className="text-[10px] text-slate-500 font-normal">{RESOURCE_INFO[selectedResource]?.unit}</span>
                 </div>
               </div>
@@ -384,7 +394,7 @@ export const GalacticBankPage = ({
                 </label>
                 {opMode === 'deposit' && (
                   <span className="text-slate-400 font-mono text-[11px] truncate">
-                    Libre: <span className="text-white font-semibold">{fmt(remainingAllowance)}</span>
+                    Cupo Libre: <span className="text-white font-semibold">{fmt(remainingAllowance)}</span>
                   </span>
                 )}
               </div>
@@ -399,8 +409,8 @@ export const GalacticBankPage = ({
                     setAmountInput(e.target.value);
                     setFeedback(null);
                   }}
-                  placeholder="Cantidad..."
-                  className="w-full bg-black/60 border border-white/20 rounded-xl px-3 py-2 text-base font-mono font-bold text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all placeholder:text-slate-600"
+                  placeholder="Cantidad a transferir..."
+                  className="w-full bg-black/70 border border-slate-600/60 rounded-xl px-3 py-2 text-base font-mono font-bold text-white focus:outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-300 transition-all placeholder:text-slate-600"
                 />
                 <span className="absolute right-3 top-2.5 text-xs font-mono text-slate-400 pointer-events-none">
                   {RESOURCE_INFO[selectedResource]?.unit}
@@ -413,7 +423,7 @@ export const GalacticBankPage = ({
                   <button
                     key={pct}
                     onClick={() => handleSetPercent(pct)}
-                    className="py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono font-semibold text-slate-300 hover:text-white border border-white/5 transition-all active:scale-95"
+                    className="py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs font-mono font-semibold text-slate-300 hover:text-white border border-slate-600/30 transition-all active:scale-95"
                   >
                     {pct === 1.0 ? 'MÁX' : `${pct * 100}%`}
                   </button>
@@ -429,7 +439,7 @@ export const GalacticBankPage = ({
               )}
             </div>
 
-            {/* FEEDBACK INTEGRADO DENTRO DE LA TARJETA (NO DESPLAZA OTRAS TARJETAS) */}
+            {/* FEEDBACK INTEGRADO DENTRO DE LA TARJETA */}
             {feedback && (
               <div
                 className={`mt-3 p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${
@@ -437,7 +447,7 @@ export const GalacticBankPage = ({
                     ? 'bg-rose-950/60 border-rose-500/40 text-rose-200'
                     : feedback.type === 'success'
                     ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-200'
-                    : 'bg-cyan-950/60 border-cyan-500/40 text-cyan-200'
+                    : 'bg-slate-800/80 border-slate-500/40 text-slate-200'
                 }`}
               >
                 <div className="flex items-center gap-1.5 leading-snug">
@@ -462,98 +472,98 @@ export const GalacticBankPage = ({
               className={`w-full py-3 rounded-xl font-bold text-xs tracking-wider uppercase transition-all shadow-xl flex items-center justify-center gap-2 ${
                 currentValidation && currentValidation.valid
                   ? opMode === 'deposit'
-                    ? 'bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 text-slate-950 font-black shadow-cyan-500/20 active:scale-[0.99]'
-                    : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-black shadow-purple-500/20 active:scale-[0.99]'
-                  : 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed opacity-60'
+                    ? 'bank-btn-chrome font-black active:scale-[0.99]'
+                    : 'bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white border border-slate-400/60 font-black shadow-lg active:scale-[0.99]'
+                  : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed opacity-60'
               }`}
             >
-              <span>{opMode === 'deposit' ? '📥 Depositar' : '📤 Retirar'}</span>
+              <span>{opMode === 'deposit' ? '📥 Confirmar Depósito' : '📤 Autorizar Retirada'}</span>
               {currentValidation?.valid && <span>({fmt(numericAmount)} {RESOURCE_INFO[selectedResource]?.unit})</span>}
             </button>
           </div>
         </div>
 
         {/* TARJETA 2 (1/3): REGULACIÓN BANCARIA */}
-        <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col justify-between">
+        <div className="bank-marble-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between border border-slate-500/30">
           <div>
-            <span className="text-[11px] font-mono uppercase text-indigo-400 tracking-wider">Regulación Bancaria</span>
+            <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider font-semibold">Regulación Institucional</span>
             <h3 className="text-base font-bold text-white mt-0.5 mb-3 flex items-center gap-2">
               <span>📜</span>
-              <span>Condiciones del Depósito</span>
+              <span>Estatuto y Condiciones del Tesoro</span>
             </h3>
 
             <div className="space-y-3 text-xs text-slate-300">
-              <div className="flex justify-between pb-2 border-b border-white/5">
+              <div className="flex justify-between pb-2 border-b border-slate-700/40">
                 <span className="text-slate-400">Tipo de Interés Vigente:</span>
                 <span className="font-mono font-bold text-emerald-400">
                   {currentInterestRate > 0 ? `+${(currentInterestRate * 100).toFixed(2)}%` : `${(currentInterestRate * 100).toFixed(2)}%`} diario
                 </span>
               </div>
-              <div className="flex justify-between pb-2 border-b border-white/5">
+              <div className="flex justify-between pb-2 border-b border-slate-700/40">
                 <span className="text-slate-400">Disponibilidad de Fondos:</span>
-                <span className="text-cyan-300 font-semibold">24/7 (Inmediata)</span>
+                <span className="text-slate-200 font-semibold">Inmediata (24/7)</span>
               </div>
-              <div className="flex justify-between pb-2 border-b border-white/5">
+              <div className="flex justify-between pb-2 border-b border-slate-700/40">
                 <span className="text-slate-400">Periodo de Liquidación:</span>
-                <span className="text-slate-200">Cada 24h reales de juego</span>
+                <span className="text-slate-300">Cada 24h reales de juego</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Protección Antisaqueo:</span>
-                <span className="text-emerald-300 font-semibold">Bóveda Blindada 100%</span>
+                <span className="text-emerald-300 font-semibold">Bóveda Subterránea 100%</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/20 text-[11px] text-cyan-200 leading-relaxed">
-            💡 <strong>Nota del Banco Central:</strong> Los recursos almacenados en la Banca Galáctica pertenecen al tesoro soberano del jugador. Puedes retirarlos desde cualquier planeta de tu imperio sin costes de transporte interplanetario.
+          <div className="mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-700/60 text-[11px] text-slate-300 leading-relaxed">
+            🏛️ <strong>Disposición Federal:</strong> Los activos depositados en la Banca Galáctica se consolidan en el tesoro federal. Puedes retirarlos desde cualquier colonia sin incurrir en costes de transporte o flete espacial.
           </div>
         </div>
 
         {/* TARJETA 3 (1/3): AMPLIACIÓN DE CAPACIDAD */}
-        <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col justify-between">
+        <div className="bank-marble-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between border border-slate-500/30">
           <div>
-            <span className="text-[11px] font-mono uppercase text-sky-400 tracking-wider">Ampliación de Capacidad</span>
+            <span className="text-[11px] font-mono uppercase text-slate-400 tracking-wider font-semibold">Ampliación de Bóvedas</span>
             <h3 className="text-base font-bold text-white mt-0.5 mb-2 flex items-center gap-2">
-              <span>🏛️</span>
-              <span>Infraestructura Financiera</span>
+              <span>🏢</span>
+              <span>Infraestructura Edilicia</span>
             </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              La capacidad de custodia se incrementa un <strong>+15% acumulativo por nivel</strong> de los edificios <em>Bolsa de Valores</em> y <em>Mercado de Futuros</em> en cualquiera de tus mundos coloniales.
+            <p className="text-xs text-slate-300 leading-relaxed font-sans">
+              El cupo máximo disponible para operar en el Alto Mando depende del nivel de la <strong>Banca Galáctica Central</strong> construida en tus mundos (<strong>20.000 unidades por nivel</strong>).
             </p>
 
             <div className="mt-4 space-y-2.5 text-xs font-mono">
-              <div className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5">
-                <span className="text-slate-400">Capacidad Base:</span>
-                <span className="text-white font-bold">{fmt(calcBankCapacity({ ...state, planets: [] }, selectedResource))}</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-slate-700/40">
+                <span className="text-slate-400">Nivel de Instalación:</span>
+                <span className="text-white font-bold">Nv. {Math.max(0, ...((state?.planets || []).map(p => p.buildings?.exchangeBank || 0)))}</span>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5">
-                <span className="text-slate-400">Capacidad Actual:</span>
-                <span className="text-cyan-300 font-bold">{fmt(resourceCapacity)}</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-slate-700/40">
+                <span className="text-slate-400">Cupo Federal Máximo:</span>
+                <span className="text-slate-100 font-bold">{fmt(resourceCapacity)}</span>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5">
-                <span className="text-slate-400">Espacio Disponible:</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-slate-700/40">
+                <span className="text-slate-400">Cupo Disponible:</span>
                 <span className="text-emerald-400 font-bold">{fmt(remainingAllowance)}</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-[11px] text-indigo-200 leading-relaxed">
-            🏢 <strong>Edificios Requeridos:</strong> Construye o amplía la <em>Bolsa de Valores</em> o el <em>Mercado de Futuros</em> en el Complejo de Obras para elevar las reservas máximas permitidas.
+          <div className="mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-700/60 text-[11px] text-slate-300 leading-relaxed">
+            💎 <strong>Gestión Territorial:</strong> Eleva la <em>Banca Galáctica Central</em> en el Ministerio de Finanzas de tus colonias para ampliar la capacidad de custodia de la entidad central.
           </div>
         </div>
       </div>
 
       {/* HISTORIAL AUDITABLE DE TRANSACCIONES */}
-      <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+      <div className="bank-marble-panel rounded-2xl p-5 shadow-2xl border border-slate-500/30">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
           <div>
-            <span className="text-xs font-mono uppercase text-cyan-400 tracking-wider">Auditoría Financiera</span>
+            <span className="text-xs font-mono uppercase text-slate-400 tracking-wider font-semibold">Libro Mayor de Contabilidad</span>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <span>📋</span>
               <span>Registro de Operaciones y Liquidaciones</span>
             </h3>
           </div>
-          <span className="text-xs font-mono text-slate-400">{history.length} entradas</span>
+          <span className="text-xs font-mono text-slate-400">{history.length} asientos</span>
         </div>
 
         {history.length === 0 ? (
@@ -564,7 +574,7 @@ export const GalacticBankPage = ({
           <div className="overflow-x-auto mt-3 max-h-64 overflow-y-auto">
             <table className="w-full text-left text-xs font-mono">
               <thead>
-                <tr className="text-slate-400 border-b border-white/5">
+                <tr className="text-slate-400 border-b border-slate-700/50">
                   <th className="py-2 px-2">Tipo</th>
                   <th className="py-2 px-2">Recurso</th>
                   <th className="py-2 px-2 text-right">Monto</th>
@@ -573,7 +583,7 @@ export const GalacticBankPage = ({
                   <th className="py-2 px-2">Detalles</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-800">
                 {history.slice(0, 20).map((tx) => {
                   const isDeposit = tx.type === 'DEPOSIT';
                   const isWithdraw = tx.type === 'WITHDRAW';
@@ -584,10 +594,10 @@ export const GalacticBankPage = ({
                       <td className="py-2 px-2">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           isDeposit
-                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                            ? 'bg-slate-700 text-white border border-slate-400/50'
                             : isWithdraw
-                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            ? 'bg-zinc-800 text-zinc-300 border border-zinc-600'
+                            : 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40'
                         }`}>
                           {isDeposit ? 'DEPÓSITO' : isWithdraw ? 'RETIRADA' : 'INTERÉS'}
                         </span>
@@ -596,7 +606,7 @@ export const GalacticBankPage = ({
                         {RESOURCE_INFO[tx.resource]?.name || tx.resource}
                       </td>
                       <td className={`py-2 px-2 text-right font-bold ${
-                        isDeposit || isInterest ? 'text-emerald-400' : 'text-purple-300'
+                        isDeposit || isInterest ? 'text-emerald-400' : 'text-slate-300'
                       }`}>
                         {isDeposit || isInterest ? `+${fmt(tx.amount)}` : `-${fmt(tx.amount)}`}
                       </td>
@@ -616,6 +626,7 @@ export const GalacticBankPage = ({
             </table>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

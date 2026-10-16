@@ -37,43 +37,40 @@ export const processPlanetTick = (planet, prod, storage, state) => {
   };
   newRes = clampResources(newRes);
 
-  // Civil Population consumption and growth (reducido un 90%)
+  // Soporte Vital Orgánico: provisto por Invernaderos Urbanos, Depuradoras de Agua, Acuíferos y Drones Agrícolas
   const pop = p.population || 1000;
-  const metalCons = pop * POPULATION_CONSUMPTION_RATES.metal;
-  const crystalCons = pop * POPULATION_CONSUMPTION_RATES.crystal;
-  const deutCons = pop * POPULATION_CONSUMPTION_RATES.deuterium;
+  const hydroBuildings = p.buildings?.urbanHydroponic || 0;
+  const waterBuildings = p.buildings?.waterTreatmentPlant || 0;
+  const aquiferBuildings = p.buildings?.deepAquiferDrill || 0;
+  const hydroTech = state?.research?.multiproposeHydroponic || 0;
+  const agriDroneTech = state?.research?.automatedAgriDrones || 0;
+  const bioTech = state?.research?.orbitalSanitaryBio || 0;
+  const sleepTech = state?.research?.acceleratedSleepBio || 0;
 
-  let hasFamine = false;
-  if (newRes.metal >= metalCons && newRes.crystal >= crystalCons && newRes.deuterium >= deutCons) {
-    newRes.metal -= metalCons;
-    newRes.crystal -= crystalCons;
-    newRes.deuterium -= deutCons;
-  } else {
-    hasFamine = true;
-    newRes.metal = Math.max(0, newRes.metal - metalCons);
-    newRes.crystal = Math.max(0, newRes.crystal - crystalCons);
-    newRes.deuterium = Math.max(0, newRes.deuterium - deutCons);
-  }
+  // Capacidad de soporte vital hídrico y calórico básico más infraestructuras
+  // Base incrementada a 100.000 para permitir colonias iniciales y medianas sin hambruna prematura
+  const baseVitalSupport = 100000;
+  const agriMultiplier = 1 + (agriDroneTech * 0.20);
+  const vitalSupportCap = baseVitalSupport + ((hydroBuildings * 40000) * agriMultiplier) + (waterBuildings * 50000) + (aquiferBuildings * 80000) + (hydroTech * 20000);
+  const isVitalDeficit = pop > vitalSupportCap;
+  const hasFamine = isVitalDeficit;
 
   let nextPop = pop;
-  if (!hasFamine) {
+  if (!isVitalDeficit) {
     const townHallLvl = p.buildings?.townHall || 0;
     const bioClinicLvl = p.buildings?.bioRegenClinic || 0;
-    const hydroLvlB = p.buildings?.urbanHydroponic || 0;
     const bioData = BIOMES[p.biome] || {};
     const growthMod = bioData.growthMod || 1.0;
-    
     const maxPop = calcPlanetMaxPop(p);
     
     if (pop < maxPop) {
-      const bioLvl = state.research?.orbitalSanitaryBio || 0;
-      const hydroLvl = state.research?.multiproposeHydroponic || 0;
-      const sleepLvl = state.research?.acceleratedSleepBio || 0;
-      const growthMult = (1 + bioLvl * 0.06 + hydroLvl * 0.05 + sleepLvl * 0.03) * growthMod;
-      
-      const growth = Math.max(1, Math.floor((2 + townHallLvl * 80 + bioClinicLvl * 40 + hydroLvlB * 25) * growthMult));
+      const growthMult = (1 + bioTech * 0.06 + hydroTech * 0.05 + sleepTech * 0.03) * growthMod;
+      const growth = Math.max(1, Math.floor((2 + townHallLvl * 80 + bioClinicLvl * 40 + hydroBuildings * 25) * growthMult));
       nextPop = Math.min(maxPop, pop + growth);
     }
+  } else {
+    // Si la población excede el soporte vital, se detiene el crecimiento y hay leve decrecimiento
+    nextPop = Math.max(100, Math.floor(pop * 0.9995));
   }
 
   if (p.specialization === 'commercial') {

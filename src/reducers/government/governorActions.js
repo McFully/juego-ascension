@@ -230,3 +230,5 @@ export const handleSetEmperorAutoGovernance = (state, action) => {
     planets: updatedPlanets
   };
 };
+
+export { handleExecuteSenateDecree } from './senateDecretActions.js';

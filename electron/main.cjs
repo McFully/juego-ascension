@@ -27,6 +27,13 @@ const { registerVisualAuditIpc } = require("./ipc/visualAuditIpc.cjs");
 // Permitir autoplay de audio/música sin requerir gesto previo del usuario
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
+// Optimización de rendimiento para PCs modestos (4 GB RAM / GPU integrada)
+// Rasterización por GPU directa y zero-copy sin duplicar texturas en RAM del sistema
+app.commandLine.appendSwitch("enable-gpu-rasterization");
+app.commandLine.appendSwitch("enable-zero-copy");
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+app.commandLine.appendSwitch("disable-software-rasterizer");
+
 // Registrar el esquema como privilegiado para permitir fetch y recursos seguros
 protocol.registerSchemesAsPrivileged([
   { 
@@ -115,11 +122,15 @@ function createWindow() {
       }
 
       const data = fs.readFileSync(filePath);
+      const isImmutableAsset = [".webp", ".png", ".jpg", ".jpeg", ".svg", ".ico", ".woff2", ".ogg", ".mp3", ".wav", ".js", ".css"].includes(ext);
       const headers = {
         "Content-Type": contentType,
         "Content-Length": fileSize.toString(),
         "Accept-Ranges": "bytes"
       };
+      if (isImmutableAsset) {
+        headers["Cache-Control"] = "public, max-age=31536000, immutable";
+      }
       // La CSP va como cabecera y no como <meta> en index.html a proposito:
       // Vite inyecta scripts en linea en desarrollo, y una meta los bloquearia
       // en `npm run dev`. En la app empaquetada todo se sirve por aqui, asi
@@ -133,7 +144,7 @@ function createWindow() {
           "media-src 'self' data: blob:",
           "font-src 'self' data:",
           "worker-src 'self' blob:",
-          "connect-src 'self'",
+          "connect-src 'self' https://generativelanguage.googleapis.com",
           "object-src 'none'",
           "frame-src 'none'",
           "base-uri 'none'",

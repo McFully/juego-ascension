@@ -8,7 +8,8 @@ import {
 
 describe('ruta de gobierno determinista', () => {
   it('Banca Galáctica y las investigaciones de Finanzas son destinos distintos e independientes', () => {
-    expect(COMMAND_CARD_TARGETS.planetaryBank).toBe('galactic_bank');
+    expect(COMMAND_CARD_TARGETS.planetaryBank).toBe('planetary_bank');
+    expect(COMMAND_CARD_TARGETS.galacticBank).toBe('galactic_bank');
     const research = parseGovernmentRoute(COMMAND_CARD_TARGETS.financeResearch);
 
     expect(COMMAND_CARD_TARGETS.planetaryBank).not.toBe(COMMAND_CARD_TARGETS.financeResearch);

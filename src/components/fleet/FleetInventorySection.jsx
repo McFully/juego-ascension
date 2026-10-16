@@ -185,34 +185,103 @@ export const FleetInventorySection = React.memo(({
             dispatch={dispatch}
           />
 
-          {/* Filtros de Categoría */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-black/40 p-3 rounded-2xl border border-white/5 font-mono text-xs">
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                { id: 'all', label: '🚀 Todas', icon: '🌌' },
-                { id: 'combat', label: 'Armada de Combate', icon: '⚔️' },
-                { id: 'mercantile', label: 'Mercantiles', icon: '📦' },
-                { id: 'civil', label: 'Civiles y Colonización', icon: '🏛️' },
-                { id: 'intel', label: 'Espionaje e Inteligencia', icon: '🕵️' },
-              ].map(btn => (
-                <button
-                  key={btn.id}
-                  onClick={() => setGroundFilter(btn.id)}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                    groundFilter === btn.id
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-sm'
-                      : 'bg-black/40 border-white/5 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <span>{btn.icon}</span>
-                  <span>{btn.label}</span>
-                </button>
-              ))}
+          {/* Selector de Categorías de Flota en formato Cuadrícula de Tarjetas Visuales */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-2">
+                <span>⚓</span>
+                <span>Divisiones del Hangar Planetario</span>
+              </span>
+              <span className="text-slate-400 font-mono text-[11px]">
+                Mostrando <strong className="text-cyan-300">{filteredGroundShips.length}</strong> modelos en dársena
+              </span>
             </div>
 
-            <span className="text-slate-400 text-[11px]">
-              Mostrando <strong className="text-cyan-300">{filteredGroundShips.length}</strong> modelos en dársena
-            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {[
+                {
+                  id: 'all',
+                  label: 'Todas las Naves',
+                  badge: 'GLOBAL',
+                  assetId: 'battleship',
+                  icon: '🌌',
+                  count: groundShips.reduce((acc, [, q]) => acc + q, 0)
+                },
+                {
+                  id: 'combat',
+                  label: 'Armada de Combate',
+                  badge: 'COMBATE',
+                  assetId: 'cruiser',
+                  icon: '⚔️',
+                  count: groundShips.filter(([id]) => getShipCategory(id) === 'combat').reduce((acc, [, q]) => acc + q, 0)
+                },
+                {
+                  id: 'mercantile',
+                  label: 'Transporte y Carga',
+                  badge: 'LOGÍSTICA',
+                  assetId: 'largeCargo',
+                  icon: '📦',
+                  count: groundShips.filter(([id]) => getShipCategory(id) === 'mercantile').reduce((acc, [, q]) => acc + q, 0)
+                },
+                {
+                  id: 'civil',
+                  label: 'Civiles y Colonia',
+                  badge: 'EXPANSIÓN',
+                  assetId: 'colonyShip',
+                  icon: '🏛️',
+                  count: groundShips.filter(([id]) => getShipCategory(id) === 'civil').reduce((acc, [, q]) => acc + q, 0)
+                },
+                {
+                  id: 'intel',
+                  label: 'Espionaje y Recon',
+                  badge: 'INTEL',
+                  assetId: 'spyProbe',
+                  icon: '🕵️',
+                  count: groundShips.filter(([id]) => getShipCategory(id) === 'intel').reduce((acc, [, q]) => acc + q, 0)
+                },
+              ].map(cat => {
+                const isSelected = groundFilter === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      setGroundFilter(cat.id);
+                      if (window.playSfx) window.playSfx('click');
+                    }}
+                    className={`relative p-3 rounded-2xl border text-left transition-all duration-300 flex flex-col justify-between overflow-hidden group cursor-pointer ${
+                      isSelected
+                        ? 'bg-gradient-to-b from-cyan-950/80 via-slate-900/90 to-cyan-950/70 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] scale-[1.02]'
+                        : 'bg-slate-900/40 border-white/10 hover:border-cyan-500/40 hover:bg-slate-900/70'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-2 z-10">
+                      <span className="text-xl group-hover:scale-110 transition-transform">{cat.icon}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-wider uppercase border ${
+                        isSelected
+                          ? 'bg-cyan-950 text-cyan-300 border-cyan-400'
+                          : 'bg-black/60 text-slate-400 border-white/10'
+                      }`}>
+                        {cat.badge}
+                      </span>
+                    </div>
+
+                    <div className="z-10 mt-1">
+                      <div className="text-xs font-bold text-white group-hover:text-cyan-200 transition-colors">
+                        {cat.label}
+                      </div>
+                      <div className="text-[11px] font-mono text-cyan-400 mt-0.5">
+                        {fmt(cat.count)} naves
+                      </div>
+                    </div>
+
+                    <div className="absolute right-0 bottom-0 w-16 h-16 opacity-15 pointer-events-none group-hover:opacity-25 transition-opacity">
+                      <SafeImg assetId={cat.assetId} className="w-full h-full object-contain filter drop-shadow" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {filteredGroundShips.length === 0 ? (

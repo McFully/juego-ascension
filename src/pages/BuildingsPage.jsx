@@ -52,7 +52,7 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
   };
 
   const getMinistryStats = (m) => {
-    if (!currentPlanet) return { totalLevels: 0, buildingCount: m.buildings?.length || 0, activeCount: 0 };
+    if (!currentPlanet) return { totalLevels: 0, buildingCount: m.buildings?.length || 0, activeCount: 0, workers: 0, outputDesc: 'Inactivo' };
     const buildings = currentPlanet.buildings || {};
     let totalLevels = 0;
     let activeCount = 0;
@@ -61,7 +61,14 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
       totalLevels += lvl;
       if (lvl > 0) activeCount++;
     });
-    return { totalLevels, buildingCount: m.buildings?.length || 0, activeCount };
+    const workers = totalLevels * 120;
+    let outputDesc = `+${totalLevels * 5}% Eficiencia`;
+    if (m.id === 'resources') outputDesc = `+${fmt((production?.metal || 0) + (production?.crystal || 0) + (production?.deuterium || 0))}/h`;
+    else if (m.id === 'energy') outputDesc = `${(production?.energyBalance || 0) >= 0 ? '+' : ''}${fmt(production?.energyBalance || 0)} ⚡`;
+    else if (m.id === 'science' || m.id === 'innovation' || m.id === 'cybernetics') outputDesc = `+${totalLevels * 8}% I+D`;
+    else if (m.id === 'defense' || m.id === 'war') outputDesc = `+${totalLevels * 10}% Blindaje`;
+    else if (m.id === 'economy' || m.id === 'finance') outputDesc = `+${totalLevels * 45} Cr/h`;
+    return { totalLevels, buildingCount: m.buildings?.length || 0, activeCount, workers, outputDesc };
   };
 
   const hasActiveConstruction = (m) => {
@@ -125,7 +132,7 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
               <button
                 key={m.id}
                 onClick={() => onSelectMinistry(m.id)}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 select-none bg-[#090d1f]/90 border-white/10 hover:border-cyan-400 hover:bg-[#0e1633] hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(6,182,212,0.25)] active:scale-[0.98] cursor-pointer text-left focus:outline-none w-full h-full min-h-[200px]"
+                className="group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 select-none bg-[#090d1f]/90 border-white/10 hover:border-cyan-400 hover:bg-[#0e1633] hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(6,182,212,0.25)] active:scale-[0.98] cursor-pointer text-left focus:outline-none w-full h-full min-h-[240px]"
               >
                 {/* Imagen Superior de Sector */}
                 <div className="relative w-full h-24 sm:h-28 overflow-hidden bg-[#05070f] border-b border-white/10">
@@ -140,20 +147,31 @@ const BuildingsPage = ({ dispatch, setActiveTab, safeSetActiveTab, currentPlanet
                   )}
                 </div>
 
-                {/* Contenido de la Tarjeta */}
-                <div className="p-4 flex flex-col justify-between flex-1">
+                {/* Contenido de la Tarjeta (3 Bloques Estandarizados) */}
+                <div className="p-3.5 flex flex-col justify-between flex-1 gap-2">
+                  {/* Bloque 1: Situación Actual y Producción del Sector */}
                   <div>
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors truncate">
+                    <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wide group-hover:text-cyan-300 transition-colors truncate">
                       {m.name.replace('Ministerio de ', '')}
                     </h3>
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-1">
-                      <span>{stats.activeCount}/{stats.buildingCount} activos</span>
-                      <span className="text-cyan-300 font-bold">{stats.totalLevels} Nvs.</span>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-1 bg-cyan-950/30 border border-cyan-500/20 rounded px-2 py-1">
+                      <span>Rendimiento:</span>
+                      <span className="text-emerald-300 font-bold">{stats.outputDesc}</span>
                     </div>
                   </div>
 
-                  {/* Barra de Progreso */}
-                  <div className="w-full mt-3">
+                  {/* Bloque 2: Población / Obreros Asignados */}
+                  <div className="flex items-center justify-between text-[10px] font-mono bg-purple-950/25 border border-purple-500/20 rounded px-2 py-1">
+                    <span className="text-purple-300">👷 Dotación:</span>
+                    <span className="text-white font-bold">{fmt(stats.workers)} hab</span>
+                  </div>
+
+                  {/* Bloque 3: Estado Operativo y Niveles */}
+                  <div className="w-full pt-1 border-t border-white/5 space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                      <span>{stats.activeCount}/{stats.buildingCount} activos</span>
+                      <span className="text-cyan-300 font-bold">{stats.totalLevels} Nvs.</span>
+                    </div>
                     <div className="w-full h-1.5 bg-[#05070f] rounded-full overflow-hidden border border-white/5">
                       <div
                         className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"

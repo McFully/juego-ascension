@@ -104,8 +104,11 @@ export const handleCombatMission = (mission, state) => {
     else if (aiIntel?.level === 'medium') intelBonus += 0.04;
   }
   let result;
+  const planetArsenal = targetPlanet?.arsenal || { heavyMissiles: 100, kineticShells: 500, plasmaCells: 250 };
+  const originPlayerPlanet = !mission.isAI ? state.planets.find(p => p.id === mission.from?.id) : null;
+  const attackerArsenal = originPlayerPlanet ? (originPlayerPlanet.arsenal || { heavyMissiles: 100, kineticShells: 500, plasmaCells: 250 }) : null;
   try {
-    result = simulateCombat(fleet, mergedDefFleet, defDefenses, attackerTech, defenderTech, 6, state.blueprints, atkFaction, defFaction, mission.autoRetreat || false, mission.formation || 'standard', intelBonus, state.relics || []);
+    result = simulateCombat(fleet, mergedDefFleet, defDefenses, attackerTech, defenderTech, 6, state.blueprints, atkFaction, defFaction, mission.autoRetreat || false, mission.formation || 'standard', intelBonus, state.relics || [], planetArsenal, attackerArsenal);
   } catch (e) {
     console.error('[Ascensión] simulateCombat (inside processMission) error:', e);
     result = { winner: 'defender', rounds: 0, atkLosses: {}, defLosses: {}, debris: { metal: 0, crystal: 0 }, atkSurvivors: fleet || {}, defShipSurvivors: {}, defDefenseSurvivors: {} };
@@ -138,6 +141,13 @@ export const handleCombatMission = (mission, state) => {
   let returnFleet = {};
   let loot = { metal: 0, crystal: 0, deuterium: 0 };
 
+  if (originPlayerPlanet && result.remainingAtkAmmo) {
+    newState = updatePlanet(newState, originPlayerPlanet.id, p => ({
+      ...p,
+      arsenal: result.remainingAtkAmmo
+    }));
+  }
+
   // Registrar bajas y victorias en SQLite para naves con matrícula
   if (!mission.isAI && typeof window !== "undefined" && window.electronAPI && typeof window.electronAPI.dbResolveCombatShips === "function") {
     const targetName = targetAI ? targetAI.name : (targetPlanet?.name || 'Sector Hostil');
@@ -155,7 +165,7 @@ export const handleCombatMission = (mission, state) => {
   if (mission.isAI) {
     if (result.winner === 'defender') {
       newState.stats = { ...newState.stats, combatsWon: newState.stats.combatsWon + 1 };
-      newState = updatePlanet(newState, targetPlanet.id, p => ({ ...p, fleet: result.defShipSurvivors, defenses: { ...p.defenses, ...result.defDefenseSurvivors } }));
+      newState = updatePlanet(newState, targetPlanet.id, p => ({ ...p, fleet: result.defShipSurvivors, defenses: { ...p.defenses, ...result.defDefenseSurvivors }, arsenal: result.remainingAmmo || p.arsenal }));
       type = 'success'; message = `🏆 ¡Victoria! Repeliste el ataque${supportText}. Escombros: ${fmt(result.debris.metal)}M/${fmt(result.debris.crystal)}C`;
     } else if (result.winner === 'attacker') {
       newState.stats = { ...newState.stats, combatsLost: newState.stats.combatsLost + 1 };
@@ -181,9 +191,9 @@ export const handleCombatMission = (mission, state) => {
           deuterium: storage.deuterium * vaultMult,
         };
         const excess = {
-          metal: Math.max(0, targetPlanet.resources.metal - protectedLimit.metal),
-          crystal: Math.max(0, targetPlanet.resources.crystal - protectedLimit.crystal),
-          deuterium: Math.max(0, targetPlanet.resources.deuterium - protectedLimit.deuterium),
+          metal: Math.max(0, (targetPlanet.resources?.metal || 0) - protectedLimit.metal),
+          crystal: Math.max(0, (targetPlanet.resources?.crystal || 0) - protectedLimit.crystal),
+          deuterium: Math.max(0, (targetPlanet.resources?.deuterium || 0) - protectedLimit.deuterium),
         };
         const totalExcess = excess.metal + excess.crystal + excess.deuterium;
         const attackerCargo = Object.entries(result.atkSurvivors).reduce((acc, [id, qty]) => acc + (SHIPS[id]?.cargo || 0) * qty, 0);
@@ -197,17 +207,20 @@ export const handleCombatMission = (mission, state) => {
         newState = updatePlanet(newState, targetPlanet.id, p => ({
           ...p,
           resources: {
-            metal: p.resources.metal - defLoot.metal,
-            crystal: p.resources.crystal - defLoot.crystal,
-            deuterium: p.resources.deuterium - defLoot.deuterium,
+            ...(p.resources || {}),
+            metal: (p.resources?.metal || 0) - defLoot.metal,
+            crystal: (p.resources?.crystal || 0) - defLoot.crystal,
+            deuterium: (p.resources?.deuterium || 0) - defLoot.deuterium,
           },
-          fleet: result.defShipSurvivors, defenses: { ...p.defenses, ...result.defDefenseSurvivors },
+          fleet: result.defShipSurvivors,
+          defenses: { ...p.defenses, ...result.defDefenseSurvivors },
+          arsenal: result.remainingAmmo || p.arsenal,
         }));
         type = 'error'; message = `💀 Batalla perdida${supportText}. Perdiste ${fmt(defLoot.metal)}M, ${fmt(defLoot.crystal)}C, ${fmt(defLoot.deuterium)}D (Protegido por almacenes: ${fmt(protectedLimit.metal)}M/${fmt(protectedLimit.crystal)}C)`;
       }
     } else {
       newState.stats = { ...newState.stats, combatsDraw: newState.stats.combatsDraw + 1 };
-      newState = updatePlanet(newState, targetPlanet.id, p => ({ ...p, fleet: result.defShipSurvivors, defenses: { ...p.defenses, ...result.defDefenseSurvivors } }));
+      newState = updatePlanet(newState, targetPlanet.id, p => ({ ...p, fleet: result.defShipSurvivors, defenses: { ...p.defenses, ...result.defDefenseSurvivors }, arsenal: result.remainingAmmo || p.arsenal }));
       type = 'warning'; message = `🤝 Combate empatado${supportText}`;
     }
   } else {
@@ -261,6 +274,7 @@ export const handleCombatMission = (mission, state) => {
             return {
               ...p,
               resources: {
+                ...(p.resources || {}),
                 metal: Math.max(0, (p.resources?.metal || 0) - loot.metal),
                 crystal: Math.max(0, (p.resources?.crystal || 0) - loot.crystal),
                 deuterium: Math.max(0, (p.resources?.deuterium || 0) - loot.deuterium),
@@ -312,9 +326,9 @@ export const handleCombatMission = (mission, state) => {
         const maxCargo = Object.entries(result.atkSurvivors).reduce((acc, [id, qty]) => acc + (SHIPS[id]?.cargo || 0) * qty * cargoMultiplier, 0);
         const storage = calcStorage(targetPlanet.buildings);
         const excess = {
-          metal: Math.max(0, targetPlanet.resources.metal - storage.metal * 0.1),
-          crystal: Math.max(0, targetPlanet.resources.crystal - storage.crystal * 0.1),
-          deuterium: Math.max(0, targetPlanet.resources.deuterium - storage.deuterium * 0.1),
+          metal: Math.max(0, (targetPlanet.resources?.metal || 0) - storage.metal * 0.1),
+          crystal: Math.max(0, (targetPlanet.resources?.crystal || 0) - storage.crystal * 0.1),
+          deuterium: Math.max(0, (targetPlanet.resources?.deuterium || 0) - storage.deuterium * 0.1),
         };
         const totalExcess = excess.metal + excess.crystal + excess.deuterium;
         const canTake = Math.min(maxCargo, totalExcess * 0.5);
@@ -328,14 +342,22 @@ export const handleCombatMission = (mission, state) => {
         newState = updatePlanet(newState, targetPlanet.id, p => ({
           ...p,
           resources: {
-            metal: p.resources.metal - loot.metal,
-            crystal: p.resources.crystal - loot.crystal,
-            deuterium: p.resources.deuterium - loot.deuterium,
+            ...(p.resources || {}),
+            metal: (p.resources?.metal || 0) - loot.metal,
+            crystal: (p.resources?.crystal || 0) - loot.crystal,
+            deuterium: (p.resources?.deuterium || 0) - loot.deuterium,
           },
-          fleet: result.defShipSurvivors, defenses: { ...p.defenses, ...result.defDefenseSurvivors },
+          fleet: result.defShipSurvivors,
+          defenses: { ...p.defenses, ...result.defDefenseSurvivors },
+          arsenal: result.remainingAmmo || p.arsenal,
         }));
       } else {
-        newState = updatePlanet(newState, targetPlanet.id, p => ({ ...p, fleet: result.defShipSurvivors, defenses: { ...p.defenses, ...result.defDefenseSurvivors } }));
+        newState = updatePlanet(newState, targetPlanet.id, p => ({
+          ...p,
+          fleet: result.defShipSurvivors,
+          defenses: { ...p.defenses, ...result.defDefenseSurvivors },
+          arsenal: result.remainingAmmo || p.arsenal,
+        }));
       }
     }
 

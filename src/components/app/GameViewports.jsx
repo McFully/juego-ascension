@@ -25,6 +25,7 @@ const GalacticObservatoryPage = lazy(() => import("../../pages/GalacticObservato
 const ImperialWikiPage = lazy(() => import("../../pages/ImperialWikiPage.jsx"));
 const SectorManagementView = lazy(() => import("../sectors/SectorManagementView.jsx").then(m => ({ default: m.SectorManagementView })));
 const GalacticBankPage = lazy(() => import("../../pages/GalacticBankPage.jsx").then(m => ({ default: m.GalacticBankPage })));
+const PlanetaryBankPage = lazy(() => import("../../pages/PlanetaryBankPage.jsx").then(m => ({ default: m.PlanetaryBankPage })));
 
 export const GameViewports = ({
   activeTab,
@@ -89,9 +90,21 @@ export const GameViewports = ({
 }) => {
   return (
     <Suspense fallback={<div className="text-center text-slate-500 py-12">Cargando módulo...</div>}>
-      {activeTab === "overview" && <OverviewPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} storage={storage} MISSIONS={MISSIONS} BUILDINGS={BUILDINGS} RESEARCH={RESEARCH} SHIPS={SHIPS} DEFENSES={DEFENSES} S={S} QueueDisplay={QueueDisplay} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} isOutdated={isOutdated} onOpenCodex={onOpenCodex} safeSetActiveTab={safeSetActiveTab} onOpenSettings={onOpenSettings} onReturnToMenu={onReturnToMenu} />}
+      {/* Vistas primarias preservadas en memoria para cambio instantáneo sin cortina */}
+      <div className={activeTab === "overview" ? "block" : "hidden"}>
+        <OverviewPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} storage={storage} MISSIONS={MISSIONS} BUILDINGS={BUILDINGS} RESEARCH={RESEARCH} SHIPS={SHIPS} DEFENSES={DEFENSES} S={S} QueueDisplay={QueueDisplay} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} isOutdated={isOutdated} onOpenCodex={onOpenCodex} safeSetActiveTab={safeSetActiveTab} onOpenSettings={onOpenSettings} onReturnToMenu={onReturnToMenu} />
+      </div>
+      <div className={activeTab === "buildings" ? "block" : "hidden"}>
+        <BuildingsPage dispatch={dispatch} setActiveTab={safeSetActiveTab} safeSetActiveTab={safeSetActiveTab} currentPlanet={currentPlanet} state={state} production={production} fmt={fmt} />
+      </div>
+      <div className={activeTab === "shipyard" ? "block" : "hidden"}>
+        <ShipyardPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} SHIPS={SHIPS} RESEARCH={RESEARCH} BUILDINGS={BUILDINGS} S={S} SafeImg={SafeImg} CardBanner={CardBanner} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} shipCost={shipCost} calcShipTime={calcShipTime} meetsReq={meetsReq} getShipStats={getShipStats} canAfford={canAfford} constructionDiscount={constructionDiscount} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />
+      </div>
+      <div className={activeTab === "defense" ? "block" : "hidden"}>
+        <DefensePage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} DEFENSES={DEFENSES} MISSILES={MISSILES} RESEARCH={RESEARCH} S={S} SafeImg={SafeImg} CardBanner={CardBanner} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} defenseCost={defenseCost} calcDefenseTime={calcDefenseTime} meetsReq={meetsReq} getDefenseStats={getDefenseStats} getEffectiveTech={getEffectiveTech} canAfford={canAfford} constructionDiscount={constructionDiscount} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />
+      </div>
+
       {activeTab === "missions" && <MissionsPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} setActiveTab={safeSetActiveTab} MISSIONS={MISSIONS} S={S} onOpenCodex={onOpenCodex} production={production} fmt={fmt} />}
-      {activeTab === "buildings" && <BuildingsPage dispatch={dispatch} setActiveTab={safeSetActiveTab} safeSetActiveTab={safeSetActiveTab} currentPlanet={currentPlanet} state={state} production={production} fmt={fmt} />}
       {(activeTab === "research" || activeTab === "techTree") && (
         <TechTreePage
           state={state}
@@ -105,11 +118,10 @@ export const GameViewports = ({
           safeSetActiveTab={safeSetActiveTab}
         />
       )}
-      {activeTab === "shipyard" && <ShipyardPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} SHIPS={SHIPS} RESEARCH={RESEARCH} BUILDINGS={BUILDINGS} S={S} SafeImg={SafeImg} CardBanner={CardBanner} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} shipCost={shipCost} calcShipTime={calcShipTime} meetsReq={meetsReq} getShipStats={getShipStats} canAfford={canAfford} constructionDiscount={constructionDiscount} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />}
-      {activeTab === "defense" && <DefensePage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} DEFENSES={DEFENSES} MISSILES={MISSILES} RESEARCH={RESEARCH} S={S} SafeImg={SafeImg} CardBanner={CardBanner} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} defenseCost={defenseCost} calcDefenseTime={calcDefenseTime} meetsReq={meetsReq} getDefenseStats={getDefenseStats} getEffectiveTech={getEffectiveTech} canAfford={canAfford} constructionDiscount={constructionDiscount} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />}
       {activeTab === "missiles" && <MissilesPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} MISSILES={MISSILES} S={S} fmt={fmt} canAfford={canAfford} constructionDiscount={constructionDiscount} onOpenCodex={onOpenCodex} meetsReq={meetsReq} RESEARCH={RESEARCH} />}
-      {activeTab === "galaxy" && <GalaxyPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} setSelectedTarget={setSelectedTarget} setActiveTab={safeSetActiveTab} S={S} fmt={fmt} fmtTime={fmtTime} onOpenCodex={onOpenCodex} />}
-      {activeTab === "fleet" && <FleetPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} selectedTarget={selectedTarget} setSelectedTarget={setSelectedTarget} SHIPS={SHIPS} DEFENSES={DEFENSES} BUILDINGS={BUILDINGS} SHIP_CHASSIS={SHIP_CHASSIS} S={S} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} getEffectiveTech={getEffectiveTech} simulateCombat={simulateCombat} getShipStats={getShipStats} calcCustomShipStats={calcCustomShipStats} onOpenCodex={onOpenCodex} />}
+      {activeTab === "galaxy" && <GalaxyPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} setSelectedTarget={setSelectedTarget} setActiveTab={safeSetActiveTab} S={S} fmt={fmt} fmtTime={fmtTime} onOpenCodex={onOpenCodex} mode={state.currentViewParent === 'imperial_hub' ? 'imperial' : 'imperial'} />}
+      {activeTab === "fleet" && <FleetPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} selectedTarget={selectedTarget} setSelectedTarget={setSelectedTarget} SHIPS={SHIPS} DEFENSES={DEFENSES} BUILDINGS={BUILDINGS} SHIP_CHASSIS={SHIP_CHASSIS} S={S} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} getEffectiveTech={getEffectiveTech} simulateCombat={simulateCombat} getShipStats={getShipStats} calcCustomShipStats={calcCustomShipStats} onOpenCodex={onOpenCodex} mode="local" />}
+      {activeTab === "imperial_fleet" && <FleetPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} selectedTarget={selectedTarget} setSelectedTarget={setSelectedTarget} SHIPS={SHIPS} DEFENSES={DEFENSES} BUILDINGS={BUILDINGS} SHIP_CHASSIS={SHIP_CHASSIS} S={S} ProgressBar={ProgressBar} fmt={fmt} fmtTime={fmtTime} getEffectiveTech={getEffectiveTech} simulateCombat={simulateCombat} getShipStats={getShipStats} calcCustomShipStats={calcCustomShipStats} onOpenCodex={onOpenCodex} mode="imperial" />}
       {activeTab === "combat" && <CombatPage state={state} currentPlanet={currentPlanet} production={production} SHIPS={SHIPS} DEFENSES={DEFENSES} S={S} ProgressBar={ProgressBar} fmt={fmt} onOpenCodex={onOpenCodex} />}
       {activeTab === "stats" && <StatsPage state={state} currentPlanet={currentPlanet} production={production} ACHIEVEMENTS={ACHIEVEMENTS} SHIPS={SHIPS} DEFENSES={DEFENSES} S={S} fmt={fmt} fmtTime={fmtTime} onOpenCodex={onOpenCodex} />}
       {activeTab === "wiki" && <ImperialWikiPage state={state} currentPlanet={currentPlanet} production={production} fmt={fmt} />}
@@ -117,10 +129,21 @@ export const GameViewports = ({
       {activeTab === "shipDesign" && <ShipDesignPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} SHIP_CHASSIS={SHIP_CHASSIS} SHIP_WEAPONS={SHIP_WEAPONS} SHIP_ENGINES={SHIP_ENGINES} SHIP_SHIELDS={SHIP_SHIELDS} SHIP_MODULES={SHIP_MODULES} S={S} ProgressBar={ProgressBar} fmtTime={fmtTime} shipTimeBonus={shipTimeBonus} calcCustomShipStats={calcCustomShipStats} calcCustomShipCost={calcCustomShipCost} calcCustomShipTime={calcCustomShipTime} canAfford={canAfford} GAME_SPEED={GAME_SPEED} onOpenCodex={onOpenCodex} />}
       {activeTab === "communications" && <CommunicationsPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
       {activeTab === "telemetry" && <TelemetryPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} safeSetActiveTab={safeSetActiveTab} />}
-      {activeTab === "market" && <GalacticMarketPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
+      {activeTab === "market" && <GalacticMarketPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} mode="imperial" />}
+      {activeTab === "local_market" && <GalacticMarketPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} mode="local" />}
       {activeTab === "colony_network" && <ColonyNetworkPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} onOpenCodex={onOpenCodex} setActiveTab={safeSetActiveTab} />}
-      {activeTab === "sectors" && <SectorManagementView state={state} dispatch={dispatch} currentPlanet={currentPlanet} fmt={fmt} />}
-      {activeTab === "galactic_observatory" && <GalacticObservatoryPage state={state} fmt={fmt} />}
+      {activeTab === "sectors" && <SectorManagementView state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} />}
+      {activeTab === "galactic_observatory" && <GalacticObservatoryPage state={state} currentPlanet={currentPlanet} production={production} fmt={fmt} />}
+      {activeTab === "planetary_bank" && (
+        <PlanetaryBankPage
+          state={state}
+          dispatch={dispatch}
+          currentPlanet={currentPlanet}
+          production={production}
+          fmt={fmt}
+          setActiveTab={safeSetActiveTab}
+        />
+      )}
       {activeTab === "galactic_bank" && (
         <GalacticBankPage
           state={state}

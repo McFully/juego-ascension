@@ -198,6 +198,17 @@ export const DefenseGrid = ({
                       );
                     })()}
 
+                    {/* BLOQUE 2: Censo y Guarnición Requerida */}
+                    <div className="p-2 rounded-xl bg-[#05070f]/60 border border-white/5 font-mono text-[10px] mb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-slate-400">
+                        <span>🎖️</span>
+                        <span className="text-[9px] uppercase tracking-wider">Guarnición requerida:</span>
+                      </span>
+                      <span className="text-cyan-300 font-bold">
+                        {fmt(Math.round(d.garrison ? d.garrison * 10 : 2))} soldados / ud
+                      </span>
+                    </div>
+
                     {/* Costes e Indicador de Tiempo */}
                     <div className="p-2 rounded-xl bg-white/[0.02] border border-white/5 space-y-1 mb-2 font-mono text-[10px]">
                       <div className="flex items-center justify-between text-slate-400 pb-1 border-b border-white/5">

@@ -80,7 +80,7 @@ function createSchema(db) {
     -- PLANETAS DEL IMPERIO Y IAS
     -- ═══════════════════════════════════════════════════════════════
     CREATE TABLE IF NOT EXISTS planets (
-      id TEXT PRIMARY KEY,
+      id TEXT NOT NULL,
       session_id TEXT NOT NULL,
       owner_id TEXT NOT NULL,
       name TEXT NOT NULL,
@@ -91,6 +91,7 @@ function createSchema(db) {
       planet_size INTEGER NOT NULL,
       is_ai INTEGER DEFAULT 0,
       data_json TEXT NOT NULL,
+      PRIMARY KEY (id, session_id),
       FOREIGN KEY(session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_planets_session ON planets(session_id);
@@ -213,7 +214,7 @@ function createSchema(db) {
 // ═══════════════════════════════════════════════════════════════
 
 // Versión de esquema actual. Súbele SOLO cuando añadas una migración abajo.
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 function tableExists(db, table) {
   return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?").get(table);
@@ -316,6 +317,47 @@ const MIGRATIONS = [
           calls_count INTEGER DEFAULT 0
         );
       `);
+    },
+  },
+  {
+    // v5 -> v6: planets.id pasa de PRIMARY KEY global a PRIMARY KEY compuesta (id, session_id).
+    // Permite tener múltiples partidas con los mismos IDs de planetas o importar partidas
+    // sin fallo por restricción UNIQUE de SQLite.
+    version: 6,
+    name: "planets_composite_primary_key",
+    up(db) {
+      if (!tableExists(db, "planets")) return;
+      const isComposite = db.prepare(`
+        SELECT COUNT(*) as pk_count FROM pragma_table_info('planets') WHERE pk > 0
+      `).get();
+      if (isComposite && isComposite.pk_count > 1) {
+        return; // Ya tiene PK compuesta
+      }
+      db.transaction(() => {
+        db.exec(`
+          CREATE TABLE planets_migration_v6 (
+            id TEXT NOT NULL,
+            session_id TEXT NOT NULL,
+            owner_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            galaxy INTEGER NOT NULL,
+            system INTEGER NOT NULL,
+            position INTEGER NOT NULL,
+            biome TEXT NOT NULL,
+            planet_size INTEGER NOT NULL,
+            is_ai INTEGER DEFAULT 0,
+            data_json TEXT NOT NULL,
+            PRIMARY KEY (id, session_id),
+            FOREIGN KEY(session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
+          );
+          INSERT INTO planets_migration_v6 SELECT * FROM planets;
+          DROP TABLE planets;
+          ALTER TABLE planets_migration_v6 RENAME TO planets;
+          CREATE INDEX IF NOT EXISTS idx_planets_session ON planets(session_id);
+          CREATE INDEX IF NOT EXISTS idx_planets_coords ON planets(galaxy, system, position);
+          CREATE INDEX IF NOT EXISTS idx_planets_owner ON planets(owner_id);
+        `);
+      })();
     },
   },
 ];

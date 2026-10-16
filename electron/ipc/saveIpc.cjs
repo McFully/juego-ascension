@@ -252,11 +252,9 @@ function registerSaveIpc(getMainWindow) {
         }
       }
 
-      // Nueva sesión — lógica original de colisión de slug
+      // Nueva sesión — garantizar slug libre sin colisión UNIQUE
       let counter = 2;
       while (sessionExists(finalSlug) && counter < 1000) {
-        const existing = loadFullGameState(finalSlug);
-        if (existing && existing.playerName === name) break;
         finalSlug = `${slug}-${counter}`;
         counter++;
       }
@@ -306,11 +304,9 @@ function registerSaveIpc(getMainWindow) {
         }
       }
 
-      // Nueva sesión
+      // Nueva sesión — garantizar slug libre sin colisión UNIQUE
       let counter = 2;
       while (sessionExists(finalSlug) && counter < 1000) {
-        const existing = loadFullGameState(finalSlug);
-        if (existing && existing.playerName === name) break;
         finalSlug = `${slug}-${counter}`;
         counter++;
       }

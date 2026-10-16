@@ -52,7 +52,7 @@ export const EXPANDED_BUILDINGS = {
   // === GOBIERNO Y DIPLOMACIA ===
   sectorGovPalace: { name: 'Palacio Gobernador', icon: '👑', cost: { m: 150000, c: 100000, d: 40000 }, factor: 1.8, energy: -30, cat: 'government', desc: 'Sede administrativa local.' },
   permanentEmbassy: { name: 'Embajada Interestelar', icon: '🏢', cost: { m: 80000, c: 60000, d: 20000 }, factor: 1.6, energy: -16, cat: 'government', desc: 'Delegación aliada.' },
-  financeMinistry: { name: 'Ministerio de Finanzas', icon: '💵', cost: { m: 90000, c: 70000, d: 30000 }, factor: 1.7, energy: -18, cat: 'government', desc: 'Recaudación créditos.' },
+  financeMinistry: { name: 'Banca Planetaria', icon: '🏦', cost: { m: 90000, c: 70000, d: 30000 }, factor: 1.7, energy: -18, cat: 'government', desc: 'Depósitos y custodia financiera planetaria.' },
   councilChamber: { name: 'Consejo Planetario', icon: '🏛️', cost: { m: 100000, c: 80000, d: 30000 }, factor: 1.7, energy: -25, cat: 'government', desc: 'Leyes e influencia.' },
   consulateHeadquarters: { name: 'Consulado Federación', icon: '🏢', cost: { m: 120000, c: 90000, d: 35000 }, factor: 1.7, energy: -18, cat: 'government', desc: 'Representación federal.' },
   galacticPublicRelation: { name: 'Relaciones Públicas', icon: '📣', cost: { m: 50000, c: 40000, d: 15000 }, factor: 1.6, energy: -14, cat: 'government', desc: 'Propaganda e imagen.' },
@@ -84,4 +84,8 @@ export const EXPANDED_BUILDINGS = {
   orbitalRefuelRing: { name: 'Anillo Repostaje', icon: '⛽', cost: { m: 90000, c: 70000, d: 25000 }, factor: 1.7, energy: -25, cat: 'storage', desc: 'Repostaje orbital.' },
   futuresExchange: { name: 'Bolsa Futuros', icon: '📈', cost: { m: 80000, c: 60000, d: 20000 }, factor: 1.6, energy: -18, cat: 'storage', desc: 'Finanzas rápidas.' },
   centralLogisticHub: { name: 'Central Logística', icon: '🏢', cost: { m: 150000, c: 110000, d: 45000 }, factor: 1.8, energy: -35, cat: 'storage', desc: 'Logística global imperio.' },
+
+  // === INFRAESTRUCTURA VITAL Y DEFENSA EXPANDIDA ===
+  deepAquiferDrill: { name: 'Acuíferos Profundos', icon: '💧', cost: { m: 18000, c: 14000, d: 4000 }, factor: 1.5, energy: -15, energyFactor: 1.05, cat: 'civil', desc: 'Perforación de bolsas de agua fósil profunda para soporte vital en biomas áridos.' },
+  militaryBarracks: { name: 'Cuartel y Guarnición', icon: '🎖️', cost: { m: 25000, c: 15000, d: 5000 }, factor: 1.5, energy: -12, energyFactor: 1.04, cat: 'defense', desc: 'Instrucción y alojamiento de tropas de guarnición para operar defensas y mantener el orden social.' },
 };

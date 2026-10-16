@@ -13,6 +13,21 @@ export const handleStartShip = (state, action) => {
   if (!canAfford(planet.resources, cost)) return state;
   if (state.shipQueue.length >= 5) return state;
 
+  const crewNeeded = (s?.crew || 0) * quantity;
+  const currentPop = planet.population || 0;
+  if (crewNeeded > 0 && currentPop < crewNeeded + 100) {
+    // Se preserva un mínimo de 100 habitantes para no despoblar el planeta por completo
+    return {
+      ...state,
+      notifications: [...(state.notifications || []), {
+        id: uid(),
+        type: 'warning',
+        message: `⚠️ Censo insuficiente: se requieren ${crewNeeded.toLocaleString()} tripulantes para botar estas naves.`,
+        timestamp: Date.now()
+      }]
+    };
+  }
+
   const mins = planet.ministries || state.ministries || {};
   let bonus = shipTimeBonus(planet.buildings);
   if (planet.specialization === 'military') bonus *= 1.20;
@@ -23,7 +38,11 @@ export const handleStartShip = (state, action) => {
     const newQty = existing.quantity + quantity;
     const time = calcShipTime(shipId, newQty, planet.buildings.shipyard, planet.buildings.naniteFactory || 0, GAME_SPEED, bonus, mins);
     const newEndTime = existing.startTime + time * 1000;
-    let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: deduct(p.resources, cost) }));
+    let newState = updatePlanet(state, planet.id, p => ({
+      ...p,
+      population: Math.max(100, (p.population || 0) - crewNeeded),
+      resources: deduct(p.resources, cost)
+    }));
     const newQueue = [...state.shipQueue];
     newQueue[existingIdx] = stampTimeMult(newState, 'ship', { ...existing, quantity: newQty, endTime: newEndTime });
     newState.shipQueue = newQueue;
@@ -37,10 +56,14 @@ export const handleStartShip = (state, action) => {
   const techSnapshot = extractShipTechSnapshot(state.research || {});
   const techGen = calculateTechGeneration(techSnapshot);
 
-  let newState = updatePlanet(state, planet.id, p => ({ ...p, resources: newRes }));
+  let newState = updatePlanet(state, planet.id, p => ({
+    ...p,
+    population: Math.max(100, (p.population || 0) - crewNeeded),
+    resources: newRes
+  }));
   newState.shipQueue = [...state.shipQueue, stampTimeMult(newState, 'ship', {
     id: uid(), planetId: planet.id, shipId, quantity, startTime: Date.now(), endTime,
-    techSnapshot, techGen
+    techSnapshot, techGen, crewAllocated: crewNeeded
   })];
   return newState;
 };

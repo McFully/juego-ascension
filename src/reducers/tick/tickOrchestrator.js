@@ -25,6 +25,8 @@ import { processPirateRaidTick } from './pirateRaidTick.js';
 import { processWorldAlertsTick } from './worldAlertTick.js';
 import { createFleetReturnEvent, appendFleetReturnTacticalEvent } from './fleetReturnEvents.js';
 import { processBankLiquidation } from '../../utils/galacticBankCore.js';
+import { processSupplyRoutesTick } from './supplyRoutesTick.js';
+import { processFinancialBalanceTick } from './financialBalanceTick.js';
 
 export const processTick = (state) => {
   const now = Date.now();
@@ -240,6 +242,9 @@ export const processTick = (state) => {
   // 8.1 Procesamiento del ciclo de patrullas orbitales y del sistema
   newState = processPatrolsTick(newState, now);
 
+  // 8.2 Rutas de abastecimiento interplanetario automatizado
+  newState = processSupplyRoutesTick(newState);
+
   // 9. Random events
   if (Math.random() < 0.008) {
     const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
@@ -328,6 +333,9 @@ export const processTick = (state) => {
       }
     }
   }
+
+  // 12.9. Balance Financiero Global: Salarios, Mantenimiento Naval, IRPF y Velocidad Monetaria
+  newState = processFinancialBalanceTick(newState, now);
 
   // 13. Diálogos y transmisiones proactivas
   newState = processDialogueTransmissionTick(newState);

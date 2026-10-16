@@ -19,6 +19,8 @@ export const calcFlightTime = (dist, speed, missionSpeed = 10, research = {}) =>
 
   if (dist <= 2700) {
     speedMult += gravityCurrents * 0.06;
+    // Sensores de Tráfico: +10% velocidad intra-sistema por nivel
+    speedMult += (research?.riverTransitSensors || 0) * 0.10;
   }
   if (dist > 20000) {
     speedMult += compression * 0.05;
@@ -37,6 +39,10 @@ export const calcFuel = (dist, shipId, qty, driveLevel, research = {}, originPla
   fuelMult -= (research.deuteriumLiquidCell || 0) * 0.04;
   fuelMult -= (research.magnetohydrodynamics || 0) * 0.05;
   fuelMult -= (research.solarPropulsionFreight || 0) * 0.06;
+  // Reabastecimiento en Ruta: -8% consumo en vuelos de media/larga distancia
+  if (dist > 2700) {
+    fuelMult -= (research.routeRefueling || 0) * 0.08;
+  }
 
   if (originPlanet) {
     const grav = originPlanet.gravity !== undefined ? originPlanet.gravity : 2;

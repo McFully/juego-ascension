@@ -33,7 +33,8 @@ function migrateJsonToSqlite(saveFilePath, saveSlug = "universe") {
   }
 
   // 1. Guardar el state completo vía gameRepository (tablas normalizadas)
-  saveFullGameState(saveSlug, rawData);
+  const savedSession = saveFullGameState(saveSlug, rawData);
+  const sessionId = savedSession ? savedSession.sessionId : null;
 
   // 2. Migrar naves con matrícula militar al Registro Naval
   const db = getDb();
@@ -53,6 +54,7 @@ function migrateJsonToSqlite(saveFilePath, saveSlug = "universe") {
             const regCode = generateRegistryCode(p.faction || "HUM", pIdx + 1, chassisId, globalSeq);
             allShipsToInsert.push({
               id: shipId,
+              session_id: sessionId,
               registry_code: regCode,
               custom_name: null,
               chassis_id: chassisId,
@@ -80,7 +82,7 @@ function migrateJsonToSqlite(saveFilePath, saveSlug = "universe") {
 
   if (allShipsToInsert.length > 0) {
     console.log(`[Ascensión Migrator] Insertando ${allShipsToInsert.length} naves con matrícula única en SQLite...`);
-    insertShipsBatch(allShipsToInsert);
+    insertShipsBatch(allShipsToInsert, sessionId);
   }
 
   console.log("[Ascensión Migrator] Migración a SQLite completada con éxito absoluto.");

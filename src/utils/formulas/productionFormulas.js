@@ -199,9 +199,18 @@ const calcProductionRaw = (buildings, research, temp, speed = 1, factionKey = 'h
       govCrystalMult += infraUpgrades.deep_mines * 0.12;
       govDeutMult += infraUpgrades.deep_mines * 0.12;
     }
+    // Directiva dir_anti_corruption (+15% a la recaudación e ingresos)
+    if (ecoDirs.dir_anti_corruption) {
+      govMetalMult += 0.05;
+      govCrystalMult += 0.05;
+      govDeutMult += 0.05;
+    }
   }
 
-  const globalTechMult = plasmaBonus * miningAutoBonus * aiProdBonus;
+  // Integración de tecnologías huérfanas: Automatización Total (fullAuto) e Integración Cibernética (cyberIntegration)
+  const fullAutoBonus = 1 + (research.fullAuto || 0) * 0.05;
+  const cyberBonus = 1 + (research.cyberIntegration || 0) * 0.04;
+  const globalTechMult = plasmaBonus * miningAutoBonus * aiProdBonus * fullAutoBonus * cyberBonus;
 
   let metalProd = metalBase * globalTechMult * prodBonus * govMetalMult * (1 + biomeBonusMetal + traitBonusMetal - traitMalus) * gravProdMult;
   let crystalProd = crystalBase * globalTechMult * prodBonus * govCrystalMult * (1 + biomeBonusCrystal + traitBonusCrystal - traitMalus) * gravProdMult;

@@ -49,7 +49,7 @@ export const PlanetaryCommandHub = React.memo(({
   const globalDebris = (state?.debrisField?.metal || 0) + (state?.debrisField?.crystal || 0);
   const totalDebrisTons = localDebris > 0 ? localDebris : globalDebris;
 
-  const bankLevel = (planet.buildings?.exchangeBank || planet.buildings?.futuresExchange || 0);
+  const bankLevel = (planet.buildings?.financeMinistry || 0);
 
   const cardsMap = useMemo(() => buildPlanetaryCommandCards({
     onEnterMinistries,

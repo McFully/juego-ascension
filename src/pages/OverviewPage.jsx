@@ -74,13 +74,40 @@ const OverviewPage = ({
     } catch (_) {}
     return 'command_hub';
   }); // 'command_hub' | 'planets' | 'operations' | 'fleets'
+
+  // Si OverviewPage ya estaba montado en memoria y se fijó una sección objetivo al navegar hacia él
+  try {
+    if (typeof window !== "undefined") {
+      const pendingSec = window.sessionStorage.getItem("ascension_target_section");
+      if (pendingSec && ['command_hub', 'planets', 'operations', 'fleets'].includes(pendingSec)) {
+        window.sessionStorage.removeItem("ascension_target_section");
+        if (activeSection !== pendingSec) {
+          setActiveSection(pendingSec);
+        }
+      }
+    }
+  } catch (_) {}
   const [opFilter, setOpFilter] = useState(null);
   const [initialPlanetSearch, setInitialPlanetSearch] = useState('');
   const [emperorModalOpen, setEmperorModalOpen] = useState(false);
   const activeItems = useActiveImperialQueues(state, BUILDINGS, RESEARCH, SHIPS, DEFENSES);
 
-  // Escuchar evento de navegación directa de sección (ej: desde la miga de pan de HubTopBar)
+  // Comprobar activamente si hay una sección pendiente en sessionStorage en cada render/retorno
   React.useEffect(() => {
+    const checkTargetSection = () => {
+      try {
+        if (typeof window !== "undefined") {
+          const sec = window.sessionStorage.getItem("ascension_target_section");
+          if (sec && ['command_hub', 'planets', 'operations', 'fleets'].includes(sec)) {
+            window.sessionStorage.removeItem("ascension_target_section");
+            setActiveSection(sec);
+          }
+        }
+      } catch (_) {}
+    };
+
+    checkTargetSection();
+
     const handleOpenSectionEvent = (e) => {
       const targetSec = e?.detail?.section;
       if (targetSec && ['command_hub', 'planets', 'operations', 'fleets'].includes(targetSec)) {
@@ -90,8 +117,13 @@ const OverviewPage = ({
         }
       }
     };
+
     window.addEventListener('ascension:open-section', handleOpenSectionEvent);
-    return () => window.removeEventListener('ascension:open-section', handleOpenSectionEvent);
+    window.addEventListener('focus', checkTargetSection);
+    return () => {
+      window.removeEventListener('ascension:open-section', handleOpenSectionEvent);
+      window.removeEventListener('focus', checkTargetSection);
+    };
   }, []);
 
   const planets = state?.planets || [];

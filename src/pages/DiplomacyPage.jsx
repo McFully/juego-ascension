@@ -188,10 +188,12 @@ const DiplomacyPage = ({ state, dispatch, currentPlanet: propPlanet, production,
     if (!tradeAIPlanet) return;
     const offerVal = calcResourceValueForAI(tradeAIPlanet, tradeGive);
     let demandVal = 0;
-    if (tradeTreaty === 'trade_agreement') demandVal = 1000;
-    else if (tradeTreaty === 'research_agreement') demandVal = 800;
-    else if (tradeTreaty === 'transit_agreement') demandVal = 600;
-    else if (tradeTreaty === 'defense_agreement') demandVal = 2500;
+    if (tradeTreaty === 'trade_agreement' || tradeTreaty === 'trade_treaty') demandVal = 1000;
+    else if (tradeTreaty === 'research_agreement') demandVal = 1500;
+    else if (tradeTreaty === 'non_aggression' || tradeTreaty === 'transit_agreement') demandVal = 600;
+    else if (tradeTreaty === 'defense_agreement' || tradeTreaty === 'defensive_pact') demandVal = 2500;
+    else if (tradeTreaty === 'permanent_embassy') demandVal = 1800;
+    else if (tradeTreaty === 'joint_expedition') demandVal = 3200;
     else if (tradeTreaty === 'protectorate') demandVal = 4000;
     else if (tradeTreaty === 'vassalage') demandVal = 6000;
     
@@ -257,6 +259,7 @@ const DiplomacyPage = ({ state, dispatch, currentPlanet: propPlanet, production,
         fmt={fmt}
         breadcrumbTitle={
           subTab === 'relations' ? 'Embajada y Líderes Extraterrestres' :
+          subTab === 'enclaves' ? 'Distrito Consular en Capital' :
           subTab === 'council' ? 'Consejo Galáctico Soberano' :
           subTab === 'federations' ? 'Pactos Federativos' :
           subTab === 'crises' ? 'Mando de Alertas y Crisis' :
@@ -286,6 +289,7 @@ const DiplomacyPage = ({ state, dispatch, currentPlanet: propPlanet, production,
             <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">Cuerpo Diplomático Interestelar</h2>
             <p className="text-[10px] text-purple-400 font-mono uppercase">
               {subTab === 'relations' && 'Embajada y Líderes Extraterrestres'}
+              {subTab === 'enclaves' && 'Distrito Consular Imperial y Legaciones Extranjeras'}
               {subTab === 'council' && 'Consejo Galáctico Soberano'}
               {subTab === 'federations' && 'Pactos Federativos y Armada Federal'}
               {subTab === 'crises' && 'Mando de Alertas y Crisis Cósmicas'}
@@ -340,6 +344,113 @@ const DiplomacyPage = ({ state, dispatch, currentPlanet: propPlanet, production,
                 setBuyQty(1);
               }}
             />
+          )}
+
+          {subTab === 'enclaves' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Columna 1: Embajadas Extranjeras en nuestra Capital */}
+              <div className="bg-[#090d1f]/90 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <div>
+                    <h3 className="text-sm font-black text-amber-300 uppercase tracking-wider font-mono flex items-center gap-2">
+                      <span>🏛️</span>
+                      <span>Embajadas Extranjeras en tu Capital</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-400 font-mono">
+                      Legaciones alienígenas autorizadas en {state.planets?.[0]?.name || 'tu Capital'}. Pagan canon horario en Créditos.
+                    </p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-bold">
+                    +{fmt((state.foreignEmbassiesInCapital || []).reduce((acc, e) => acc + (e.rentHourly || 180), 0))} Cr/h
+                  </span>
+                </div>
+
+                {(state.foreignEmbassiesInCapital || []).length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 font-mono text-xs bg-black/20 rounded-xl border border-white/5 p-4">
+                    Ninguna facción extranjera tiene aún embajada en tu capital. Mantén relaciones amistosas (+25) para recibir solicitudes consulares o concédelas desde transmisiones diplomáticas.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(state.foreignEmbassiesInCapital || []).map((emb) => {
+                      const aiPlanet = (state.aiPlanets || []).find(p => p.id === emb.aiId);
+                      const rel = aiPlanet?.relation ?? 0;
+                      return (
+                        <div key={emb.aiId} className="bg-[#060916] border border-white/10 rounded-xl p-3 flex flex-col justify-between gap-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-xs font-bold text-white uppercase">{emb.empireName}</div>
+                              <div className="text-[10px] font-mono text-slate-400">
+                                Facción: <span className="text-cyan-300 uppercase">{emb.faction || 'alien'}</span> · Relación: <span className={rel >= 20 ? 'text-emerald-300 font-bold' : 'text-amber-300 font-bold'}>{rel > 0 ? `+${rel}` : rel}</span>
+                              </div>
+                            </div>
+                            <div className="text-right font-mono">
+                              <div className="text-xs font-black text-emerald-300">+{emb.rentHourly || 180} Cr/h</div>
+                              <div className="text-[9px] text-slate-400">Canon Consular</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                            <button
+                              type="button"
+                              onClick={() => dispatch({ type: 'DIPLOMACY_RAISE_EMBASSY_RENT', aiId: emb.aiId })}
+                              className="flex-1 py-1.5 px-2.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-200 text-[10px] font-mono font-bold uppercase cursor-pointer transition-all"
+                            >
+                              💰 Subir Canon (+60 Cr/h | -8 Opinión)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => dispatch({ type: 'DIPLOMACY_EXPEL_FOREIGN_EMBASSY', aiId: emb.aiId })}
+                              className="py-1.5 px-2.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/70 border border-rose-500/40 text-rose-300 text-[10px] font-mono font-bold uppercase cursor-pointer transition-all"
+                            >
+                              🚫 Expulsar (-25)
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Columna 2: Nuestras Embajadas Imperiales en el Extranjero */}
+              <div className="bg-[#090d1f]/90 border border-cyan-500/30 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <div>
+                    <h3 className="text-sm font-black text-cyan-300 uppercase tracking-wider font-mono flex items-center gap-2">
+                      <span>🌐</span>
+                      <span>Nuestras Embajadas en Mundos Extranjeros</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-400 font-mono">
+                      Sedes diplomáticas abiertas por nuestro Imperio (Coste apertura: 2.500 Cr · Mantenimiento: -120 Cr/h).
+                    </p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold">
+                    {(state.aiPlanets || []).filter(p => p.hasEmbassy || (p.activePacts || []).includes('permanent_embassy')).length} activas
+                  </span>
+                </div>
+
+                {(state.aiPlanets || []).filter(p => p.hasEmbassy || (p.activePacts || []).includes('permanent_embassy')).length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 font-mono text-xs bg-black/20 rounded-xl border border-white/5 p-4">
+                    Aún no has fundado Embajadas Permanentes en planetas extranjeros. Propón una Embajada Permanente (2.500 Cr) en acuerdos comerciales o ábrela desde el Mapa Galáctico.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(state.aiPlanets || []).filter(p => p.hasEmbassy || (p.activePacts || []).includes('permanent_embassy')).map((ai) => (
+                      <div key={ai.id} className="bg-[#060916] border border-white/10 rounded-xl p-3 flex items-center justify-between gap-2">
+                        <div>
+                          <div className="text-xs font-bold text-white uppercase">{ai.empireName || ai.name}</div>
+                          <div className="text-[10px] font-mono text-slate-400">
+                            Coordenadas: [{ai.galaxy}:{ai.system}:{ai.position}] · Relación: <span className="text-emerald-300 font-bold">{ai.relation ?? 0}</span>
+                          </div>
+                        </div>
+                        <span className="px-2 py-1 rounded bg-rose-950/50 border border-rose-500/30 text-rose-300 text-[10px] font-mono">
+                          -120 Cr/h
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {subTab === 'council' && (

@@ -26,6 +26,12 @@ const TechTreePage = ({ state, currentPlanet, production, fmt, RESEARCH, S, meet
   const totalResearchCount = Object.keys(RESEARCH || {}).length;
   const researchedCount = Object.values(state.research || {}).filter(lvl => lvl > 0).length;
 
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const visibleCats = activeFilter === 'all' 
+    ? allCats 
+    : allCats.filter(c => c.key === activeFilter);
+
   return (
     <div className="space-y-6 view-enter w-full">
       {/* DOM Superior Estandarizado (Recursos + Explorador + I+D Status) */}
@@ -55,9 +61,38 @@ const TechTreePage = ({ state, currentPlanet, production, fmt, RESEARCH, S, meet
         }
       />
 
+      {/* Filtros Rápidos Temáticos */}
+      <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar py-2 border-b border-white/10">
+        <button
+          type="button"
+          onClick={() => setActiveFilter('all')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 border ${
+            activeFilter === 'all'
+              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+              : 'bg-black/30 text-slate-400 border-white/10 hover:text-white'
+          }`}
+        >
+          🌐 Todas ({totalResearchCount})
+        </button>
+        {allCats.map(cat => (
+          <button
+            key={cat.key}
+            type="button"
+            onClick={() => setActiveFilter(cat.key)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all shrink-0 border ${
+              activeFilter === cat.key
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.3)] font-bold'
+                : 'bg-black/30 text-slate-400 border-white/10 hover:text-white'
+            }`}
+          >
+            {cat.title}
+          </button>
+        ))}
+      </div>
+
       {/* Categorías y Tarjetas */}
       <div className="space-y-6">
-        {allCats.map(cat => {
+        {visibleCats.map(cat => {
           const items = Object.entries(RESEARCH).filter(([, r]) => r.cat === cat.key);
           if (items.length === 0) return null;
 

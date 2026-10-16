@@ -48,6 +48,7 @@ const gameReducerInner = (state, action) => {
     case 'SET_TUTORIAL_COMPLETE':
     case 'DISMISS_VICTORY_OVERLAY':
     case 'SET_PLAYER_PROFILE':
+    case 'APPLY_AI_STRATEGIC_DIRECTIVE':
     // --- GOBIERNO PLANETARIO (Senado Planetario / Planeta Vivo) ---
     case 'SET_PLANET_TAX_RATE':
     case 'TOGGLE_PLANET_LOCAL_DIRECTIVE':
@@ -85,6 +86,11 @@ const gameReducerInner = (state, action) => {
     case 'BANK_WITHDRAW':
     case 'BANK_SET_INTEREST_RATE':
     case 'BANK_PROCESS_LIQUIDATION':
+    case 'PLANETARY_BANK_DEPOSIT':
+    case 'PLANETARY_BANK_WITHDRAW':
+    case 'TRANSFER_TO_GALACTIC_BANK':
+    case 'LIQUIDATION_INTEREST':
+    case 'LIQUIDATION_CUSTODY_FEE':
     case 'ESTABLISH_BILATERAL_ROUTE':
     case 'CANCEL_BILATERAL_ROUTE':
     // --- RED DE COLONIAS ---
@@ -119,6 +125,7 @@ const gameReducerInner = (state, action) => {
     case 'JUMP_GATE_TRANSFER':
     case 'BUILD_MISSILE':
     case 'LAUNCH_MISSILE':
+    case 'BUILD_ORDNANCE':
     case 'SAVE_BLUEPRINT':
     case 'DELETE_BLUEPRINT':
     case 'BUILD_CUSTOM_SHIP':
@@ -153,6 +160,10 @@ const gameReducerInner = (state, action) => {
     case 'DIPLOMACY_PAY_TRIBUTO_THREAT':
     case 'DIPLOMACY_REJECT_TRIBUTO_THREAT':
     case 'DIPLOMACY_ACCEPT_PROPOSAL':
+    case 'DIPLOMACY_ACCEPT_FOREIGN_EMBASSY':
+    case 'DIPLOMACY_SELL_EMERGENCY_ORDNANCE':
+    case 'DIPLOMACY_EXPEL_FOREIGN_EMBASSY':
+    case 'DIPLOMACY_RAISE_EMBASSY_RENT':
     case 'DIPLOMACY_BETRAYAL_RESPONSE':
     case 'DIPLOMACY_TRADE':
     case 'DIPLOMACY_TRIBUTE':
@@ -203,6 +214,8 @@ const gameReducerInner = (state, action) => {
     case 'SET_EMPEROR_AUTO_GOVERNANCE':
     case 'SET_BUILDING_MODE':
     case 'TOGGLE_AUTOMATION_RESTRICTION':
+    // --- DECRETOS MAYORES DEL SENADO (FONDOS DE TESORERÍA) ---
+    case 'EXECUTE_SENATE_DECREE':
     // --- INTERIORES DE EDIFICIO (consola operativa) ---
     case 'EXECUTE_BUILDING_ACTION':
       return governmentReducer(workingState, action);

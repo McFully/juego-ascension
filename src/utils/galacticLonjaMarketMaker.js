@@ -65,8 +65,11 @@ export function processMarketMakerTick({
     const health = lonjaState.healthState || 'NORMAL';
     const healthSpreadMult = health === 'CRITICO' ? 1.15 : health === 'PROTECCION' ? 1.08 : 1.02;
 
-    const askPrice = Number((lastP * (1.01 * healthSpreadMult)).toFixed(2));
-    const bidPrice = Number((lastP * (0.99 / healthSpreadMult)).toFixed(2));
+    // Bonificación por tecnologías comerciales: Megapuertos Comerciales y Predicción de Mercado
+    const tradeTechBonus = 1 - Math.min(0.04, ((lonjaPlanet.research?.tradeHubTheorems || 0) * 0.005) + ((lonjaPlanet.research?.marketPrediction || 0) * 0.005));
+
+    const askPrice = Number((lastP * (1.01 * healthSpreadMult * tradeTechBonus)).toFixed(2));
+    const bidPrice = Number((lastP * (0.99 / (healthSpreadMult * tradeTechBonus))).toFixed(2));
 
     // Solo vender si hay stock real (Regla 48)
     if (stock >= 5000) {

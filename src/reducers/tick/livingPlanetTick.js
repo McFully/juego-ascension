@@ -100,9 +100,19 @@ export const processLivingPlanetTick = (planet, state) => {
   }
 
   // 4. Ciclo de Biosfera y Polución
-  const miningPollution = ((b.metalMine || 0) + (b.refinery || 0) * 2) * 0.02;
+  const miningPollution = ((b.metalMine || 0) + (b.refinery || 0) * 2 + (b.automatedMine || 0) * 1.5) * 0.02;
   const governorMod = p.governance.governor?.pollutionMod || 1.0;
-  const netPollutionDelta = (miningPollution * governorMod) - (activePollutionReduction + (b.waterTreatmentPlant || 0) * 0.05);
+
+  // Descontaminación por edificios y tecnologías especializadas
+  const scrubbersClean = (b.pollutionScrubbers || 0) * 0.08;
+  const waterClean = (b.waterTreatmentPlant || 0) * 0.04;
+  const biomeDomeClean = (b.biomeDomeSimulation || 0) * 0.10;
+  const ecoParkClean = (b.geosphericEcoPark || 0) * 0.06;
+  const recycleTechBonus = 1 + (state.research?.wasteRecycleSystem || 0) * 0.08;
+  const purifTechClean = (state.research?.purificationEngineer || 0) * 0.15;
+
+  const totalCleaningPower = (activePollutionReduction + scrubbersClean + waterClean + biomeDomeClean + ecoParkClean + purifTechClean) * recycleTechBonus;
+  const netPollutionDelta = (miningPollution * governorMod) - totalCleaningPower;
 
   p.biosphere.pollutionLevel = Math.max(0, Math.min(100, (p.biosphere.pollutionLevel || 0) + netPollutionDelta));
 

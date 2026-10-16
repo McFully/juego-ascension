@@ -13,7 +13,8 @@ import {
   handleSetPlanetGovernorDirectiveMode,
   handleSetPlanetAutoGovernance,
   handleSetEmperorDirectiveMode,
-  handleSetEmperorAutoGovernance
+  handleSetEmperorAutoGovernance,
+  handleExecuteSenateDecree
 } from './government/governorActions.js';
 import {
   handleSetBuildingMode,
@@ -23,6 +24,9 @@ import {
 
 export const governmentReducer = (state, action) => {
   switch (action.type) {
+    // === DECRETOS MAYORES DEL SENADO (FONDOS DE TESORERÍA) ===
+    case 'EXECUTE_SENATE_DECREE':
+      return handleExecuteSenateDecree(state, action);
     // === COMUNICACIONES / CHAT ===
     case 'ADD_CHAT_MESSAGE':
       return handleAddChatMessage(state, action);

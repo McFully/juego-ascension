@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { IMPERIAL_SENATE_BILLS } from '../../../data/imperialCouncilData.js';
+import { SENATE_DECREES } from '../../../reducers/government/senateDecretActions.js';
 import { SafeImg } from '../../../assets.jsx';
 import { SubsystemTopBanner } from '../../navigation/SubsystemTopBanner.jsx';
 
@@ -8,6 +9,7 @@ import { SubsystemTopBanner } from '../../navigation/SubsystemTopBanner.jsx';
  * Estructurada en tarjetas grandes de alta fidelidad:
  * 1. Hemiciclo Imperial & Roster de Escaños
  * 2. Cuadrícula de Tarjetas:
+ *    - Decretos Mayores del Senado (Financiados por Tesorería)
  *    - Dictámenes y Leyes Federales en Deliberación
  *    - Diplomacia y Embajadas Galácticas
  *    - Facciones y Grupos de Presión
@@ -27,7 +29,9 @@ export const ImperialSenateView = ({
   const passedBills = council.passedBills || [];
   const planets = state?.planets || [];
   const currentInfluence = state?.influence || 0;
-  const [senateTab, setSenateTab] = useState('bills'); // 'bills' | 'diplomacy' | 'factions' | 'laws'
+  const currentTreasury = state?.ministries?.economy?.treasury || 0;
+  const activeBuffs = state?.activeSenateBuffs || [];
+  const [senateTab, setSenateTab] = useState('decrees'); // 'decrees' | 'bills' | 'diplomacy' | 'factions' | 'laws'
 
   // Cálculo de escaños por planeta
   const delegateRoster = planets.map(p => {
@@ -117,7 +121,22 @@ export const ImperialSenateView = ({
       </div>
 
       {/* Selector de Pestañas de la Cámara */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <button
+          onClick={() => {
+            setSenateTab('decrees');
+            if (window.playSfx) window.playSfx('click');
+          }}
+          className={`p-3.5 rounded-2xl border text-center font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+            senateTab === 'decrees'
+              ? 'bg-amber-900/50 border-amber-400 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
+              : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <span>👑</span>
+          <span>Decretos Mayores</span>
+        </button>
+
         <button
           onClick={() => {
             setSenateTab('bills');
@@ -130,7 +149,7 @@ export const ImperialSenateView = ({
           }`}
         >
           <span>📜</span>
-          <span>Dictámenes Activos ({activeBills.length})</span>
+          <span>Dictámenes ({activeBills.length})</span>
         </button>
 
         <button
@@ -178,6 +197,90 @@ export const ImperialSenateView = ({
           <span>Leyes en Vigor ({passedBills.length})</span>
         </button>
       </div>
+
+      {/* PESTAÑA 0: DECRETOS MAYORES DEL SENADO (FINANCIADOS POR TESORERÍA) */}
+      {senateTab === 'decrees' && (
+        <div className="space-y-5">
+          <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-950/40 via-amber-900/20 to-black/40 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-black text-amber-200 uppercase tracking-wide flex items-center gap-2">
+                <span>💰</span>
+                <span>Tesorería Federal Imperial Acumulada</span>
+              </h3>
+              <p className="text-xs text-slate-300 mt-1 max-w-xl">
+                Fondos recaudados mediante tributos e impuestos ministeriales en todos los mundos. Financian decretos supremos de efecto inmediato.
+              </p>
+            </div>
+            <div className="px-5 py-3 rounded-2xl bg-black/60 border border-amber-500/50 text-right">
+              <span className="text-[10px] font-mono uppercase text-amber-400/80 block">Saldo en Arcas:</span>
+              <span className="text-2xl font-black font-mono text-amber-300">
+                {currentTreasury.toLocaleString()} <span className="text-xs font-normal">Cr</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.values(SENATE_DECREES).map(decree => {
+              const canAfford = currentTreasury >= decree.costCredits;
+              const isBuffActive = activeBuffs.some(b => b.id === decree.id || b.type === decree.effect);
+
+              return (
+                <div
+                  key={decree.id}
+                  className="p-5 rounded-3xl bg-[#0d1424]/90 border border-amber-500/30 flex flex-col justify-between shadow-xl hover:border-amber-400/60 transition-all"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl p-2.5 rounded-2xl bg-amber-950/60 border border-amber-500/40">
+                          {decree.icon}
+                        </span>
+                        <div>
+                          <h4 className="text-base font-black text-white">{decree.name}</h4>
+                          <span className="text-[11px] font-mono text-amber-400">
+                            Coste: {decree.costCredits.toLocaleString()} Créditos
+                          </span>
+                        </div>
+                      </div>
+                      {isBuffActive && (
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold animate-pulse">
+                          ACTIVO
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {decree.desc}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between">
+                    <span className="text-[11px] font-mono text-slate-400">
+                      Autorización: Pleno del Senado
+                    </span>
+                    <button
+                      disabled={!canAfford}
+                      onClick={() => {
+                        if (window.playSfx) window.playSfx('build');
+                        dispatch({
+                          type: 'EXECUTE_SENATE_DECREE',
+                          decreeId: decree.id
+                        });
+                      }}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                        canAfford
+                          ? 'bg-amber-500 hover:bg-amber-400 text-black font-black shadow-[0_0_20px_rgba(245,158,11,0.4)] cursor-pointer'
+                          : 'bg-white/5 border border-white/10 text-slate-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {canAfford ? 'Promulgar Decreto ⚡' : 'Fondos Insuficientes'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* PESTAÑA 1: DICTÁMENES EN DISCUSIÓN */}
       {senateTab === 'bills' && (

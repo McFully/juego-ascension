@@ -1,12 +1,16 @@
 import { getShipStats, getDefenseStats, calcCustomShipCost } from '../utils/formulas.js';
 import { DEFENSES, SHIPS } from '../data/gameData.js';
 
-export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, atkTech, defTech, maxRounds = 6, blueprints = [], atkFaction = 'human', defFaction = 'human', autoRetreat = false, formation = 'standard', intelBonus = 0, relics = []) => {
+export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, atkTech, defTech, maxRounds = 6, blueprints = [], atkFaction = 'human', defFaction = 'human', autoRetreat = false, formation = 'standard', intelBonus = 0, relics = [], defenderArsenal = null, attackerArsenal = null) => {
   try {
   const initialAtkCount = Object.values(attackerFleet).reduce((a, b) => a + b, 0);
   const totalUnits = initialAtkCount + Object.values(defenderFleet).reduce((a, b) => a + b, 0) + Object.values(defenderDefenses).reduce((a, b) => a + b, 0);
   const useGroup = totalUnits > 500;
   let didRetreat = false;
+  const ammoStock = defenderArsenal ? { ...defenderArsenal } : { heavyMissiles: 99999, kineticShells: 99999, plasmaCells: 99999 };
+  const ammoSpent = { heavyMissiles: 0, kineticShells: 0, plasmaCells: 0 };
+  const atkAmmoStock = attackerArsenal ? { ...attackerArsenal } : { heavyMissiles: 99999, kineticShells: 99999, plasmaCells: 99999 };
+  const atkAmmoSpent = { heavyMissiles: 0, kineticShells: 0, plasmaCells: 0 };
 
   if (!useGroup) {
     const units = [];
@@ -113,6 +117,30 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
 
           let dmg = a.atk * ecmPenalty;
 
+          // Consumo de munición en naves atacantes
+          if (a.id === 'cruiser' || a.id === 'bomber') {
+            if (atkAmmoStock.heavyMissiles > 0) {
+              atkAmmoStock.heavyMissiles--;
+              atkAmmoSpent.heavyMissiles++;
+            } else {
+              dmg *= 0.25;
+            }
+          } else if (a.id === 'battleship') {
+            if (atkAmmoStock.kineticShells > 0) {
+              atkAmmoStock.kineticShells--;
+              atkAmmoSpent.kineticShells++;
+            } else {
+              dmg *= 0.25;
+            }
+          } else if (a.id === 'destroyer') {
+            if (atkAmmoStock.plasmaCells > 0) {
+              atkAmmoStock.plasmaCells--;
+              atkAmmoSpent.plasmaCells++;
+            } else {
+              dmg *= 0.25;
+            }
+          }
+
           // Absorción de daño según el tipo de escudo
           if (target.shieldType === 'thermal') {
             // Escudo térmico: gran absorción contra cazas/bombarderos de energía
@@ -122,9 +150,10 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
             dmg *= 0.85;
           }
 
+          const rawDealt = dmg;
           if (target.shield >= dmg) { target.shield -= dmg; dmg = 0; }
           else { dmg -= target.shield; target.shield = 0; target.hull -= dmg; }
-          atkDmg += a.atk * ecmPenalty;
+          atkDmg += rawDealt;
           if (target.hull <= 0 || (target.hull < target.maxHull * 0.7 && Math.random() < (1 - target.hull / target.maxHull))) {
             target.alive = false;
           }
@@ -141,9 +170,34 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
           const t = alive('attacker'); if (t.length === 0) break;
           const target = t[Math.floor(Math.random() * t.length)];
           let dmg = d.atk;
+
+          // Deducción de munición real según el tipo de arma defensiva o nave defensora
+          if (d.id === 'rocketLauncher' || d.id === 'cruiser' || d.id === 'bomber') {
+            if (ammoStock.heavyMissiles > 0) {
+              ammoStock.heavyMissiles--;
+              ammoSpent.heavyMissiles++;
+            } else {
+              dmg *= 0.20;
+            }
+          } else if (d.id === 'gaussCannon' || d.id === 'battleship') {
+            if (ammoStock.kineticShells > 0) {
+              ammoStock.kineticShells--;
+              ammoSpent.kineticShells++;
+            } else {
+              dmg *= 0.20;
+            }
+          } else if (d.id === 'plasmaTurret' || d.id === 'destroyer') {
+            if (ammoStock.plasmaCells > 0) {
+              ammoStock.plasmaCells--;
+              ammoSpent.plasmaCells++;
+            } else {
+              dmg *= 0.25;
+            }
+          }
+
           if (target.shield >= dmg) { target.shield -= dmg; dmg = 0; }
           else { dmg -= target.shield; target.shield = 0; target.hull -= dmg; }
-          defDmg += d.atk;
+          defDmg += dmg;
           if (target.hull <= 0 || (target.hull < target.maxHull * 0.7 && Math.random() < (1 - target.hull / target.maxHull))) {
             target.alive = false;
           }
@@ -156,7 +210,7 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
       }
       const atkShots = units.filter(u => u.side === 'attacker' && u.alive).length;
       const defShots = units.filter(u => u.side === 'defender' && u.alive).length;
-      rounds.push({ round, atkAlive: alive('attacker').length, defAlive: alive('defender').length, atkDmg, defDmg, atkShots, defShots });
+      rounds.push({ round, atkAlive: alive('attacker').length, defAlive: alive('defender').length, atkDmg, defDmg, atkShots, defShots, ammoStock: { ...ammoStock }, atkAmmoStock: { ...atkAmmoStock } });
     }
 
     const atkSurv = {}, defShipSurv = {}, defDefenseSurv = {};
@@ -205,7 +259,22 @@ export const simulateCombat = (attackerFleet, defenderFleet, defenderDefenses, a
     else if (defAlive > 0 && atkAlive === 0) winner = 'defender';
     if (didRetreat) winner = 'defender';
 
-    return { winner, rounds, atkSurvivors: atkSurv, defShipSurvivors: defShipSurv, defDefenseSurvivors: defDefenseSurv, atkLosses, defShipLosses, defDefenseLosses, retreated: didRetreat, debris: { metal: debrisMetal, crystal: debrisCrystal } };
+    return {
+      winner,
+      rounds,
+      atkSurvivors: atkSurv,
+      defShipSurvivors: defShipSurv,
+      defDefenseSurvivors: defDefenseSurv,
+      atkLosses,
+      defShipLosses,
+      defDefenseLosses,
+      retreated: didRetreat,
+      debris: { metal: debrisMetal, crystal: debrisCrystal },
+      ammoSpent,
+      remainingAmmo: ammoStock,
+      atkAmmoSpent,
+      remainingAtkAmmo: atkAmmoStock
+    };
   }
 
   function buildGroups(fleet, defenses, tech, factionKey = 'human', isAttacker = false) {

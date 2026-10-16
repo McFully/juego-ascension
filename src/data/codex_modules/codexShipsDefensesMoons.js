@@ -112,11 +112,29 @@ export const CODEX_SHIPS_DEFENSES_MOONS = {
     stats: "Ataque: 500,000 | Escudo: 100,000 | Integridad: 2,500,000 | Velocidad: 50 | Fuego rápido devastador",
     usage: "Desplegada exclusivamente para pulverizar planetas hostiles y quebrar la resistencia de fortalezas enemigas.",
   },
+  orbitalProbe: {
+    name: "Sonda Suborbital",
+    lore: "Sonda fotográfica y radiométrica de corto alcance diseñada para cartografiar órbitas adyacentes inmediatas dentro de tu propio sistema solar.",
+    stats: "Ataque: 0 | Escudo: 0 | Integridad: 1 | Velocidad: 50,000",
+    usage: "Mapeo inicial de órbitas locales y monitorización de cuerpos celestes cercanos.",
+  },
+  systemProbe: {
+    name: "Sonda Interplanetaria",
+    lore: "Sonda científica de largo recorrido capaz de penetrar la niebla orbital de cualquier posición de tu estrella natal.",
+    stats: "Ataque: 0 | Escudo: 0 | Integridad: 2 | Velocidad: 100,000",
+    usage: "Exploración de posiciones desconocidas dentro del sistema solar.",
+  },
   espionageProbe: {
     name: "Sonda de Espionaje",
     lore: "Sondas diminutas no tripuladas dotadas de propulsores hiperrápidos y sensores de amplio espectro.",
-    stats: "Ataque: 0 | Escudo: 0 | Integridad: 1 | Velocidad: Extremadamente alta",
+    stats: "Ataque: 0 | Escudo: 0 | Integridad: 5 | Velocidad: Extremadamente alta",
     usage: "Enviadas para recolectar informes detallados de tecnologías y recursos en otros planetas.",
+  },
+  deepSpaceProbe: {
+    name: "Sonda Cuántica de Espacio Profundo",
+    lore: "Explorador autónomo con sensores cuánticos. Disipa la niebla de sectores estelares desconocidos y sondea nuevas galaxias.",
+    stats: "Ataque: 0 | Escudo: 10 | Integridad: 20 | Velocidad: Ultra-rápida (5e8)",
+    usage: "Exploración intergaláctica remota y disipación de niebla cósmica profunda.",
   },
   localColonizer: {
     name: "Arca Colonial de Proximidad",

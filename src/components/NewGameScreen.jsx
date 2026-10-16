@@ -8,41 +8,15 @@ export const NewGameScreen = ({ onConfirm, onBack, availableSaves = [] }) => {
   const [maxStandardPlanets, setMaxStandardPlanets] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
-    const calculateRecord = async () => {
-      let maxCount = 0;
-
-      if (Array.isArray(availableSaves)) {
-        for (const s of availableSaves) {
-          if (s.gameMode === 'standard' || !s.gameMode) {
-            maxCount = Math.max(maxCount, s.planetCount || 0);
-          }
+    let maxCount = 0;
+    if (Array.isArray(availableSaves)) {
+      for (const s of availableSaves) {
+        if (s.gameMode === 'standard' || !s.gameMode) {
+          maxCount = Math.max(maxCount, s.planetCount || 0);
         }
       }
-
-      if (window.electronAPI && window.electronAPI.loadSaveBySlug && Array.isArray(availableSaves)) {
-        try {
-          for (const s of availableSaves) {
-            const res = await window.electronAPI.loadSaveBySlug(s.slug);
-            if (res && res.success && res.data) {
-              const saveMode = res.data.gameMode || 'standard';
-              if (saveMode === 'standard') {
-                const count = Array.isArray(res.data.planets) ? res.data.planets.length : 0;
-                if (count > maxCount) maxCount = count;
-              }
-            }
-          }
-        } catch (_) {}
-      }
-
-
-      if (isMounted) {
-        setMaxStandardPlanets(maxCount);
-      }
-    };
-
-    calculateRecord();
-    return () => { isMounted = false; };
+    }
+    setMaxStandardPlanets(maxCount);
   }, [availableSaves]);
 
   const trimmed = name.trim();

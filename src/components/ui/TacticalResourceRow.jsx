@@ -26,7 +26,18 @@ export const TacticalResourceRow = React.memo(({
   const prodDeut = production?.deuterium ?? production?.prodDeuterium;
   const energyBalance = production?.energyBalance ?? 0;
   const slagNet = production?.slagNet ?? production?.prodSlagNet;
-  const breakdown = production?.breakdown;
+
+  // Fallback seguro de breakdown: garantiza que siempre se renderice la tarjeta de detalle
+  const breakdown = React.useMemo(() => {
+    if (production?.breakdown) return production.breakdown;
+    return {
+      metal: { total: prodMetal || 0, netTotal: prodMetal || 0, baseMine: prodMetal || 0, popConsumption: 0, techMult: 1, govMult: 1, biomeMult: 1, civMult: 1, specMult: 1, ratio: 1 },
+      crystal: { total: prodCrystal || 0, netTotal: prodCrystal || 0, baseMine: prodCrystal || 0, popConsumption: 0, techMult: 1, govMult: 1, biomeMult: 1, civMult: 1, specMult: 1, ratio: 1 },
+      deuterium: { total: prodDeut || 0, netTotal: prodDeut || 0, baseMine: prodDeut || 0, popConsumption: 0, techMult: 1, govMult: 1, biomeMult: 1, civMult: 1, specMult: 1, ratio: 1, fusionDeduction: 0 },
+      energy: { totalProd: energyBalance || 0, totalCons: 0, energyBalance: energyBalance || 0 },
+      slag: { total: slagAmount || 0, generation: slagNet || 0, details: {} }
+    };
+  }, [production?.breakdown, prodMetal, prodCrystal, prodDeut, energyBalance, slagAmount, slagNet]);
 
   // Calculo de censo si aplica
   const pop = currentPlanet?.population || (state?.planets ? state.planets.reduce((acc, p) => acc + (p.population || 0), 0) : 1000);
@@ -164,44 +175,72 @@ export const TacticalResourceRow = React.memo(({
       <div className="w-[1px] h-5 bg-white/15 shrink-0" />
 
       {/* Censo Poblacional */}
-      <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Censo Poblacional">
-        <span className="text-xl">👥</span>
-        <div className="flex items-baseline leading-none">
-          <span className="font-black text-teal-300 text-base md:text-lg">
-            {fmt(pop)}
-          </span>
-          <span className="text-[10px] text-slate-400 font-mono ml-1">
-            / {fmt(maxPop)}
-          </span>
-        </div>
-        <div className="hidden group-hover/res:block z-[120]">
-          <div className="absolute top-full left-0 mt-2 w-80 max-w-[320px] bg-[#060a18] border border-teal-500/50 rounded-xl p-3 shadow-[0_12px_40px_rgba(0,0,0,1),0_0_20px_rgba(20,184,166,0.2)] z-[120] text-left font-mono text-xs pointer-events-none whitespace-normal break-words">
-            <div className="flex items-center gap-2 border-b border-teal-500/30 pb-1.5 mb-2 font-bold text-white">
-              <span className="text-base">👥</span>
-              <span className="text-teal-300 uppercase tracking-wider">Censo Imperial</span>
-            </div>
-            <div className="space-y-1 text-slate-300 text-[11px]">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Poblacion Activa:</span>
-                <span className="font-bold text-teal-300">{fmt(pop)} hab</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Capacidad Maxima:</span>
-                <span className="font-bold text-white">{fmt(maxPop)} hab</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Tasa de Ocupacion:</span>
-                <span className="font-bold text-cyan-300">
-                  {maxPop > 0 ? Math.min(100, Math.round((pop / maxPop) * 100)) : 0}%
+      {(() => {
+        const blds = currentPlanet?.buildings || {};
+        const mineWorkers = ((blds.metalMine || 0) + (blds.crystalMine || 0) + (blds.deuteriumSynthesizer || 0) + (blds.solarPlant || 0) + (blds.fusionReactor || 0)) * 120;
+        const fleetCount = Object.values(currentPlanet?.fleet || {}).reduce((a, b) => a + (b || 0), 0);
+        const defCount = Object.values(currentPlanet?.defenses || {}).reduce((a, b) => a + (b || 0), 0);
+        const militaryCrew = fleetCount * 15 + defCount * 8;
+        const occupiedPop = Math.min(pop, mineWorkers + militaryCrew);
+        const freePop = Math.max(0, Math.floor(pop - occupiedPop));
+        const vitalSupport = 100000 + (blds.urbanHydroponic || 0) * 25000 + (blds.biomeDomeSimulation || 0) * 50000 + (blds.waterPurifier || 0) * 20000;
+        const growthRatePerHour = pop < maxPop ? Math.max(5, Math.floor(pop * 0.015 * Math.max(0.2, 1 - pop / Math.max(1, maxPop)))) : 0;
+
+        return (
+          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Censo Poblacional">
+            <span className="text-xl">👥</span>
+            <div className="flex items-baseline leading-none">
+              <span className="font-black text-teal-300 text-base md:text-lg">
+                {fmt(pop)}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono ml-1">
+                / {fmt(maxPop)}
+              </span>
+              {growthRatePerHour > 0 && (
+                <span className="text-[10px] text-emerald-400 font-mono font-bold ml-1">
+                  +{fmt(growthRatePerHour)}/h
                 </span>
-              </div>
-              <div className="text-[10px] text-slate-400 pt-1 border-t border-white/10 mt-1 leading-relaxed whitespace-normal break-words">
-                Suministra mano de obra, consumo y tributos imperiales. La capacidad crece con Distritos Residenciales y Habitats.
+              )}
+            </div>
+            <div className="hidden group-hover/res:block z-[120]">
+              <div className="absolute top-full left-0 mt-2 w-80 max-w-[320px] bg-[#060a18] border border-teal-500/50 rounded-xl p-3 shadow-[0_12px_40px_rgba(0,0,0,1),0_0_20px_rgba(20,184,166,0.2)] z-[120] text-left font-mono text-xs pointer-events-none whitespace-normal break-words">
+                <div className="flex items-center justify-between border-b border-teal-500/30 pb-1.5 mb-2 font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">👥</span>
+                    <span className="text-teal-300 uppercase tracking-wider">Censo Imperial</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-300 font-bold">+{fmt(growthRatePerHour)} hab/h</span>
+                </div>
+                <div className="space-y-1 text-slate-300 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Poblacion Total:</span>
+                    <span className="font-bold text-teal-300">{fmt(pop)} / {fmt(maxPop)} hab</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Obreros en Minas e Ind.:</span>
+                    <span className="font-bold text-amber-300">{fmt(Math.min(pop, mineWorkers))} hab</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Personal Flota y Defensa:</span>
+                    <span className="font-bold text-rose-300">{fmt(Math.min(Math.max(0, pop - mineWorkers), militaryCrew))} hab</span>
+                  </div>
+                  <div className="flex justify-between border-t border-white/10 pt-1">
+                    <span className="text-slate-300 font-bold">Poblacion Libre (Reserva):</span>
+                    <span className="font-bold text-emerald-400">{fmt(freePop)} hab</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Soporte Vital (Agua/Alim.):</span>
+                    <span className="font-bold text-cyan-300">{fmt(vitalSupport)} hab</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 pt-1 border-t border-white/10 mt-1 leading-relaxed whitespace-normal break-words">
+                    Suministra obreros para minas, tripulaciones navales y recaudacion fiscal en Creditos.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       <div className="w-[1px] h-5 bg-white/15 shrink-0" />
 
@@ -238,32 +277,65 @@ export const TacticalResourceRow = React.memo(({
 
       <div className="w-[1px] h-5 bg-white/15 shrink-0" />
 
-      {/* Monedas / Créditos Estelares */}
-      <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Créditos Estelares / Monedas Galácticas">
-        <span className="text-xl">🪙</span>
-        <div className="flex items-baseline leading-none">
-          <span className="font-black text-amber-300 text-base md:text-lg tabular-nums">
-            {fmt(state?.credits ?? 0)}
-          </span>
-        </div>
-        <div className="hidden group-hover/res:block z-[120]">
-          <div className="absolute top-full left-0 mt-2 w-80 max-w-[320px] bg-[#060a18] border border-amber-500/50 rounded-xl p-3 shadow-[0_12px_40px_rgba(0,0,0,1),0_0_20px_rgba(245,158,11,0.2)] z-[120] text-left font-mono text-xs pointer-events-none whitespace-normal break-words">
-            <div className="flex items-center gap-2 border-b border-amber-500/30 pb-1.5 mb-2 font-bold text-white">
-              <span className="text-base">🪙</span>
-              <span className="text-amber-300 uppercase tracking-wider">Tesoro Imperial (Monedas)</span>
+      {/* Monedas / Créditos Estelares con Flujo Neto Horario */}
+      {(() => {
+        const netFlow = state?.financialBalance?.netHourly ?? 0;
+        const velocity = state?.financialBalance?.monetaryVelocity ?? 1.0;
+        const income = state?.financialBalance?.income || {};
+        const expenses = state?.financialBalance?.expenses || {};
+
+        return (
+          <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Créditos Estelares / Tesorería Imperial">
+            <span className="text-xl">🪙</span>
+            <div className="flex items-baseline gap-1.5 leading-none">
+              <span className="font-black text-amber-300 text-base md:text-lg tabular-nums">
+                {fmt(state?.credits ?? 0)}
+              </span>
+              <span className={`text-[10px] font-mono font-bold ${netFlow >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {netFlow >= 0 ? `+${fmt(netFlow)}/h` : `${fmt(netFlow)}/h`}
+              </span>
             </div>
-            <div className="space-y-1 text-slate-300 text-[11px]">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Saldo Disponible:</span>
-                <span className="font-bold text-amber-300">{fmt(state?.credits ?? 0)} créditos</span>
-              </div>
-              <div className="text-[10px] text-slate-400 pt-1 border-t border-white/10 mt-1 leading-relaxed whitespace-normal break-words">
-                Moneda fiduciaria galáctica utilizada en transacciones de la Lonja, banca central, mercado interestelar y contratación de ministros.
+            <div className="hidden group-hover/res:block z-[120]">
+              <div className="absolute top-full left-0 mt-2 w-80 max-w-[320px] bg-[#060a18] border border-amber-500/50 rounded-xl p-3 shadow-[0_12px_40px_rgba(0,0,0,1),0_0_20px_rgba(245,158,11,0.2)] z-[120] text-left font-mono text-xs pointer-events-none whitespace-normal break-words">
+                <div className="flex items-center gap-2 border-b border-amber-500/30 pb-1.5 mb-2 font-bold text-white">
+                  <span className="text-base">🪙</span>
+                  <span className="text-amber-300 uppercase tracking-wider">Tesoro y Balance Financiero</span>
+                </div>
+                <div className="space-y-1.5 text-slate-300 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Saldo Disponible:</span>
+                    <span className="font-bold text-amber-300">{fmt(state?.credits ?? 0)} Cr</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Balance Neto:</span>
+                    <span className={`font-bold ${netFlow >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {netFlow >= 0 ? `+${fmt(netFlow)} Cr/h` : `${fmt(netFlow)} Cr/h`}
+                    </span>
+                  </div>
+                  <div className="pt-1 border-t border-white/10 space-y-1 text-[10px]">
+                    <div className="flex justify-between text-emerald-400">
+                      <span>• Ingresos (IRPF/Tasas/Negocios):</span>
+                      <span>+{fmt(income.total || 0)}/h</span>
+                    </div>
+                    <div className="flex justify-between text-rose-400">
+                      <span>• Salarios de Ministros:</span>
+                      <span>-{fmt(expenses.ministerSalaries || 0)}/h</span>
+                    </div>
+                    <div className="flex justify-between text-rose-400">
+                      <span>• Mantenimiento Naval/Tropas:</span>
+                      <span>-{fmt(expenses.fleetUpkeep || 0)}/h</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between pt-1 border-t border-white/10 text-cyan-300 text-[10px]">
+                    <span>Velocidad Monetaria (V):</span>
+                    <span className="font-bold">{velocity}x {velocity > 1.5 ? '(Economía Boyante)' : '(Neutral)'}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       <div className="w-[1px] h-5 bg-white/15 shrink-0" />
 

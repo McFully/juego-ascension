@@ -658,3 +658,61 @@ export const migrateLegacyColonization = (state) => {
   return state;
 };
 
+/**
+ * Retorna las galaxias descubiertas según la progresión del imperio.
+ * Nivel base: solo galaxia 1.
+ * Nivel 7: abre Galaxia 2.
+ * Nivel 10: abre Galaxia 3.
+ * Nivel 13: abre Galaxia 4.
+ * Nivel 16+: abre galaxias más profundas de forma escalonada.
+ */
+export const getKnownGalaxies = (state) => {
+  const astroLvl = state?.research?.astrophysics || 0;
+  const known = [1];
+  if (astroLvl >= 7) known.push(2);
+  if (astroLvl >= 10) known.push(3);
+  if (astroLvl >= 13) known.push(4);
+  if (astroLvl >= 15) known.push(5);
+  if (astroLvl >= 17) known.push(6);
+  if (astroLvl >= 19) known.push(7);
+  if (astroLvl >= 21) known.push(8);
+  if (astroLvl >= 23) known.push(9);
+  if (astroLvl >= 25) known.push(10);
+
+  // Asegurar que si el jugador tiene colonias en una galaxia, esté en la lista
+  if (state?.planets) {
+    state.planets.forEach(p => {
+      if (p.galaxy && !known.includes(p.galaxy)) known.push(p.galaxy);
+    });
+  }
+  return known.sort((a, b) => a - b);
+};
+
+/**
+ * Retorna el número máximo de sistemas conocidos en una galaxia dada.
+ * Al inicio estricto (sin investigaciones de sensores) es 1 único sistema.
+ * Se expande con Sensores Avanzados, Astrofísica y Puerto Espacial.
+ */
+export const getMaxKnownSystem = (state, galaxy = 1) => {
+  const sensorsLvl = state?.research?.advSensors || 0;
+  const astroLvl = state?.research?.astrophysics || 0;
+  const obsLvl = state?.planets?.reduce((max, p) => Math.max(max, p?.buildings?.spacePort || 0), 0) || 0;
+
+  // Base inicial estricta: 1 sistema (el propio sistema de origen)
+  // Cada nivel de sensores abre nuevos sistemas a explorar
+  let baseMax = 1 + (sensorsLvl * 5) + (obsLvl * 3) + (astroLvl * 2);
+
+  // Considerar posiciones de planetas propios del jugador
+  if (state?.planets) {
+    state.planets.forEach(p => {
+      if (p.galaxy === galaxy) {
+        baseMax = Math.max(baseMax, p.system);
+      }
+    });
+  }
+
+  const galLimit = galaxy === 1 ? 500 : 389;
+  return Math.min(galLimit, baseMax);
+};
+
+

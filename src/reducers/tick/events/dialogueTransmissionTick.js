@@ -77,7 +77,66 @@ export const processDialogueTransmissionTick = (state) => {
         const pScore = getScore(playerShips);
         
         const aiHostile = discoveredAIs.find(ai => (ai.strategy === 'militarist' || ai.strategy === 'expansionist' || ai.aiPersonality === 'bélico') && (ai.relation || 0) < 0);
-        if (aiHostile && pScore < 10 && Math.random() < 0.3) {
+        const aiDiplomat = discoveredAIs.find(ai => (ai.relation || 0) >= 25 && !(newState.foreignEmbassiesInCapital || []).some(e => e.aiId === ai.id));
+        const aiAllyNeedingAmmo = discoveredAIs.find(ai => (ai.relation || 0) >= 20);
+        const playerArsenal = homePlanet.arsenal || { heavyMissiles: 100, kineticShells: 500, plasmaCells: 250 };
+
+        if (aiDiplomat) {
+          newState.activeTransmission = {
+            id: uid(),
+            type: 'proactive_embassy_request',
+            aiId: aiDiplomat.id,
+            faction: aiDiplomat.faction,
+            name: aiDiplomat.name,
+            message: `Saludos cordiales, ilustre Comandante. En vista de nuestros lazos fraternos y prosperidad mutua, el Alto Mando de ${aiDiplomat.empireName || aiDiplomat.name} solicita formalmente autorización para establecer una Embajada Permanente en vuestra capital. Pagaremos un canon de alquiler de +180 Cr/h a vuestro tesoro imperial y garantizaremos un flujo constante de inteligencia consular. ¿Aceptáis nuestra legación?`,
+            options: [
+              {
+                text: '🏛️ Conceder Embajada en Capital (+180 Cr/h y +15 Opinión)',
+                action: {
+                  type: 'DIPLOMACY_ACCEPT_FOREIGN_EMBASSY',
+                  payload: {
+                    aiId: aiDiplomat.id,
+                    rentHourly: 180,
+                    reputationBonus: 5,
+                    relationBonus: 15
+                  }
+                }
+              },
+              {
+                text: '❌ Declinar por el momento.',
+                action: { type: 'DIPLOMACY_CLOSE_TRANSMISSION' }
+              }
+            ]
+          };
+        } else if (aiAllyNeedingAmmo && (playerArsenal.heavyMissiles ?? 0) >= 50 && (playerArsenal.kineticShells ?? 0) >= 100 && Math.random() < 0.45) {
+          newState.activeTransmission = {
+            id: uid(),
+            type: 'allied_ammo_request',
+            aiId: aiAllyNeedingAmmo.id,
+            faction: aiAllyNeedingAmmo.faction,
+            name: aiAllyNeedingAmmo.name,
+            message: `¡Comandante! Nuestras baterías orbitales en ${aiAllyNeedingAmmo.name} están al borde del Silencio Balístico tras repeler incursiones hostiles. Solicitamos un suministro urgente de 50 Cohetes Pesados y 100 Obuses Cinéticos de vuestro polvorín. Abonaremos 650 Créditos Imperiales al contado. ¿Nos enviáis la munición?`,
+            options: [
+              {
+                text: '💣 Vender Suministro Balístico (-50 Cohetes, -100 Obuses -> +650 Cr y +15 Opinión)',
+                action: {
+                  type: 'DIPLOMACY_SELL_EMERGENCY_ORDNANCE',
+                  payload: {
+                    aiId: aiAllyNeedingAmmo.id,
+                    heavyMissiles: 50,
+                    kineticShells: 100,
+                    creditsReward: 650,
+                    relationBonus: 15
+                  }
+                }
+              },
+              {
+                text: '❌ Denegar envío (Reservar polvorín propio).',
+                action: { type: 'DIPLOMACY_CLOSE_TRANSMISSION' }
+              }
+            ]
+          };
+        } else if (aiHostile && pScore < 10 && Math.random() < 0.3) {
           newState.activeTransmission = {
             id: uid(),
             type: 'militaristic_threat',

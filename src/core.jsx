@@ -63,6 +63,7 @@ export {
   generatePlanetName,
   generateAIPlanet,
   getVirginPlanet,
+  getSystemProfile,
   generateGalaxy
 } from "./core/galaxyGenerator.js";
 

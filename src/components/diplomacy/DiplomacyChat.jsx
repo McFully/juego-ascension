@@ -208,6 +208,20 @@ export const DiplomacyChat = ({
                               <span>Defensa Mutua</span>
                             </span>
                           )}
+
+                          {(activeContact.hasEmbassy || activeContact.activePacts?.includes('permanent_embassy')) && (
+                            <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-bold flex items-center gap-1">
+                              <span>🏛️</span>
+                              <span>Embajada Permanente</span>
+                            </span>
+                          )}
+
+                          {(activeContact.hasResearchPact || activeContact.activePacts?.includes('research_agreement')) && (
+                            <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-[9px] font-bold flex items-center gap-1">
+                              <span>🔬</span>
+                              <span>Cooperación I+D</span>
+                            </span>
+                          )}
                         </div>
                       </div>
 

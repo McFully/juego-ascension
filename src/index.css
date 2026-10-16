@@ -581,3 +581,87 @@ button:focus-visible,
     animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important;
   }
 }
+
+/* Optimización de rendimiento para grids masivos en PCs modestos */
+.virtualized-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 280px 380px;
+}
+
+/* ==========================================================================
+   TEMA BANCARIO INSTITUCIONAL (CROMO, HORMIGÓN ARQUITECTÓNICO, MÁRMOL OSCURO)
+   ========================================================================== */
+.bank-institution-theme {
+  --bank-metal-border: rgba(226, 232, 240, 0.22);
+  --bank-chrome-shine: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(200,210,225,0.05) 50%, rgba(255,255,255,0.12) 100%);
+  position: relative;
+  min-height: 100vh;
+  background-color: #0d0f14;
+}
+
+/* Telón arquitectónico que anula y cubre por completo el fondo estelar */
+.bank-institution-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-color: #0b0d12;
+  /* Textura de muros de hormigón arquitectónico, vigas y losas de grafito pulido */
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(190, 205, 225, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 50% 110%, rgba(140, 155, 175, 0.08), transparent),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 60px 60px, 60px 60px;
+}
+
+/* Panel frontal con textura de mármol negro/grafito veteado */
+.bank-marble-panel {
+  background: 
+    linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 40%, rgba(255,255,255,0.02) 100%),
+    linear-gradient(180deg, #181b22 0%, #101319 100%);
+  border: 1px solid rgba(203, 213, 225, 0.18);
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Tarjeta blindada estilo caja fuerte / bóveda de titanio */
+.bank-vault-card {
+  background: 
+    linear-gradient(180deg, rgba(30, 35, 46, 0.95) 0%, rgba(18, 21, 28, 0.98) 100%);
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease-out;
+}
+.bank-vault-card:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 
+    0 12px 30px rgba(0, 0, 0, 0.7),
+    0 0 15px rgba(226, 232, 240, 0.08);
+}
+
+/* Botones cromados de alta entidad financiera */
+.bank-btn-chrome {
+  background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 50%, #94a3b8 100%);
+  color: #0f172a;
+  border: 1px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 #ffffff;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.bank-btn-chrome:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 50%, #cbd5e1 100%);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2), inset 0 1px 0 #ffffff;
+}
+
+/* Relieve de cromo y oro institucional */
+.bank-gold-accent {
+  color: #eab308;
+  text-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
+}
+
+

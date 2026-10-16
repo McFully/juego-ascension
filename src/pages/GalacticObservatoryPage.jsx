@@ -285,7 +285,7 @@ function FactionCard({ faction, galacticEvents, isSelected, onSelect }) {
   );
 }
 
-export function GalacticObservatoryPage({ state, fmt }) {
+export function GalacticObservatoryPage({ state, currentPlanet, production, fmt }) {
   const { navigateBack } = useNavigation();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('level');
@@ -343,9 +343,17 @@ export function GalacticObservatoryPage({ state, fmt }) {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-transparent">
       <SubsystemTopBanner
-        title="🔭 Observatorio Galáctico"
-        subtitle="Simulación Autónoma del Universo — Auditoría de Facciones"
-        onBack={navigateBack}
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Observatorio Galáctico"
+        breadcrumbIcon="🔭"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Cartografía"
+        backButtonIcon="🌌"
+        onBackToAltoMando={navigateBack}
       />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">

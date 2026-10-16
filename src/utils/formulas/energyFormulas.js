@@ -38,3 +38,18 @@ export const calcBuildingDeutCons = (id, lvl) => {
   if (!b?.deutCons) return 0;
   return Math.floor(b.deutCons * lvl * Math.pow(GEN_GROWTH, lvl));
 };
+
+// Consumo energético de mantenimiento de defensas planetarias activas
+export const calcDefenseEnergyDemand = (defenses = {}) => {
+  if (!defenses || typeof defenses !== 'object') return 0;
+  let total = 0;
+  const { DEFENSES } = require('../../data/game/defensesData.js');
+  for (const [id, qty] of Object.entries(defenses)) {
+    if (!qty || qty <= 0) continue;
+    const d = DEFENSES[id];
+    if (d?.energy) {
+      total += d.energy * qty;
+    }
+  }
+  return Math.floor(total);
+};

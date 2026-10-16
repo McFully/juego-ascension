@@ -22,11 +22,19 @@ function getAuditDirs() {
 
   const uiAuditDir = path.join(baseDir, 'ui-audit');
   const auditsDir = path.join(uiAuditDir, 'audits');
-  return { uiAuditDir, auditsDir };
+  return { baseDir, uiAuditDir, auditsDir };
+}
+
+function assertSafeAuditId(id) {
+  const val = String(id || '').trim();
+  if (!/^[A-Za-z0-9_-]{1,80}$/.test(val) || val.includes('..')) {
+    throw new Error('ID de auditoría inválido');
+  }
+  return val;
 }
 
 function registerVisualAuditIpc(getMainWindow) {
-  const { uiAuditDir, auditsDir } = getAuditDirs();
+  const { baseDir, uiAuditDir, auditsDir } = getAuditDirs();
 
   // Asegurar directorios de forma segura y tolerante
   try {
@@ -160,7 +168,7 @@ ${(auditData.visualIssues || []).length > 0
       }
       const raw = fs.readFileSync(latestJsonPath, 'utf-8');
       const latestMeta = JSON.parse(raw);
-      const auditJsonPath = path.join(projectRootDir, latestMeta.path, 'visual-audit.json');
+      const auditJsonPath = path.join(baseDir, latestMeta.path, 'visual-audit.json');
       let fullData = null;
       if (fs.existsSync(auditJsonPath)) {
         fullData = JSON.parse(fs.readFileSync(auditJsonPath, 'utf-8'));
@@ -174,13 +182,13 @@ ${(auditData.visualIssues || []).length > 0
   // 4. Exportar auditoría a ZIP nativo
   ipcMain.handle('audit-export-zip', async (_event, auditId) => {
     try {
-      const targetDir = auditId ? path.join(auditsDir, auditId) : null;
+      const targetDir = auditId ? path.join(auditsDir, assertSafeAuditId(auditId)) : null;
       let runDir = targetDir;
       if (!runDir || !fs.existsSync(runDir)) {
         const latestJsonPath = path.join(uiAuditDir, 'LATEST_AUDIT.json');
         if (!fs.existsSync(latestJsonPath)) return { success: false, error: 'No hay auditoría que exportar' };
         const latestMeta = JSON.parse(fs.readFileSync(latestJsonPath, 'utf-8'));
-        runDir = path.join(projectRootDir, latestMeta.path);
+        runDir = path.join(baseDir, latestMeta.path);
       }
 
       const zipName = `JuegoAscension_UI_Audit_${path.basename(runDir)}.zip`;
@@ -203,8 +211,10 @@ ${(auditData.visualIssues || []).length > 0
   ipcMain.handle('audit-compare', async (_event, payload) => {
     try {
       const { previousAuditId, currentAuditId } = payload || {};
-      const prevPath = path.join(auditsDir, previousAuditId, 'visual-audit.json');
-      const currPath = path.join(auditsDir, currentAuditId, 'visual-audit.json');
+      const safePrevId = assertSafeAuditId(previousAuditId);
+      const safeCurrId = assertSafeAuditId(currentAuditId);
+      const prevPath = path.join(auditsDir, safePrevId, 'visual-audit.json');
+      const currPath = path.join(auditsDir, safeCurrId, 'visual-audit.json');
 
       if (!fs.existsSync(prevPath) || !fs.existsSync(currPath)) {
         return { success: false, error: 'Uno o ambos archivos de auditoría no existen' };

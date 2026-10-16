@@ -13,6 +13,11 @@ let lastDirectorCallTimestamp = 0;
 export async function consultStrategicDirector(faction, universeSummary) {
   const now = Date.now();
 
+  // En Web Workers o entornos sin window/fetch no llamamos a la API externa
+  if (typeof window === 'undefined') {
+    return fallbackStrategicDirector(faction);
+  }
+
   // Si está en cooldown o no es momento, devolver null para dejar que el motor determinista prosiga
   if (now - lastDirectorCallTimestamp < AI_DIRECTOR_COOLDOWN_MS) {
     return null;

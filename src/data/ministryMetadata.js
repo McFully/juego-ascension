@@ -33,7 +33,7 @@ export const MINISTRY_METADATA = {
     name: 'Ministerio de Economía',
     subtitle: 'Comercio Interestelar y Tesoro Imperial',
     icon: '💼',
-    assetId: 'financeMinistry',
+    assetId: 'ministryEconomyChamber',
     desc: 'Supervisa el mercado galáctico, aranceles comerciales y la red de comercio.',
     border: 'border-amber-500/40',
     badgeBg: 'bg-amber-500/10 text-amber-400',
@@ -151,20 +151,20 @@ export const MINISTRY_METADATA = {
   },
   diplomacy: {
     name: 'Ministerio Diplomático',
-    subtitle: 'Tratados, Embajadas y Senado Galáctico',
+    subtitle: 'Delegación Exterior, Embajadas e Influencia',
     icon: '🤝',
     assetId: 'permanentEmbassy',
-    desc: 'Coordina embajadas, tratados de paz y pactos de cooperación.',
+    desc: 'Coordina embajadas consulares, acuerdos de cooperación y generación de influencia política para el imperio.',
     border: 'border-purple-500/40',
     badgeBg: 'bg-purple-500/10 text-purple-400',
     accentColor: '#a855f7'
   },
   intel: {
     name: 'Ministerio de Inteligencia',
-    subtitle: 'Criptoanálisis y Red de Infiltración',
+    subtitle: 'Contrainteligencia Territorial y Criptoanálisis',
     icon: '🕵️',
     assetId: 'spyCenter',
-    desc: 'Interfiere señales rivales y comanda sondas de espionaje.',
+    desc: 'Neutraliza sondas espías enemigas, protege las comunicaciones locales y cifra los registros del planeta.',
     border: 'border-blue-500/40',
     badgeBg: 'bg-blue-500/10 text-blue-400',
     accentColor: '#3b82f6'

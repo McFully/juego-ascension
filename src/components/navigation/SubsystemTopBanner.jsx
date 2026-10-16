@@ -33,7 +33,12 @@ export const SubsystemTopBanner = ({
       activeView === 'shipDesign' ||
       activeView === 'colony_network' ||
       activeView === 'imperial_council' ||
-      activeView === 'imperial_senate'
+      activeView === 'imperial_senate' ||
+      activeView === 'imperial_fleet' ||
+      activeView === 'galaxy' ||
+      activeView === 'communications' ||
+      activeView === 'market' ||
+      activeView === 'tactical_advisor'
     )
   );
 
@@ -51,7 +56,7 @@ export const SubsystemTopBanner = ({
       {/* === DOM SUPERIOR: 2 FILAS CON SEPARADOR HORIZONTAL Y ANCHO COMPLETO === */}
       <section className="flex-1 min-w-0 bg-black/85 backdrop-blur-md rounded-2xl border border-white/10 text-xs font-mono shadow-2xl flex flex-col justify-between">
         {/* FILA SUPERIOR: Fila unificada de recursos tácticos (sin la palabra créditos) */}
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-visible">
           <TacticalResourceRow
             resources={currentPlanet?.resources}
             production={production}

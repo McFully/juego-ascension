@@ -33,14 +33,17 @@ export const useUIDiagnostics = (activeTab, currentPlanet) => {
         });
       }
 
-      // Comprobar elementos contenedores principales con overflow accidental
+      // Comprobar elementos contenedores principales con overflow accidental genuino (> 20px o si el documento sufre scroll horizontal)
       const mainContainer = document.getElementById('main-game-viewport');
       if (mainContainer) {
-        if (mainContainer.scrollWidth > mainContainer.clientWidth + 2) {
+        const diff = mainContainer.scrollWidth - mainContainer.clientWidth;
+        // Solo reportar si supera el ancho típico de scrollbar nativo de Windows (17-18px) y hay desbordamiento real
+        if (diff > 20) {
           logTelemetry('WARN', 'Viewport central con overflow inesperado', {
             activeTab,
             clientWidth: mainContainer.clientWidth,
             scrollWidth: mainContainer.scrollWidth,
+            diff,
           });
         }
       }

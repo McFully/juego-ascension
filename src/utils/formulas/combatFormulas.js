@@ -100,6 +100,13 @@ export const getShipStats = (id, tech, blueprints, factionKey = 'human', buildin
     atkBonus += (tech?.geneticWarAlgorithm || 0) * 0.04;
   }
 
+  // Gobernanza Federal: +4% escudo y daño a naves de línea y capitales
+  const federalGovLvl = tech?.unifiedFederalGov || 0;
+  if (federalGovLvl > 0 && ['battleship', 'dreadnought', 'destroyer', 'cruiser'].includes(id)) {
+    atkBonus += federalGovLvl * 0.04;
+    hullBonus += federalGovLvl * 0.03;
+  }
+
   const ship = SHIPS[id];
 
   // Bonificaciones de maniobrabilidad y resistencia por motor

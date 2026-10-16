@@ -176,6 +176,11 @@ export const migrateLoadState = (payload = {}) => {
       },
       fleet: p.fleet || {},
       defenses: p.defenses || {},
+      arsenal: p.arsenal || {
+        heavyMissiles: 100,
+        kineticShells: 500,
+        plasmaCells: 250,
+      },
       buildings: {
         ...(p.buildings || {}),
         slagRecycler: (p.buildings?.slagRecycler !== undefined && p.buildings?.slagRecycler > 0) ? p.buildings.slagRecycler : 1,
@@ -245,15 +250,17 @@ export const migrateLoadState = (payload = {}) => {
     // no se pierdan.
     tacticalEventLog: buildMigratedEventLog(payload),
     totalAICount: payload.totalAICount || (payload.aiPlanets || []).length,
-    // New diplomacy and narrative fields for compatibility
     influence: payload.influence ?? 50,
     reputation: payload.reputation ?? 0,
+    activeSenateBuffs: payload.activeSenateBuffs && typeof payload.activeSenateBuffs === 'object' ? payload.activeSenateBuffs : {},
+    supplyRoutes: Array.isArray(payload.supplyRoutes) ? payload.supplyRoutes : [],
     adventureLogs: Array.isArray(payload.adventureLogs) ? payload.adventureLogs : [],
     eventLog: Array.isArray(payload.eventLog) ? payload.eventLog : [],
     galacticCouncil: payload.galacticCouncil || { lastSessionTick: 0, currentSession: null, resolutionsPassed: [], influenceHistory: [] },
     federations: payload.federations || [],
     federalFleet: payload.federalFleet || { metal: 0, crystal: 0, deuterium: 0, ships: {} },
     diplomaticHistory: payload.diplomaticHistory || [],
+    foreignEmbassiesInCapital: Array.isArray(payload.foreignEmbassiesInCapital) ? payload.foreignEmbassiesInCapital : [],
     activeCrises: payload.activeCrises || [],
     // 1.6-2 — `buildMinistriesState` completa los 17 ministerios conservando lo
     // que la partida ya tenía, en vez de hardcodear 6 defaults aquí.
@@ -281,6 +288,13 @@ export const migrateLoadState = (payload = {}) => {
       linkedPlanetIds: payload.planets?.[0]?.id ? [payload.planets[0].id] : []
     },
     galacticBank: processBankLiquidation(initGalacticBankState(payload.galacticBank)).bankState,
+    financialBalance: payload.financialBalance && typeof payload.financialBalance === 'object' ? payload.financialBalance : {
+      income: { total: 0, populationTax: 0, businessTax: 0, miningTax: 0 },
+      expenses: { total: 0, ministerSalaries: 0, fleetUpkeep: 0 },
+      netHourly: 0,
+      monetaryVelocity: 1.0,
+      isBankrupt: false
+    },
   };
 
 // Amnistía Imperial: asegurar compatibilidad con expansiones previas

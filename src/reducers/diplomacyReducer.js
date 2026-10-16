@@ -47,8 +47,21 @@ export const diplomacyReducer = (state, action) => {
         deuterium: offer.deuterium || 0
       };
       const offerInfluence = offer.influence || 0;
-      if (!canAfford(planet.resources, offerCost) || (state.influence || 0) < offerInfluence) {
-        return { ...state, notifications: [...(state.notifications || []), { id: uid(), type: 'warning', message: '💸 No puedes permitirte esta oferta diplomática.', timestamp: Date.now() }] };
+      const isEmbassy = treatyType === 'permanent_embassy';
+      const embassyCreditsCost = isEmbassy ? 2500 : 0;
+
+      if (!canAfford(planet.resources, offerCost) || (state.influence || 0) < offerInfluence || (state.credits || 0) < embassyCreditsCost) {
+        return {
+          ...state,
+          notifications: [...(state.notifications || []), {
+            id: uid(),
+            type: 'warning',
+            message: embassyCreditsCost > 0 && (state.credits || 0) < embassyCreditsCost
+              ? `💸 Fondos insuficientes: Establecer una Embajada Permanente requiere ${embassyCreditsCost.toLocaleString()} créditos imperiales.`
+              : '💸 No puedes permitirte esta oferta diplomática.',
+            timestamp: Date.now()
+          }]
+        };
       }
 
       if ((targetAI.activePacts || []).includes(treatyType)) {
@@ -60,6 +73,9 @@ export const diplomacyReducer = (state, action) => {
       if (treatyType === 'trade_treaty') demandVal = 1000;
       else if (treatyType === 'non_aggression') demandVal = 600;
       else if (treatyType === 'defensive_pact') demandVal = 2500;
+      else if (treatyType === 'permanent_embassy') demandVal = 1800;
+      else if (treatyType === 'research_agreement') demandVal = 1500;
+      else if (treatyType === 'joint_expedition') demandVal = 3200;
 
       const demandResVal = (demand.metal || 0) * 1.0 + (demand.crystal || 0) * 2.0 + (demand.deuterium || 0) * 4.0;
       demandVal += demandResVal;
@@ -80,6 +96,9 @@ export const diplomacyReducer = (state, action) => {
           const isPna = treatyType === 'non_aggression' || treatyType === 'pna';
           const isTrade = treatyType === 'trade_treaty' || treatyType === 'trade';
           const isDef = treatyType === 'defensive_pact' || treatyType === 'defense_agreement';
+          const isEmbassy = treatyType === 'permanent_embassy';
+          const isResearch = treatyType === 'research_agreement';
+          const isExpedition = treatyType === 'joint_expedition';
           return {
             ...p,
             activePacts: Array.from(new Set([...pacts, treatyType, isPna ? 'pna' : null, isTrade ? 'trade' : null].filter(Boolean))),
@@ -88,7 +107,10 @@ export const diplomacyReducer = (state, action) => {
             trade: isTrade ? true : p.trade,
             tradeTicks: isTrade ? 300 : p.tradeTicks,
             defensivePact: isDef ? true : p.defensivePact,
-            relation: Math.min(100, (p.relation || 0) + 12)
+            hasEmbassy: isEmbassy ? true : p.hasEmbassy,
+            hasResearchPact: isResearch ? true : p.hasResearchPact,
+            hasJointExpedition: isExpedition ? true : p.hasJointExpedition,
+            relation: Math.min(100, (p.relation || 0) + (isEmbassy ? 25 : isResearch ? 18 : 12))
           };
         }
         return p;
@@ -99,6 +121,7 @@ export const diplomacyReducer = (state, action) => {
         planets: updatedPlanets,
         aiPlanets: updatedAIPlanets,
         influence: Math.max(0, (state.influence || 0) - offerInfluence),
+        credits: Math.max(0, (state.credits || 0) - embassyCreditsCost),
         notifications: [...(state.notifications || []), { id: uid(), type: 'success', message: `✅ Tratado firmado con ${targetAI.empireName || targetAI.name}: ${treatyType}`, timestamp: Date.now() }]
       };
     }
@@ -209,6 +232,135 @@ export const diplomacyReducer = (state, action) => {
         reputation: Math.min(100, (state.reputation || 0) + 5),
         activeTransmission: null,
         notifications: [...(state.notifications || []), { id: uid(), type: 'success', message: `✅ ${ai.empireName || ai.name} firmó ${treatyNames[treatyType] || treatyType}. Relación +10.`, timestamp: Date.now() }]
+      };
+    }
+
+    case 'DIPLOMACY_ACCEPT_FOREIGN_EMBASSY': {
+      const { aiId, rentHourly = 180, reputationBonus = 5, relationBonus = 15 } = action.payload;
+      const ai = state.aiPlanets.find(p => p.id === aiId);
+      if (!ai) return { ...state, activeTransmission: null };
+
+      const updatedAi = state.aiPlanets.map(p => {
+        if (p.id === aiId) {
+          const newPacts = [...(p.activePacts || []), 'foreign_embassy_in_capital'];
+          return {
+            ...p,
+            relation: Math.min(100, (p.relation || 0) + relationBonus),
+            hasEmbassyInPlayerCapital: true,
+            activePacts: newPacts,
+          };
+        }
+        return p;
+      });
+
+      const existingEmbassies = state.foreignEmbassiesInCapital || [];
+      const newEmbassy = {
+        aiId,
+        faction: ai.faction,
+        empireName: ai.empireName || ai.name,
+        rentHourly,
+        establishedAt: Date.now()
+      };
+
+      return {
+        ...state,
+        aiPlanets: updatedAi,
+        foreignEmbassiesInCapital: [...existingEmbassies.filter(e => e.aiId !== aiId), newEmbassy],
+        reputation: Math.min(100, (state.reputation || 0) + reputationBonus),
+        activeTransmission: null,
+        notifications: [
+          ...(state.notifications || []),
+          {
+            id: uid(),
+            type: 'success',
+            message: `🏛️ Enclave Consular establecido: ${ai.empireName || ai.name} ha abierto su Embajada en tu capital (+${rentHourly} Cr/h, Relación +${relationBonus}).`,
+            timestamp: Date.now()
+          }
+        ]
+      };
+    }
+
+    case 'DIPLOMACY_SELL_EMERGENCY_ORDNANCE': {
+      const { aiId, heavyMissiles = 50, kineticShells = 100, creditsReward = 650, relationBonus = 15 } = action.payload || {};
+      const homePlanet = state.planets[0];
+      if (!homePlanet) return { ...state, activeTransmission: null };
+      const arsenal = homePlanet.arsenal || { heavyMissiles: 100, kineticShells: 500, plasmaCells: 250 };
+      if ((arsenal.heavyMissiles ?? 0) < heavyMissiles || (arsenal.kineticShells ?? 0) < kineticShells) {
+        return {
+          ...state,
+          activeTransmission: null,
+          notifications: [...(state.notifications || []), { id: uid(), type: 'warning', message: '⚠️ Munición insuficiente en el polvorín de la capital para completar el envío.', timestamp: Date.now() }]
+        };
+      }
+      const updatedPlanets = state.planets.map((p, idx) => idx === 0 ? {
+        ...p,
+        arsenal: {
+          ...arsenal,
+          heavyMissiles: Math.max(0, (arsenal.heavyMissiles ?? 0) - heavyMissiles),
+          kineticShells: Math.max(0, (arsenal.kineticShells ?? 0) - kineticShells),
+        }
+      } : p);
+      const updatedAi = state.aiPlanets.map(p => p.id === aiId ? { ...p, relation: Math.min(100, (p.relation || 0) + relationBonus) } : p);
+      const targetAI = state.aiPlanets.find(p => p.id === aiId);
+
+      return {
+        ...state,
+        planets: updatedPlanets,
+        aiPlanets: updatedAi,
+        credits: (state.credits || 0) + creditsReward,
+        activeTransmission: null,
+        notifications: [...(state.notifications || []), {
+          id: uid(),
+          type: 'success',
+          message: `💣 Convoy balístico entregado a ${targetAI?.empireName || targetAI?.name}: +${creditsReward} Créditos y +${relationBonus} Relación.`,
+          timestamp: Date.now()
+        }]
+      };
+    }
+
+    case 'DIPLOMACY_EXPEL_FOREIGN_EMBASSY': {
+      const { aiId } = action;
+      const existing = state.foreignEmbassiesInCapital || [];
+      const targetEmb = existing.find(e => e.aiId === aiId);
+      const updatedAi = state.aiPlanets.map(p => {
+        if (p.id === aiId) {
+          return {
+            ...p,
+            hasEmbassyInPlayerCapital: false,
+            activePacts: (p.activePacts || []).filter(pt => pt !== 'foreign_embassy_in_capital'),
+            relation: Math.max(-100, (p.relation || 0) - 25)
+          };
+        }
+        return p;
+      });
+      return {
+        ...state,
+        aiPlanets: updatedAi,
+        foreignEmbassiesInCapital: existing.filter(e => e.aiId !== aiId),
+        notifications: [...(state.notifications || []), {
+          id: uid(),
+          type: 'warning',
+          message: `🚫 Embajada de ${targetEmb?.empireName || 'facción extranjera'} clausurada y cuerpo diplomático expulsado de la capital (-25 Relación).`,
+          timestamp: Date.now()
+        }]
+      };
+    }
+
+    case 'DIPLOMACY_RAISE_EMBASSY_RENT': {
+      const { aiId } = action;
+      const existing = state.foreignEmbassiesInCapital || [];
+      const updatedEmbassies = existing.map(e => e.aiId === aiId ? { ...e, rentHourly: (e.rentHourly || 180) + 60 } : e);
+      const updatedAi = state.aiPlanets.map(p => p.id === aiId ? { ...p, relation: Math.max(-100, (p.relation || 0) - 8) } : p);
+      return {
+        ...state,
+        aiPlanets: updatedAi,
+        foreignEmbassiesInCapital: updatedEmbassies,
+        notifications: [...(state.notifications || []), {
+          id: uid(),
+          type: 'info',
+          message: `💰 Canon consular incrementado en +60 Cr/h (-8 Relación).`,
+          timestamp: Date.now()
+        }]
       };
     }
 

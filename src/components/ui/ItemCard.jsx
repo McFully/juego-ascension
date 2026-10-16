@@ -152,10 +152,10 @@ export const ItemCard = React.memo(({
           )}
         </div>
 
-        {/* Info de Producción Submodularizada */}
+        {/* BLOQUE 1: Rendimiento / Situación Actual y Próximo Nivel */}
         <ItemCardProductionInfo prodInfo={prodInfo} level={level} />
 
-        {/* Cajón Rojo de Requisitos (Idéntico a Consejo Imperial) */}
+        {/* Cajón Rojo de Requisitos Bloqueantes */}
         {(lockReason || (!meetsRequirements && extra) || (lackOfPop && extra)) && (
           <div className="mt-2 mb-2 p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] font-mono leading-relaxed text-rose-300">
             <span className="font-bold text-rose-400 inline-flex items-center gap-1 mr-1.5">
@@ -165,30 +165,36 @@ export const ItemCard = React.memo(({
           </div>
         )}
 
-        {/* Recuadro Verde de Población / Requisitos Satisfechos y Líneas Extra */}
-        {extra && (lockReason ? Boolean(extra) : (meetsRequirements && !lackOfPop)) && (() => {
-          const lines = String(extra).split(' | ');
+        {/* BLOQUE 2: Demografía y Censo (Módulo permanente estandarizado) */}
+        {(() => {
+          const lines = extra ? String(extra).split(' | ') : [];
           const popLine = lines.find(l => l.includes('Población:'));
           const otherLines = lines.filter(l => !l.includes('Población:'));
+          const popText = popLine ? popLine.replace(/👥\s*Población:\s*/, '') : null;
 
           return (
-            <div className="flex flex-col gap-1.5 mb-2">
-              {popLine && (
-                <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono leading-tight text-emerald-300 flex items-center justify-between">
-                  <span className="font-bold flex items-center gap-1 text-emerald-400">
-                    <span>👥</span> Población:
-                  </span>
-                  <span className="text-emerald-200 font-semibold">{popLine.replace(/👥\s*Población:\s*/, '')}</span>
-                </div>
-              )}
+            <div className="flex flex-col gap-1 mb-2">
+              <div className={`p-2 rounded-xl border text-[11px] font-mono leading-tight flex items-center justify-between ${
+                lackOfPop
+                  ? 'bg-rose-950/40 border-rose-500/30 text-rose-300'
+                  : 'bg-[#05070f]/60 border-white/5 text-slate-300'
+              }`}>
+                <span className="font-bold flex items-center gap-1.5 text-slate-400">
+                  <span>👥</span>
+                  <span className="text-[10px] uppercase tracking-wider">Censo Requerido:</span>
+                </span>
+                <span className={`font-bold ${lackOfPop ? 'text-rose-300' : 'text-emerald-300'}`}>
+                  {popText || (lackOfPop ? 'Insuficiente' : 'Cubierto')}
+                </span>
+              </div>
               {otherLines.length > 0 && (
-                <div className="text-xs text-slate-400">{otherLines.join(' | ')}</div>
+                <div className="text-[10px] font-mono text-slate-400 px-1">{otherLines.join(' | ')}</div>
               )}
             </div>
           );
         })()}
 
-        {/* Sección de Costes Submodularizada */}
+        {/* BLOQUE 3: Coste de Mejora y Tiempo de Ensamblaje */}
         <ItemCardCostSection cost={cost} time={time} canAfford={canAfford} planetResources={planetResources} prodInfo={prodInfo} />
       </div>
 

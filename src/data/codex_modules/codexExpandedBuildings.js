@@ -276,10 +276,10 @@ export const CODEX_EXPANDED_BUILDINGS = {
     "usage": "Fundamental para desbloquear directivas de alto nivel y proyectar autoridad interplanetaria."
   },
   "financeMinistry": {
-    "name": "Ministerio de Finanzas",
-    "lore": "Sede institucional y administrativa del aparato estatal imperial encargada de coordinar políticas, leyes y presupuestos.",
-    "stats": "Genera influencia colonial, reduce la corrupción y optimiza los decretos ministeriales.",
-    "usage": "Fundamental para desbloquear directivas de alto nivel y proyectar autoridad interplanetaria."
+    "name": "Banca Planetaria",
+    "lore": "Entidad financiera y cámara de custodia local encargada de gestionar los saldos, depósitos y reservas de la colonia.",
+    "stats": "Permite abrir la Banca Planetaria local para custodiar recursos e intereses propios del mundo.",
+    "usage": "Requisito fundamental para operar la Banca Planetaria de la colonia."
   },
   "councilChamber": {
     "name": "Consejo Planetario",

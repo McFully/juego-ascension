@@ -11,7 +11,8 @@ export const DESK_SUBVIEWS = ['buildings', 'research', 'programs', 'directives',
 
 export const COMMAND_CARD_TARGETS = {
   exchangeMinistries: 'government_ministries',
-  planetaryBank: 'galactic_bank',
+  planetaryBank: 'planetary_bank',
+  galacticBank: 'galactic_bank',
   financeResearch: 'ministry_finance_research',
 };
 

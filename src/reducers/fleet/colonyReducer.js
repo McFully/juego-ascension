@@ -43,12 +43,18 @@ export const handleScrapShips = (state, action) => {
     crystal: Math.floor((s.cost.c || 0) * 0.35 * quantity),
     deuterium: Math.floor((s.cost.d || 0) * 0.35 * quantity),
   };
+  const crewReturned = (s.crew || 0) * quantity;
 
   let newState = updatePlanet(state, planetId, p => {
     const newF = { ...p.fleet };
     newF[shipId] = (newF[shipId] || 0) - quantity;
     if (newF[shipId] <= 0) delete newF[shipId];
-    return { ...p, fleet: newF, resources: { metal: p.resources.metal + refund.metal, crystal: p.resources.crystal + refund.crystal, deuterium: p.resources.deuterium + refund.deuterium } };
+    return {
+      ...p,
+      population: (p.population || 0) + crewReturned,
+      fleet: newF,
+      resources: { metal: p.resources.metal + refund.metal, crystal: p.resources.crystal + refund.crystal, deuterium: p.resources.deuterium + refund.deuterium }
+    };
   });
 
   // Reflejar desguace en SQLite
@@ -133,6 +139,9 @@ export const handleColonize = (state, action) => {
     if (newFleet.colonizer <= 0) delete newFleet.colonizer;
     return { ...p, fleet: newFleet, resources: { metal: p.resources.metal + refund.metal, crystal: p.resources.crystal + refund.crystal, deuterium: p.resources.deuterium + refund.deuterium } };
   });
+  const extraFields = (state.research?.advColonization || 0) * 2;
+  const initialPop = 2000; // Capacidad estándar embarcada por el colonizador
+
   const newPlanetId = uid();
   const newPlanet = {
     id: newPlanetId,
@@ -140,12 +149,12 @@ export const handleColonize = (state, action) => {
     galaxy: to.galaxy, system: to.system, position: to.position,
     isHome: false,
     biome: 'temperate',
-    planetSize: 100 + Math.floor(Math.random() * 100),
+    planetSize: 100 + Math.floor(Math.random() * 100) + extraFields,
     gravity: Math.ceil(Math.random() * 5),
     trait: null,
     specialization: null,
     faction: originPlanet.faction || 'human',
-    population: 500,
+    population: initialPop,
     autoTrade: false,
     buildings: { metalMine: 0, crystalMine: 0, deutSynth: 0, solarPlant: 0, fusionReactor: 0, robotFactory: 0, shipyard: 0, researchLab: 0, missileSilo: 0, naniteFactory: 0, terraformer: 0, allianceDepot: 0, moonBase: 0, sensorPhalanx: 0, jumpGate: 0 },
     resources: { metal: 800, crystal: 500, deuterium: 200 },
@@ -154,6 +163,6 @@ export const handleColonize = (state, action) => {
     retrofitTech: { weapons: 0, shields: 0, armour: 0, combustion: 0, impulse: 0, hyperspace: 0 },
   };
   newState.planets = [...newState.planets, newPlanet];
-  newState.notifications = [...(newState.notifications || []), { id: uid(), type: 'success', message: `🚀 Nueva colonia establecida en [${to.galaxy}:${to.system}:${to.position}]`, timestamp: Date.now() }];
+  newState.notifications = [...(newState.notifications || []), { id: uid(), type: 'success', message: `🚀 Nueva colonia establecida en [${to.galaxy}:${to.system}:${to.position}] con ${initialPop.toLocaleString()} colonos pioneros (+${extraFields} campos por Colonización Avanzada)`, timestamp: Date.now() }];
   return newState;
 };

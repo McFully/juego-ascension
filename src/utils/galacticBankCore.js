@@ -91,28 +91,82 @@ export function initGalacticBankState(existingState = null) {
   };
 }
 
+// Capacidad base y escalado de la Banca Planetaria local
+export const BASE_PLANETARY_BANK_CAPACITY = {
+  metal: 1000000,
+  crystal: 500000,
+  deuterium: 250000,
+  credits: 2000000,
+};
+
+export const CAPACITY_PER_PLANETARY_BANK_LEVEL = {
+  metal: 1000000,
+  crystal: 500000,
+  deuterium: 250000,
+  credits: 2000000,
+};
+
+// Capacidad federal transferible a Banca Galáctica Central por nivel de exchangeBank (Nv 1: 20.000)
+export const CAPACITY_PER_GALACTIC_BANK_LEVEL = {
+  metal: 20000,
+  crystal: 20000,
+  deuterium: 20000,
+  credits: 50000,
+};
+
 /**
- * Calcula la capacidad bancaria máxima para un recurso dado el estado imperial
+ * Obtiene el estado seguro de la Banca Planetaria de un planeta
+ */
+export function getPlanetaryBankState(planet) {
+  const existing = planet?.bank || {};
+  const balances = {
+    metal: 0,
+    crystal: 0,
+    deuterium: 0,
+    credits: 0,
+    ...(existing.balances || {})
+  };
+  for (const r of BANK_RESOURCES) {
+    balances[r] = Math.max(0, Math.floor(Number(balances[r]) || 0));
+  }
+  return {
+    balances,
+    history: Array.isArray(existing.history) ? existing.history.slice(0, 50) : [],
+  };
+}
+
+/**
+ * Calcula la capacidad máxima de la Banca Planetaria local de un planeta
+ */
+export function calcPlanetaryBankCapacity(planet, resource) {
+  if (!BANK_RESOURCES.includes(resource)) return 0;
+  const level = planet?.buildings?.financeMinistry || 0;
+  if (level < 1) return 0;
+  const base = BASE_PLANETARY_BANK_CAPACITY[resource] || 1000000;
+  const perLevel = CAPACITY_PER_PLANETARY_BANK_LEVEL[resource] || 1000000;
+  return base + ((level - 1) * perLevel);
+}
+
+/**
+ * Calcula la capacidad bancaria de la Banca Galáctica Central imperial
+ * Nivel 1 = 20.000 por recurso (según nivel acumulado o máximo de exchangeBank)
  */
 export function calcBankCapacity(state, resource) {
   if (!BANK_RESOURCES.includes(resource)) return 0;
   
-  // Buscar nivel máximo de Banca Galáctica en todos los mundos del imperio
-  let maxBankLevel = 0;
+  // Buscar nivel de Banca Galáctica Central (exchangeBank) en todos los mundos
+  let totalExchangeBankLevel = 0;
   if (Array.isArray(state?.planets)) {
     for (const p of state.planets) {
-      const bLvl = Math.max(
-        p.buildings?.exchangeBank || 0,
-        p.buildings?.futuresExchange || 0
-      );
-      if (bLvl > maxBankLevel) maxBankLevel = bLvl;
+      const bLvl = p.buildings?.exchangeBank || 0;
+      if (bLvl > totalExchangeBankLevel) totalExchangeBankLevel = bLvl;
     }
   }
 
-  const base = BASE_BANK_CAPACITY[resource] || 5000000;
-  const perLevel = CAPACITY_PER_BANK_LEVEL[resource] || 5000000;
+  if (totalExchangeBankLevel < 1) return 0;
 
-  return base + (maxBankLevel * perLevel);
+  const perLevel = CAPACITY_PER_GALACTIC_BANK_LEVEL[resource] || 20000;
+  return totalExchangeBankLevel * perLevel;
 }
 
 /**

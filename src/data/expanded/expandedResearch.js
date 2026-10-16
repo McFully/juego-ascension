@@ -94,4 +94,8 @@ export const EXPANDED_RESEARCH = {
   riverTransitSensors: { name: 'Sensores Tráfico', icon: '📡', cost: { m: 120000, c: 95000, d: 48000 }, factor: 2, cat: 'logistics', req: { deepScanner: 3 }, effect: 'Evita accidentes de flotas' },
   routeRefueling: { name: 'Reabastecimiento en Ruta', icon: '⛽', cost: { m: 150000, c: 120000, d: 60000 }, factor: 2, cat: 'logistics', req: { combustion: 10 }, effect: 'Combustible a mitad de vuelo' },
   tradeHubTheorems: { name: 'Megapuertos Comerciales', icon: '🏢', cost: { m: 200000, c: 160000, d: 80000 }, factor: 2.2, cat: 'logistics', req: { computer: 12 }, effect: 'Velocidad y volumen de comercio' },
+
+  // === BIO-AGRO Y AUTOMATIZACIÓN MARCIAL ===
+  automatedAgriDrones: { name: 'Drones Agrícolas', icon: '🌾', cost: { m: 35000, c: 28000, d: 14000 }, factor: 1.8, cat: 'civics', req: { townHall: 4 }, effect: 'Eficiencia soporte vital', perLevel: { agriBoost: 20 }, unit: '%' },
+  gridDefenseAutomation: { name: 'Defensa Automatizada', icon: '🤖', cost: { m: 45000, c: 35000, d: 20000 }, factor: 2, cat: 'military', req: { robotFactory: 6 }, effect: 'Reduce guarnición de defensas' },
 };

@@ -235,16 +235,18 @@ export const Planet3DCard = React.memo(function Planet3DCard({
                 )}
               </div>
 
-              {/* Botón Ficha Completa anclado abajo del todo, justo por encima del separador */}
-              <button
-                type="button"
-                onClick={(e) => handleOpenDetail(e, planet)}
-                className="w-full max-w-[155px] py-1.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600/90 to-blue-600/90 hover:from-cyan-500 hover:to-blue-500 text-white font-mono text-[11px] font-black uppercase tracking-wider border border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all cursor-pointer flex items-center justify-center gap-1.5 mt-auto mb-0"
-                title="Abrir ficha técnica completa"
-              >
-                <span>📋</span>
-                <span>Ficha Completa</span>
-              </button>
+              {/* Botón de Acción: Ficha Completa */}
+              <div className="flex items-center justify-center w-full max-w-[210px] mt-auto mb-0">
+                <button
+                  type="button"
+                  onClick={(e) => handleOpenDetail(e, planet)}
+                  className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600/90 to-blue-600/90 hover:from-cyan-500 hover:to-blue-500 text-white font-mono text-[10px] font-black uppercase tracking-wider border border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.3)] hover:shadow-[0_0_18px_rgba(6,182,212,0.5)] transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  title="Abrir ficha técnica completa"
+                >
+                  <span>📋</span>
+                  <span>Ficha Técnica</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

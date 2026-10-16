@@ -116,6 +116,59 @@ export const generateAIPlanet = (level, coords, empireName, aiIndex) => {
   };
 };
 
+/**
+ * Perfil astronómico realista del sistema solar.
+ * Genera deterministamente el tipo estelar y cuántos planetas reales orbitan.
+ */
+export const getSystemProfile = (galaxy, system) => {
+  const seed = galaxy * 7777 + system * 31;
+  let sVal = seed;
+  const nextRand = () => {
+    const x = Math.sin(sVal++) * 10000;
+    return x - Math.floor(x);
+  };
+
+  const starTypes = [
+    { type: 'Enana Amarilla (Clase G)', color: '#facc15', spectral: 'G2V' },
+    { type: 'Enana Roja (Clase M)', color: '#ef4444', spectral: 'M4V' },
+    { type: 'Gigante Azul (Clase O)', color: '#38bdf8', spectral: 'O9V' },
+    { type: 'Subgigante Naranja (Clase K)', color: '#fb923c', spectral: 'K1IV' },
+    { type: 'Sistema Binario', color: '#e879f9', spectral: 'G+M' }
+  ];
+
+  const star = starTypes[Math.floor(nextRand() * starTypes.length)];
+
+  // Número real y finito de órbitas que tiene este sistema solar (entre 5 y 9 órbitas totales, ej. 8 como nuestro sistema solar)
+  const maxOrbits = (galaxy === 1 && system === 1) ? 8 : (5 + Math.floor(nextRand() * 5));
+
+  // De esas órbitas existentes, entre 2 y 6 albergan planetas reales; otras pueden ser cinturones o vacío
+  const planetPositions = new Set();
+  const asteroidPositions = new Set();
+
+  if (galaxy === 1 && system === 1) {
+    planetPositions.add(1); // Mundo natal del jugador
+    planetPositions.add(3);
+    planetPositions.add(5);
+    planetPositions.add(7);
+    asteroidPositions.add(4);
+  } else {
+    const planetCount = 2 + Math.floor(nextRand() * (maxOrbits - 2));
+    for (let i = 0; i < planetCount; i++) {
+      const pos = 1 + Math.floor(nextRand() * maxOrbits);
+      planetPositions.add(pos);
+    }
+    const asteroidPos = 1 + Math.floor(nextRand() * maxOrbits);
+    if (!planetPositions.has(asteroidPos)) asteroidPositions.add(asteroidPos);
+  }
+
+  return {
+    star,
+    maxOrbits,
+    planetPositions,
+    asteroidPositions,
+  };
+};
+
 export const getVirginPlanet = (galaxy, system, position) => {
   const seed = galaxy * 10000 + system * 20 + position;
   let sVal = seed;

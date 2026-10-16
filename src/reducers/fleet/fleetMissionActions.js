@@ -111,12 +111,21 @@ export const handleSendFleet = (state, action) => {
     newFleet[id] = (newFleet[id] || 0) - qty;
     if (newFleet[id] <= 0) delete newFleet[id];
   }
-  // Deduct resources if transport
+  // Deduct resources and ordnance if transport
   let newResources = { ...from.resources };
+  let newArsenal = { ...(from.arsenal || { heavyMissiles: 100, kineticShells: 500, plasmaCells: 250 }) };
   if (resources) {
     if ((resources.metal || 0) < 0 || (resources.crystal || 0) < 0 || (resources.deuterium || 0) < 0) return state;
     if (!canAfford(newResources, resources)) return state;
     newResources = deduct(newResources, resources);
+
+    if (resources.ordnance) {
+      for (const [ammoKey, qty] of Object.entries(resources.ordnance)) {
+        const sendQty = Math.max(0, Math.floor(Number(qty) || 0));
+        if (sendQty > (newArsenal[ammoKey] ?? 0)) return state;
+        newArsenal[ammoKey] = Math.max(0, (newArsenal[ammoKey] ?? 0) - sendQty);
+      }
+    }
   }
   // Calculate fuel
   const dist = calcDistance(from, to);
@@ -213,7 +222,7 @@ export const handleSendFleet = (state, action) => {
     }).catch(e => console.warn("[Ascensión DB] Error al asignar naves a misión:", e));
   }
 
-  let newState = updatePlanet(state, fromId, p => ({ ...p, fleet: newFleet, resources: newResources }));
+  let newState = updatePlanet(state, fromId, p => ({ ...p, fleet: newFleet, resources: newResources, arsenal: newArsenal }));
   newState.fleetMissions = [...(state.fleetMissions || []), {
     id: missionId, type: missionType, from, to, fleet, resources, fuel: totalFuel,
     departure: Date.now(), arrivalTime, returnTime, isAI: false, autoRetreat, formation,

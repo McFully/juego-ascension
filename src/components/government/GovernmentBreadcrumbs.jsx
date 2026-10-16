@@ -62,7 +62,7 @@ export const GovernmentBreadcrumbs = ({
       {/* === DOM SUPERIOR: 2 FILAS CON SEPARADOR HORIZONTAL Y ANCHO COMPLETO === */}
       <nav className="flex-1 min-w-0 bg-black/85 backdrop-blur-md rounded-2xl border border-white/10 text-xs font-mono shadow-2xl flex flex-col justify-between">
         {/* FILA SUPERIOR: Recursos Tácticos Ancho Completo */}
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-visible">
           <GovernmentResourceBar
             currentPlanet={currentPlanet}
             production={production}

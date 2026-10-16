@@ -159,6 +159,49 @@ export const MissionConfigPanel = ({
             </div>
           </div>
 
+          {/* Suministro Balístico (Polvorín a transportar) */}
+          <div className="bg-amber-950/20 border border-amber-500/25 rounded-xl p-2.5 space-y-2">
+            <div className="flex items-center justify-between text-[11px] font-mono">
+              <span className="text-amber-300 font-bold flex items-center gap-1.5">
+                <span>💣</span>
+                <span>Munición del Polvorín a Embarcar:</span>
+              </span>
+              <span className="text-[10px] text-slate-400">Reabastece colonias en guerra</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { key: 'heavyMissiles', label: '🚀 Cohetes', max: currentPlanet?.arsenal?.heavyMissiles ?? 100 },
+                { key: 'kineticShells', label: '🎯 Obuses', max: currentPlanet?.arsenal?.kineticShells ?? 500 },
+                { key: 'plasmaCells', label: '🟣 Plasma', max: currentPlanet?.arsenal?.plasmaCells ?? 250 },
+              ].map((ammo) => (
+                <div key={ammo.key} className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                    <span>{ammo.label}</span>
+                    <span className="text-amber-300/80">Disp: {ammo.max}</span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max={ammo.max}
+                    placeholder="0"
+                    value={transportRes?.ordnance?.[ammo.key] || ""}
+                    onChange={e => {
+                      const val = Math.max(0, Math.min(ammo.max, parseInt(e.target.value) || 0));
+                      setTransportRes({
+                        ...transportRes,
+                        ordnance: {
+                          ...(transportRes?.ordnance || {}),
+                          [ammo.key]: val
+                        }
+                      });
+                    }}
+                    className={S.input}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Botones de llenado rápido según capacidad de bodega de las naves seleccionadas */}
           {(() => {
             const totalCargoCap = Object.entries(selectedShips || {}).reduce((acc, [id, qty]) => {

@@ -17,7 +17,10 @@ import {
   handleBankDeposit,
   handleBankWithdraw,
   handleBankSetRate,
-  handleBankProcessLiquidation
+  handleBankProcessLiquidation,
+  handlePlanetaryBankDeposit,
+  handlePlanetaryBankWithdraw,
+  handleTransferToGalacticBank
 } from './economy/bankActions.js';
 import {
   handleMarketTrade,
@@ -79,6 +82,14 @@ export const economyReducer = (state, action) => {
       return handleBankSetRate(state, action);
     case 'BANK_PROCESS_LIQUIDATION':
       return handleBankProcessLiquidation(state, action);
+
+    // === BANCA PLANETARIA LOCAL ===
+    case 'PLANETARY_BANK_DEPOSIT':
+      return handlePlanetaryBankDeposit(state, action);
+    case 'PLANETARY_BANK_WITHDRAW':
+      return handlePlanetaryBankWithdraw(state, action);
+    case 'TRANSFER_TO_GALACTIC_BANK':
+      return handleTransferToGalacticBank(state, action);
 
     // === GESTIÓN DE PLANETAS Y COLONIAS ===
     case 'SET_PLANET':

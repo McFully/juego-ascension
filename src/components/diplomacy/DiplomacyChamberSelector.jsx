@@ -5,7 +5,8 @@ import { ActionCardTile } from '../ui/ActionCardTile.jsx';
 export const DiplomacyChamberSelector = ({ onSelectChamber, playDiploSound, onBack }) => {
   const chambers = [
     { id: 'relations', label: 'Embajada y Líderes', icon: '🤝', assetId: 'permanentEmbassy', subtitle: 'Contacto directo con imperios alienígenas, pactos y comercio' },
-    { id: 'council', label: 'Consejo Galáctico', icon: '🏛️', assetId: 'sectorGovPalace', subtitle: 'Votación de resoluciones interestelares y hegemonía política' },
+    { id: 'enclaves', label: 'Distrito Consular', icon: '🏛️', assetId: 'diploCenter', subtitle: 'Embajadas extranjeras en tu capital, alquileres y legaciones' },
+    { id: 'council', label: 'Consejo Galáctico', icon: '⚖️', assetId: 'sectorGovPalace', subtitle: 'Votación de resoluciones interestelares y hegemonía política' },
     { id: 'federations', label: 'Pactos Federativos', icon: '🛡️', assetId: 'battleship', subtitle: 'Alianzas militares, flota federal conjunta y defensa mutua' },
     { id: 'crises', label: 'Alertas de Crisis', icon: '⚠️', assetId: 'plasmaTurret', subtitle: 'Amenazas interestelares, plagas cósmicas y frentes bélicos' },
   ];

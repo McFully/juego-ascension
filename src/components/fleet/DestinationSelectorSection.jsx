@@ -12,16 +12,21 @@ export const DestinationSelectorSection = React.memo(({
 }) => {
   return (
     <div className={S.cardDeep}>
-      <h3 className="text-lg font-semibold mb-3">🎯 Destino</h3>
+      <h3 className="text-lg font-semibold mb-3">🎯 Destino y Base de Lanzamiento</h3>
       {target ? (
-        <div className="flex items-center justify-between bg-slate-950/50 rounded-lg p-3">
-          <div>
-            <div className="font-mono text-cyan-400">[{target.galaxy}:{target.system}:{target.position}]</div>
-            <div className="text-sm text-slate-400">
-              {target.occupied ? (target.isAI ? "Planeta IA" : "Tu planeta") : "Espacio vacío"}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/50 rounded-lg p-3 border border-white/5">
+          <div className="flex items-center gap-3">
+            <div>
+              <div className="font-mono text-cyan-400 font-bold">[{target.galaxy}:{target.system}:{target.position}]</div>
+              <div className="text-xs text-slate-400">
+                {target.occupied ? (target.isAI ? "Planeta IA" : "Tu planeta") : "Espacio vacío"}
+              </div>
             </div>
           </div>
-          <button onClick={() => setSelectedTarget(null)} className={S.btnGhost + " " + S.btn}>✕</button>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400 font-mono">Base: <span className="text-cyan-300 font-bold">{currentPlanet.name}</span></span>
+            <button onClick={() => setSelectedTarget(null)} className={S.btnGhost + " " + S.btn}>✕ Cancelar</button>
+          </div>
         </div>
       ) : (
         <div>

@@ -15,8 +15,6 @@ import { COMMAND_CARD_TARGETS } from '../../../utils/governmentRoute.js';
 export const PLANETARY_COMMAND_CARDS = [
   'ministries',
   'planetary_senate',
-  'galaxy',
-  'market',
   'bank',
   'defense',
   'missiles',
@@ -27,7 +25,7 @@ export const PLANETARY_COMMAND_CARDS = [
 ];
 
 export const planetaryCommandStorageKey = (planetId) =>
-  `ascension_cmd_hub_planet_${planetId || 'unknown'}_v2`;
+  `ascension_cmd_hub_planet_${planetId || 'unknown'}_v3`;
 
 export function buildPlanetaryCommandCards({
   onEnterMinistries,
@@ -49,7 +47,7 @@ export function buildPlanetaryCommandCards({
   totalShips,
   hasMoon,
   totalDebrisTons,
-  bankLevel = (planet?.buildings?.exchangeBank || planet?.buildings?.futuresExchange || 0),
+  bankLevel = (planet?.buildings?.financeMinistry || 0),
   dispatch
 }) {
   return {
@@ -102,7 +100,7 @@ export function buildPlanetaryCommandCards({
         borderColor="border-cyan-500/30"
         hoverBorderColor="hover:border-cyan-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(6,182,212,0.3)]"
-        assetId="sectorGovPalace"
+        assetId="planetarySenateHall"
         badgeText="LOCAL"
         badgeClasses="bg-cyan-950/80 text-cyan-300 border border-cyan-500/50"
         title="Senado Planetario"
@@ -121,33 +119,33 @@ export function buildPlanetaryCommandCards({
         hoverBorderColor="hover:border-sky-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(56,189,248,0.3)]"
         assetId="deepScanner"
-        badgeText="MAPA ESTELAR"
+        badgeText="MANDO GALÁCTICO"
         badgeClasses="bg-sky-950/80 text-sky-300 border border-sky-500/50"
-        title="Navegación y Galaxia"
+        title="Cartografía y Galaxia"
         icon="🌌"
         titleHoverColor="group-hover:text-sky-300"
-        description="Exploración de sistemas estelares, localización de nuevos planetas vírgenes y control de convoyes en tránsito."
-        footerLabel="Flotas en vuelo:"
-        footerValue={`${fleets.length} en misión`}
+        description="Enlace con el Mando Galáctico Imperial: navegación por cuadrantes estelares, escaneo orbital y proyección exterior."
+        footerLabel="Flotas en misión:"
+        footerValue={`${fleets.length} en vuelo`}
         footerValueClasses="text-sky-300"
       />
     ),
     market: (
       <HubCard
-        onClick={() => onNavigateTab && onNavigateTab('market')}
+        onClick={() => onNavigateTab && onNavigateTab('local_market')}
         borderColor="border-emerald-500/30"
         hoverBorderColor="hover:border-emerald-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(16,185,129,0.3)]"
         assetId="galacticMarket"
-        badgeText="COMERCIO"
+        badgeText="PUERTO COMERCIAL"
         badgeClasses="bg-emerald-950/80 text-emerald-300 border border-emerald-500/50"
-        title="Mercado Galáctico"
+        title="Puerto de Carga y Lonja Local"
         icon="💼"
         titleHoverColor="group-hover:text-emerald-300"
-        description="Bolsa de valores espacial, intercambio de excedentes por créditos o deuterio y fletamento de transportes mercantes."
-        footerLabel="Rutas comerciales:"
-        footerValue={planet?.autoTrade ? 'Automatizadas' : 'Manual'}
-        footerValueClasses="text-emerald-300"
+        description="Embarque de mercancías del planeta, arbitraje de excedentes locales y control del enlace de auto-comercio."
+        footerLabel="Auto-Comercio:"
+        footerValue={planet?.autoTrade ? 'Ruta Activa' : 'Desconectado'}
+        footerValueClasses={planet?.autoTrade ? 'text-emerald-300' : 'text-slate-400'}
       />
     ),
     defense: (
@@ -219,11 +217,11 @@ export function buildPlanetaryCommandCards({
         assetId="battleship"
         badgeText="HANGAR"
         badgeClasses="bg-cyan-950/80 text-cyan-300 border border-cyan-500/50"
-        title="Hangar de la Flota"
+        title="Hangar Planetario"
         icon="🛸"
         titleHoverColor="group-hover:text-cyan-300"
-        description="Gestión táctica de naves estacionadas: inspección de cazas, fragatas, cruceros y cargueros listos para misión."
-        footerLabel="Naves en base:"
+        description="Dársenas de superficie: naves amarradas en este mundo listas para despegue, reubicación o defensa orbital."
+        footerLabel="Naves en dársena:"
         footerValue={`${totalShips} unidades operativas`}
         footerValueClasses="text-cyan-300"
       />
@@ -232,17 +230,17 @@ export function buildPlanetaryCommandCards({
       <HubCard
         onClick={() => onNavigateTab && onNavigateTab(COMMAND_CARD_TARGETS.planetaryBank)}
         isLocked={bankLevel < 1}
-        lockReason="Banca galáctica central nivel 1."
+        lockReason="Banca planetaria nivel 1."
         borderColor="border-yellow-500/30"
         hoverBorderColor="hover:border-yellow-400"
         hoverShadow="hover:shadow-[0_0_35px_rgba(234,179,8,0.3)]"
-        assetId="futuresExchange"
+        assetId="planetaryBankVault"
         badgeText="FINANZAS"
         badgeClasses="bg-yellow-950/80 text-yellow-300 border border-yellow-500/50"
-        title="Banca Central"
+        title="Banca Planetaria"
         icon="🏦"
         titleHoverColor="group-hover:text-yellow-300"
-        description="Servicios bancarios y de crédito estelar: custodia de activos, colocación de depósitos e intereses en el mercado interplanetario."
+        description="Servicios financieros y de custodia local: gestión de depósitos, saldos únicos y reserva propia de este mundo."
         footerLabel="Nivel de Banca:"
         footerValue={bankLevel > 0 ? `Nv. ${bankLevel} Operativo` : 'Bloqueado'}
         footerValueClasses={bankLevel > 0 ? 'text-yellow-300' : 'text-slate-500'}

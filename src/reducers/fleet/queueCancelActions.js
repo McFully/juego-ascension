@@ -107,9 +107,14 @@ export const handleCancelShipQueue = (state, action) => {
   }
   const sPl = state.planets.find(p => p.id === item.planetId);
   const refund = { metal: Math.floor(ship.cost.m * item.quantity * 0.5 * constructionDiscount(sPl?.buildings?.constructionCenter || 0)), crystal: Math.floor(ship.cost.c * item.quantity * 0.5 * constructionDiscount(sPl?.buildings?.constructionCenter || 0)), deuterium: Math.floor((ship.cost.d || 0) * item.quantity * 0.5 * constructionDiscount(sPl?.buildings?.constructionCenter || 0)) };
-  let newState = updatePlanet(state, item.planetId, p => ({ ...p, resources: { metal: p.resources.metal + refund.metal, crystal: p.resources.crystal + refund.crystal, deuterium: p.resources.deuterium + refund.deuterium } }));
+  const crewRefund = item.crewAllocated || ((ship?.crew || 0) * item.quantity);
+  let newState = updatePlanet(state, item.planetId, p => ({
+    ...p,
+    population: (p.population || 0) + crewRefund,
+    resources: { metal: p.resources.metal + refund.metal, crystal: p.resources.crystal + refund.crystal, deuterium: p.resources.deuterium + refund.deuterium }
+  }));
   newState.shipQueue = state.shipQueue.filter(q => q.id !== queueId);
-  newState.notifications = [...(newState.notifications || []), { id: uid(), type: 'info', message: `🚫 Construcción de ${ship.name}x${item.quantity} cancelada. Reembolso 50%`, timestamp: Date.now() }];
+  newState.notifications = [...(newState.notifications || []), { id: uid(), type: 'info', message: `🚫 Construcción de ${ship.name}x${item.quantity} cancelada. Reembolso 50% recursos y +${crewRefund.toLocaleString()} tripulantes reincorporados al censo.`, timestamp: Date.now() }];
   return newState;
 };
 

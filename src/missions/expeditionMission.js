@@ -27,7 +27,7 @@ export const handleExpeditionMission = (mission, state) => {
     const fightWon = Math.random() < 0.65;
     if (fightWon) {
       const loot = { metal: Math.floor((5000 + Math.random() * 15000) * 50), crystal: Math.floor((3000 + Math.random() * 8000) * 50), deuterium: Math.floor((1000 + Math.random() * 5000) * 50) };
-      let newState = updatePlanet(state, mission.from.id, p => ({ ...p, resources: { metal: p.resources.metal + loot.metal, crystal: p.resources.crystal + loot.crystal, deuterium: p.resources.deuterium + loot.deuterium } }));
+      let newState = updatePlanet(state, mission.from.id, p => ({ ...p, resources: { ...(p.resources || {}), metal: (p.resources?.metal || 0) + loot.metal, crystal: (p.resources?.crystal || 0) + loot.crystal, deuterium: (p.resources?.deuterium || 0) + loot.deuterium } }));
       events.push(`⚔️ ¡Emboscada Pirata Repelida! Tras un combate intenso en los anillos de un gigante gaseoso, capturaste sus cargueras: +${fmt(loot.metal)}M, +${fmt(loot.crystal)}C, +${fmt(loot.deuterium)}D`);
       return { 
         state: newState, 
@@ -121,7 +121,7 @@ export const handleExpeditionMission = (mission, state) => {
   if (roll < 0.33) {
     const multiplier = Math.max(1, cargoCap / 6000) * 50;
     const bonus = { metal: Math.floor((4000 + Math.random() * 16000) * multiplier), crystal: Math.floor((3000 + Math.random() * 10000) * multiplier), deuterium: Math.floor((1500 + Math.random() * 6000) * multiplier) };
-    let newState = updatePlanet(state, mission.from.id, p => ({ ...p, resources: { metal: p.resources.metal + bonus.metal, crystal: p.resources.crystal + bonus.crystal, deuterium: p.resources.deuterium + bonus.deuterium } }));
+    let newState = updatePlanet(state, mission.from.id, p => ({ ...p, resources: { ...(p.resources || {}), metal: (p.resources?.metal || 0) + bonus.metal, crystal: (p.resources?.crystal || 0) + bonus.crystal, deuterium: (p.resources?.deuterium || 0) + bonus.deuterium } }));
     events.push(`☄️ ¡Cinturón de Asteroides Minerales! Tus naves de carga realizaron una operación de minería a gran escala: +${fmt(bonus.metal)} Metal, +${fmt(bonus.crystal)} Cristal, +${fmt(bonus.deuterium)} Deuterio`);
     return { state: newState, type: 'success', message: events.join(' • '), returnFleet: fleet };
   }
@@ -151,14 +151,14 @@ export const handleExpeditionMission = (mission, state) => {
 
   if (roll < 0.48) {
     const refund = { metal: Math.floor((10000 + Math.random() * 25000) * 50), crystal: Math.floor((8000 + Math.random() * 15000) * 50) };
-    let newState = updatePlanet(state, mission.from.id, p => ({ ...p, resources: { metal: p.resources.metal + refund.metal, crystal: p.resources.crystal + refund.crystal, deuterium: p.resources.deuterium } }));
+    let newState = updatePlanet(state, mission.from.id, p => ({ ...p, resources: { ...(p.resources || {}), metal: (p.resources?.metal || 0) + refund.metal, crystal: (p.resources?.crystal || 0) + refund.crystal, deuterium: (p.resources?.deuterium || 0) } }));
     events.push(`🏛️ ¡Contenedores Mercantes! Hallaron contenedores de carga criogénica sellados que contenían valiosas aleaciones comerciales: +${fmt(refund.metal)} Metal, +${fmt(refund.crystal)} Cristal`);
     return { state: newState, type: 'success', message: events.join(' • '), returnFleet: fleet };
   }
 
   if (roll < 0.55) {
     const deutBonus = Math.floor((8000 + Math.random() * 24000) * 50);
-    let newState = updatePlanet(state, mission.from.id, p => ({ ...p, resources: { ...p.resources, deuterium: p.resources.deuterium + deutBonus } }));
+    let newState = updatePlanet(state, mission.from.id, p => ({ ...p, resources: { ...(p.resources || {}), deuterium: (p.resources?.deuterium || 0) + deutBonus } }));
     events.push(`✨ ¡Nebulosa Radiante! Los sintetizadores cargaron al máximo los depósitos absorbiendo plasma de deuterio de alta pureza de la nube espacial: +${fmt(deutBonus)} Deuterio`);
     return { state: newState, type: 'success', message: events.join(' • '), returnFleet: fleet };
   }

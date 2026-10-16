@@ -73,7 +73,7 @@ export const VisualAuditSettingsTab = ({ state, currentPlanet, appVersion }) => 
             <span>AUDITORÍA VISUAL DEL DOM EN TIEMPO DE EJECUCIÓN</span>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-900 text-cyan-200">
-            QA & Evidencia
+            QA y Evidencia
           </span>
         </div>
         <p className="text-slate-300 leading-relaxed text-[11px]">

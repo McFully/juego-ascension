@@ -127,6 +127,18 @@ export const ShipProductionCard = ({
             </div>
           </div>
 
+          {/* BLOQUE 2: Censo y Tripulación Requerida */}
+          <div className="p-2 rounded-xl bg-[#05070f]/60 border border-white/5 font-mono text-[10px] mb-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-slate-400">
+              <span>👨‍🚀</span>
+              <span className="text-[9px] uppercase tracking-wider">Tripulación requerida:</span>
+            </span>
+            <span className="text-cyan-300 font-bold">
+              {fmt(s.crew || 0)} tripulantes / nave
+            </span>
+          </div>
+
+          {/* BLOQUE 3: Coste de Fabricación y Tiempo */}
           <div className="space-y-0.5 text-[10px] font-mono p-2 rounded-xl bg-[#05070f]/40 border border-white/5 mb-3">
             {cost.metal > 0 && (
               <div className="flex justify-between">

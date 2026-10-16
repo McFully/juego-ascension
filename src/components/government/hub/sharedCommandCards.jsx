@@ -16,7 +16,7 @@ export const sharedCommandCards = ({ onNavigateTab, fmt, state }) => ({
       borderColor="border-teal-500/30"
       hoverBorderColor="hover:border-teal-400"
       hoverShadow="hover:shadow-[0_0_35px_rgba(20,184,166,0.3)]"
-      assetId="robotFactory"
+      assetId="shipDesignWorkshop"
       badgeText="INGENIERÍA"
       badgeClasses="bg-teal-950/80 text-teal-300 border border-teal-500/50"
       title="Diseñador de Naves"

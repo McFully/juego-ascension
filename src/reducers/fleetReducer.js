@@ -1,4 +1,4 @@
-import { handleBuildMissile, handleLaunchMissile } from './fleet/missileReducer.js';
+import { handleBuildMissile, handleLaunchMissile, handleBuildOrdnance } from './fleet/missileReducer.js';
 import {
   handleSaveBlueprint, handleDeleteBlueprint, handleBuildCustomShip, handleCancelCustomShipQueue
 } from './fleet/blueprintReducer.js';
@@ -87,11 +87,13 @@ export const fleetReducer = (state, action) => {
     case 'JUMP_GATE_TRANSFER':
       return handleJumpGateTransfer(state, action);
 
-    // === SILO DE MISILES ===
+    // === SILO DE MISILES Y POLVORÍN ===
     case 'BUILD_MISSILE':
       return handleBuildMissile(state, action);
     case 'LAUNCH_MISSILE':
       return handleLaunchMissile(state, action);
+    case 'BUILD_ORDNANCE':
+      return handleBuildOrdnance(state, action);
 
     // === PATENTES Y NAVES CUSTOM ===
     case 'SAVE_BLUEPRINT':

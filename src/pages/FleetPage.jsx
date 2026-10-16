@@ -22,11 +22,37 @@ import { FleetDispatchView } from "../components/fleet/views/FleetDispatchView.j
 import { FleetHubCardGrid } from "../components/fleet/views/FleetHubCardGrid.jsx";
 import { FleetRelocationView } from "../components/colonyNetwork/FleetRelocationView.jsx";
 
-const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget, setSelectedTarget, SHIPS, DEFENSES, BUILDINGS, SHIP_CHASSIS, S, ProgressBar, fmt, fmtTime, getEffectiveTech, simulateCombat, getShipStats, calcCustomShipStats, setActiveTab, onOpenCodex }) => {
+const FleetPage = ({
+  state,
+  dispatch,
+  currentPlanet,
+  production,
+  selectedTarget,
+  setSelectedTarget,
+  SHIPS,
+  DEFENSES,
+  BUILDINGS,
+  SHIP_CHASSIS,
+  S,
+  ProgressBar,
+  fmt,
+  fmtTime,
+  getEffectiveTech,
+  simulateCombat,
+  getShipStats,
+  calcCustomShipStats,
+  setActiveTab,
+  onOpenCodex,
+  mode = 'local' // 'local' (Guarnición / Hangar de mundo) | 'imperial' (Almirantazgo y Operaciones Macro)
+}) => {
   const { navigateTo, navigateBack } = useNavigation();
   // Estado de vista del Hangar:
-  // 'menu' (pantalla principal con tarjetas de botón) | 'inventory' | 'in_flight' | 'trade_routes' | 'dispatch' | 'spy_reports'
-  const [activeCardView, setActiveCardView] = useState(() => selectedTarget ? 'dispatch' : 'menu');
+  // Modo Imperial arranca en 'in_flight' o 'dispatch' si hay objetivo; modo local arranca en 'inventory' o 'menu'
+  const [activeCardView, setActiveCardView] = useState(() => {
+    if (selectedTarget) return 'dispatch';
+    if (mode === 'imperial') return 'in_flight';
+    return 'inventory';
+  });
 
   const [selectedShips, setSelectedShips] = useState({});
   const [missionType, setMissionType] = useState(() => {
@@ -205,33 +231,74 @@ const FleetPage = ({ state, dispatch, currentPlanet, production, selectedTarget,
         currentPlanet={currentPlanet}
         production={production}
         fmt={fmt}
+        parentHub={mode === 'imperial' ? 'imperial_hub' : 'government'}
         breadcrumbTitle={
-          activeCardView === 'inventory' ? 'Inventario de la Flota' :
-          activeCardView === 'in_flight' ? 'Flotas en Vuelo' :
-          activeCardView === 'trade_routes' ? 'Rutas Comerciales' :
-          activeCardView === 'dispatch' || activeCardView === 'destination' ? 'Despacho de Misión' :
-          activeCardView === 'spy_reports' ? 'Informes de Espionaje' :
-          activeCardView === 'patrols' ? 'Patrullas y Seguridad Orbital' :
-          'Hangar de la Flota'
+          mode === 'imperial'
+            ? (activeCardView === 'in_flight' ? 'Almirantazgo · Misiones en Vuelo' :
+               activeCardView === 'trade_routes' ? 'Almirantazgo · Rutas Comerciales' :
+               activeCardView === 'dispatch' || activeCardView === 'destination' ? 'Almirantazgo · Despacho Federal' :
+               activeCardView === 'spy_reports' ? 'Almirantazgo · Informes de Inteligencia' :
+               activeCardView === 'inventory' ? 'Almirantazgo · Registro de Flotas' :
+               'Almirantazgo y Operaciones Imperiales')
+            : (activeCardView === 'inventory' ? 'Hangar Planetario' :
+               activeCardView === 'in_flight' ? 'Hangar Planetario · Misiones en Tránsito' :
+               activeCardView === 'trade_routes' ? 'Hangar Planetario · Rutas' :
+               activeCardView === 'dispatch' || activeCardView === 'destination' ? 'Hangar Planetario · Despacho' :
+               activeCardView === 'spy_reports' ? 'Hangar Planetario · Informes de Espionaje' :
+               activeCardView === 'patrols' ? 'Hangar Planetario · Patrullas' :
+               'Hangar Planetario')
         }
         breadcrumbIcon="🛸"
         backButtonLabelTop="VOLVER A"
-        backButtonLabelBottom={activeCardView === 'menu' ? 'Alto Mando' : 'Hangar de la Flota'}
-        backButtonIcon={activeCardView === 'menu' ? '👑' : '🛸'}
+        backButtonLabelBottom={
+          activeCardView !== (mode === 'imperial' ? 'in_flight' : 'inventory') && activeCardView !== 'menu'
+            ? (mode === 'imperial' ? 'Almirantazgo' : 'Hangar Local')
+            : (mode === 'imperial' ? 'Mando Imperial' : 'Alto Mando')
+        }
+        backButtonIcon={
+          activeCardView !== (mode === 'imperial' ? 'in_flight' : 'inventory') && activeCardView !== 'menu'
+            ? '🛸'
+            : '👑'
+        }
         onBackToAltoMando={() => {
-          if (activeCardView !== 'menu') {
-            setActiveCardView('menu');
+          const defaultHomeView = mode === 'imperial' ? 'in_flight' : 'inventory';
+          if (activeCardView !== defaultHomeView && activeCardView !== 'menu') {
+            setActiveCardView(defaultHomeView);
           } else {
-            if (navigateBack) navigateBack();
-            else if (navigateTo) navigateTo('government');
-            else if (setActiveTab) setActiveTab('government');
+            const targetHub = mode === 'imperial' ? 'imperial_hub' : 'government';
+            if (setActiveTab) setActiveTab(targetHub);
+            else if (navigateTo) navigateTo(targetHub);
+            else if (navigateBack) navigateBack();
           }
         }}
         rightSlot={
           <div className="flex items-center gap-3">
+            {mode === 'imperial' && state.planets && state.planets.length > 1 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs font-mono">
+                <span className="text-slate-400">Base Activa:</span>
+                <select
+                  value={currentPlanet?.id}
+                  onChange={(e) => {
+                    if (dispatch) dispatch({ type: 'SET_PLANET', planetId: e.target.value });
+                    if (window.playSfx) window.playSfx('click');
+                  }}
+                  className="bg-black/80 text-cyan-300 font-bold border border-cyan-500/40 rounded px-2 py-0.5 text-xs focus:outline-none cursor-pointer"
+                >
+                  {state.planets.map(p => (
+                    <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                      {p.name} [{p.galaxy}:{p.system}:{p.position}] ({Object.values(p.fleet || {}).reduce((a, b) => a + b, 0)} naves)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono">
-              <span className="text-slate-400">En vuelo:</span>
-              <span className="font-bold text-cyan-300">{playerActiveMissions.length} misiones</span>
+              <span className="text-slate-400">En Hangar:</span>
+              <span className="font-bold text-cyan-300">{fmt(totalShipsInHangar)}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs font-mono">
+              <span className="text-slate-400">En Vuelo:</span>
+              <span className="font-bold text-blue-300">{playerActiveMissions.length} misiones</span>
             </div>
             {incomingAttacks.length > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs font-mono">

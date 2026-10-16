@@ -62,6 +62,9 @@ export const FederalDistrictHeader = ({
                   onClick={() => {
                     if (window.playSfx) window.playSfx('click');
                     try {
+                      if (typeof window !== "undefined") {
+                        window.sessionStorage.setItem("ascension_target_section", "planets");
+                      }
                       window.dispatchEvent(new CustomEvent('ascension:open-section', { detail: { section: 'planets' } }));
                     } catch (_) {}
                     onBackToEmpire();

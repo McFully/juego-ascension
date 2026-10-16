@@ -16,8 +16,9 @@ import { migrateLoadState } from '../reducers/loadMigrator.js';
 
 describe('Banca Galáctica — Core Funcional & Integración X-Wars', () => {
   // 1. Ruta y navegación independiente
-  it('1. la tarjeta Banca Galáctica tiene destino propio y no abre Ministerios/Finanzas/Instalaciones', () => {
-    expect(COMMAND_CARD_TARGETS.planetaryBank).toBe('galactic_bank');
+  it('1. la tarjeta Banca Planetaria y Banca Galáctica tienen destinos propios y no abren Ministerios/Finanzas/Instalaciones', () => {
+    expect(COMMAND_CARD_TARGETS.planetaryBank).toBe('planetary_bank');
+    expect(COMMAND_CARD_TARGETS.galacticBank).toBe('galactic_bank');
     expect(COMMAND_CARD_TARGETS.planetaryBank).not.toContain('ministry');
     expect(COMMAND_CARD_TARGETS.planetaryBank).not.toContain('buildings');
 
@@ -29,6 +30,10 @@ describe('Banca Galáctica — Core Funcional & Integración X-Wars', () => {
     const bankTab = GAME_TABS.find(t => t.id === 'galactic_bank');
     expect(bankTab).toBeDefined();
     expect(bankTab.id).toBe('galactic_bank');
+
+    const planetBankTab = GAME_TABS.find(t => t.id === 'planetary_bank');
+    expect(planetBankTab).toBeDefined();
+    expect(planetBankTab.id).toBe('planetary_bank');
   });
 
   // 2. Recursos soportados
@@ -45,20 +50,20 @@ describe('Banca Galáctica — Core Funcional & Integración X-Wars', () => {
     expect(bank.nextLiquidation).toBeGreaterThan(Date.now());
   });
 
-  // 4. Capacidad bancaria escalable
-  it('4. calcula capacidad bancaria base e incrementada con infraestructuras', () => {
+  // 4. Capacidad bancaria escalable de la Banca Galáctica Central (20.000 por nivel de exchangeBank)
+  it('4. calcula capacidad bancaria de la Banca Galáctica Central (20.000 por nivel de exchangeBank)', () => {
     const emptyState = { planets: [] };
     const baseMetalCap = calcBankCapacity(emptyState, 'metal');
-    expect(baseMetalCap).toBe(5000000);
+    expect(baseMetalCap).toBe(0);
 
     const builtState = {
       planets: [
-        { buildings: { exchangeBank: 2, futuresExchange: 1 } }
+        { buildings: { exchangeBank: 2 } }
       ]
     };
-    // maxLevel = 2 (Math.max(2, 1)) * 10.000.000 + 5.000.000 base = 25.000.000
+    // Nivel 2 * 20.000 = 40.000
     const upgradedCap = calcBankCapacity(builtState, 'metal');
-    expect(upgradedCap).toBe(25000000);
+    expect(upgradedCap).toBe(40000);
   });
 
   // 5. Validación de depósito válida
@@ -97,7 +102,7 @@ describe('Banca Galáctica — Core Funcional & Integración X-Wars', () => {
       currentPlanetId: 'p1',
       credits: 5000,
       planets: [
-        { id: 'p1', resources: { metal: 200000, crystal: 50000, deuterium: 10000 } }
+        { id: 'p1', buildings: { exchangeBank: 5 }, resources: { metal: 200000, crystal: 50000, deuterium: 10000 } }
       ],
       galacticBank: initGalacticBankState()
     };
@@ -118,7 +123,7 @@ describe('Banca Galáctica — Core Funcional & Integración X-Wars', () => {
   it('10. ejecuta depósito de créditos estelares del imperio', () => {
     const initialState = {
       credits: 10000,
-      planets: [{ id: 'p1', resources: { metal: 0 } }],
+      planets: [{ id: 'p1', buildings: { exchangeBank: 1 }, resources: { metal: 0 } }],
       galacticBank: initGalacticBankState()
     };
 

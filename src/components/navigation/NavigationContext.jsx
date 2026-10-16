@@ -40,23 +40,27 @@ const LABELS = {
   techTree: '🌌 Árbol Tecnológico',
   shipyard: '🚀 Astillero Naval',
   shipDesign: '🔧 Diseñador de Naves',
-  fleet: '🛸 Hangar de la Flota',
+  fleet: '🛸 Guarnición y Hangar Local',
+  imperial_fleet: '🛸 Almirantazgo y Operaciones Imperiales',
   defense: '🛡️ Bastión Defensivo',
   combat: '⚔️ Simulador de Batalla',
   moon: '🌙 Base Lunar',
-  galaxy: '🌌 Mapa Estelar',
+  galaxy: '🌌 Cartografía',
   diplomacy: '🤝 Cuerpo Diplomático',
   communications: '📡 Red de Inteligencia',
   missiles: '🚀 Silos de Misiles',
   replay: '📼 Replay',
   colony_network: '🪐 Red de Colonias',
   market: '💼 Mercado Galáctico',
-  galactic_bank: '🏦 Banca Central',
+  local_market: '💼 Puerto de Carga y Lonja Local',
+  planetary_bank: '🏦 Banca Planetaria',
+  galactic_bank: '💎 Banca Galáctica Central',
 };
 
 // Jerarquía de navegación — define qué padre tiene cada vista
 const PARENT_MAP = {
   // Órganos de Mando Imperial: las 8 tarjetas cuelgan de Mando Imperial
+  galaxy: 'imperial_hub',
   missions: 'imperial_hub',
   diplomacy: 'imperial_hub',
   imperial_council: 'imperial_hub',
@@ -65,10 +69,13 @@ const PARENT_MAP = {
   combat: 'imperial_hub',
   shipDesign: 'imperial_hub',
   stats: 'imperial_hub',
+  galactic_bank: 'imperial_hub',
+  imperial_fleet: 'imperial_hub',
 
-  // Nivel superior del imperio
-  market: 'overview',
-  galactic_bank: 'overview',
+  // Nivel superior del imperio / local
+  market: 'imperial_hub',
+  local_market: 'government',
+  planetary_bank: 'overview',
 
   // Nivel militar planetario
   missiles: 'defense',
@@ -77,7 +84,8 @@ const PARENT_MAP = {
   techTree: 'government',
 
   // Diplomacia e Inteligencia
-  communications: 'diplomacy',
+  communications: 'imperial_hub',
+  tactical_advisor: 'imperial_hub',
   telemetry: 'communications',
 
   // Ministerios del Alto Mando planetario

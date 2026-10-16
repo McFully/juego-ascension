@@ -22,11 +22,12 @@ export const GalacticMarketPage = ({
   fmt,
   S,
   onOpenCodex,
-  setActiveTab
+  setActiveTab,
+  mode = 'imperial' // 'imperial' (Bolsa y Distritos Mercantiles) | 'local' (Puerto de Carga y Lonja Local)
 }) => {
   const { navigateBack } = useNavigation();
-  // 'exchange' | 'used_ships' | 'contracts' | 'black_market' | 'automated_rules'
-  const [activeSubTab, setActiveSubTab] = useState('exchange');
+  // Modo local inicia directamente en directrices de puerto/flete ('automated_rules')
+  const [activeSubTab, setActiveSubTab] = useState(() => mode === 'local' ? 'automated_rules' : 'exchange');
   const [exchangeMode, setExchangeMode] = useState('spot'); // 'spot' | 'arbitrage'
   const [arbDestId, setArbDestId] = useState('');
   const [arbInstrument, setArbInstrument] = useState('metal');
@@ -126,37 +127,120 @@ export const GalacticMarketPage = ({
         </div>
       </div>
 
-      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver al Mando Imperial) */}
+      {/* DOM Superior Estandarizado (Recursos + Explorador + Volver al Mando Imperial / Alto Mando) */}
       <SubsystemTopBanner
         state={state}
         currentPlanet={currentPlanet}
         production={production}
         fmt={fmt}
-        breadcrumbTitle="Mercado Galáctico"
+        breadcrumbTitle={
+          mode === 'local'
+            ? (activeSubTab === 'automated_rules' ? 'Puerto Local · Directrices de Auto-Comercio' :
+               activeSubTab === 'exchange' ? 'Puerto Local · Lonja de Excedentes' :
+               'Puerto de Carga y Lonja Local')
+            : (activeSubTab === 'exchange' ? 'Bolsa de Materias Primas Spot' :
+               activeSubTab === 'used_ships' ? 'Lonja Naval de Ocasión' :
+               activeSubTab === 'contracts' ? 'Licitaciones Corporativas' :
+               activeSubTab === 'black_market' ? 'Bazar Negro y Contrabando' :
+               'Mercado y Comercio Galáctico')
+        }
         breadcrumbIcon="💼"
-        parentHub="imperial_hub"
+        parentHub={mode === 'local' ? 'government' : 'imperial_hub'}
         backButtonLabelTop="VOLVER A"
-        backButtonLabelBottom="Mando Imperial"
-        backButtonIcon="👑"
+        backButtonLabelBottom={
+          mode === 'local'
+            ? (activeSubTab !== 'automated_rules' ? 'Puerto Local' : 'Alto Mando')
+            : (activeSubTab !== 'exchange' ? 'Mercado Galáctico' : 'Mando Imperial')
+        }
+        backButtonIcon={
+          (mode === 'local' && activeSubTab !== 'automated_rules') || (mode === 'imperial' && activeSubTab !== 'exchange')
+            ? '💼'
+            : '👑'
+        }
         onBackToAltoMando={() => {
-          if (setActiveTab) setActiveTab('imperial_hub');
-          else if (navigateBack) navigateBack();
+          if (mode === 'local') {
+            if (activeSubTab !== 'automated_rules') {
+              setActiveSubTab('automated_rules');
+            } else {
+              if (setActiveTab) setActiveTab('government');
+              else if (navigateBack) navigateBack();
+            }
+          } else {
+            if (activeSubTab !== 'exchange') {
+              setActiveSubTab('exchange');
+            } else {
+              if (setActiveTab) setActiveTab('imperial_hub');
+              else if (navigateBack) navigateBack();
+            }
+          }
         }}
         rightSlot={
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-xs font-mono">
-            <span className="text-amber-400">₢ Créditos:</span>
-            <span className="font-bold text-amber-300">{fmt(state.credits || 0)}</span>
+          <div className="flex items-center gap-3">
+            {state.planets && state.planets.length > 1 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs font-mono">
+                <span className="text-slate-400">Planeta de Enlace:</span>
+                <select
+                  value={currentPlanet?.id}
+                  onChange={(e) => {
+                    if (dispatch) dispatch({ type: 'SET_PLANET', planetId: e.target.value });
+                    if (window.playSfx) window.playSfx('click');
+                  }}
+                  className="bg-black/80 text-emerald-300 font-bold border border-emerald-500/40 rounded px-2 py-0.5 text-xs focus:outline-none cursor-pointer"
+                >
+                  {state.planets.map(p => (
+                    <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                      {p.name} [{p.galaxy}:{p.system}:{p.position}]
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-xs font-mono">
+              <span className="text-amber-400">₢ Créditos:</span>
+              <span className="font-bold text-amber-300">{fmt(state.credits || 0)}</span>
+            </div>
           </div>
         }
       />
 
-      {/* Selector de Distritos Mercantiles en Card Grid Estandarizado */}
-      <MarketDistrictCardGrid
-        activeSubTab={activeSubTab}
-        onSelectSubTab={setActiveSubTab}
-        contractsCount={CORPORATE_CONTRACTS.length}
-        automatedRulesCount={(state?.automatedTradeRules || []).length}
-      />
+      {/* Selector de Distritos Mercantiles en Card Grid Estandarizado (Modo Imperial) o Selector Rápido Local (Modo Local) */}
+      {mode === 'imperial' ? (
+        <MarketDistrictCardGrid
+          activeSubTab={activeSubTab}
+          onSelectSubTab={setActiveSubTab}
+          contractsCount={CORPORATE_CONTRACTS.length}
+          automatedRulesCount={(state?.automatedTradeRules || []).length}
+        />
+      ) : (
+        <div className="flex items-center gap-3 p-2 rounded-2xl bg-black/60 border border-emerald-500/20 backdrop-blur-md">
+          <button
+            onClick={() => {
+              setActiveSubTab('automated_rules');
+              if (window.playSfx) window.playSfx('click');
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'automated_rules'
+                ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                : 'text-slate-400 hover:text-white bg-white/5'
+            }`}
+          >
+            <span>🤖</span> Directrices de Auto-Comercio y Fletes
+          </button>
+          <button
+            onClick={() => {
+              setActiveSubTab('exchange');
+              if (window.playSfx) window.playSfx('click');
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'exchange'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                : 'text-slate-400 hover:text-white bg-white/5'
+            }`}
+          >
+            <span>⚖️</span> Lonja y Venta de Excedentes Locales
+          </button>
+        </div>
+      )}
 
       {/* Subvista: Bolsa y Conversor de Materias Primas */}
       {activeSubTab === 'exchange' && (

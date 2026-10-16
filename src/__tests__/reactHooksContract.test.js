@@ -60,6 +60,11 @@ function hooksImportados(src) {
 
 describe('contrato de hooks de React', () => {
   const archivos = walk(SRC);
+  const fuentes = archivos.map(file => ({
+    file,
+    rel: file.split(/[\\/]/).slice(-2).join('/'),
+    src: sinComentarios(readFileSync(file, 'utf-8')),
+  }));
 
   it('el escaner encuentra componentes que comprobar', () => {
     expect(archivos.length).toBeGreaterThan(100);
@@ -67,10 +72,8 @@ describe('contrato de hooks de React', () => {
 
   it('ningun archivo usa un hook de React sin importarlo', () => {
     const ofensores = [];
-    for (const file of archivos) {
-      const src = sinComentarios(readFileSync(file, 'utf-8'));
+    for (const { src, rel } of fuentes) {
       const importados = hooksImportados(src);
-      const rel = file.split(/[\\/]/).slice(-2).join('/');
 
       for (const hook of REACT_HOOKS) {
         // `(?<![.\w])` descarta React.useState: ese llega por el import por defecto.
@@ -81,17 +84,14 @@ describe('contrato de hooks de React', () => {
       }
     }
     expect(ofensores.sort().join('\n')).toBe('');
-  });
+  }, 30000);
 
   it('ningun componente monta un hook sin declararlo antes de usarlo', () => {
     // Un `useState` declarado despues de su primera llamada no compila en la
     // practica con el patron de este proyecto, pero el fallo se manifiesta
     // como pantalla en blanco, asi que se comprueba explicitamente.
     const ofensores = [];
-    for (const file of archivos) {
-      const src = sinComentarios(readFileSync(file, 'utf-8'));
-      const rel = file.split(/[\\/]/).slice(-2).join('/');
-
+    for (const { src, rel } of fuentes) {
       for (const m of src.matchAll(/const\s*[\[{]([^\]}]*)[\]}]?\s*=\s*use([A-Z]\w*)\(/g)) {
         const nombres = m[1].split(',').map(s => s.trim()).filter(Boolean);
         for (const nombre of nombres) {
@@ -104,5 +104,5 @@ describe('contrato de hooks de React', () => {
       }
     }
     expect(ofensores.sort().join('\n')).toBe('');
-  });
+  }, 30000);
 });

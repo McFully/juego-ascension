@@ -21,7 +21,7 @@ describe('Phase 08 - Navigation, Empire vs Planet & Tax Contracts', () => {
 
     // Colony network, missions, stats map to imperial_hub (Imperio: Mando Imperial)
     expect(PARENT_MAP.colony_network).toBe('imperial_hub');
-    expect(PARENT_MAP.market).toBe('overview');
+    expect(PARENT_MAP.market).toBe('imperial_hub');
     expect(PARENT_MAP.missions).toBe('imperial_hub');
     expect(PARENT_MAP.stats).toBe('imperial_hub');
   });

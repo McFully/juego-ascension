@@ -69,6 +69,10 @@ const ShipyardPage = ({ state, dispatch, currentPlanet, production, SHIPS, RESEA
         breadcrumbIcon="🚀"
         rightSlot={
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-xs font-mono" title="Tripulantes libres listos para tripular naves en este planeta">
+              <span className="text-cyan-300">👨‍🚀 Tripulación Libre:</span>
+              <span className="font-bold text-white">{fmt(Math.max(0, (currentPlanet.population || 1000) - 100))}</span>
+            </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#05070f]/70 border border-white/10 text-xs font-mono">
               <span className="text-cyan-400">Total Hangar:</span>
               <span className="font-bold text-white">{fmt(fleetSummary.totalCount)}</span>

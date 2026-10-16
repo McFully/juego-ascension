@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { SECTOR_DOCTRINES, VICEROY_CANDIDATES } from '../../data/sectorsData.js';
+import { SubsystemTopBanner } from '../navigation/SubsystemTopBanner.jsx';
 
 export const SectorManagementView = ({
   state,
   dispatch,
   currentPlanet,
+  production,
   fmt
 }) => {
   const [newSectorName, setNewSectorName] = useState('');
@@ -43,6 +45,18 @@ export const SectorManagementView = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
+      <SubsystemTopBanner
+        state={state}
+        currentPlanet={currentPlanet}
+        production={production}
+        fmt={fmt}
+        breadcrumbTitle="Sectores Coloniales y Virreinatos"
+        breadcrumbIcon="🗺️"
+        parentHub="imperial_hub"
+        backButtonLabelTop="VOLVER A"
+        backButtonLabelBottom="Mando Imperial"
+        backButtonIcon="👑"
+      />
       {/* Cabecera de Sectores */}
       <div className="p-5 rounded-2xl bg-[#090d1e]/90 border border-teal-500/30 shadow-[0_0_30px_rgba(20,184,166,0.15)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">

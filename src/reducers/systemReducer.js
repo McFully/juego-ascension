@@ -22,6 +22,16 @@ export const systemReducer = (state, action) => {
     case 'APPLY_TICK_STATE': {
       return action.payload;
     }
+    case 'APPLY_AI_STRATEGIC_DIRECTIVE': {
+      const { factionId, directive } = action.payload || {};
+      if (!factionId || !directive || !Array.isArray(state.aiPlanets)) return state;
+      return {
+        ...state,
+        aiPlanets: state.aiPlanets.map(p =>
+          p && p.id === factionId ? { ...p, strategicDirective: directive } : p
+        ),
+      };
+    }
 
     case 'SET_PLANET_GOVERNOR': {
       const { planetId, governor } = action.payload;

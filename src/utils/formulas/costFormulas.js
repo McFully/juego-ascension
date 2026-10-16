@@ -226,7 +226,12 @@ export const calcShipTime = (id, qty, shipyard, nanite, speed = 1, bonus = 1, mi
   let conscriptionBonus = 1.0;
   if (conscription === 'mandated') conscriptionBonus = 1.15;
 
-  const shipyardReduction = 1 + shipyard * 0.5;
+  const r = mins?.research || {};
+  const aiMilLvl = r.aiMilitary || 0;
+  const electronBeamLvl = r.electronBeamWeld || 0;
+  const shipyardTechMult = 1 + (aiMilLvl * 0.08) + (electronBeamLvl * 0.05);
+
+  const shipyardReduction = (1 + shipyard * 0.5) * shipyardTechMult;
   const t = (cost / (2500 * shipyardReduction * (1 + nanite * 0.5) * speed * bonus * conscriptionBonus)) * 3600 * qty;
   return Math.max(1, Math.floor(t));
 };

@@ -87,7 +87,10 @@ export const TradeAgreementModal = ({
                 <option value="none">Ninguno (Sólo Intercambio de Recursos)</option>
                 <option value="trade_treaty">🤝 Tratado de Comercio Libre (Req. Valor: 1000)</option>
                 <option value="non_aggression">📜 Pacto de No Agresión (Req. Valor: 600)</option>
-                <option value="defensive_pact">🛡️ Alianza Defensiva (Req. Valor: 2500)</option>
+                <option value="defensive_pact">🛡️ Alianza Defensiva y Refuerzo (Req. Valor: 2500)</option>
+                <option value="permanent_embassy">🏛️ Establecer Embajada Permanente (Coste: 2.500 Cr + Valor: 1800)</option>
+                <option value="research_agreement">🔬 Cooperación Científica e I+D (Req. Valor: 1500)</option>
+                <option value="joint_expedition">🌌 Operación Militar Conjunta (Req. Valor: 3200)</option>
               </select>
             </div>
           </div>

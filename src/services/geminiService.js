@@ -9,21 +9,23 @@
  */
 
 const LOCAL_STORAGE_KEY = "ascension_gemini_api_key";
-const DEFAULT_MODEL = "gemini-2.0-flash";
+const DEFAULT_MODEL = "gemini-flash-latest";
 
 /**
  * Obtiene la API Key activa (prioridad: localStorage del jugador -> variable de entorno)
  */
 export function getGeminiApiKey() {
   try {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored && stored.trim().length > 10) {
-      return stored.trim();
+    if (typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored && stored.trim().length > 10) {
+        return stored.trim();
+      }
     }
   } catch (err) {
     console.warn("[Gemini Service] Error leyendo localStorage:", err);
   }
-  return import.meta.env.VITE_GEMINI_API_KEY || "";
+  return (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) || "";
 }
 
 /**
@@ -31,10 +33,12 @@ export function getGeminiApiKey() {
  */
 export function saveGeminiApiKey(key) {
   try {
-    if (!key || key.trim() === "") {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-    } else {
-      localStorage.setItem(LOCAL_STORAGE_KEY, key.trim());
+    if (typeof localStorage !== 'undefined') {
+      if (!key || key.trim() === "") {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      } else {
+        localStorage.setItem(LOCAL_STORAGE_KEY, key.trim());
+      }
     }
     return true;
   } catch (err) {
@@ -47,7 +51,7 @@ export function saveGeminiApiKey(key) {
  * Consulta el estado actual de la cuota diaria (llamadas gastadas y restantes)
  */
 export async function checkQuotaStatus(maxDaily = 500) {
-  if (window.electronAPI?.geminiGetQuota) {
+  if (typeof window !== 'undefined' && window.electronAPI?.geminiGetQuota) {
     try {
       const res = await window.electronAPI.geminiGetQuota(maxDaily);
       if (res.success && res.quota) {
@@ -80,7 +84,7 @@ export async function queryGemini(prompt, options = {}) {
   }
 
   // 1. Revisar si ya está en la caché de SQLite local
-  if (useCache && window.electronAPI?.geminiGetCache) {
+  if (useCache && typeof window !== 'undefined' && window.electronAPI?.geminiGetCache) {
     try {
       const cacheRes = await window.electronAPI.geminiGetCache(prompt);
       if (cacheRes.success && cacheRes.cached) {
@@ -169,12 +173,12 @@ export async function queryGemini(prompt, options = {}) {
     const cleanText = candidateText.trim();
 
     // 5. Registrar llamada en la cuota local
-    if (window.electronAPI?.geminiRecordCall) {
+    if (typeof window !== 'undefined' && window.electronAPI?.geminiRecordCall) {
       window.electronAPI.geminiRecordCall().catch(() => {});
     }
 
     // 6. Guardar en la caché de SQLite local
-    if (useCache && window.electronAPI?.geminiSetCache) {
+    if (useCache && typeof window !== 'undefined' && window.electronAPI?.geminiSetCache) {
       window.electronAPI
         .geminiSetCache({ prompt, responseText: cleanText, category })
         .catch(() => {});

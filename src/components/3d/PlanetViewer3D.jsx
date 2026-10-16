@@ -129,15 +129,18 @@ export const PlanetViewer3D = ({
     const ambientLight = new THREE.AmbientLight(palette.glow, 0.25);
     scene.add(ambientLight);
 
-    // Bucle de animación (60 FPS rotación fluida con pausa automática si la pestaña o elemento no es visible)
+    // Bucle de animación limitado a 30 FPS para ahorro drástico de GPU/batería
     let animationFrameId;
     let isVisible = typeof document !== 'undefined' ? !document.hidden : true;
     let isInViewport = true;
+    let lastFrameTime = 0;
+    const FRAME_INTERVAL = 1000 / 30; // ~33.33ms (30 FPS)
 
     const onVisibilityChange = () => {
       isVisible = typeof document !== 'undefined' ? !document.hidden : true;
       if (isVisible && isInViewport && !animationFrameId) {
-        animate();
+        lastFrameTime = performance.now();
+        animate(lastFrameTime);
       }
     };
     if (typeof document !== 'undefined') {
@@ -149,24 +152,33 @@ export const PlanetViewer3D = ({
       observer = new IntersectionObserver(([entry]) => {
         isInViewport = entry.isIntersecting;
         if (isInViewport && isVisible && !animationFrameId) {
-          animate();
+          lastFrameTime = performance.now();
+          animate(lastFrameTime);
         }
       }, { threshold: 0.05 });
       observer.observe(currentMount);
     }
 
-    const animate = () => {
+    const animate = (currentTime = performance.now()) => {
       if (!isVisible || !isInViewport) {
         animationFrameId = null;
         return;
       }
-      planetMesh.rotation.y += 0.0035;
-      cloudMesh.rotation.y += 0.0052;
+      animationFrameId = requestAnimationFrame(animate);
+
+      const elapsed = currentTime - lastFrameTime;
+      if (elapsed < FRAME_INTERVAL) {
+        return; // Salta el frame para asegurar exactamente 30 FPS
+      }
+      lastFrameTime = currentTime - (elapsed % FRAME_INTERVAL);
+
+      planetMesh.rotation.y += 0.007;
+      cloudMesh.rotation.y += 0.0104;
 
       renderer.render(scene, camera);
-      animationFrameId = requestAnimationFrame(animate);
     };
-    animate();
+    lastFrameTime = performance.now();
+    animate(lastFrameTime);
 
     // Limpieza estricta de geometrías y renderizador WebGL
     return () => {
@@ -176,7 +188,10 @@ export const PlanetViewer3D = ({
       }
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (renderer) {
-        renderer.dispose();
+        try {
+          renderer.forceContextLoss();
+          renderer.dispose();
+        } catch (_) {}
         if (currentMount.contains(renderer.domElement)) {
           currentMount.removeChild(renderer.domElement);
         }
