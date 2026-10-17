@@ -233,9 +233,7 @@ function App() {
             setIntroComplete(true);
           }}
           onComplete={() => {
-            if (ready) {
-              setIntroComplete(true);
-            }
+            setIntroComplete(true);
           }}
         />
       );

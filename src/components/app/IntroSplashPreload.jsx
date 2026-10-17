@@ -53,8 +53,8 @@ export const IntroSplashPreload = ({ ready = true, onForceReady, onComplete }) =
         setFadingOut(true);
         setTimeout(() => {
           if (!isCancelled && onComplete) onComplete();
-        }, 550);
-      }, 400);
+        }, 200);
+      }, 150);
     }).catch(() => {
       if (!isCancelled && onComplete) onComplete();
     });
