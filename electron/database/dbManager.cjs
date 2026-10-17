@@ -95,6 +95,7 @@ function createSchema(db) {
       FOREIGN KEY(session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_planets_session ON planets(session_id);
+    CREATE INDEX IF NOT EXISTS idx_planets_session_ai ON planets(session_id, is_ai);
     CREATE INDEX IF NOT EXISTS idx_planets_coords ON planets(galaxy, system, position);
     CREATE INDEX IF NOT EXISTS idx_planets_owner ON planets(owner_id);
 

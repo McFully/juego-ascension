@@ -49,7 +49,13 @@ function migrateJsonToSqlite(saveFilePath, saveSlug = "universe") {
           const isCapital = ["cruiser", "battleship", "bomber", "destroyer", "deathstar", "planetDestroyer"].includes(chassisId) || chassisId.startsWith("custom_");
           const category = isCapital ? "capital" : (["espionageProbe", "smallCargo", "largeCargo", "colonizer", "recycler"].includes(chassisId) ? "civil" : "swarm");
 
-          for (let i = 0; i < qty; i++) {
+          // Para evitar explosiones de gigabytes en flotas con millones de cargueros o cazas:
+          // Las naves capitales y prototipos retienen sus matrículas individuales (hasta 200 por tipo).
+          // La flota total completa vive íntegra y exacta en planet.fleet.
+          const maxIndividualInserts = isCapital ? 200 : Math.min(qty, 50);
+          const insertCount = Math.min(qty, maxIndividualInserts);
+
+          for (let i = 0; i < insertCount; i++) {
             const shipId = `shp_${p.id}_${chassisId}_${globalSeq}`;
             const regCode = generateRegistryCode(p.faction || "HUM", pIdx + 1, chassisId, globalSeq);
             allShipsToInsert.push({

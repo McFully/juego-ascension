@@ -192,6 +192,7 @@ function createWindow() {
   mainWindow.once("ready-to-show", () => {
     mainWindow.maximize();
     mainWindow.show();
+    mainWindow.focus();
   });
 
   mainWindow.on("closed", () => {
@@ -432,21 +433,21 @@ registerVisualAuditIpc(() => mainWindow);
 app.whenReady().then(() => {
   logToFile("APPLICATION STARTED");
   logToFile("[Ascensión] SQLite unified persistence system v4 active");
-  migrateLegacySave();
-
-  try {
-    initDatabase();
-    logToFile("[Ascensión DB] SQLite engine successfully initialized.");
-
-    // Migración automática: JSON → SQLite (solo en primer arranque post-actualización)
-    migrateLegacyJsonSaves();
-    logToFile("[Ascensión DB] Legacy JSON migration check completed.");
-  } catch (dbErr) {
-    console.error("[Ascensión DB] Fallo al iniciar SQLite:", dbErr);
-    logToFile("SQLITE INIT ERROR", dbErr.stack || dbErr.message);
-  }
-
   createWindow();
+
+  // Inicializar motor de base de datos sin congelar la creación ni el renderizado de la ventana
+  setTimeout(() => {
+    try {
+      migrateLegacySave();
+      initDatabase();
+      logToFile("[Ascensión DB] SQLite engine successfully initialized.");
+      migrateLegacyJsonSaves();
+      logToFile("[Ascensión DB] Legacy JSON migration check completed.");
+    } catch (dbErr) {
+      console.error("[Ascensión DB] Fallo al iniciar SQLite:", dbErr);
+      logToFile("SQLITE INIT ERROR", dbErr.stack || dbErr.message);
+    }
+  }, 10);
 });
 
 app.on("window-all-closed", () => {
