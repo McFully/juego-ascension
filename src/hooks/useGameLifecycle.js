@@ -14,7 +14,7 @@ export function useGameLifecycle({
   activeTab,
   fmt
 }) {
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(true);
   const [engineInfo, setEngineInfo] = useState("Detectando...");
   const [availableSaves, setAvailableSaves] = useState([]);
   const [lastSaveName, setLastSaveName] = useState("");

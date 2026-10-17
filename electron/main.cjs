@@ -58,7 +58,7 @@ process.on("unhandledRejection", (reason) => {
 });
 
 function createWindow() {
-  protocol.handle("ascension-asset", (request) => {
+  protocol.handle("ascension-asset", async (request) => {
     const parsedUrl = new URL(request.url);
     let decodedPath = decodeURIComponent(parsedUrl.pathname);
     if (decodedPath === "/" || decodedPath === "") {
@@ -92,7 +92,7 @@ function createWindow() {
       };
       const ext = path.extname(filePath).toLowerCase();
       const contentType = mimeTypes[ext] || "application/octet-stream";
-      const stat = fs.statSync(filePath);
+      const stat = await fs.promises.stat(filePath);
       const fileSize = stat.size;
       const rangeHeader = request.headers.get("range");
 
@@ -102,9 +102,9 @@ function createWindow() {
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
         const chunkSize = (end - start) + 1;
         const buffer = Buffer.alloc(chunkSize);
-        const fd = fs.openSync(filePath, "r");
-        fs.readSync(fd, buffer, 0, chunkSize, start);
-        fs.closeSync(fd);
+        const fileHandle = await fs.promises.open(filePath, "r");
+        await fileHandle.read(buffer, 0, chunkSize, start);
+        await fileHandle.close();
 
         return new Response(buffer, {
           status: 206,
@@ -117,7 +117,7 @@ function createWindow() {
         });
       }
 
-      const data = fs.readFileSync(filePath);
+      const data = await fs.promises.readFile(filePath);
       const isImmutableAsset = [".webp", ".png", ".jpg", ".jpeg", ".svg", ".ico", ".woff2", ".ogg", ".mp3", ".wav", ".js", ".css"].includes(ext);
       const headers = {
         "Content-Type": contentType,
@@ -127,10 +127,6 @@ function createWindow() {
       if (isImmutableAsset) {
         headers["Cache-Control"] = "public, max-age=31536000, immutable";
       }
-      // La CSP va como cabecera y no como <meta> en index.html a proposito:
-      // Vite inyecta scripts en linea en desarrollo, y una meta los bloquearia
-      // en `npm run dev`. En la app empaquetada todo se sirve por aqui, asi
-      // que la politica estricta si aplica.
       if (ext === ".html") {
         headers["Content-Security-Policy"] = [
           "default-src 'self'",

@@ -4,7 +4,6 @@ import NewGameScreen from "./components/NewGameScreen";
 import { MainMenuScreen } from "./components/app/MainMenuScreen";
 import { LoadGameScreen } from "./components/app/LoadGameScreen";
 import { SaveGameScreen } from "./components/app/SaveGameScreen";
-import { IntroSplashPreload } from "./components/app/IntroSplashPreload";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { useGameKeyboardShortcuts } from "./hooks/useGameKeyboardShortcuts";
 import { useGameLifecycle } from "./hooks/useGameLifecycle";
@@ -57,7 +56,6 @@ function App() {
   const [renaming, setRenaming] = useState(false);
   // 3.4-a — `acceptTransmission` eliminado: nada de aperturas automáticas.
   const [menuScreen, setMenuScreen] = useState("main");
-  const [introComplete, setIntroComplete] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState("menu");
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -224,20 +222,6 @@ function App() {
   };
 
   if (!state.gameStarted) {
-    if (!ready || !introComplete) {
-      return (
-        <IntroSplashPreload
-          ready={ready}
-          onForceReady={() => {
-            setReady(true);
-            setIntroComplete(true);
-          }}
-          onComplete={() => {
-            setIntroComplete(true);
-          }}
-        />
-      );
-    }
     if (menuScreen === "new") {
       return <NewGameScreen onConfirm={handleStart} onBack={() => setMenuScreen("main")} availableSaves={availableSaves} />;
     }
