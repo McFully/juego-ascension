@@ -93,6 +93,7 @@ const gameReducerInner = (state, action) => {
     case 'LIQUIDATION_CUSTODY_FEE':
     case 'ESTABLISH_BILATERAL_ROUTE':
     case 'CANCEL_BILATERAL_ROUTE':
+    case 'APPLY_OFFLINE_PROGRESS':
     // --- RED DE COLONIAS ---
     case 'EQUALIZE_COLONY_RESOURCES':
     case 'RELOCATE_COLONY_FLEET':

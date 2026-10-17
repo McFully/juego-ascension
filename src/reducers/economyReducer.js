@@ -40,7 +40,8 @@ import {
   handleRelocateColonyFleet,
   handleStartPlanetTerraforming,
   handleEstablishBilateralRoute,
-  handleCancelBilateralRoute
+  handleCancelBilateralRoute,
+  handleApplyOfflineProgress
 } from './economy/planetActions.js';
 // Delegación modular: START_BUILDING usa calcEffectiveBuildTime({ cost, planet, state, speed }) en buildActions.js
 export const economyReducer = (state, action) => {
@@ -112,6 +113,8 @@ export const economyReducer = (state, action) => {
       return handleEstablishBilateralRoute(state, action);
     case 'CANCEL_BILATERAL_ROUTE':
       return handleCancelBilateralRoute(state, action);
+    case 'APPLY_OFFLINE_PROGRESS':
+      return handleApplyOfflineProgress(state, action);
 
     // === CONSTRUCCIÓN ===
     case 'START_BUILDING':

@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
+import { calcProduction, GAME_SPEED } from "../core.jsx";
 
 export function useOfflineProgress({ state, ready, dispatch, fmt, stateRef }) {
   const offlineProcessedRef = useRef(false);
-  const offlineResourcesBeforeRef = useRef(null);
-  const offlineEventsBeforeRef = useRef(null);
   const lastSessionIdRef = useRef(state?._sessionId || state?.playerName);
 
   useEffect(() => {
@@ -18,75 +17,68 @@ export function useOfflineProgress({ state, ready, dispatch, fmt, stateRef }) {
     if (!state?.gameStarted || !state?.lastTick || !ready || offlineProcessedRef.current) return;
     const elapsed = (Date.now() - state.lastTick) / 1000;
     if (elapsed <= 300) return;
-    const totalTicks = Math.min(Math.floor(elapsed), 1800);
     offlineProcessedRef.current = true;
 
-    const totalsBefore = {
-      metal: (state.planets || []).reduce((sum, p) => sum + (p.resources?.metal || 0), 0),
-      crystal: (state.planets || []).reduce((sum, p) => sum + (p.resources?.crystal || 0), 0),
-      deuterium: (state.planets || []).reduce((sum, p) => sum + (p.resources?.deuterium || 0), 0),
-    };
-    offlineResourcesBeforeRef.current = totalsBefore;
-    offlineEventsBeforeRef.current = {
-      notifs: (state.notifications || []).length,
-      galactic: (state.galacticEvents || []).length,
-    };
+    // Límite de 30 minutos (1.800 s) para evitar inflación desmedida
+    const simulatedSeconds = Math.min(Math.floor(elapsed), 1800);
+    const hours = Math.floor(simulatedSeconds / 3600);
+    const mins = Math.floor((simulatedSeconds % 3600) / 60);
+    const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
-    let completed = 0;
-    const CHUNK = 50;
-    let timerId = null;
-    const tickBatch = () => {
-      const limit = Math.min(completed + CHUNK, totalTicks);
-      for (let i = completed; i < limit; i++) {
-        try {
-          dispatch({ type: "TICK" });
-        } catch (e) {
-          console.error("[Ascensión] Offline TICK error:", e);
-          if (window.electronAPI && window.electronAPI.logError) {
-            const snap = stateRef.current || state;
-            window.electronAPI.logError(`Offline TICK error: ${e?.message || e}`, e?.stack || "", `offlineTick player=${snap.playerName} missions=${(snap.fleetMissions||[]).length}`);
-          }
-          break;
+    const planetGains = {};
+    const totalGathered = { metal: 0, crystal: 0, deuterium: 0 };
+
+    for (const planet of (state.planets || [])) {
+      let prod = { metal: 0, crystal: 0, deuterium: 0 };
+      try {
+        const planetTax = planet.taxRate ?? state.ministries?.economy?.taxRate ?? 0;
+        prod = calcProduction(
+          planet.buildings,
+          state.research,
+          planet.temperature,
+          GAME_SPEED,
+          planet.faction || 'human',
+          planet.biome,
+          planet.gravity,
+          planet.trait,
+          planet.specialization,
+          { galaxy: planet.galaxy, system: planet.system, position: planet.position },
+          planetTax
+        );
+      } catch (_) {}
+
+      // Producción analítica exacta: (tasa horaria / 3600) * segundos simulados
+      const gainM = Math.max(0, Math.floor(((prod?.metal || 0) / 3600) * simulatedSeconds));
+      const gainC = Math.max(0, Math.floor(((prod?.crystal || 0) / 3600) * simulatedSeconds));
+      const gainD = Math.max(0, Math.floor(((prod?.deuterium || 0) / 3600) * simulatedSeconds));
+
+      planetGains[planet.id] = {
+        metal: gainM,
+        crystal: gainC,
+        deuterium: gainD
+      };
+
+      totalGathered.metal += gainM;
+      totalGathered.crystal += gainC;
+      totalGathered.deuterium += gainD;
+    }
+
+    const richMessage = `⏱️ Progreso offline: ${timeStr} simulados\n⛏️ +${fmt(totalGathered.metal)} Metal  💎 +${fmt(totalGathered.crystal)} Cristal  ⚗️ +${fmt(totalGathered.deuterium)} Deuterio`;
+
+    dispatch({
+      type: "APPLY_OFFLINE_PROGRESS",
+      payload: {
+        seconds: simulatedSeconds,
+        planetGains,
+        totalGathered,
+        notification: {
+          id: Math.random().toString(36).slice(2, 11),
+          type: "success",
+          message: richMessage,
+          timestamp: Date.now()
         }
       }
-      completed = limit;
-      if (completed < totalTicks) {
-        timerId = setTimeout(tickBatch, 16);
-      } else {
-        const hours = Math.floor(totalTicks / 3600);
-        const mins = Math.floor((totalTicks % 3600) / 60);
-        const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-
-        const snap = stateRef.current;
-        const before = offlineResourcesBeforeRef.current || { metal: 0, crystal: 0, deuterium: 0 };
-        const after = {
-          metal: (snap?.planets || []).reduce((sum, p) => sum + (p.resources?.metal || 0), 0),
-          crystal: (snap?.planets || []).reduce((sum, p) => sum + (p.resources?.crystal || 0), 0),
-          deuterium: (snap?.planets || []).reduce((sum, p) => sum + (p.resources?.deuterium || 0), 0),
-        };
-        const dMetal = Math.max(0, Math.floor(after.metal - before.metal));
-        const dCrystal = Math.max(0, Math.floor(after.crystal - before.crystal));
-        const dDeuterium = Math.max(0, Math.floor(after.deuterium - before.deuterium));
-
-        const evBefore = offlineEventsBeforeRef.current || { notifs: 0, galactic: 0 };
-        const notifNow = (snap?.notifications || []).length;
-        const galNow = (snap?.galacticEvents || []).length;
-        const processed = (notifNow - evBefore.notifs) + (galNow - evBefore.galactic);
-
-        const richMessage = `⏱️ Progreso offline: ${timeStr} simulados\n⛏️ +${fmt(dMetal)} Metal  💎 +${fmt(dCrystal)} Cristal  ⚗️ +${fmt(dDeuterium)} Deuterio\n📡 ${processed} eventos/notificaciones procesados durante tu ausencia`;
-
-        dispatch({ type: "ADD_NOTIFICATION", payload: {
-          type: "success",
-          message: richMessage
-        }});
-
-        offlineResourcesBeforeRef.current = null;
-        offlineEventsBeforeRef.current = null;
-      }
-    };
-    timerId = setTimeout(tickBatch, 32);
-    return () => {
-      if (timerId) clearTimeout(timerId);
-    };
+    });
   }, [ready, dispatch, fmt, state, stateRef]);
 }
+

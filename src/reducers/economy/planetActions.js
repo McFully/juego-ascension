@@ -206,3 +206,41 @@ export const handleCancelBilateralRoute = (state, action) => {
     }]
   };
 };
+
+export const handleApplyOfflineProgress = (state, action) => {
+  const { seconds, planetGains, totalGathered, notification } = action.payload || {};
+  if (!seconds || seconds <= 0 || !planetGains) return state;
+
+  const now = Date.now();
+  const currentStats = state.stats || {};
+
+  const updatedPlanets = (state.planets || []).map(p => {
+    const gain = planetGains[p.id];
+    if (!gain) return p;
+    const currentRes = p.resources || { metal: 0, crystal: 0, deuterium: 0 };
+    return {
+      ...p,
+      resources: {
+        ...currentRes,
+        metal: (currentRes.metal || 0) + (gain.metal || 0),
+        crystal: (currentRes.crystal || 0) + (gain.crystal || 0),
+        deuterium: (currentRes.deuterium || 0) + (gain.deuterium || 0),
+      }
+    };
+  });
+
+  return {
+    ...state,
+    planets: updatedPlanets,
+    lastTick: now,
+    gameTick: (state.gameTick || 0) + Math.min(seconds, 1800),
+    stats: {
+      ...currentStats,
+      metalGathered: (currentStats.metalGathered || 0) + (totalGathered?.metal || 0),
+      crystalGathered: (currentStats.crystalGathered || 0) + (totalGathered?.crystal || 0),
+      deuteriumGathered: (currentStats.deuteriumGathered || 0) + (totalGathered?.deuterium || 0),
+    },
+    notifications: notification ? [...(state.notifications || []), notification] : state.notifications
+  };
+};
+
