@@ -1,9 +1,10 @@
 import React from 'react';
 import { ResourceBreakdownTooltip } from './ResourceBreakdownTooltip.jsx';
+import { BiosphereSocialTooltip } from './BiosphereSocialTooltip.jsx';
 import { calcPlanetMaxPop, fmt as defaultFmt } from '../../core.jsx';
 
 /**
- * TacticalResourceRow — Fila unificada de telemetria de recursos tácticos y censo.
+ * TacticalResourceRow — Fila unificada de telemetria de recursos tácticos, censo y biosfera.
  * Utilizada de forma estandarizada en OverviewHudBar, HubTopBar y FederalDistrictHeader.
  */
 export const TacticalResourceRow = React.memo(({
@@ -52,20 +53,57 @@ export const TacticalResourceRow = React.memo(({
 
   const reputation = state?.reputation ?? 0;
 
+  // Vectores Vitales (Planeta o Imperial Global)
+  const isImperial = !currentPlanet || currentPlanet.isImperialSummary;
+  const planetsList = state?.planets || [];
+
+  const bioMetrics = React.useMemo(() => {
+    if (!isImperial && currentPlanet) {
+      const b = currentPlanet.biosphere || {};
+      const t = currentPlanet.thermalGrid || {};
+      const d = currentPlanet.demographics || {};
+      return {
+        o2Pct: Math.round((b.o2Level !== undefined ? b.o2Level : 0.21) * 100),
+        waterDays: b.waterReserveDays !== undefined ? b.waterReserveDays : 120,
+        pollution: Number((b.pollutionLevel !== undefined ? b.pollutionLevel : 5.0).toFixed(1)),
+        tempC: Number((t.atmosphericTempC !== undefined ? t.atmosphericTempC : 18.0).toFixed(0)),
+        morale: d.morale !== undefined ? d.morale : 85,
+      };
+    }
+    // Promedio Imperial Global
+    if (planetsList.length > 0) {
+      let totO2 = 0, totWater = 0, totPollution = 0, totTemp = 0, totMorale = 0;
+      planetsList.forEach(p => {
+        const b = p.biosphere || {};
+        const t = p.thermalGrid || {};
+        const d = p.demographics || {};
+        totO2 += (b.o2Level !== undefined ? b.o2Level : 0.21);
+        totWater += (b.waterReserveDays !== undefined ? b.waterReserveDays : 120);
+        totPollution += (b.pollutionLevel !== undefined ? b.pollutionLevel : 5.0);
+        totTemp += (t.atmosphericTempC !== undefined ? t.atmosphericTempC : 18.0);
+        totMorale += (d.morale !== undefined ? d.morale : 85);
+      });
+      const count = planetsList.length;
+      return {
+        o2Pct: Math.round((totO2 / count) * 100),
+        waterDays: Math.round(totWater / count),
+        pollution: Number((totPollution / count).toFixed(1)),
+        tempC: Math.round(totTemp / count),
+        morale: Math.round(totMorale / count),
+      };
+    }
+    return { o2Pct: 21, waterDays: 120, pollution: 5.0, tempC: 18, morale: 85 };
+  }, [isImperial, currentPlanet, planetsList]);
+
   return (
     <div className={`flex items-center gap-1 sm:gap-2 px-4 py-2 border-b border-white/10 flex-wrap bg-black/40 relative z-40 ${className}`}>
-      {/* Metal */}
-      <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[130px] sm:min-w-[145px]">
-        <span className="text-xl shrink-0">⛏️</span>
-        <div className="flex items-baseline gap-1.5 leading-none tabular-nums">
-          <span className="font-black text-amber-400 text-base md:text-lg">
+      {/* Metal — Solo Stock */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
+        <span className="text-lg shrink-0">⛏️</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className="font-black text-amber-400 text-sm md:text-base">
             {fmt(metalAmount)}
           </span>
-          {prodMetal !== undefined && (
-            <span className="text-xs text-emerald-400 font-bold tabular-nums">
-              +{fmt(prodMetal)}
-            </span>
-          )}
         </div>
         <div className="hidden group-hover/res:block">
           <ResourceBreakdownTooltip
@@ -77,20 +115,15 @@ export const TacticalResourceRow = React.memo(({
         </div>
       </div>
 
-      <div className="w-[1px] h-5 bg-white/15 shrink-0" />
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
 
-      {/* Cristal */}
-      <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[130px] sm:min-w-[145px]">
-        <span className="text-xl shrink-0">💎</span>
-        <div className="flex items-baseline gap-1.5 leading-none tabular-nums">
-          <span className="font-black text-cyan-400 text-base md:text-lg">
+      {/* Cristal — Solo Stock */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
+        <span className="text-lg shrink-0">💎</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className="font-black text-cyan-400 text-sm md:text-base">
             {fmt(crystalAmount)}
           </span>
-          {prodCrystal !== undefined && (
-            <span className="text-xs text-emerald-400 font-bold tabular-nums">
-              +{fmt(prodCrystal)}
-            </span>
-          )}
         </div>
         <div className="hidden group-hover/res:block">
           <ResourceBreakdownTooltip
@@ -102,20 +135,15 @@ export const TacticalResourceRow = React.memo(({
         </div>
       </div>
 
-      <div className="w-[1px] h-5 bg-white/15 shrink-0" />
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
 
-      {/* Deuterio */}
-      <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[130px] sm:min-w-[145px]">
-        <span className="text-xl shrink-0">⚗️</span>
-        <div className="flex items-baseline gap-1.5 leading-none tabular-nums">
-          <span className="font-black text-emerald-400 text-base md:text-lg">
+      {/* Deuterio — Solo Stock */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
+        <span className="text-lg shrink-0">⚗️</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className="font-black text-emerald-400 text-sm md:text-base">
             {fmt(deutAmount)}
           </span>
-          {prodDeut !== undefined && (
-            <span className="text-xs text-emerald-400 font-bold tabular-nums">
-              +{fmt(prodDeut)}
-            </span>
-          )}
         </div>
         <div className="hidden group-hover/res:block">
           <ResourceBreakdownTooltip
@@ -127,20 +155,15 @@ export const TacticalResourceRow = React.memo(({
         </div>
       </div>
 
-      <div className="w-[1px] h-5 bg-white/15 shrink-0" />
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
 
-      {/* Escoria Industrial (Ancho fijo estricto para evitar jitter/baile del HUD) */}
-      <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 w-[170px]">
-        <span className="text-xl shrink-0">🪨</span>
-        <div className="flex items-baseline gap-1.5 leading-none tabular-nums flex-1 overflow-hidden">
-          <span className="font-black text-orange-400 text-base md:text-lg tabular-nums">
+      {/* Escoria Industrial — Homogéneo, Solo Stock */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
+        <span className="text-lg shrink-0">🪨</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className="font-black text-orange-400 text-sm md:text-base">
             {fmt(slagAmount)}
           </span>
-          {slagNet !== undefined && (
-            <span className={`text-xs font-bold tabular-nums shrink-0 ${(slagNet || 0) <= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
-              {(slagNet || 0) > 0 ? `+${fmt(slagNet)}` : fmt(slagNet || 0)}
-            </span>
-          )}
         </div>
         <div className="hidden group-hover/res:block z-[100]">
           <ResourceBreakdownTooltip
@@ -152,13 +175,13 @@ export const TacticalResourceRow = React.memo(({
         </div>
       </div>
 
-      <div className="w-[1px] h-5 bg-white/15 shrink-0" />
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
 
       {/* Energia */}
-      <div className="relative group/res flex items-center gap-2 px-2.5 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0 min-w-[90px] sm:min-w-[105px]">
-        <span className="text-xl shrink-0">⚡</span>
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0">
+        <span className="text-lg shrink-0">⚡</span>
         <div className="flex items-baseline leading-none tabular-nums">
-          <span className="font-black text-yellow-400 text-base md:text-lg">
+          <span className="font-black text-yellow-400 text-sm md:text-base">
             {(energyBalance >= 0 ? '+' : '')}{fmt(energyBalance)}
           </span>
         </div>
@@ -168,6 +191,108 @@ export const TacticalResourceRow = React.memo(({
             breakdown={breakdown}
             currentAmount={energyBalance}
             prodVal={energyBalance}
+          />
+        </div>
+      </div>
+
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
+
+      {/* VECTORES VITALES (SÓTANO A LA SUPERFICIE) */}
+
+      {/* 1. Calidad del Aire y Respirabilidad */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Calidad Atmosférica y Respirabilidad">
+        <span className="text-lg shrink-0">🌬️</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className="font-black text-sky-300 text-sm md:text-base">
+            {bioMetrics.o2Pct}%
+          </span>
+        </div>
+        <div className="hidden group-hover/res:block z-[120]">
+          <BiosphereSocialTooltip
+            metricType="air"
+            currentPlanet={currentPlanet}
+            state={state}
+            fmt={fmt}
+          />
+        </div>
+      </div>
+
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
+
+      {/* 2. Reserva de Agua y Soporte Vital */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Reserva Hídrica y Soporte Vital">
+        <span className="text-lg shrink-0">💧</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className="font-black text-cyan-300 text-sm md:text-base">
+            {bioMetrics.waterDays}d
+          </span>
+        </div>
+        <div className="hidden group-hover/res:block z-[120]">
+          <BiosphereSocialTooltip
+            metricType="water"
+            currentPlanet={currentPlanet}
+            state={state}
+            fmt={fmt}
+          />
+        </div>
+      </div>
+
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
+
+      {/* 3. Contaminación y Polución */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Degradación Ecológica y Polución">
+        <span className="text-lg shrink-0">☣️</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className={`font-black text-sm md:text-base ${bioMetrics.pollution > 15 ? 'text-rose-400' : 'text-emerald-400'}`}>
+            {bioMetrics.pollution}%
+          </span>
+        </div>
+        <div className="hidden group-hover/res:block z-[120]">
+          <BiosphereSocialTooltip
+            metricType="pollution"
+            currentPlanet={currentPlanet}
+            state={state}
+            fmt={fmt}
+          />
+        </div>
+      </div>
+
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
+
+      {/* 4. Red Térmica y Climatización */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Red Térmica y Clima">
+        <span className="text-lg shrink-0">🌡️</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className="font-black text-amber-300 text-sm md:text-base">
+            {bioMetrics.tempC}°C
+          </span>
+        </div>
+        <div className="hidden group-hover/res:block z-[120]">
+          <BiosphereSocialTooltip
+            metricType="thermal"
+            currentPlanet={currentPlanet}
+            state={state}
+            fmt={fmt}
+          />
+        </div>
+      </div>
+
+      <div className="w-[1px] h-4 bg-white/15 shrink-0" />
+
+      {/* 5. Moral y Cohesión Social */}
+      <div className="relative group/res flex items-center gap-1.5 px-2 hover:bg-white/5 rounded-lg transition-colors whitespace-nowrap cursor-help shrink-0" title="Moral Colonial y Cohesión Social">
+        <span className="text-lg shrink-0">😊</span>
+        <div className="flex items-baseline leading-none tabular-nums">
+          <span className={`font-black text-sm md:text-base ${bioMetrics.morale < 60 ? 'text-rose-400' : 'text-teal-300'}`}>
+            {bioMetrics.morale}%
+          </span>
+        </div>
+        <div className="hidden group-hover/res:block z-[120]">
+          <BiosphereSocialTooltip
+            metricType="society"
+            currentPlanet={currentPlanet}
+            state={state}
+            fmt={fmt}
           />
         </div>
       </div>
