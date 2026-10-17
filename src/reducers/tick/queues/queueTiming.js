@@ -285,6 +285,24 @@ export const backfillQueueTimeMults = (state) => {
 export const reconcileQueueTimings = (state) => {
   if (!state || !state.planets) return state;
 
+  const bQ = state.buildQueue;
+  const rQ = state.researchQueue;
+  const sQ = state.shipQueue;
+  const dQ = state.defenseQueue;
+  const cQ = state.customShipQueue;
+  const retQ = state.retrofitQueue;
+
+  if (
+    (!bQ || bQ.length === 0) &&
+    (!rQ || rQ.length === 0) &&
+    (!sQ || sQ.length === 0) &&
+    (!dQ || dQ.length === 0) &&
+    (!cQ || cQ.length === 0) &&
+    (!retQ || retQ.length === 0)
+  ) {
+    return state;
+  }
+
   const { state: backfilled, stamped } = backfillQueueTimeMults(state);
   const newState = backfilled;
   if (stamped === 0 && !hasStampedItems(state)) return state;

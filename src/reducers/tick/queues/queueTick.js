@@ -10,6 +10,17 @@ import {
 import { generateRegistryCode } from '../../../utils/shipRegistryBridge.js';
 
 export const processAllQueuesTick = (state, currentTime = Date.now()) => {
+  const hasRetrofit = (state.retrofitQueue && state.retrofitQueue.length > 0);
+  const hasBuild = (state.buildQueue && state.buildQueue.length > 0);
+  const hasResearch = (state.researchQueue && state.researchQueue.length > 0);
+  const hasShip = (state.shipQueue && state.shipQueue.length > 0);
+  const hasDefense = (state.defenseQueue && state.defenseQueue.length > 0);
+  const hasCustom = (state.customShipQueue && state.customShipQueue.length > 0);
+
+  if (!hasRetrofit && !hasBuild && !hasResearch && !hasShip && !hasDefense && !hasCustom) {
+    return state;
+  }
+
   let newState = { ...state };
   const now = currentTime;
 
