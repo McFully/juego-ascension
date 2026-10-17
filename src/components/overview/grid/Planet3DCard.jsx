@@ -1,8 +1,9 @@
-import React from 'react';
-import { PlanetViewer3D } from '../../3d/PlanetViewer3D.jsx';
+import React, { Suspense, lazy } from 'react';
 import { BIOMES } from '../../../data/gameData.js';
 import { ResourceBreakdownTooltip } from '../../ui/ResourceBreakdownTooltip.jsx';
 import { getPlanetHeritage } from '../../../data/planetaryHeritageData.js';
+
+const PlanetViewer3D = lazy(() => import('../../3d/PlanetViewer3D.jsx'));
 
 /**
  * Planet3DCard — Tarjeta 3D interactiva para renderizado individual de mundos.
@@ -164,7 +165,9 @@ export const Planet3DCard = React.memo(function Planet3DCard({
         <div className="col-span-4 flex items-center justify-center relative pointer-events-none my-auto">
           <div className="relative flex items-center justify-center w-36 h-36">
             <div className="absolute inset-0 bg-cyan-500/10 rounded-full blur-xl pointer-events-none" />
-            <PlanetViewer3D biome={planet.biome || "temperate"} name={planet.name} size={145} planet={planet} />
+            <Suspense fallback={<div className="w-[145px] h-[145px] rounded-full bg-cyan-950/20 border border-cyan-500/20 flex items-center justify-center text-2xl animate-pulse">🪐</div>}>
+              <PlanetViewer3D biome={planet.biome || "temperate"} name={planet.name} size={145} planet={planet} />
+            </Suspense>
           </div>
         </div>
 

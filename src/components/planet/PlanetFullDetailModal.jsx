@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { PlanetViewer3D } from '../3d/PlanetViewer3D.jsx';
 import { BIOMES, BUILDINGS, DEFENSES, SHIPS, RESEARCH, GAME_SPEED } from '../../data/gameData.js';
 import { calcProduction, calcPlanetMaxPop } from '../../utils/formulas/productionFormulas.js';
 import { fmt as defaultFmt } from '../../core.jsx';

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { ProductionSummaryCard } from "../components/overview/ProductionSummaryCard.jsx";
 import { ActiveFleetsOverview } from "../components/overview/ActiveFleetsOverview.jsx";
-import { PlanetViewer3D } from "../components/3d/PlanetViewer3D.jsx";
 import { LivingPlanetPanel } from "../components/planet/LivingPlanetPanel.jsx";
 import { PlanetarySpecializationCard } from "../components/overview/PlanetarySpecializationCard.jsx";
 import { ConstructionQueuesPanel } from "../components/overview/ConstructionQueuesPanel.jsx";

@@ -1,6 +1,8 @@
-import { PlanetViewer3D } from '../../3d/PlanetViewer3D.jsx';
+import React, { Suspense, lazy } from 'react';
 import { BIOMES } from '../../../data/gameData.js';
 import { getPlanetHeritage } from '../../../data/planetaryHeritageData.js';
+
+const PlanetViewer3D = lazy(() => import('../../3d/PlanetViewer3D.jsx'));
 
 export const PlanetOverviewTab = ({
   planet,
@@ -15,7 +17,9 @@ export const PlanetOverviewTab = ({
       <div className="lg:col-span-4 flex flex-col items-center p-6 rounded-3xl bg-[#070b1a] border border-cyan-500/20 space-y-4">
         <div className="relative w-48 h-48 flex items-center justify-center">
           <div className="absolute inset-0 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-          <PlanetViewer3D biome={planet.biome || 'temperate'} name={planet.name} size={190} planet={planet} />
+          <Suspense fallback={<div className="w-[190px] h-[190px] rounded-full bg-cyan-950/20 border border-cyan-500/20 flex items-center justify-center text-3xl animate-pulse">🪐</div>}>
+            <PlanetViewer3D biome={planet.biome || 'temperate'} name={planet.name} size={190} planet={planet} />
+          </Suspense>
         </div>
         <div className="w-full text-center space-y-1">
           <h3 className="text-xl font-black text-white uppercase tracking-wider">{planet.name}</h3>
