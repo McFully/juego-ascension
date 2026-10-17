@@ -1,8 +1,8 @@
 export const S = {
   page: 'min-h-screen bg-[#05070f] text-white font-sans relative overflow-x-hidden',
-  header: 'fixed top-0 left-0 w-full z-50 flex items-stretch justify-between px-margin-edge h-16 bg-[#0a0d1a]/88 backdrop-blur-3xl border-b border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.75)] fresnel',
-  card: 'glass holographic rounded-2xl p-4 border border-white/10 hover:border-[var(--ue-accent)]/40 transition-all duration-200 shadow-[0_10px_40px_rgba(0,0,0,0.5)] unreal-panel fresnel specular flex flex-col h-full text-white virtualized-card',
-  cardInner: 'glass rounded-xl p-3 border border-white/5 bg-[#05070f]/60',
+  header: 'fixed top-0 left-0 w-full z-50 flex items-stretch justify-between px-margin-edge h-16 bg-[#0a0d1a] border-b border-white/10 shadow-lg',
+  card: 'glass rounded-2xl p-4 border border-white/10 hover:border-cyan-400/50 transition-colors duration-150 shadow-md flex flex-col h-full text-white virtualized-card',
+  cardInner: 'rounded-xl p-3 border border-white/5 bg-[#05070f]/90',
   btn: 'px-4 py-2 rounded-xl font-medium transition-all btn-spring active:scale-[0.965] disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden',
   btnPrimary: 'bg-[#0a0d1a] border border-[var(--ue-accent)]/60 text-white shadow-[0_0_15px_rgba(6,182,212,0.25)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:border-[var(--ue-accent)]',
   btnSuccess: 'bg-emerald-950/60 border border-emerald-500/50 text-emerald-200 hover:bg-emerald-900/60',

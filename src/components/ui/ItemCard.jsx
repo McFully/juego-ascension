@@ -44,16 +44,6 @@ export const ItemCard = React.memo(({
   const [clicked, setClicked] = useState(false);
   const [selectedCancelItem, setSelectedCancelItem] = useState(null);
   const handleCancelClose = React.useCallback(() => setSelectedCancelItem(null), []);
-  const cardRef = React.useRef(null);
-
-  const handleMouseMove = React.useCallback((e) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    cardRef.current.style.setProperty('--mouse-x', `${x}px`);
-    cardRef.current.style.setProperty('--mouse-y', `${y}px`);
-  }, []);
 
   useEffect(() => {
     if (clicked) {
@@ -96,8 +86,6 @@ export const ItemCard = React.memo(({
 
   return (
     <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
       className={`${S.card} ${stateClass} relative group flex flex-col justify-between`}
     >
       <div>

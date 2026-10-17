@@ -27,7 +27,7 @@ const SectorManagementView = lazy(() => import("../sectors/SectorManagementView.
 const GalacticBankPage = lazy(() => import("../../pages/GalacticBankPage.jsx").then(m => ({ default: m.GalacticBankPage })));
 const PlanetaryBankPage = lazy(() => import("../../pages/PlanetaryBankPage.jsx").then(m => ({ default: m.PlanetaryBankPage })));
 
-export const GameViewports = ({
+export const GameViewports = React.memo(({
   activeTab,
   state,
   dispatch,
@@ -193,4 +193,5 @@ export const GameViewports = ({
       {activeTab === "replay" && <ReplayPage state={state} dispatch={dispatch} currentPlanet={currentPlanet} production={production} fmt={fmt} S={S} setActiveTab={safeSetActiveTab} />}
     </Suspense>
   );
-};
+});
+
