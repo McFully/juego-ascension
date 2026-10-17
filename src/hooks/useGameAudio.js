@@ -135,7 +135,13 @@ export function useGameAudio({ state, activeTab }) {
       playInGameMusic();
       startAmbient();
     } else {
-      playMenuMusic();
+      // Diferir música para no competir con el arranque inicial y montaje del DOM
+      const scheduleMenuMusic = typeof window !== 'undefined' && window.requestIdleCallback
+        ? (cb) => window.requestIdleCallback(cb, { timeout: 1500 })
+        : (cb) => setTimeout(cb, 100);
+      scheduleMenuMusic(() => {
+        playMenuMusic();
+      });
       stopAmbient();
       stopSystemMusic();
       stopMinistryMusic();

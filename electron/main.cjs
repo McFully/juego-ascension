@@ -27,8 +27,11 @@ const { registerVisualAuditIpc } = require("./ipc/visualAuditIpc.cjs");
 // Permitir autoplay de audio/música sin requerir gesto previo del usuario
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
-// Aceleración por hardware segura y balanceada para Windows
+// Aceleración por hardware de ultra alto rendimiento para Windows (60-144 FPS nativos)
 app.commandLine.appendSwitch("enable-gpu-rasterization");
+app.commandLine.appendSwitch("enable-zero-copy");
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
 
 // Registrar el esquema como privilegiado para permitir fetch y recursos seguros
 protocol.registerSchemesAsPrivileged([

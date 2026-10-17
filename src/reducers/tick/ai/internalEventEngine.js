@@ -239,7 +239,7 @@ export function processInternalEvents(state, tick, now) {
 
     if (techLean > 0.6 && isTechDirective && labLvl >= 4) {
       const breakthroughRoll = evaluateContextualRoll({
-        baseProb: 0.04,
+        baseProb: 0.08,
         modifiers: [
           { name: 'techLean', value: (techLean - 0.6) * 0.2 },
           { name: 'labLevel', value: Math.min(0.10, labLvl * 0.015) }
