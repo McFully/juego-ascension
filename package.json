@@ -1,7 +1,7 @@
 {
   "name": "ascension",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Ascensión - Estrategia espacial single player 100% local",
   "author": "Aritz Bahamonde Larxé",
   "copyright": "© 2026 Aritz Bahamonde Larxé. All rights reserved.",
@@ -13,6 +13,7 @@
     "build": "vite build",
     "bump": "npm version patch --no-git-tag-version --no-commit-hooks",
     "dist": "npm run bump && vite build && electron-builder --win",
+    "dist:light": "npm run bump && node scripts/build-light.js",
     "dist:dir": "npm run bump && vite build && electron-builder --win --dir",
     "dist:all": "npm run bump && vite build && electron-builder --win --linux --mac",
     "doctor": "node scripts/doctor.js",
@@ -92,5 +93,6 @@
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.5",
     "vitest": "^4.1.8"
-  }
+  },
+  "license": "UNLICENSED"
 }
